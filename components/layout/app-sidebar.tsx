@@ -99,7 +99,7 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
   const initials = getInitials(organizationName)
 
   return (
-    <Sidebar className="w-52">
+    <Sidebar>
       <SidebarHeader className="border-b px-4 py-3">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground font-bold text-xs">
