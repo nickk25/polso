@@ -83,6 +83,7 @@ const settingsNavItems = [
 
 interface AppSidebarProps {
   organizationName: string
+  userEmail: string | null
 }
 
 function getInitials(name: string): string {
@@ -93,24 +94,24 @@ function getInitials(name: string): string {
   return name.charAt(0).toUpperCase()
 }
 
-export function AppSidebar({ organizationName }: AppSidebarProps) {
+export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
   const pathname = usePathname()
   const initials = getInitials(organizationName)
 
   return (
-    <Sidebar>
-      <SidebarHeader className="border-b px-6 py-4">
+    <Sidebar className="w-52">
+      <SidebarHeader className="border-b px-4 py-3">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-            {initials}
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground font-bold text-xs">
+            P
           </div>
-          <span className="text-lg font-semibold truncate max-w-[140px]">{organizationName}</span>
+          <span className="text-sm font-semibold">Polso</span>
         </Link>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px]">Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
@@ -118,9 +119,10 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
+                    className="h-8 text-xs"
                   >
                     <Link href={item.href}>
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-3.5 w-3.5" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -131,7 +133,7 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Manage</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px]">Manage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {manageNavItems.map((item) => (
@@ -139,9 +141,10 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
+                    className="h-8 text-xs"
                   >
                     <Link href={item.href}>
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-3.5 w-3.5" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -159,17 +162,28 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
               <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href}
+                className="h-8 text-xs"
               >
                 <Link href={item.href}>
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-3.5 w-3.5" />
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
-        <div className="px-4 py-2 text-xs text-muted-foreground">
-          Powered by <span className="font-medium">Polso</span>
+        <div className="px-2 py-3 border-t mt-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs">
+              {initials}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-medium truncate">{organizationName}</span>
+              {userEmail && (
+                <span className="text-[10px] text-muted-foreground truncate">{userEmail}</span>
+              )}
+            </div>
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>
