@@ -85,15 +85,24 @@ interface AppSidebarProps {
   organizationName: string
 }
 
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/)
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase()
+  }
+  return name.charAt(0).toUpperCase()
+}
+
 export function AppSidebar({ organizationName }: AppSidebarProps) {
   const pathname = usePathname()
+  const initials = getInitials(organizationName)
 
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-6 py-4">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-            {organizationName.charAt(0).toUpperCase()}
+            {initials}
           </div>
           <span className="text-lg font-semibold truncate max-w-[140px]">{organizationName}</span>
         </Link>
