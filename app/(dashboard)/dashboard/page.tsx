@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Wallet,
   TrendDown,
+  TrendUp,
   Clock,
   Receipt,
   ArrowDown,
@@ -13,6 +14,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr"
 import { getAccountsSummary, getAccounts } from "@/features/banking/queries/get-accounts"
 import { getExpenseStats, getRecentExpenses } from "@/features/expenses/queries/get-expenses"
+import { getIncomeStats, getRecentIncomes } from "@/features/income/queries/get-income"
 import { getBurnRateAndRunway, getCashFlow, getCategoryBreakdown } from "@/features/analytics/queries/get-analytics"
 import { format } from "date-fns"
 import Link from "next/link"
@@ -37,18 +39,22 @@ function formatCurrencyCompact(value: number, currency = "USD") {
 }
 
 export default async function DashboardPage() {
-  const [accountsSummary, accounts, expenseStats, burnRateData, cashFlow, recentExpenses, categoryBreakdown] = await Promise.all([
+  const [accountsSummary, accounts, expenseStats, incomeStats, burnRateData, cashFlow, recentExpenses, recentIncomes, categoryBreakdown] = await Promise.all([
     getAccountsSummary(),
     getAccounts(),
     getExpenseStats(),
+    getIncomeStats(),
     getBurnRateAndRunway(),
     getCashFlow(6),
-    getRecentExpenses(8),
+    getRecentExpenses(5),
+    getRecentIncomes(3),
     getCategoryBreakdown(),
   ])
 
   const currency = accountsSummary.currency || "USD"
   const totalExpenses = expenseStats.totalThisMonth
+  const totalIncome = incomeStats.totalThisMonth
+  const netCashFlow = totalIncome - totalExpenses
   const fixedExpenses = expenseStats.fixedThisMonth
   const variableExpenses = expenseStats.variableThisMonth
   const fixedPercent = totalExpenses > 0 ? (fixedExpenses / totalExpenses) * 100 : 0
@@ -65,7 +71,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
@@ -85,16 +91,49 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Burn Rate</CardTitle>
-            <TrendDown className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Monthly Income</CardTitle>
+            <TrendUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(burnRateData.burnRate, currency)}
-              <span className="text-sm font-normal text-muted-foreground">/mo</span>
+            <div className="text-2xl font-bold text-green-500">
+              +{formatCurrency(totalIncome, currency)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Average monthly spend (3mo)
+              {incomeStats.incomeCount} transactions this month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Expenses</CardTitle>
+            <Receipt className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-500">
+              -{formatCurrency(totalExpenses, currency)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {expenseStats.expenseCount} transactions this month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Cash Flow</CardTitle>
+            {netCashFlow >= 0 ? (
+              <TrendUp className="h-4 w-4 text-green-500" />
+            ) : (
+              <TrendDown className="h-4 w-4 text-red-500" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${netCashFlow >= 0 ? "text-green-500" : "text-red-500"}`}>
+              {netCashFlow >= 0 ? "+" : ""}{formatCurrency(netCashFlow, currency)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Income minus expenses
             </p>
           </CardContent>
         </Card>
@@ -107,25 +146,10 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">
               {burnRateData.runway > 0 ? burnRateData.runway.toFixed(1) : "∞"}
-              <span className="text-sm font-normal text-muted-foreground"> months</span>
+              <span className="text-sm font-normal text-muted-foreground"> mo</span>
             </div>
             <p className="text-xs text-muted-foreground">
               At current burn rate
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(totalExpenses, currency)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {expenseStats.expenseCount} transactions this month
             </p>
           </CardContent>
         </Card>
@@ -223,22 +247,55 @@ export default async function DashboardPage() {
 
       {/* Two Big Blocks: Recent Transactions & Top Categories */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Recent Transactions */}
+        {/* Recent Transactions - Combined Expenses & Income */}
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Transactions</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/expenses">
-                View all
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
+            <CardTitle>Recent Activity</CardTitle>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/expenses">
+                  Expenses
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/income">
+                  Income
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="flex-1">
-            {recentExpenses.length > 0 ? (
+            {recentExpenses.length > 0 || recentIncomes.length > 0 ? (
               <div className="space-y-3">
+                {/* Recent Income */}
+                {recentIncomes.map((income) => (
+                  <div key={`income-${income.id}`} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0 bg-green-500/10 text-green-500">
+                        <TrendUp className="h-4 w-4" weight="bold" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate text-sm">
+                          {income.transaction?.merchantName ||
+                            income.transaction?.name ||
+                            income.description ||
+                            "Income"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(income.date), "MMM d")}
+                          {" · "}
+                          <span className="capitalize">{income.source}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-medium text-sm shrink-0 ml-2 text-green-500">
+                      +{formatCurrencyCompact(income.amount, income.currency)}
+                    </span>
+                  </div>
+                ))}
+                {/* Recent Expenses */}
                 {recentExpenses.map((expense) => (
-                  <div key={expense.id} className="flex items-center justify-between">
+                  <div key={`expense-${expense.id}`} className="flex items-center justify-between">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
                         className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
@@ -263,8 +320,8 @@ export default async function DashboardPage() {
                         </p>
                       </div>
                     </div>
-                    <span className="font-medium text-sm shrink-0 ml-2">
-                      {formatCurrencyCompact(expense.amount, expense.currency)}
+                    <span className="font-medium text-sm shrink-0 ml-2 text-red-500">
+                      -{formatCurrencyCompact(expense.amount, expense.currency)}
                     </span>
                   </div>
                 ))}

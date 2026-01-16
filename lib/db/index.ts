@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/lib/generated/prisma"
+import { PrismaClient } from "@/lib/generated/prisma/client"
 import { PrismaNeon } from "@prisma/adapter-neon"
 
 // Create adapter with connection string
@@ -22,4 +22,4 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma
 }
 
-export { type PrismaClient } from "@/lib/generated/prisma"
+export { type PrismaClient } from "@/lib/generated/prisma/client"

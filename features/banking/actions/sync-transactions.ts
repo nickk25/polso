@@ -8,6 +8,7 @@ import {
   getBalances,
   normalizeCounterpartyName,
   getTransactionType,
+  detectIncomeSource,
   type PlaidTransaction,
 } from "../lib/plaid-client"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
@@ -18,6 +19,7 @@ interface SyncResult {
   transactionsModified: number
   transactionsRemoved: number
   expensesCreated: number
+  incomesCreated: number
 }
 
 /**
@@ -47,6 +49,7 @@ export async function syncTransactionsAction(
         transactionsModified: 0,
         transactionsRemoved: 0,
         expensesCreated: 0,
+        incomesCreated: 0,
       })
     }
 
@@ -63,6 +66,7 @@ export async function syncTransactionsAction(
     let totalTransactionsModified = 0
     let totalTransactionsRemoved = 0
     let totalExpensesCreated = 0
+    let totalIncomesCreated = 0
     let accountsUpdated = 0
 
     // Process each Item (bank connection)
@@ -111,6 +115,9 @@ export async function syncTransactionsAction(
           totalTransactionsImported++
           if (result.expenseCreated) {
             totalExpensesCreated++
+          }
+          if (result.incomeCreated) {
+            totalIncomesCreated++
           }
         }
 
@@ -162,7 +169,9 @@ export async function syncTransactionsAction(
 
     revalidatePath("/banking")
     revalidatePath("/expenses")
+    revalidatePath("/income")
     revalidatePath("/dashboard")
+    revalidatePath("/analytics")
 
     return successResponse({
       accountsUpdated,
@@ -170,6 +179,7 @@ export async function syncTransactionsAction(
       transactionsModified: totalTransactionsModified,
       transactionsRemoved: totalTransactionsRemoved,
       expensesCreated: totalExpensesCreated,
+      incomesCreated: totalIncomesCreated,
     })
   } catch (error) {
     console.error("Error syncing transactions:", error)
@@ -184,7 +194,7 @@ async function importTransaction(
   organizationId: string,
   accountId: string,
   tx: PlaidTransaction
-): Promise<{ expenseCreated: boolean }> {
+): Promise<{ expenseCreated: boolean; incomeCreated: boolean }> {
   // Check if transaction already exists
   const existing = await prisma.transaction.findFirst({
     where: {
@@ -195,7 +205,7 @@ async function importTransaction(
   })
 
   if (existing) {
-    return { expenseCreated: false }
+    return { expenseCreated: false, incomeCreated: false }
   }
 
   // Determine counterparty name
@@ -225,8 +235,10 @@ async function importTransaction(
     },
   })
 
-  // Create expense for outgoing transactions (positive amounts = money out)
   let expenseCreated = false
+  let incomeCreated = false
+
+  // Create expense for outgoing transactions (positive amounts = money out)
   if (tx.amount > 0 && !tx.pending) {
     await prisma.expense.create({
       data: {
@@ -244,7 +256,24 @@ async function importTransaction(
     expenseCreated = true
   }
 
-  return { expenseCreated }
+  // Create income for incoming transactions (negative amounts = money in)
+  if (tx.amount < 0 && !tx.pending) {
+    await prisma.income.create({
+      data: {
+        organizationId,
+        transactionId: transaction.id,
+        amount: Math.abs(tx.amount), // Store as positive
+        currency: tx.iso_currency_code || "USD",
+        date: new Date(tx.date),
+        description: tx.merchant_name || tx.name,
+        source: detectIncomeSource(tx),
+        status: "pending",
+      },
+    })
+    incomeCreated = true
+  }
+
+  return { expenseCreated, incomeCreated }
 }
 
 async function updateTransaction(
@@ -277,13 +306,13 @@ async function updateTransaction(
     },
   })
 
-  // Update associated expense if exists
+  // Update associated expense or income if exists
   const transaction = await prisma.transaction.findFirst({
     where: {
       accountId,
       plaidTransactionId: tx.transaction_id,
     },
-    include: { expense: true },
+    include: { expense: true, income: true },
   })
 
   if (transaction?.expense) {
@@ -294,6 +323,19 @@ async function updateTransaction(
         currency: tx.iso_currency_code || "USD",
         date: new Date(tx.date),
         description: tx.merchant_name || tx.name,
+      },
+    })
+  }
+
+  if (transaction?.income) {
+    await prisma.income.update({
+      where: { id: transaction.income.id },
+      data: {
+        amount: Math.abs(tx.amount),
+        currency: tx.iso_currency_code || "USD",
+        date: new Date(tx.date),
+        description: tx.merchant_name || tx.name,
+        source: detectIncomeSource(tx),
       },
     })
   }

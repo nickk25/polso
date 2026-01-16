@@ -7,11 +7,12 @@ export type {
   Category,
   Vendor,
   Expense,
+  Income,
   ExpenseInvoice,
   RecurringPattern,
   Alert,
   Export,
-} from "@/lib/generated/prisma"
+} from "@/lib/generated/prisma/client"
 
 // Action response type for server actions
 export type ActionResponse<T = void> =
@@ -37,6 +38,12 @@ export type ExpenseType = "fixed" | "variable"
 
 // Expense status
 export type ExpenseStatus = "pending" | "documented" | "excluded"
+
+// Income source
+export type IncomeSource = "salary" | "freelance" | "investment" | "refund" | "transfer" | "other"
+
+// Income status
+export type IncomeStatus = "pending" | "confirmed" | "excluded"
 
 // Account status
 export type AccountStatus = "pending" | "active" | "expired" | "error"

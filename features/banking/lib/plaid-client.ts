@@ -210,5 +210,27 @@ export function getTransactionType(amount: number): "debit" | "credit" {
   return amount > 0 ? "debit" : "credit"
 }
 
+/**
+ * Detect income source from Plaid transaction category
+ */
+export function detectIncomeSource(tx: PlaidTransaction): string {
+  const category = tx.personal_finance_category?.primary || ""
+  const detailed = tx.personal_finance_category?.detailed || ""
+
+  if (category === "INCOME" && (detailed.includes("WAGES") || detailed.includes("SALARY"))) {
+    return "salary"
+  }
+  if (category === "INCOME" && (detailed.includes("DIVIDENDS") || detailed.includes("INTEREST"))) {
+    return "investment"
+  }
+  if (detailed.includes("REFUND")) {
+    return "refund"
+  }
+  if (category === "TRANSFER_IN") {
+    return "transfer"
+  }
+  return "other"
+}
+
 // Re-export types for convenience
 export type { PlaidTransaction, AccountBase, RemovedTransaction }

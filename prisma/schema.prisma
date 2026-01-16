@@ -27,6 +27,7 @@ model Organization {
   categories        Category[]
   vendors           Vendor[]
   expenses          Expense[]
+  incomes           Income[]
   expenseInvoices   ExpenseInvoice[]
   recurringPatterns RecurringPattern[]
   alerts            Alert[]
@@ -116,6 +117,7 @@ model Transaction {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   account      Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
   expense      Expense?
+  income       Income?
 
   @@unique([accountId, plaidTransactionId])
   @@index([organizationId])
@@ -147,6 +149,7 @@ model Category {
   children          Category[]         @relation("CategoryHierarchy")
   vendors           Vendor[]
   expenses          Expense[]
+  incomes           Income[]
   recurringPatterns RecurringPattern[]
 
   @@unique([organizationId, slug])
@@ -223,6 +226,38 @@ model Expense {
   @@index([categoryId])
   @@index([vendorId])
   @@map("expenses")
+}
+
+// ============================================
+// Income - Incoming money
+// ============================================
+
+model Income {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  transactionId  String?   @unique @map("transaction_id")
+  amount         Float     // Always positive (absolute value)
+  currency       String    @default("USD")
+  date           DateTime
+  description    String?
+  categoryId     String?   @map("category_id")
+  source         String    @default("other") // salary, freelance, investment, refund, transfer, other
+  isRecurring    Boolean   @default(false) @map("is_recurring")
+  status         String    @default("pending") // pending, confirmed, excluded
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction  Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([date])
+  @@index([status])
+  @@index([source])
+  @@map("incomes")
 }
 
 // ============================================

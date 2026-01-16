@@ -6,6 +6,7 @@ import {
   ChartLine,
   Bank,
   Receipt,
+  TrendUp,
   Repeat,
   Buildings,
   Tag,
@@ -42,6 +43,11 @@ const mainNavItems = [
     title: "Expenses",
     href: "/expenses",
     icon: Receipt,
+  },
+  {
+    title: "Income",
+    href: "/income",
+    icon: TrendUp,
   },
   {
     title: "Recurring",
