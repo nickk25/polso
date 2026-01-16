@@ -17,7 +17,7 @@ Polso is a financial management and expense intelligence SaaS platform for busin
 | **Neon PostgreSQL** | Serverless Postgres database |
 | **Neon Auth** | Authentication (built on Better Auth) |
 | **Cloudflare R2** | Object storage for invoices and exports |
-| **GoCardless** | Open Banking API (bank connections) |
+| **Plaid** | Bank account connections (Link + Transactions API) |
 | **Shadcn/ui** | UI components (Radix primitives) |
 | **Tailwind CSS v4** | Styling |
 
@@ -140,7 +140,8 @@ R2_ENDPOINT               # Cloudflare R2 endpoint
 R2_ACCESS_KEY_ID          # R2 credentials
 R2_SECRET_ACCESS_KEY      # R2 credentials
 R2_BUCKET_NAME            # R2 bucket name
-GOCARDLESS_SECRET_ID      # GoCardless API credentials
-GOCARDLESS_SECRET_KEY     # GoCardless API credentials
+PLAID_CLIENT_ID           # Plaid API client ID
+PLAID_SECRET              # Plaid API secret
+PLAID_ENV                 # Plaid environment (sandbox|development|production)
 NEXT_PUBLIC_APP_URL       # Application URL
 ```
