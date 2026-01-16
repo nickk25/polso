@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Plus, Receipt, ArrowRight } from "@phosphor-icons/react/dist/ssr"
+import { Receipt, ArrowRight } from "@phosphor-icons/react/dist/ssr"
 import { getExpenses, getExpenseStats } from "@/features/expenses/queries/get-expenses"
 import { ExpenseFilters } from "@/features/expenses/components/expense-filters"
 import { ExpensePagination } from "@/features/expenses/components/expense-pagination"
@@ -73,19 +73,13 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Expenses</h1>
-          <p className="text-muted-foreground">
-            {total > 0
-              ? `${total} transaction${total > 1 ? "s" : ""}`
-              : "Track and categorize your expenses"}
-          </p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Expense
-        </Button>
+      <div>
+        <h1 className="text-2xl font-semibold">Expenses</h1>
+        <p className="text-muted-foreground">
+          {total > 0
+            ? `${total} transaction${total > 1 ? "s" : ""}`
+            : "Track and categorize your expenses"}
+        </p>
       </div>
 
       {/* Stats Cards */}
@@ -228,21 +222,14 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
             <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium">No expenses yet</h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-              Connect a bank account to automatically import transactions, or add
-              expenses manually
+              Connect a bank account to automatically import and sync your transactions
             </p>
-            <div className="flex gap-3 mt-4">
-              <Button variant="outline" asChild>
-                <Link href="/banking">
-                  Connect Bank
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Expense
-              </Button>
-            </div>
+            <Button className="mt-4" asChild>
+              <Link href="/banking">
+                Connect Bank
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       )}
