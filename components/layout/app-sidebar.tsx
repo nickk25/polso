@@ -81,7 +81,11 @@ const settingsNavItems = [
   },
 ]
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  organizationName: string
+}
+
+export function AppSidebar({ organizationName }: AppSidebarProps) {
   const pathname = usePathname()
 
   return (
@@ -91,7 +95,10 @@ export function AppSidebar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
             P
           </div>
-          <span className="text-lg font-semibold">Polso</span>
+          <div className="flex flex-col">
+            <span className="text-lg font-semibold leading-tight">Polso</span>
+            <span className="text-xs text-muted-foreground truncate max-w-[140px]">{organizationName}</span>
+          </div>
         </Link>
       </SidebarHeader>
 

@@ -5,14 +5,15 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 
-async function ensureOrganization(userId: string, userEmail: string | null) {
+async function getOrganization(userId: string, userEmail: string | null) {
   // Check if user has an organization
   const userOrg = await prisma.userOrganization.findFirst({
     where: { userId },
+    include: { organization: true },
   })
 
   if (userOrg) {
-    return userOrg.organizationId
+    return userOrg.organization
   }
 
   // Create a new organization for the user
@@ -28,7 +29,7 @@ async function ensureOrganization(userId: string, userEmail: string | null) {
     },
   })
 
-  return org.id
+  return org
 }
 
 export default async function DashboardLayout({
@@ -42,12 +43,12 @@ export default async function DashboardLayout({
     redirect("/auth/sign-in")
   }
 
-  // Ensure user has an organization
-  await ensureOrganization(user.id, user.email)
+  // Get or create user's organization
+  const organization = await getOrganization(user.id, user.email)
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar organizationName={organization.name} />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
