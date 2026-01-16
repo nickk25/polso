@@ -159,6 +159,9 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
+        <div className="px-4 py-2 text-xs text-muted-foreground">
+          Powered by <span className="font-medium">Polso</span>
+        </div>
       </SidebarFooter>
     </Sidebar>
   )
