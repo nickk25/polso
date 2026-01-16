@@ -39,3 +39,56 @@ export async function getAccountsWithBalance() {
 
   return { accounts, totalBalance }
 }
+
+export interface AccountsSummary {
+  totalAvailable: number
+  totalCurrent: number
+  totalLimit: number
+  accountCount: number
+  lastSyncedAt: Date | null
+  currency: string
+}
+
+export async function getAccountsSummary(): Promise<AccountsSummary> {
+  const { organizationId } = await getAuthContext()
+
+  const accounts = await prisma.account.findMany({
+    where: {
+      organizationId,
+      status: "active",
+    },
+    select: {
+      balanceAvailable: true,
+      balanceCurrent: true,
+      balanceLimit: true,
+      lastSyncedAt: true,
+      currency: true,
+    },
+  })
+
+  const summary = accounts.reduce(
+    (acc, account) => ({
+      totalAvailable: acc.totalAvailable + (account.balanceAvailable || 0),
+      totalCurrent: acc.totalCurrent + (account.balanceCurrent || 0),
+      totalLimit: acc.totalLimit + (account.balanceLimit || 0),
+    }),
+    { totalAvailable: 0, totalCurrent: 0, totalLimit: 0 }
+  )
+
+  // Get the most recent sync time
+  const lastSyncedAt = accounts.reduce((latest: Date | null, account) => {
+    if (!account.lastSyncedAt) return latest
+    if (!latest) return account.lastSyncedAt
+    return account.lastSyncedAt > latest ? account.lastSyncedAt : latest
+  }, null)
+
+  // Use first account's currency or default to USD
+  const currency = accounts[0]?.currency || "USD"
+
+  return {
+    ...summary,
+    accountCount: accounts.length,
+    lastSyncedAt,
+    currency,
+  }
+}
