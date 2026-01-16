@@ -4,7 +4,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Polso is a Next.js 16 application using React 19, TypeScript, Tailwind CSS v4, and Shadcn/ui component library.
+Polso is a financial management and expense intelligence SaaS platform for businesses. It connects to banks via Open Banking APIs, syncs transactions, detects recurring expenses, auto-categorizes spending, and provides analytics (burn rate, runway, cash flow).
+
+**Architecture documentation**: See `docs/ARCHITECTURE.md` for full database schema, feature modules, and implementation details.
+
+## Core Modules
+
+| Module | Purpose |
+|--------|---------|
+| Banking | Bank connection via Open Banking, transaction sync |
+| Expenses | Expense management with invoices, categories, vendors |
+| Intelligence | Recurring detection, auto-categorization |
+| Analytics | Burn rate, runway, cash flow, KPIs |
+| Export | ZIP with invoices + CSV/PDF for accountant |
+
+## Core Entities
+
+- `organizations` - Multi-tenant root
+- `accounts` - Connected bank accounts
+- `transactions` - Raw bank transactions
+- `expenses` - Enriched transactions with metadata
+- `categories` - System + custom expense categories
+- `vendors` - Detected/created suppliers
+- `recurring_patterns` - Detected fixed expenses
 
 ## UI Components - IMPORTANT
 
