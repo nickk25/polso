@@ -11,8 +11,12 @@ import {
 } from "@/components/ui/table"
 import { Plus, Receipt, ArrowRight } from "@phosphor-icons/react/dist/ssr"
 import { getExpenses, getExpenseStats } from "@/features/expenses/queries/get-expenses"
+import { ExpenseFilters } from "@/features/expenses/components/expense-filters"
+import { ExpensePagination } from "@/features/expenses/components/expense-pagination"
 import { format } from "date-fns"
 import Link from "next/link"
+
+const PAGE_SIZE = 25
 
 function formatCurrency(value: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
@@ -43,13 +47,29 @@ function getExpenseTypeBadge(type: string) {
   }
 }
 
-export default async function ExpensesPage() {
-  const [{ expenses, total }, stats] = await Promise.all([
-    getExpenses({}, 1, 50),
+interface PageProps {
+  searchParams: Promise<{
+    page?: string
+    search?: string
+    status?: string
+    expenseType?: string
+  }>
+}
+
+export default async function ExpensesPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const page = parseInt(params.page || "1", 10)
+  const search = params.search || undefined
+  const status = params.status || undefined
+  const expenseType = params.expenseType || undefined
+
+  const [{ expenses, total, pages }, stats] = await Promise.all([
+    getExpenses({ search, status, expenseType }, page, PAGE_SIZE),
     getExpenseStats(),
   ])
 
   const hasExpenses = expenses.length > 0
+  const hasAnyExpenses = total > 0 || stats.totalThisMonth > 0
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -58,7 +78,7 @@ export default async function ExpensesPage() {
           <h1 className="text-2xl font-semibold">Expenses</h1>
           <p className="text-muted-foreground">
             {total > 0
-              ? `${total} transaction${total > 1 ? "s" : ""} this month`
+              ? `${total} transaction${total > 1 ? "s" : ""}`
               : "Track and categorize your expenses"}
           </p>
         </div>
@@ -69,7 +89,7 @@ export default async function ExpensesPage() {
       </div>
 
       {/* Stats Cards */}
-      {hasExpenses && (
+      {hasAnyExpenses && (
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
@@ -122,11 +142,16 @@ export default async function ExpensesPage() {
         </div>
       )}
 
+      {/* Filters */}
+      {hasAnyExpenses && (
+        <ExpenseFilters search={search} status={status} expenseType={expenseType} />
+      )}
+
       {/* Expenses Table */}
       {hasExpenses ? (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
+            <CardTitle>Transactions</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -184,14 +209,17 @@ export default async function ExpensesPage() {
                 ))}
               </TableBody>
             </Table>
-            {total > 50 && (
-              <div className="mt-4 flex justify-center">
-                <Button variant="outline" size="sm">
-                  Load more
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            )}
+            <ExpensePagination currentPage={page} totalPages={pages} total={total} />
+          </CardContent>
+        </Card>
+      ) : hasAnyExpenses ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium">No matching expenses</h3>
+            <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
+              Try adjusting your search or filters
+            </p>
           </CardContent>
         </Card>
       ) : (

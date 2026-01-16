@@ -143,5 +143,6 @@ R2_BUCKET_NAME            # R2 bucket name
 PLAID_CLIENT_ID           # Plaid API client ID
 PLAID_SECRET              # Plaid API secret
 PLAID_ENV                 # Plaid environment (sandbox|development|production)
+CRON_SECRET               # Secret for cron job authentication
 NEXT_PUBLIC_APP_URL       # Application URL
 ```
