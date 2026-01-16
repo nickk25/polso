@@ -7,18 +7,34 @@ import {
   ArrowDown,
   ArrowUp,
 } from "@phosphor-icons/react/dist/ssr"
+import { getAccountsSummary } from "@/features/banking/queries/get-accounts"
+import { getExpenseStats } from "@/features/expenses/queries/get-expenses"
+import { getBurnRateAndRunway, getCashFlow } from "@/features/analytics/queries/get-analytics"
 
-// Placeholder data - will be replaced with real data
-const kpis = {
-  currentBalance: 45230.50,
-  burnRate: 8500,
-  runway: 5.3,
-  totalExpenses: 12450,
-  fixedExpenses: 6800,
-  variableExpenses: 5650,
+function formatCurrency(value: number, currency = "USD") {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [accountsSummary, expenseStats, burnRateData, cashFlow] = await Promise.all([
+    getAccountsSummary(),
+    getExpenseStats(),
+    getBurnRateAndRunway(),
+    getCashFlow(6),
+  ])
+
+  const currency = accountsSummary.currency || "USD"
+  const totalExpenses = expenseStats.totalThisMonth
+  const fixedExpenses = expenseStats.fixedThisMonth
+  const variableExpenses = expenseStats.variableThisMonth
+  const fixedPercent = totalExpenses > 0 ? (fixedExpenses / totalExpenses) * 100 : 0
+  const variablePercent = totalExpenses > 0 ? (variableExpenses / totalExpenses) * 100 : 0
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
@@ -37,13 +53,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "EUR",
-              }).format(kpis.currentBalance)}
+              {formatCurrency(accountsSummary.totalCurrent, currency)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Across all accounts
+              {accountsSummary.accountCount === 0
+                ? "No accounts connected"
+                : `Across ${accountsSummary.accountCount} account${accountsSummary.accountCount > 1 ? "s" : ""}`}
             </p>
           </CardContent>
         </Card>
@@ -55,14 +70,11 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "EUR",
-              }).format(kpis.burnRate)}
+              {formatCurrency(burnRateData.burnRate, currency)}
               <span className="text-sm font-normal text-muted-foreground">/mo</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Average monthly spend
+              Average monthly spend (3mo)
             </p>
           </CardContent>
         </Card>
@@ -74,7 +86,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {kpis.runway.toFixed(1)}
+              {burnRateData.runway > 0 ? burnRateData.runway.toFixed(1) : "∞"}
               <span className="text-sm font-normal text-muted-foreground"> months</span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -90,13 +102,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "EUR",
-              }).format(kpis.totalExpenses)}
+              {formatCurrency(totalExpenses, currency)}
             </div>
             <p className="text-xs text-muted-foreground">
-              This month
+              {expenseStats.expenseCount} transactions this month
             </p>
           </CardContent>
         </Card>
@@ -111,22 +120,17 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "EUR",
-              }).format(kpis.fixedExpenses)}
+              {formatCurrency(fixedExpenses, currency)}
             </div>
             <div className="mt-2 flex items-center gap-2">
               <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full bg-red-500"
-                  style={{
-                    width: `${(kpis.fixedExpenses / kpis.totalExpenses) * 100}%`,
-                  }}
+                  className="h-full bg-red-500 transition-all"
+                  style={{ width: `${fixedPercent}%` }}
                 />
               </div>
               <span className="text-xs text-muted-foreground">
-                {((kpis.fixedExpenses / kpis.totalExpenses) * 100).toFixed(0)}%
+                {fixedPercent.toFixed(0)}%
               </span>
             </div>
           </CardContent>
@@ -139,39 +143,78 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "EUR",
-              }).format(kpis.variableExpenses)}
+              {formatCurrency(variableExpenses, currency)}
             </div>
             <div className="mt-2 flex items-center gap-2">
               <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full bg-amber-500"
-                  style={{
-                    width: `${(kpis.variableExpenses / kpis.totalExpenses) * 100}%`,
-                  }}
+                  className="h-full bg-amber-500 transition-all"
+                  style={{ width: `${variablePercent}%` }}
                 />
               </div>
               <span className="text-xs text-muted-foreground">
-                {((kpis.variableExpenses / kpis.totalExpenses) * 100).toFixed(0)}%
+                {variablePercent.toFixed(0)}%
               </span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Placeholder for charts */}
+      {/* Cash Flow Chart */}
       <Card>
         <CardHeader>
           <CardTitle>Cash Flow</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
-            <p className="text-sm text-muted-foreground">
-              Cash flow chart will be displayed here
-            </p>
-          </div>
+          {cashFlow.length > 0 && cashFlow.some((d) => d.inflow > 0 || d.outflow > 0) ? (
+            <div className="space-y-4">
+              {/* Simple bar chart */}
+              <div className="flex h-[200px] items-end gap-2">
+                {cashFlow.map((month) => {
+                  const maxValue = Math.max(
+                    ...cashFlow.flatMap((d) => [d.inflow, d.outflow])
+                  )
+                  const inflowHeight = maxValue > 0 ? (month.inflow / maxValue) * 100 : 0
+                  const outflowHeight = maxValue > 0 ? (month.outflow / maxValue) * 100 : 0
+
+                  return (
+                    <div key={month.month} className="flex-1 flex flex-col items-center gap-1">
+                      <div className="flex-1 w-full flex items-end gap-0.5">
+                        <div
+                          className="flex-1 bg-green-500 rounded-t transition-all"
+                          style={{ height: `${inflowHeight}%` }}
+                          title={`Income: ${formatCurrency(month.inflow, currency)}`}
+                        />
+                        <div
+                          className="flex-1 bg-red-400 rounded-t transition-all"
+                          style={{ height: `${outflowHeight}%` }}
+                          title={`Expenses: ${formatCurrency(month.outflow, currency)}`}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground">{month.month}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Legend */}
+              <div className="flex justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded bg-green-500" />
+                  <span className="text-muted-foreground">Income</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded bg-red-400" />
+                  <span className="text-muted-foreground">Expenses</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
+              <p className="text-sm text-muted-foreground">
+                No transaction data yet. Connect a bank account to see cash flow.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
