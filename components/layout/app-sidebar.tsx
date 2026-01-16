@@ -92,13 +92,10 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
     <Sidebar>
       <SidebarHeader className="border-b px-6 py-4">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            P
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
+            {organizationName.charAt(0).toUpperCase()}
           </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold leading-tight">Polso</span>
-            <span className="text-xs text-muted-foreground truncate max-w-[140px]">{organizationName}</span>
-          </div>
+          <span className="text-lg font-semibold truncate max-w-[140px]">{organizationName}</span>
         </Link>
       </SidebarHeader>
 
