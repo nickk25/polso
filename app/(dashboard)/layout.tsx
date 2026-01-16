@@ -11,31 +11,59 @@ import { Separator } from "@/components/ui/separator";
 
 async function getOrganization(userId: string, userEmail: string | null) {
   // Check if user has an organization
-  const userOrg = await prisma.userOrganization.findFirst({
+  const existingOrg = await prisma.userOrganization.findFirst({
     where: { userId },
     include: { organization: true },
   });
 
-  if (userOrg) {
-    return userOrg.organization;
+  if (existingOrg) {
+    return existingOrg.organization;
   }
 
-  // Create a new organization for the user
-  const org = await prisma.organization.create({
-    data: {
-      name: userEmail
-        ? `${userEmail.split("@")[0]}'s Organization`
-        : "My Organization",
-      userOrganizations: {
-        create: {
-          userId,
-          role: "owner",
-        },
-      },
-    },
-  });
+  // Use transaction to prevent race condition on first login
+  // Multiple parallel requests might try to create an org simultaneously
+  try {
+    const org = await prisma.$transaction(async (tx) => {
+      // Double-check inside transaction
+      const existing = await tx.userOrganization.findFirst({
+        where: { userId },
+        include: { organization: true },
+      });
 
-  return org;
+      if (existing) {
+        return existing.organization;
+      }
+
+      // Create new organization
+      return tx.organization.create({
+        data: {
+          name: userEmail
+            ? `${userEmail.split("@")[0]}'s Organization`
+            : "My Organization",
+          userOrganizations: {
+            create: {
+              userId,
+              role: "owner",
+            },
+          },
+        },
+      });
+    });
+
+    return org;
+  } catch {
+    // If transaction failed due to race condition, fetch the org that was created
+    const created = await prisma.userOrganization.findFirst({
+      where: { userId },
+      include: { organization: true },
+    });
+
+    if (created) {
+      return created.organization;
+    }
+
+    throw new Error("Failed to create organization");
+  }
 }
 
 export default async function DashboardLayout({
