@@ -4,7 +4,7 @@ This document describes the expense auto-categorization system and provides a ro
 
 ## Overview
 
-The auto-categorization system automatically assigns categories to expenses when transactions are synced from Plaid. It uses a layered, rule-based approach with three priority levels.
+The auto-categorization system automatically assigns categories to expenses when transactions are synced from Plaid. It uses a layered, rule-based approach with four priority levels, ensuring every expense gets a category.
 
 ## Current Implementation
 
@@ -36,13 +36,19 @@ The auto-categorization system automatically assigns categories to expenses when
 │   │  │ Priority 3: Keyword Matching (70-85% confidence)    ││  │
 │   │  │ - Match merchant name against keyword rules         ││  │
 │   │  └─────────────────────────────────────────────────────┘│  │
+│   │                      │ No match                         │  │
+│   │                      ▼                                  │  │
+│   │  ┌─────────────────────────────────────────────────────┐│  │
+│   │  │ Priority 4: Fallback (50% confidence)               ││  │
+│   │  │ - Assign "Miscellaneous" category                   ││  │
+│   │  └─────────────────────────────────────────────────────┘│  │
 │   └─────────────────────────────────────────────────────────┘  │
 │         │                                                       │
 │         ▼                                                       │
 │   Expense Created with:                                         │
-│   - categoryId                                                  │
-│   - categorySource: "vendor" | "plaid" | "keyword" | null       │
-│   - categoryConfidence: 0.0 - 1.0                               │
+│   - categoryId (always assigned)                                │
+│   - categorySource: "vendor" | "plaid" | "keyword"              │
+│   - categoryConfidence: 0.5 - 0.95                              │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -50,11 +56,18 @@ The auto-categorization system automatically assigns categories to expenses when
 ### File Structure
 
 ```
-features/intelligence/lib/
-├── category-suggester.ts      # Main suggestion engine
-├── plaid-category-mapping.ts  # Plaid → Polso category mappings
-├── keyword-rules.ts           # Keyword-based matching rules
-└── recurring-detector.ts      # Existing recurring pattern detection
+features/intelligence/
+├── lib/
+│   ├── category-suggester.ts      # Main suggestion engine
+│   ├── plaid-category-mapping.ts  # Plaid → Polso category mappings
+│   ├── keyword-rules.ts           # Keyword-based matching rules
+│   └── recurring-detector.ts      # Recurring pattern detection
+└── actions/
+    └── backfill-categories.ts     # Backfill action for existing expenses
+
+features/expenses/components/
+├── expense-table.tsx              # Table with sparkle indicators
+└── auto-categorize-button.tsx     # Button to trigger backfill
 ```
 
 ### Key Files
@@ -64,6 +77,8 @@ features/intelligence/lib/
 | `category-suggester.ts` | Main entry point - `suggestCategory()` function |
 | `plaid-category-mapping.ts` | Static mapping tables for Plaid categories |
 | `keyword-rules.ts` | Keyword/merchant name matching rules |
+| `backfill-categories.ts` | Server action to categorize existing expenses |
+| `auto-categorize-button.tsx` | UI button on /expenses page |
 | `sync-transactions.ts` | Integration point in banking module |
 
 ### Data Model
@@ -108,6 +123,30 @@ interface SuggestionContext {
 | `professional-services` | Professional Services | variable |
 | `equipment` | Equipment | variable |
 | `miscellaneous` | Miscellaneous | variable |
+
+### UI Features
+
+**Auto-categorize Button** (`/expenses` page)
+- Triggers `backfillCategoriesAction()` to categorize all uncategorized expenses
+- Shows toast notification with results (categorized count, skipped count)
+- Located in the filters section
+
+**Sparkle Indicator** (expense table & edit drawer)
+- Purple sparkle icon (✦) appears next to auto-categorized expenses
+- Tooltip shows: source (Vendor default / Bank category / Merchant match) and confidence %
+- Disappears when user manually changes category (marked as "manual")
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Date     │ Description      │ Category                │ Amount  │
+├──────────┼──────────────────┼─────────────────────────┼─────────┤
+│ Jan 15   │ Netflix          │ ● Subscriptions ✦       │ $15.99  │
+│ Jan 14   │ Uber             │ ● Travel & Transport ✦  │ $24.50  │
+│ Jan 13   │ Custom payment   │ ● Miscellaneous ✦       │ $89.00  │
+└─────────────────────────────────────────────────────────────────┘
+                                      ↑
+                             Sparkle = auto-categorized
+```
 
 ---
 
@@ -328,7 +367,14 @@ export async function categorizeWithLLMBatch(
 describe("category-suggester", () => {
   it("should prioritize vendor default over Plaid mapping")
   it("should fall back to keyword matching when no Plaid match")
-  it("should return null when no match found")
+  it("should fall back to Miscellaneous when no other match")
+  it("should never return null if Miscellaneous category exists")
+})
+
+describe("backfill-categories", () => {
+  it("should only process expenses with null categoryId")
+  it("should update categorySource and categoryConfidence")
+  it("should link vendor if matched by counterparty name")
 })
 
 describe("llm-categorizer", () => {
