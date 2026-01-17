@@ -21,6 +21,8 @@ export interface ExpenseWithRelations {
   expenseType: string
   status: string
   isManual: boolean
+  categorySource: string | null
+  categoryConfidence: number | null
   transaction: {
     id: string
     merchantName: string | null

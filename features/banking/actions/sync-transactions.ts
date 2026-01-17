@@ -12,6 +12,7 @@ import {
   type PlaidTransaction,
 } from "../lib/plaid-client"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
+import { suggestCategory } from "@/features/intelligence/lib/category-suggester"
 
 interface SyncResult {
   accountsUpdated: number
@@ -62,6 +63,32 @@ export async function syncTransactionsAction(
       itemGroups.set(account.plaidItemId, group)
     }
 
+    // Pre-fetch categories and vendors for auto-categorization
+    const [categories, vendors] = await Promise.all([
+      prisma.category.findMany({
+        where: {
+          OR: [{ isSystem: true }, { organizationId }],
+        },
+        select: { id: true, slug: true },
+      }),
+      prisma.vendor.findMany({
+        where: { organizationId },
+        select: {
+          id: true,
+          normalizedName: true,
+          defaultCategoryId: true,
+        },
+      }),
+    ])
+
+    const categoryLookup = new Map(categories.map((c) => [c.slug, c.id]))
+    const vendorLookup = new Map(
+      vendors.map((v) => [
+        v.normalizedName,
+        { id: v.id, defaultCategoryId: v.defaultCategoryId },
+      ])
+    )
+
     let totalTransactionsImported = 0
     let totalTransactionsModified = 0
     let totalTransactionsRemoved = 0
@@ -111,7 +138,13 @@ export async function syncTransactionsAction(
           )
           if (!account) continue
 
-          const result = await importTransaction(organizationId, account.id, tx)
+          const result = await importTransaction(
+            organizationId,
+            account.id,
+            tx,
+            categoryLookup,
+            vendorLookup
+          )
           totalTransactionsImported++
           if (result.expenseCreated) {
             totalExpensesCreated++
@@ -193,7 +226,9 @@ export async function syncTransactionsAction(
 async function importTransaction(
   organizationId: string,
   accountId: string,
-  tx: PlaidTransaction
+  tx: PlaidTransaction,
+  categoryLookup: Map<string, string>,
+  vendorLookup: Map<string, { id: string; defaultCategoryId: string | null }>
 ): Promise<{ expenseCreated: boolean; incomeCreated: boolean }> {
   // Check if transaction already exists
   const existing = await prisma.transaction.findFirst({
@@ -212,6 +247,11 @@ async function importTransaction(
   const counterpartyName = tx.merchant_name || tx.name || null
   const normalizedCounterparty = counterpartyName
     ? normalizeCounterpartyName(counterpartyName)
+    : null
+
+  // Look up vendor by normalized name
+  const matchedVendor = normalizedCounterparty
+    ? vendorLookup.get(normalizedCounterparty)
     : null
 
   // Create transaction
@@ -240,6 +280,18 @@ async function importTransaction(
 
   // Create expense for outgoing transactions (positive amounts = money out)
   if (tx.amount > 0 && !tx.pending) {
+    // Get category suggestion using layered approach
+    const suggestion = suggestCategory(
+      {
+        vendorDefaultCategoryId: matchedVendor?.defaultCategoryId,
+        plaidPrimaryCategory: tx.personal_finance_category?.primary,
+        plaidDetailedCategory: tx.personal_finance_category?.detailed,
+        merchantName: tx.merchant_name,
+        transactionName: tx.name,
+      },
+      categoryLookup
+    )
+
     await prisma.expense.create({
       data: {
         organizationId,
@@ -251,6 +303,10 @@ async function importTransaction(
         expenseType: "variable",
         status: "pending",
         isManual: false,
+        vendorId: matchedVendor?.id ?? null,
+        categoryId: suggestion?.categoryId ?? null,
+        categorySource: suggestion?.source ?? null,
+        categoryConfidence: suggestion?.confidence ?? null,
       },
     })
     expenseCreated = true

@@ -213,6 +213,8 @@ model Expense {
   status             String    @default("pending") // pending, documented, excluded
   isManual           Boolean   @default(false) @map("is_manual")
   notes              String?
+  categorySource     String?   @map("category_source") // vendor, plaid, keyword, manual
+  categoryConfidence Float?    @map("category_confidence") // 0-1 confidence score
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 

@@ -1,19 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Receipt, ArrowRight } from "@phosphor-icons/react/dist/ssr"
 import { getExpenses, getExpenseStats } from "@/features/expenses/queries/get-expenses"
+import { getAllCategories } from "@/features/categories/queries/get-categories"
 import { ExpenseFilters } from "@/features/expenses/components/expense-filters"
 import { ExpensePagination } from "@/features/expenses/components/expense-pagination"
-import { format } from "date-fns"
+import { ExpenseTable } from "@/features/expenses/components/expense-table"
+import { AutoCategorizeButton } from "@/features/expenses/components/auto-categorize-button"
 import Link from "next/link"
 
 const PAGE_SIZE = 25
@@ -23,28 +16,6 @@ function formatCurrency(value: number, currency = "USD") {
     style: "currency",
     currency,
   }).format(value)
-}
-
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "documented":
-      return <Badge variant="default">Documented</Badge>
-    case "excluded":
-      return <Badge variant="secondary">Excluded</Badge>
-    case "pending":
-    default:
-      return <Badge variant="outline">Pending</Badge>
-  }
-}
-
-function getExpenseTypeBadge(type: string) {
-  switch (type) {
-    case "fixed":
-      return <Badge variant="destructive" className="bg-red-500/10 text-red-500 border-red-500/20">Fixed</Badge>
-    case "variable":
-    default:
-      return <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 border-amber-500/20">Variable</Badge>
-  }
 }
 
 interface PageProps {
@@ -63,9 +34,10 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
   const status = params.status || undefined
   const expenseType = params.expenseType || undefined
 
-  const [{ expenses, total, pages }, stats] = await Promise.all([
+  const [{ expenses, total, pages }, stats, categories] = await Promise.all([
     getExpenses({ search, status, expenseType }, page, PAGE_SIZE),
     getExpenseStats(),
+    getAllCategories(),
   ])
 
   const hasExpenses = expenses.length > 0
@@ -138,7 +110,10 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
 
       {/* Filters */}
       {hasAnyExpenses && (
-        <ExpenseFilters search={search} status={status} expenseType={expenseType} />
+        <div className="flex items-center justify-between gap-4">
+          <ExpenseFilters search={search} status={status} expenseType={expenseType} />
+          <AutoCategorizeButton />
+        </div>
       )}
 
       {/* Expenses Table */}
@@ -148,61 +123,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
             <CardTitle>Transactions</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell className="font-medium">
-                      {format(new Date(expense.date), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {expense.vendor?.name ||
-                            expense.transaction?.merchantName ||
-                            expense.transaction?.name ||
-                            expense.description ||
-                            "Unknown"}
-                        </span>
-                        {expense.transaction?.category && (
-                          <span className="text-xs text-muted-foreground">
-                            {expense.transaction.category}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {expense.category ? (
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: expense.category.color }}
-                          />
-                          <span>{expense.category.name}</span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{getExpenseTypeBadge(expense.expenseType)}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(expense.amount, expense.currency)}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(expense.status)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ExpenseTable expenses={expenses} categories={categories} />
             <ExpensePagination currentPage={page} totalPages={pages} total={total} />
           </CardContent>
         </Card>
