@@ -34,6 +34,7 @@ model Organization {
   incomes           Income[]
   expenseInvoices   ExpenseInvoice[]
   recurringPatterns RecurringPattern[]
+  dismissedPatterns DismissedPattern[]
   alerts            Alert[]
   exports           Export[]
 
@@ -185,6 +186,7 @@ model Vendor {
   defaultCategory   Category?          @relation(fields: [defaultCategoryId], references: [id], onDelete: SetNull)
   expenses          Expense[]
   recurringPatterns RecurringPattern[]
+  dismissedPatterns DismissedPattern[]
 
   @@unique([organizationId, normalizedName])
   @@index([organizationId])
@@ -312,6 +314,8 @@ model RecurringPattern {
   firstOccurrence    DateTime? @map("first_occurrence")
   lastOccurrence     DateTime? @map("last_occurrence")
   occurrenceCount    Int       @default(0) @map("occurrence_count")
+  pauseReason        String?   @map("pause_reason") // "manual" | "missed_payment"
+  pausedAt           DateTime? @map("paused_at")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
@@ -424,4 +428,24 @@ model NotificationSetting {
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   @@map("notification_settings")
+}
+
+// ============================================
+// Dismissed Patterns - Prevent re-detection
+// ============================================
+
+model DismissedPattern {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  vendorId       String?  @map("vendor_id")
+  patternName    String   @map("pattern_name")
+  dismissedAt    DateTime @default(now()) @map("dismissed_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vendor       Vendor?      @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([vendorId])
+  @@map("dismissed_patterns")
 }
