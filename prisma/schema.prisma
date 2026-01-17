@@ -15,10 +15,14 @@ datasource db {
 // ============================================
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(cuid())
+  name            String
+  currency        String   @default("USD")
+  timezone        String   @default("UTC")
+  fiscalYearStart Int      @default(1) @map("fiscal_year_start")
+  dateFormat      String   @default("MM/dd/yyyy") @map("date_format")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
   userOrganizations UserOrganization[]
@@ -384,4 +388,40 @@ model Export {
   @@index([organizationId])
   @@index([status])
   @@map("exports")
+}
+
+// ============================================
+// User Preferences - Per-user settings
+// ============================================
+
+model UserPreference {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  theme       String   @default("system") // light, dark, system
+  locale      String   @default("en-US")
+  compactMode Boolean  @default(false) @map("compact_mode")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("user_preferences")
+}
+
+// ============================================
+// Notification Settings - Per-user notification preferences
+// ============================================
+
+model NotificationSetting {
+  id                   String   @id @default(cuid())
+  userId               String   @unique @map("user_id")
+  emailAlerts          Boolean  @default(true) @map("email_alerts")
+  emailWeeklyDigest    Boolean  @default(true) @map("email_weekly_digest")
+  emailLowBalance      Boolean  @default(true) @map("email_low_balance")
+  emailSyncErrors      Boolean  @default(true) @map("email_sync_errors")
+  inAppAlerts          Boolean  @default(true) @map("in_app_alerts")
+  lowBalanceThreshold  Float?   @map("low_balance_threshold")
+  highExpenseThreshold Float?   @map("high_expense_threshold")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_settings")
 }

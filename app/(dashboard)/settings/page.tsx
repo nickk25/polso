@@ -1,6 +1,7 @@
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Gear, Bank, User, Bell } from "@phosphor-icons/react/dist/ssr"
+import { Gear, Bank, User, Bell, Buildings } from "@phosphor-icons/react/dist/ssr"
 
 export default function SettingsPage() {
   return (
@@ -16,6 +17,23 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
+              <Buildings className="h-5 w-5" />
+              <CardTitle>Organization</CardTitle>
+            </div>
+            <CardDescription>
+              Manage organization settings, currency, and timezone
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" asChild>
+              <Link href="/settings/organization">Manage Organization</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
               <User className="h-5 w-5" />
               <CardTitle>Profile</CardTitle>
             </div>
@@ -24,7 +42,9 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline">Edit Profile</Button>
+            <Button variant="outline" asChild>
+              <Link href="/settings/profile">Edit Profile</Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -39,7 +59,9 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline">Manage Banks</Button>
+            <Button variant="outline" asChild>
+              <Link href="/settings/banking">Manage Banks</Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -54,7 +76,9 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline">Configure</Button>
+            <Button variant="outline" asChild>
+              <Link href="/settings/notifications">Configure</Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -65,11 +89,13 @@ export default function SettingsPage() {
               <CardTitle>Preferences</CardTitle>
             </div>
             <CardDescription>
-              Currency, timezone, and other settings
+              Theme, locale, and display settings
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline">Edit Preferences</Button>
+            <Button variant="outline" asChild>
+              <Link href="/settings/preferences">Edit Preferences</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

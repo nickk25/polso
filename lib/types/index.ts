@@ -12,6 +12,8 @@ export type {
   RecurringPattern,
   Alert,
   Export,
+  UserPreference,
+  NotificationSetting,
 } from "@/lib/generated/prisma/client"
 
 // Action response type for server actions
