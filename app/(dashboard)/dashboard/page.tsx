@@ -10,7 +10,6 @@ import {
   ArrowRight,
   Bank,
   Warning,
-  CheckCircle,
 } from "@phosphor-icons/react/dist/ssr"
 import { getAccountsSummary, getAccounts } from "@/features/banking/queries/get-accounts"
 import { getExpenseStats, getRecentExpenses } from "@/features/expenses/queries/get-expenses"
@@ -354,9 +353,9 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               {activeAccounts.length > 0 ? (
-                <div className="space-y-3">
-                  {activeAccounts.slice(0, 4).map((account) => (
-                    <div key={account.id} className="space-y-1">
+                <div className="max-h-[280px] overflow-y-auto space-y-4">
+                  {activeAccounts.map((account) => (
+                    <div key={account.id} className="space-y-1 pb-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
                           {account.institutionLogo ? (
@@ -373,15 +372,13 @@ export default async function DashboardPage() {
                             {account.mask && <span className="text-muted-foreground"> ••{account.mask}</span>}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                          {account.status === "active" ? (
-                            <CheckCircle className="h-3.5 w-3.5 text-green-500" weight="fill" />
-                          ) : account.status === "error" ? (
-                            <Warning className="h-3.5 w-3.5 text-red-500" weight="fill" />
-                          ) : (
-                            <Clock className="h-3.5 w-3.5 text-amber-500" weight="fill" />
-                          )}
-                        </div>
+                        {account.lastSyncedAt ? (
+                          <span className="text-[10px] text-muted-foreground/70 shrink-0 ml-2">
+                            Synced {format(new Date(account.lastSyncedAt), "MMM d, h:mm a")}
+                          </span>
+                        ) : account.status === "error" ? (
+                          <Warning className="h-3.5 w-3.5 text-red-500 shrink-0 ml-2" weight="fill" />
+                        ) : null}
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground pl-7">
                         <div className="flex items-center gap-3">
@@ -394,18 +391,8 @@ export default async function DashboardPage() {
                         </div>
                         <span>{account._count.transactions} txns</span>
                       </div>
-                      {account.lastSyncedAt && (
-                        <p className="text-[10px] text-muted-foreground/70 pl-7">
-                          Synced {format(new Date(account.lastSyncedAt), "MMM d, h:mm a")}
-                        </p>
-                      )}
                     </div>
                   ))}
-                  {activeAccounts.length > 4 && (
-                    <p className="text-xs text-muted-foreground text-center pt-1">
-                      +{activeAccounts.length - 4} more
-                    </p>
-                  )}
                 </div>
               ) : (
                 <div className="flex items-center justify-center py-4">
@@ -433,8 +420,8 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               {categoryBreakdown.length > 0 ? (
-                <div className="space-y-3">
-                  {categoryBreakdown.slice(0, 5).map((category) => (
+                <div className="max-h-[200px] overflow-y-auto space-y-3">
+                  {categoryBreakdown.map((category) => (
                     <div key={category.categoryId || "uncategorized"} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
