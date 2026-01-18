@@ -39,6 +39,9 @@ export interface ExpenseWithRelations {
     name: string
     logoUrl: string | null
   } | null
+  _count: {
+    invoices: number
+  }
 }
 
 export async function getExpenses(
@@ -94,6 +97,11 @@ export async function getExpenses(
             id: true,
             name: true,
             logoUrl: true,
+          },
+        },
+        _count: {
+          select: {
+            invoices: true,
           },
         },
       },
@@ -217,6 +225,11 @@ export async function getRecentExpenses(limit = 10): Promise<ExpenseWithRelation
           id: true,
           name: true,
           logoUrl: true,
+        },
+      },
+      _count: {
+        select: {
+          invoices: true,
         },
       },
     },

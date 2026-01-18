@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 import {
   Table,
   TableBody,
@@ -29,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Spinner, Sparkle } from "@phosphor-icons/react"
+import { Spinner, Sparkle, Receipt } from "@phosphor-icons/react"
 import {
   Tooltip,
   TooltipContent,
@@ -37,6 +38,9 @@ import {
 } from "@/components/ui/tooltip"
 import { CategorySelect } from "@/features/categories/components/category-select"
 import { updateExpenseAction } from "../actions/update-expense"
+import { getExpenseInvoicesAction, type InvoiceWithUrl } from "../actions/invoice-actions"
+import { InvoiceUpload } from "./invoice-upload"
+import { InvoiceList } from "./invoice-list"
 import type { ExpenseWithRelations } from "../queries/get-expenses"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 
@@ -110,12 +114,47 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
   const [editedCategoryId, setEditedCategoryId] = useState<string | null>(null)
   const [editedExpenseType, setEditedExpenseType] = useState<string>("")
   const [editedStatus, setEditedStatus] = useState<string>("")
+  const [invoices, setInvoices] = useState<InvoiceWithUrl[]>([])
+  const [invoicesLoading, setInvoicesLoading] = useState(false)
+
+  // Load invoices when expense is selected
+  useEffect(() => {
+    if (selectedExpense) {
+      setInvoicesLoading(true)
+      getExpenseInvoicesAction(selectedExpense.id)
+        .then((result) => {
+          if (result.success) {
+            setInvoices(result.data)
+          }
+        })
+        .finally(() => setInvoicesLoading(false))
+    } else {
+      setInvoices([])
+    }
+  }, [selectedExpense?.id])
 
   const handleRowClick = (expense: ExpenseWithRelations) => {
     setSelectedExpense(expense)
     setEditedCategoryId(expense.category?.id || null)
     setEditedExpenseType(expense.expenseType)
     setEditedStatus(expense.status)
+  }
+
+  const handleInvoiceUploadComplete = (invoice: InvoiceWithUrl) => {
+    setInvoices((prev) => [invoice, ...prev])
+    // Status is automatically set to "documented" on the server
+    setEditedStatus("documented")
+    router.refresh()
+  }
+
+  const handleInvoiceDelete = (invoiceId: string) => {
+    const newInvoices = invoices.filter((inv) => inv.id !== invoiceId)
+    setInvoices(newInvoices)
+    // If no invoices remain, status is set to "pending" on the server
+    if (newInvoices.length === 0) {
+      setEditedStatus("pending")
+    }
+    router.refresh()
   }
 
   const handleSave = async () => {
@@ -311,6 +350,35 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                     <SelectItem value="excluded">Excluded</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <Separator />
+
+              {/* Invoices & Receipts Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="h-4 w-4 text-muted-foreground" />
+                    <Label>Invoices & Receipts</Label>
+                  </div>
+                  {invoices.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {invoices.length}
+                    </Badge>
+                  )}
+                </div>
+
+                <InvoiceList
+                  invoices={invoices}
+                  onDelete={handleInvoiceDelete}
+                  loading={invoicesLoading}
+                />
+
+                <InvoiceUpload
+                  expenseId={selectedExpense.id}
+                  onUploadComplete={handleInvoiceUploadComplete}
+                  disabled={loading}
+                />
               </div>
 
               <SheetFooter className="mt-auto p-0">
