@@ -8,6 +8,7 @@ import { successResponse, errorResponse, type ActionResponse } from "@/lib/types
 
 /**
  * Disconnect a bank account by removing the Plaid Item
+ * Keeps transactions and expenses for historical records
  */
 export async function disconnectBankAction(
   accountId: string
@@ -38,18 +39,28 @@ export async function disconnectBankAction(
       }
     }
 
-    // Delete all accounts with the same Item ID (Plaid groups accounts by Item)
+    // Mark accounts as disconnected instead of deleting
+    // This preserves all transactions and expenses for historical records
     if (account.plaidItemId) {
-      await prisma.account.deleteMany({
+      await prisma.account.updateMany({
         where: {
           plaidItemId: account.plaidItemId,
           organizationId,
         },
+        data: {
+          status: "disconnected",
+          plaidAccessToken: null, // Token is revoked, clear it
+          plaidCursor: null, // Reset cursor for fresh sync on reconnect
+        },
       })
     } else {
-      // Fallback to deleting just this account
-      await prisma.account.delete({
+      await prisma.account.update({
         where: { id: accountId },
+        data: {
+          status: "disconnected",
+          plaidAccessToken: null,
+          plaidCursor: null,
+        },
       })
     }
 

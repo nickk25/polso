@@ -126,6 +126,7 @@ model Transaction {
   income       Income?
 
   @@unique([accountId, plaidTransactionId])
+  @@unique([organizationId, plaidTransactionId]) // Prevent duplicates when relinking bank
   @@index([organizationId])
   @@index([accountId])
   @@index([date])

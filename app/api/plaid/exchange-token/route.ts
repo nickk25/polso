@@ -115,9 +115,25 @@ export async function POST(request: NextRequest) {
         ? normalizeCounterpartyName(counterpartyName)
         : null
 
-      // Create transaction
-      const transaction = await prisma.transaction.create({
-        data: {
+      // Upsert transaction - handles duplicates when relinking bank
+      // Uses organizationId + plaidTransactionId as unique key
+      const transaction = await prisma.transaction.upsert({
+        where: {
+          organizationId_plaidTransactionId: {
+            organizationId: userOrg.organizationId,
+            plaidTransactionId: tx.transaction_id,
+          },
+        },
+        update: {
+          // Update to link to new account when relinking
+          accountId: account.id,
+          amount: tx.amount,
+          pending: tx.pending,
+          merchantName: tx.merchant_name || null,
+          category: tx.personal_finance_category?.primary || null,
+          categoryDetailed: tx.personal_finance_category?.detailed || null,
+        },
+        create: {
           organizationId: userOrg.organizationId,
           accountId: account.id,
           plaidTransactionId: tx.transaction_id,
@@ -136,12 +152,16 @@ export async function POST(request: NextRequest) {
           categoryDetailed: tx.personal_finance_category?.detailed || null,
           counterpartyName: normalizedCounterparty,
         },
+        include: {
+          expense: true, // Check if expense already exists
+        },
       })
 
       transactionsImported++
 
       // Create expense for outgoing transactions (positive amounts in Plaid = money out)
-      if (tx.amount > 0 && !tx.pending) {
+      // Only create if expense doesn't already exist (prevents duplicates on relink)
+      if (tx.amount > 0 && !tx.pending && !transaction.expense) {
         await prisma.expense.create({
           data: {
             organizationId: userOrg.organizationId,

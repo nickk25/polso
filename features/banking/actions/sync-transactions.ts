@@ -268,15 +268,18 @@ async function importTransaction(
     vendorLookup.set(normalizedCounterparty, vendor)
   }
 
-  // Upsert transaction - handles duplicates gracefully
+  // Upsert transaction - handles duplicates gracefully including relinks
+  // Uses organizationId + plaidTransactionId to detect duplicates even when account changes
   const transaction = await prisma.transaction.upsert({
     where: {
-      accountId_plaidTransactionId: {
-        accountId,
+      organizationId_plaidTransactionId: {
+        organizationId,
         plaidTransactionId: tx.transaction_id,
       },
     },
     update: {
+      // Update account link (important for relinked banks)
+      accountId,
       // Update mutable fields for existing transactions
       amount: tx.amount,
       currency: tx.iso_currency_code || "USD",
