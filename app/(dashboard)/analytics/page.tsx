@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartLine, ArrowRight, TrendUp } from "@phosphor-icons/react/dist/ssr"
+import { ChartLine, ArrowRight, TrendUp, Binoculars } from "@phosphor-icons/react/dist/ssr"
 import {
   getBurnRateAndRunway,
   getMonthlySpendTrend,
@@ -7,7 +7,17 @@ import {
   getTopVendors,
   getCashFlow,
 } from "@/features/analytics/queries/get-analytics"
+import {
+  getCashFlowForecast,
+  getRevenueForecast,
+  getExpenseForecast,
+} from "@/features/analytics/queries/get-forecasts"
 import { getIncomeStats, getMonthlyIncomeTrend } from "@/features/income/queries/get-income"
+import {
+  CashFlowForecastCard,
+  RevenueForecastCard,
+  ExpenseForecastCard,
+} from "@/features/analytics/components"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -21,16 +31,29 @@ function formatCurrency(value: number, currency = "USD") {
 }
 
 export default async function AnalyticsPage() {
-  const [burnRate, monthlyTrend, categoryBreakdown, topVendors, cashFlow, incomeStats, incomeTrend] =
-    await Promise.all([
-      getBurnRateAndRunway(),
-      getMonthlySpendTrend(6),
-      getCategoryBreakdown(),
-      getTopVendors(5),
-      getCashFlow(6),
-      getIncomeStats(),
-      getMonthlyIncomeTrend(6),
-    ])
+  const [
+    burnRate,
+    monthlyTrend,
+    categoryBreakdown,
+    topVendors,
+    cashFlow,
+    incomeStats,
+    incomeTrend,
+    cashFlowForecast,
+    revenueForecast,
+    expenseForecast,
+  ] = await Promise.all([
+    getBurnRateAndRunway(),
+    getMonthlySpendTrend(6),
+    getCategoryBreakdown(),
+    getTopVendors(5),
+    getCashFlow(6),
+    getIncomeStats(),
+    getMonthlyIncomeTrend(6),
+    getCashFlowForecast(3),
+    getRevenueForecast(),
+    getExpenseForecast(),
+  ])
 
   const hasData =
     monthlyTrend.some((m) => m.total > 0) ||
@@ -458,6 +481,23 @@ export default async function AnalyticsPage() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Forecasts Section */}
+      <div className="pt-4 border-t">
+        <div className="flex items-center gap-2 mb-4">
+          <Binoculars className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Forecasts</h2>
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+            AI-powered predictions
+          </span>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <CashFlowForecastCard forecast={cashFlowForecast} />
+          <RevenueForecastCard forecast={revenueForecast} currency={currency} />
+          <ExpenseForecastCard forecast={expenseForecast} currency={currency} />
+        </div>
       </div>
     </div>
   )
