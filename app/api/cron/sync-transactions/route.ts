@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@/lib/generated/prisma/client"
 import { prisma } from "@/lib/db"
 import {
   syncTransactions,
@@ -235,28 +236,36 @@ async function importTransaction(
   accountId: string,
   tx: PlaidTransaction
 ): Promise<{ expenseCreated: boolean; incomeCreated: boolean }> {
-  // Check if transaction already exists
-  const existing = await prisma.transaction.findFirst({
-    where: {
-      accountId,
-      plaidTransactionId: tx.transaction_id,
-    },
-    select: { id: true },
-  })
-
-  if (existing) {
-    return { expenseCreated: false, incomeCreated: false }
-  }
-
   // Determine counterparty name
   const counterpartyName = tx.merchant_name || tx.name || null
   const normalizedCounterparty = counterpartyName
     ? normalizeCounterpartyName(counterpartyName)
     : null
 
-  // Create transaction
-  const transaction = await prisma.transaction.create({
-    data: {
+  // Upsert transaction - handles duplicates gracefully
+  const transaction = await prisma.transaction.upsert({
+    where: {
+      accountId_plaidTransactionId: {
+        accountId,
+        plaidTransactionId: tx.transaction_id,
+      },
+    },
+    update: {
+      // Update mutable fields for existing transactions
+      amount: tx.amount,
+      currency: tx.iso_currency_code || "USD",
+      date: new Date(tx.date),
+      authorizedDate: tx.authorized_date ? new Date(tx.authorized_date) : null,
+      name: tx.name,
+      merchantName: tx.merchant_name || null,
+      pending: tx.pending,
+      paymentChannel: tx.payment_channel,
+      transactionType: getTransactionType(tx.amount),
+      category: tx.personal_finance_category?.primary || null,
+      categoryDetailed: tx.personal_finance_category?.detailed || null,
+      counterpartyName: normalizedCounterparty,
+    },
+    create: {
       organizationId,
       accountId,
       plaidTransactionId: tx.transaction_id,
@@ -279,38 +288,72 @@ async function importTransaction(
   let incomeCreated = false
 
   // Create expense for outgoing transactions (positive amounts = money out)
+  // Only create if non-pending and expense doesn't already exist
   if (tx.amount > 0 && !tx.pending) {
-    await prisma.expense.create({
-      data: {
-        organizationId,
-        transactionId: transaction.id,
-        amount: tx.amount,
-        currency: tx.iso_currency_code || "USD",
-        date: new Date(tx.date),
-        description: tx.merchant_name || tx.name,
-        expenseType: "variable",
-        status: "pending",
-        isManual: false,
-      },
+    const existingExpense = await prisma.expense.findUnique({
+      where: { transactionId: transaction.id },
+      select: { id: true },
     })
-    expenseCreated = true
+
+    if (!existingExpense) {
+      try {
+        await prisma.expense.create({
+          data: {
+            organizationId,
+            transactionId: transaction.id,
+            amount: tx.amount,
+            currency: tx.iso_currency_code || "USD",
+            date: new Date(tx.date),
+            description: tx.merchant_name || tx.name,
+            expenseType: "variable",
+            status: "pending",
+            isManual: false,
+          },
+        })
+        expenseCreated = true
+      } catch (error) {
+        // Handle race condition - expense was created by concurrent sync
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+          console.log(`[Cron] Expense already exists for transaction ${transaction.id}, skipping`)
+        } else {
+          throw error
+        }
+      }
+    }
   }
 
   // Create income for incoming transactions (negative amounts = money in)
+  // Only create if non-pending and income doesn't already exist
   if (tx.amount < 0 && !tx.pending) {
-    await prisma.income.create({
-      data: {
-        organizationId,
-        transactionId: transaction.id,
-        amount: Math.abs(tx.amount), // Store as positive
-        currency: tx.iso_currency_code || "USD",
-        date: new Date(tx.date),
-        description: tx.merchant_name || tx.name,
-        source: detectIncomeSource(tx),
-        status: "pending",
-      },
+    const existingIncome = await prisma.income.findUnique({
+      where: { transactionId: transaction.id },
+      select: { id: true },
     })
-    incomeCreated = true
+
+    if (!existingIncome) {
+      try {
+        await prisma.income.create({
+          data: {
+            organizationId,
+            transactionId: transaction.id,
+            amount: Math.abs(tx.amount), // Store as positive
+            currency: tx.iso_currency_code || "USD",
+            date: new Date(tx.date),
+            description: tx.merchant_name || tx.name,
+            source: detectIncomeSource(tx),
+            status: "pending",
+          },
+        })
+        incomeCreated = true
+      } catch (error) {
+        // Handle race condition - income was created by concurrent sync
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+          console.log(`[Cron] Income already exists for transaction ${transaction.id}, skipping`)
+        } else {
+          throw error
+        }
+      }
+    }
   }
 
   return { expenseCreated, incomeCreated }
