@@ -7,6 +7,11 @@ export async function getAccounts() {
   return prisma.account.findMany({
     where: { organizationId },
     orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: { transactions: true },
+      },
+    },
   })
 }
 

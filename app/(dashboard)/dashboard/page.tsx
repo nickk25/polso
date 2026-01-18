@@ -331,7 +331,7 @@ export default async function DashboardPage() {
                 <Receipt className="h-10 w-10 text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">No transactions yet</p>
                 <Button variant="outline" size="sm" className="mt-3" asChild>
-                  <Link href="/banking">Connect bank</Link>
+                  <Link href="/settings/banking">Connect bank</Link>
                 </Button>
               </div>
             )}
@@ -345,7 +345,7 @@ export default async function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Connected Accounts</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/banking">
+                <Link href="/settings/banking">
                   Manage
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
@@ -353,50 +353,63 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               {accounts.length > 0 ? (
-                <div className="space-y-2">
-                  {accounts.slice(0, 3).map((account) => (
-                    <div key={account.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {account.institutionLogo ? (
-                          <img
-                            src={account.institutionLogo.startsWith("data:") ? account.institutionLogo : `data:image/png;base64,${account.institutionLogo}`}
-                            alt=""
-                            className="h-6 w-6 rounded shrink-0"
-                          />
-                        ) : (
-                          <Bank className="h-6 w-6 text-muted-foreground shrink-0" />
-                        )}
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{account.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {account.institutionName}
-                          </p>
+                <div className="space-y-3">
+                  {accounts.filter((a) => a.status !== "disconnected").slice(0, 4).map((account) => (
+                    <div key={account.id} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {account.institutionLogo ? (
+                            <img
+                              src={account.institutionLogo.startsWith("data:") ? account.institutionLogo : `data:image/png;base64,${account.institutionLogo}`}
+                              alt=""
+                              className="h-5 w-5 rounded shrink-0"
+                            />
+                          ) : (
+                            <Bank className="h-5 w-5 text-muted-foreground shrink-0" />
+                          )}
+                          <span className="text-sm font-medium truncate">
+                            {account.name}
+                            {account.mask && <span className="text-muted-foreground"> ••{account.mask}</span>}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                          {account.status === "active" ? (
+                            <CheckCircle className="h-3.5 w-3.5 text-green-500" weight="fill" />
+                          ) : account.status === "error" ? (
+                            <Warning className="h-3.5 w-3.5 text-red-500" weight="fill" />
+                          ) : (
+                            <Clock className="h-3.5 w-3.5 text-amber-500" weight="fill" />
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0 ml-2">
-                        {account.status === "active" ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" weight="fill" />
-                        ) : account.status === "error" ? (
-                          <Warning className="h-4 w-4 text-red-500" weight="fill" />
-                        ) : (
-                          <Clock className="h-4 w-4 text-amber-500" weight="fill" />
-                        )}
-                        <span className="text-sm font-medium">
-                          {formatCurrency(account.balanceCurrent || 0, account.currency)}
-                        </span>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground pl-7">
+                        <div className="flex items-center gap-3">
+                          <span>
+                            Avail: <span className="text-foreground">{formatCurrency(account.balanceAvailable || 0, account.currency)}</span>
+                          </span>
+                          <span>
+                            Curr: <span className="text-foreground">{formatCurrency(account.balanceCurrent || 0, account.currency)}</span>
+                          </span>
+                        </div>
+                        <span>{account._count.transactions} txns</span>
                       </div>
+                      {account.lastSyncedAt && (
+                        <p className="text-[10px] text-muted-foreground/70 pl-7">
+                          Synced {format(new Date(account.lastSyncedAt), "MMM d, h:mm a")}
+                        </p>
+                      )}
                     </div>
                   ))}
-                  {accounts.length > 3 && (
+                  {accounts.filter((a) => a.status !== "disconnected").length > 4 && (
                     <p className="text-xs text-muted-foreground text-center pt-1">
-                      +{accounts.length - 3} more account{accounts.length - 3 > 1 ? 's' : ''}
+                      +{accounts.filter((a) => a.status !== "disconnected").length - 4} more
                     </p>
                   )}
                 </div>
               ) : (
                 <div className="flex items-center justify-center py-4">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/banking">
+                    <Link href="/settings/banking">
                       <Bank className="mr-2 h-4 w-4" />
                       Connect your first account
                     </Link>

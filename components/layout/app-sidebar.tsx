@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   ChartLine,
-  Bank,
   Receipt,
   TrendUp,
   Repeat,
@@ -34,11 +33,6 @@ const mainNavItems = [
     title: "Overview",
     href: "/dashboard",
     icon: House,
-  },
-  {
-    title: "Banking",
-    href: "/banking",
-    icon: Bank,
   },
   {
     title: "Expenses",
