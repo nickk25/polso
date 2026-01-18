@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   ChartLine,
   Receipt,
@@ -13,7 +13,7 @@ import {
   Export,
   Gear,
   House,
-} from "@phosphor-icons/react"
+} from "@phosphor-icons/react";
 
 import {
   Sidebar,
@@ -26,7 +26,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const mainNavItems = [
   {
@@ -35,14 +35,14 @@ const mainNavItems = [
     icon: House,
   },
   {
-    title: "Expenses",
-    href: "/expenses",
-    icon: Receipt,
-  },
-  {
     title: "Income",
     href: "/income",
     icon: TrendUp,
+  },
+  {
+    title: "Expenses",
+    href: "/expenses",
+    icon: Receipt,
   },
   {
     title: "Recurring",
@@ -54,7 +54,7 @@ const mainNavItems = [
     href: "/analytics",
     icon: ChartLine,
   },
-]
+];
 
 const manageNavItems = [
   {
@@ -77,7 +77,7 @@ const manageNavItems = [
     href: "/export",
     icon: Export,
   },
-]
+];
 
 const settingsNavItems = [
   {
@@ -85,24 +85,24 @@ const settingsNavItems = [
     href: "/settings",
     icon: Gear,
   },
-]
+];
 
 interface AppSidebarProps {
-  organizationName: string
-  userEmail: string | null
+  organizationName: string;
+  userEmail: string | null;
 }
 
 function getInitials(name: string): string {
-  const words = name.trim().split(/\s+/)
+  const words = name.trim().split(/\s+/);
   if (words.length >= 2) {
-    return (words[0][0] + words[1][0]).toUpperCase()
+    return (words[0][0] + words[1][0]).toUpperCase();
   }
-  return name.charAt(0).toUpperCase()
+  return name.charAt(0).toUpperCase();
 }
 
 export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
-  const pathname = usePathname()
-  const initials = getInitials(organizationName)
+  const pathname = usePathname();
+  const initials = getInitials(organizationName);
 
   return (
     <Sidebar>
@@ -117,14 +117,19 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px]">Dashboard</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px]">
+            Dashboard
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
+                    isActive={
+                      pathname === item.href ||
+                      pathname.startsWith(item.href + "/")
+                    }
                     className="h-8 text-xs"
                   >
                     <Link href={item.href}>
@@ -184,14 +189,18 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
               {initials}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-medium truncate">{organizationName}</span>
+              <span className="text-xs font-medium truncate">
+                {organizationName}
+              </span>
               {userEmail && (
-                <span className="text-[10px] text-muted-foreground truncate">{userEmail}</span>
+                <span className="text-[10px] text-muted-foreground truncate">
+                  {userEmail}
+                </span>
               )}
             </div>
           </div>
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
