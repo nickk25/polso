@@ -21,8 +21,24 @@ import { syncTransactionsAction } from "@/features/banking/actions/sync-transact
 import { disconnectBankAction } from "@/features/banking/actions/connect-bank"
 import type { Account } from "@/lib/types"
 
+interface AccountWithCount extends Account {
+  _count: {
+    transactions: number
+  }
+}
+
 interface BankAccountCardProps {
-  account: Account
+  account: AccountWithCount
+}
+
+function formatCurrency(amount: number | null, currency: string = "USD") {
+  if (amount === null) return "—"
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
 }
 
 export function BankAccountCard({ account }: BankAccountCardProps) {
@@ -84,6 +100,15 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
               <span>{account.institutionName || "Bank"}</span>
               <span>•</span>
               <span className="capitalize">{account.accountSubtype || account.accountType}</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+              <span>
+                Avail: <span className="text-foreground font-medium">{formatCurrency(account.balanceAvailable, account.currency)}</span>
+              </span>
+              <span>
+                Curr: <span className="text-foreground font-medium">{formatCurrency(account.balanceCurrent, account.currency)}</span>
+              </span>
+              <span>{account._count.transactions} txns</span>
             </div>
             {account.lastSyncedAt && (
               <p className="text-xs text-muted-foreground mt-1">

@@ -52,6 +52,7 @@ export default async function DashboardPage() {
   ])
 
   const currency = accountsSummary.currency || "USD"
+  const activeAccounts = accounts.filter((a) => a.status !== "disconnected")
   const totalExpenses = expenseStats.totalThisMonth
   const totalIncome = incomeStats.totalThisMonth
   const netCashFlow = totalIncome - totalExpenses
@@ -352,9 +353,9 @@ export default async function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              {accounts.length > 0 ? (
+              {activeAccounts.length > 0 ? (
                 <div className="space-y-3">
-                  {accounts.filter((a) => a.status !== "disconnected").slice(0, 4).map((account) => (
+                  {activeAccounts.slice(0, 4).map((account) => (
                     <div key={account.id} className="space-y-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
@@ -400,9 +401,9 @@ export default async function DashboardPage() {
                       )}
                     </div>
                   ))}
-                  {accounts.filter((a) => a.status !== "disconnected").length > 4 && (
+                  {activeAccounts.length > 4 && (
                     <p className="text-xs text-muted-foreground text-center pt-1">
-                      +{accounts.filter((a) => a.status !== "disconnected").length - 4} more
+                      +{activeAccounts.length - 4} more
                     </p>
                   )}
                 </div>
