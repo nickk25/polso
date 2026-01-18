@@ -9,6 +9,7 @@ import {
   TrendUp,
   Repeat,
   Buildings,
+  Users,
   Tag,
   Export,
   Gear,
@@ -66,6 +67,11 @@ const manageNavItems = [
     title: "Vendors",
     href: "/vendors",
     icon: Buildings,
+  },
+  {
+    title: "Clients",
+    href: "/clients",
+    icon: Users,
   },
   {
     title: "Categories",

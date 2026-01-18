@@ -30,6 +30,7 @@ model Organization {
   transactions      Transaction[]
   categories        Category[]
   vendors           Vendor[]
+  clients           Client[]
   expenses          Expense[]
   incomes           Income[]
   expenseInvoices   ExpenseInvoice[]
@@ -153,6 +154,7 @@ model Category {
   parent            Category?          @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children          Category[]         @relation("CategoryHierarchy")
   vendors           Vendor[]
+  clientDefaults    Client[]           @relation("ClientDefaultCategory")
   expenses          Expense[]
   incomes           Income[]
   recurringPatterns RecurringPattern[]
@@ -192,6 +194,34 @@ model Vendor {
   @@index([organizationId])
   @@index([normalizedName])
   @@map("vendors")
+}
+
+// ============================================
+// Clients - Income sources / Payers
+// ============================================
+
+model Client {
+  id                String   @id @default(cuid())
+  organizationId    String   @map("organization_id")
+  name              String
+  normalizedName    String   @map("normalized_name")
+  logoUrl           String?  @map("logo_url")
+  website           String?
+  taxId             String?  @map("tax_id")
+  defaultCategoryId String?  @map("default_category_id")
+  isAutoDetected    Boolean  @default(false) @map("is_auto_detected")
+  detectionPatterns String[] @map("detection_patterns")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  defaultCategory Category?    @relation("ClientDefaultCategory", fields: [defaultCategoryId], references: [id], onDelete: SetNull)
+  incomes         Income[]
+
+  @@unique([organizationId, normalizedName])
+  @@index([organizationId])
+  @@index([normalizedName])
+  @@map("clients")
 }
 
 // ============================================
@@ -244,6 +274,7 @@ model Income {
   id             String    @id @default(cuid())
   organizationId String    @map("organization_id")
   transactionId  String?   @unique @map("transaction_id")
+  clientId       String?   @map("client_id")
   amount         Float     // Always positive (absolute value)
   currency       String    @default("USD")
   date           DateTime
@@ -260,11 +291,13 @@ model Income {
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   transaction  Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
   category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  client       Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
   @@index([date])
   @@index([status])
   @@index([source])
+  @@index([clientId])
   @@map("incomes")
 }
 

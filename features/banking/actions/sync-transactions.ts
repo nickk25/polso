@@ -14,6 +14,7 @@ import {
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 import { suggestCategory } from "@/features/intelligence/lib/category-suggester"
 import { findOrCreateVendor, type MatchedVendor } from "@/features/vendors/lib/vendor-matcher"
+import { findOrCreateClient, type MatchedClient } from "@/features/clients/lib/client-matcher"
 
 interface SyncResult {
   accountsUpdated: number
@@ -64,8 +65,8 @@ export async function syncTransactionsAction(
       itemGroups.set(account.plaidItemId, group)
     }
 
-    // Pre-fetch categories and vendors for auto-categorization
-    const [categories, vendors] = await Promise.all([
+    // Pre-fetch categories, vendors, and clients for auto-categorization
+    const [categories, vendors, clients] = await Promise.all([
       prisma.category.findMany({
         where: {
           OR: [{ isSystem: true }, { organizationId }],
@@ -80,6 +81,14 @@ export async function syncTransactionsAction(
           defaultCategoryId: true,
         },
       }),
+      prisma.client.findMany({
+        where: { organizationId },
+        select: {
+          id: true,
+          normalizedName: true,
+          defaultCategoryId: true,
+        },
+      }),
     ])
 
     const categoryLookup = new Map(categories.map((c) => [c.slug, c.id]))
@@ -87,6 +96,12 @@ export async function syncTransactionsAction(
       vendors.map((v) => [
         v.normalizedName,
         { id: v.id, defaultCategoryId: v.defaultCategoryId },
+      ])
+    )
+    const clientLookup = new Map(
+      clients.map((c) => [
+        c.normalizedName,
+        { id: c.id, defaultCategoryId: c.defaultCategoryId },
       ])
     )
 
@@ -144,7 +159,8 @@ export async function syncTransactionsAction(
             account.id,
             tx,
             categoryLookup,
-            vendorLookup
+            vendorLookup,
+            clientLookup
           )
           totalTransactionsImported++
           if (result.expenseCreated) {
@@ -207,6 +223,7 @@ export async function syncTransactionsAction(
     revalidatePath("/dashboard")
     revalidatePath("/analytics")
     revalidatePath("/vendors")
+    revalidatePath("/clients")
 
     return successResponse({
       accountsUpdated,
@@ -230,7 +247,8 @@ async function importTransaction(
   accountId: string,
   tx: PlaidTransaction,
   categoryLookup: Map<string, string>,
-  vendorLookup: Map<string, { id: string; defaultCategoryId: string | null }>
+  vendorLookup: Map<string, { id: string; defaultCategoryId: string | null }>,
+  clientLookup: Map<string, { id: string; defaultCategoryId: string | null }>
 ): Promise<{ expenseCreated: boolean; incomeCreated: boolean }> {
   // Check if transaction already exists
   const existing = await prisma.transaction.findFirst({
@@ -324,6 +342,19 @@ async function importTransaction(
 
   // Create income for incoming transactions (negative amounts = money in)
   if (tx.amount < 0 && !tx.pending) {
+    // Look up or create client for income
+    let matchedClient: MatchedClient | null = normalizedCounterparty
+      ? clientLookup.get(normalizedCounterparty) ?? null
+      : null
+
+    // If no client found and we have a counterparty name, create a new client
+    if (!matchedClient && normalizedCounterparty && counterpartyName) {
+      const client = await findOrCreateClient(organizationId, counterpartyName, clientLookup)
+      matchedClient = client
+      // Update lookup for future transactions in this batch
+      clientLookup.set(normalizedCounterparty, client)
+    }
+
     await prisma.income.create({
       data: {
         organizationId,
@@ -334,6 +365,7 @@ async function importTransaction(
         description: tx.merchant_name || tx.name,
         source: detectIncomeSource(tx),
         status: "pending",
+        clientId: matchedClient?.id ?? null,
       },
     })
     incomeCreated = true
