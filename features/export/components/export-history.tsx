@@ -1,0 +1,160 @@
+"use client"
+
+import { format } from "date-fns"
+import { FileZip, DownloadSimple, Trash, Spinner, Warning, CheckCircle, Clock } from "@phosphor-icons/react"
+import { Button } from "@/components/ui/button"
+import { deleteExportAction } from "../actions/create-export"
+import { useState } from "react"
+
+interface Export {
+  id: string
+  name: string
+  filePath: string
+  fileSize: number | null
+  startDate: Date
+  endDate: Date
+  expenseCount: number | null
+  invoiceCount: number | null
+  status: string
+  errorMessage: string | null
+  createdAt: Date
+}
+
+interface ExportHistoryProps {
+  exports: Export[]
+}
+
+function formatFileSize(bytes: number | null): string {
+  if (!bytes) return "—"
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function formatDateRange(start: Date, end: Date): string {
+  const startDate = new Date(start)
+  const endDate = new Date(end)
+  return `${format(startDate, "MMM d")} - ${format(endDate, "MMM d, yyyy")}`
+}
+
+export function ExportHistory({ exports }: ExportHistoryProps) {
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this export?")) return
+
+    setDeletingId(id)
+    try {
+      await deleteExportAction(id)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const handleDownload = (id: string) => {
+    window.location.href = `/api/exports/${id}`
+  }
+
+  if (exports.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <FileZip className="h-12 w-12 text-muted-foreground mb-3" />
+        <p className="text-sm text-muted-foreground">
+          No previous exports
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Exports you generate will appear here
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {exports.map((exp) => (
+        <div
+          key={exp.id}
+          className="flex items-center justify-between p-4 rounded-lg border bg-card"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
+              exp.status === "completed"
+                ? "bg-primary/10 text-primary"
+                : exp.status === "failed"
+                ? "bg-red-500/10 text-red-500"
+                : "bg-amber-500/10 text-amber-500"
+            }`}>
+              {exp.status === "completed" ? (
+                <FileZip className="h-5 w-5" weight="fill" />
+              ) : exp.status === "failed" ? (
+                <Warning className="h-5 w-5" weight="fill" />
+              ) : (
+                <Spinner className="h-5 w-5 animate-spin" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-sm truncate">{exp.name}</p>
+                {exp.status === "completed" && (
+                  <span className="text-xs text-green-600 flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" weight="fill" />
+                  </span>
+                )}
+                {exp.status === "processing" && (
+                  <span className="text-xs text-amber-600 flex items-center gap-1">
+                    <Clock className="h-3 w-3" weight="fill" />
+                    Processing
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                <span>{formatDateRange(exp.startDate, exp.endDate)}</span>
+                {exp.status === "completed" && (
+                  <>
+                    <span>·</span>
+                    <span>{exp.expenseCount} expenses</span>
+                    <span>·</span>
+                    <span>{exp.invoiceCount} invoices</span>
+                    <span>·</span>
+                    <span>{formatFileSize(exp.fileSize)}</span>
+                  </>
+                )}
+                {exp.status === "failed" && exp.errorMessage && (
+                  <>
+                    <span>·</span>
+                    <span className="text-red-500">{exp.errorMessage}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 ml-4">
+            {exp.status === "completed" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDownload(exp.id)}
+              >
+                <DownloadSimple className="h-4 w-4 mr-1" />
+                Download
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => handleDelete(exp.id)}
+              disabled={deletingId === exp.id}
+            >
+              {deletingId === exp.id ? (
+                <Spinner className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash className="h-4 w-4 text-muted-foreground" />
+              )}
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
