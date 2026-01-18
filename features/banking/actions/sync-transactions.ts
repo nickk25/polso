@@ -13,6 +13,7 @@ import {
 } from "../lib/plaid-client"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 import { suggestCategory } from "@/features/intelligence/lib/category-suggester"
+import { findOrCreateVendor, type MatchedVendor } from "@/features/vendors/lib/vendor-matcher"
 
 interface SyncResult {
   accountsUpdated: number
@@ -205,6 +206,7 @@ export async function syncTransactionsAction(
     revalidatePath("/income")
     revalidatePath("/dashboard")
     revalidatePath("/analytics")
+    revalidatePath("/vendors")
 
     return successResponse({
       accountsUpdated,
@@ -249,10 +251,18 @@ async function importTransaction(
     ? normalizeCounterpartyName(counterpartyName)
     : null
 
-  // Look up vendor by normalized name
-  const matchedVendor = normalizedCounterparty
-    ? vendorLookup.get(normalizedCounterparty)
+  // Look up or create vendor
+  let matchedVendor: MatchedVendor | null = normalizedCounterparty
+    ? vendorLookup.get(normalizedCounterparty) ?? null
     : null
+
+  // If no vendor found and we have a counterparty name, create a new vendor
+  if (!matchedVendor && normalizedCounterparty && counterpartyName) {
+    const vendor = await findOrCreateVendor(organizationId, counterpartyName, vendorLookup)
+    matchedVendor = vendor
+    // Update lookup for future transactions in this batch
+    vendorLookup.set(normalizedCounterparty, vendor)
+  }
 
   // Create transaction
   const transaction = await prisma.transaction.create({
