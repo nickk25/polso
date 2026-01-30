@@ -1,0 +1,50 @@
+import { Button } from "@/components/ui/button"
+import { Shield, LockKey, Flag } from "@phosphor-icons/react/dist/ssr"
+
+export function FinalCtaSection() {
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Stop guessing. Start knowing.
+          </h2>
+          <p className="mt-6 text-lg text-muted-foreground">
+            Be the first to get access when we launch.
+          </p>
+
+          {/* Waitlist form */}
+          <form className="mx-auto mt-8 flex max-w-sm flex-col gap-2 sm:flex-row">
+            <input
+              type="email"
+              placeholder="you@company.com"
+              className="h-10 flex-1 border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              required
+            />
+            <Button type="submit" className="h-10">
+              Join waitlist
+            </Button>
+          </form>
+
+          {/* Trust badges */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5" weight="duotone" />
+              Read-only
+            </span>
+            <span className="text-muted-foreground/30">·</span>
+            <span className="flex items-center gap-1.5">
+              <LockKey className="h-3.5 w-3.5" weight="duotone" />
+              No credentials stored
+            </span>
+            <span className="text-muted-foreground/30">·</span>
+            <span className="flex items-center gap-1.5">
+              <Flag className="h-3.5 w-3.5" weight="duotone" />
+              GDPR
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}

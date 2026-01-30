@@ -6,7 +6,17 @@ export default neonAuthMiddleware({
 
 export const config = {
   matcher: [
-    // Protected routes - exclude auth routes and static files
-    "/((?!_next/static|_next/image|favicon.ico|auth|api/auth).*)",
+    // Protected routes - dashboard and app routes only
+    "/dashboard/:path*",
+    "/expenses/:path*",
+    "/income/:path*",
+    "/analytics/:path*",
+    "/recurring/:path*",
+    "/categories/:path*",
+    "/vendors/:path*",
+    "/clients/:path*",
+    "/export/:path*",
+    "/settings/:path*",
+    "/account/:path*",
   ],
 }
