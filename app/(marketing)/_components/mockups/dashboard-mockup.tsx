@@ -92,7 +92,7 @@ export function DashboardMockup() {
           </div>
           <div className="flex-1 text-center">
             <div className="mx-auto inline-flex items-center gap-2 rounded-sm border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
-              <span>polso.app/dashboard</span>
+              <span>polso.app</span>
             </div>
           </div>
         </div>
