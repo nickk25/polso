@@ -1,8 +1,10 @@
-import { resend, FROM_EMAIL } from "./resend"
+import { resend, FROM_EMAIL, FROM_FOUNDER } from "./resend"
 
 // Onboarding emails
 import WaitlistConfirmationEmail from "@/emails/waitlist-confirmation"
+import WaitlistFounderEmail from "@/emails/waitlist-founder"
 import WelcomeEmail from "@/emails/welcome"
+import WelcomeFounderEmail from "@/emails/welcome-founder"
 
 // Trial & Subscription emails
 import TrialStartedEmail from "@/emails/trial-started"
@@ -50,6 +52,24 @@ export async function sendWelcome(to: string, name: string) {
       name,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
     }),
+  })
+}
+
+export async function sendWelcomeFounder(to: string, name: string) {
+  return resend.emails.send({
+    from: FROM_FOUNDER,
+    to,
+    subject: "Welcome to Polso",
+    react: WelcomeFounderEmail({ name }),
+  })
+}
+
+export async function sendWaitlistFounder(to: string, name: string) {
+  return resend.emails.send({
+    from: FROM_FOUNDER,
+    to,
+    subject: "You're on the list",
+    react: WaitlistFounderEmail({ name }),
   })
 }
 
