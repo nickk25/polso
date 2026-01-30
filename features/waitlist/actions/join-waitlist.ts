@@ -22,15 +22,17 @@ export async function joinWaitlist(
   const normalizedEmail = email.toLowerCase().trim()
 
   try {
-    // Add contact to waitlist segment (optional - skip if not configured)
+    // Add contact to waitlist segment
     if (WAITLIST_SEGMENT_ID) {
-      const { error: segmentError } = await resend.contacts.segments.add({
+      const { error: contactError } = await resend.contacts.create({
         email: normalizedEmail,
-        segmentId: WAITLIST_SEGMENT_ID,
+        unsubscribed: false,
+        segments: [{ id: WAITLIST_SEGMENT_ID }],
       })
 
-      if (segmentError && !segmentError.message?.includes("already exists")) {
-        console.error("Segment add error:", segmentError)
+      // Ignore "already exists" errors
+      if (contactError && !contactError.message?.includes("already exists")) {
+        console.error("Contact create error:", contactError)
       }
     }
 
