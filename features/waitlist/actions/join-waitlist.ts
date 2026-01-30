@@ -22,24 +22,28 @@ export async function joinWaitlist(
   const normalizedEmail = email.toLowerCase().trim()
 
   try {
-    // Add contact to waitlist segment
+    // Add contact to waitlist segment (optional - skip if not configured)
     if (WAITLIST_SEGMENT_ID) {
-      await resend.contacts.segments.add({
+      const { error: segmentError } = await resend.contacts.segments.add({
         email: normalizedEmail,
         segmentId: WAITLIST_SEGMENT_ID,
       })
+
+      if (segmentError && !segmentError.message?.includes("already exists")) {
+        console.error("Segment add error:", segmentError)
+      }
     }
 
     // Send founder welcome email
-    await sendWaitlistFounder(normalizedEmail, "there")
+    const { error: emailError } = await sendWaitlistFounder(normalizedEmail, "there")
+
+    if (emailError) {
+      console.error("Email send error:", emailError)
+      return { success: false, error: "Failed to send email. Please try again." }
+    }
 
     return { success: true }
   } catch (error) {
-    // If contact already exists, still return success
-    if (error instanceof Error && error.message.includes("already exists")) {
-      return { success: true }
-    }
-
     console.error("Waitlist signup error:", error)
     return { success: false, error: "Something went wrong. Please try again." }
   }
