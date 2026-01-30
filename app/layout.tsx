@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { JetBrains_Mono } from "next/font/google"
+import { Analytics } from "@vercel/analytics/react"
 import "./globals.css"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import { Toaster } from "@/components/ui/sonner"
@@ -62,6 +63,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
         <Toaster />
+        <Analytics />
       </body>
     </html>
   )
