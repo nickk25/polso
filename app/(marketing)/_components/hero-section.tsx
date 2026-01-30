@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button"
 import { DashboardMockup } from "./mockups/dashboard-mockup"
+import { WaitlistForm } from "./waitlist-form"
 
 export function HeroSection() {
   return (
@@ -23,17 +23,9 @@ export function HeroSection() {
           </p>
 
           {/* Waitlist form */}
-          <form className="mx-auto mt-8 flex max-w-sm flex-col gap-2 sm:flex-row">
-            <input
-              type="email"
-              placeholder="you@company.com"
-              className="h-10 flex-1 border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-              required
-            />
-            <Button type="submit" className="h-10">
-              Join waitlist
-            </Button>
-          </form>
+          <div className="mt-8">
+            <WaitlistForm source="hero" />
+          </div>
           <p className="mt-3 text-xs text-muted-foreground">
             Be the first to know when we launch.
           </p>
