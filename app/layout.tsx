@@ -10,8 +10,46 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Polso - Financial Management",
-  description: "Financial management and expense intelligence platform",
+  title: {
+    default: "Polso — Know your numbers without waiting for your accountant",
+    template: "%s — Polso",
+  },
+  description:
+    "Connect your bank. See expenses categorized. Track your runway — updated daily, not monthly. Financial clarity for freelancers, founders, and small teams.",
+  keywords: [
+    "expense tracking",
+    "financial management",
+    "runway calculator",
+    "burn rate",
+    "cash flow",
+    "bank sync",
+    "open banking",
+    "business finances",
+    "freelancer finances",
+    "startup runway",
+  ],
+  authors: [{ name: "Polso" }],
+  creator: "Polso",
+  metadataBase: new URL("https://polso.app"),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://polso.app",
+    siteName: "Polso",
+    title: "Polso — Know your numbers without waiting for your accountant",
+    description:
+      "Connect your bank. See expenses categorized. Track your runway — updated daily, not monthly.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Polso — Know your numbers without waiting for your accountant",
+    description:
+      "Connect your bank. See expenses categorized. Track your runway — updated daily, not monthly.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({
