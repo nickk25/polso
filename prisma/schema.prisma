@@ -24,6 +24,22 @@ model Organization {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
+  // Subscription
+  planType        String    @default("starter") @map("plan_type")
+  planInterval    String?   @map("plan_interval") // "monthly" | "annual"
+  planStartedAt   DateTime? @map("plan_started_at")
+  planExpiresAt   DateTime? @map("plan_expires_at")
+  trialEndsAt     DateTime? @map("trial_ends_at")
+
+  // Creem billing
+  creemCustomerId     String? @map("creem_customer_id")
+  creemSubscriptionId String? @map("creem_subscription_id")
+
+  // Scheduled plan changes (for downgrades)
+  scheduledPlanType     String?   @map("scheduled_plan_type")
+  scheduledPlanInterval String?   @map("scheduled_plan_interval")
+  scheduledChangeAt     DateTime? @map("scheduled_change_at")
+
   // Relations
   userOrganizations UserOrganization[]
   accounts          Account[]

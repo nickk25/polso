@@ -1,0 +1,148 @@
+"use client"
+
+import { ArrowRight, Lock } from "@phosphor-icons/react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import type { PlanType, LimitKey } from "@/lib/plans"
+import { getPlanDisplayName, getUpgradePlan } from "@/lib/plans"
+
+interface UpgradePromptProps {
+  limit: LimitKey
+  currentPlan: PlanType
+  currentCount: number
+  maxAllowed: number
+  title?: string
+  description?: string
+}
+
+const LIMIT_LABELS: Record<LimitKey, string> = {
+  maxBankConnections: "bank connections",
+  maxUsers: "team members",
+}
+
+export function UpgradePrompt({
+  limit,
+  currentPlan,
+  currentCount,
+  maxAllowed,
+  title,
+  description,
+}: UpgradePromptProps) {
+  const upgradePlan = getUpgradePlan(currentPlan)
+  const limitLabel = LIMIT_LABELS[limit]
+  const usagePercent = Math.min(100, (currentCount / maxAllowed) * 100)
+
+  const defaultTitle = `${getPlanDisplayName(currentPlan)} plan limit reached`
+  const defaultDescription = `You've used all ${maxAllowed} ${limitLabel} available on your plan.`
+
+  return (
+    <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <Lock className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+          <CardTitle className="text-base">
+            {title ?? defaultTitle}
+          </CardTitle>
+        </div>
+        <CardDescription className="text-amber-800 dark:text-amber-200">
+          {description ?? defaultDescription}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">
+              {currentCount} of {maxAllowed} {limitLabel} used
+            </span>
+            <span className="font-medium">{Math.round(usagePercent)}%</span>
+          </div>
+          <Progress value={usagePercent} className="h-2" />
+        </div>
+
+        {upgradePlan && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Upgrade to {getPlanDisplayName(upgradePlan)} for more capacity
+            </p>
+            <Button asChild size="sm">
+              <Link href="/settings/billing">
+                Upgrade
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+interface UsageIndicatorProps {
+  limit: LimitKey
+  currentCount: number
+  maxAllowed: number
+  showUpgradeAt?: number // Show upgrade prompt when this percentage is reached (default: 100)
+}
+
+export function UsageIndicator({
+  limit,
+  currentCount,
+  maxAllowed,
+  showUpgradeAt = 100,
+}: UsageIndicatorProps) {
+  const usagePercent = Math.min(100, (currentCount / maxAllowed) * 100)
+  const limitLabel = LIMIT_LABELS[limit]
+
+  // Determine status color
+  let statusColor = "text-muted-foreground"
+  if (usagePercent >= 100) {
+    statusColor = "text-destructive"
+  } else if (usagePercent >= 80) {
+    statusColor = "text-amber-600 dark:text-amber-500"
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className={statusColor}>
+        {currentCount} of {maxAllowed} {limitLabel}
+      </span>
+      {usagePercent >= showUpgradeAt && (
+        <Button variant="link" size="sm" className="h-auto p-0" asChild>
+          <Link href="/settings/billing">Upgrade</Link>
+        </Button>
+      )}
+    </div>
+  )
+}
+
+interface InlineUpgradeProps {
+  message: string
+  planType?: PlanType
+}
+
+export function InlineUpgrade({ message, planType }: InlineUpgradeProps) {
+  const upgradePlan = planType ? getUpgradePlan(planType) : "business"
+
+  return (
+    <div className="flex flex-col items-center gap-3 py-4 text-center">
+      <Lock className="h-8 w-8 text-muted-foreground" />
+      <p className="text-sm text-muted-foreground">{message}</p>
+      {upgradePlan && (
+        <Button asChild size="sm" variant="outline">
+          <Link href="/settings/billing">
+            Upgrade to {getPlanDisplayName(upgradePlan)}
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+      )}
+    </div>
+  )
+}
