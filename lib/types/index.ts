@@ -14,6 +14,7 @@ export type {
   Export,
   UserPreference,
   NotificationSetting,
+  Invitation,
 } from "@/lib/generated/prisma/client"
 
 // Action response type for server actions

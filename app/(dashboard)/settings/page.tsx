@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Gear, Bank, User, Bell, Buildings } from "@phosphor-icons/react/dist/ssr"
+import { Gear, Bank, User, Bell, Buildings, UsersThree } from "@phosphor-icons/react/dist/ssr"
 
 export default function SettingsPage() {
   return (
@@ -95,6 +95,23 @@ export default function SettingsPage() {
           <CardContent>
             <Button variant="outline" asChild>
               <Link href="/settings/preferences">Edit Preferences</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <UsersThree className="h-5 w-5" />
+              <CardTitle>Team</CardTitle>
+            </div>
+            <CardDescription>
+              Invite and manage team members
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" asChild>
+              <Link href="/settings/team">Manage Team</Link>
             </Button>
           </CardContent>
         </Card>

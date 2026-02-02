@@ -54,6 +54,7 @@ model Organization {
   dismissedPatterns DismissedPattern[]
   alerts            Alert[]
   exports           Export[]
+  invitations       Invitation[]
 
   @@map("organizations")
 }
@@ -500,4 +501,36 @@ model DismissedPattern {
   @@index([organizationId])
   @@index([vendorId])
   @@map("dismissed_patterns")
+}
+
+// ============================================
+// Invitations - Team member invitations
+// ============================================
+
+model Invitation {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  email          String
+  role           String    @default("member")
+  token          String    @unique
+  status         String    @default("pending") // pending, accepted, revoked
+  expiresAt      DateTime  @map("expires_at")
+  invitedById    String    @map("invited_by_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  acceptedAt     DateTime? @map("accepted_at")
+
+  // Email tracking
+  emailStatus   String?   @map("email_status") // sent, delivered, bounced, failed
+  emailSentAt   DateTime? @map("email_sent_at")
+  emailError    String?   @map("email_error")
+  resendEmailId String?   @map("resend_email_id")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([token])
+  @@index([email])
+  @@index([status])
+  @@map("invitations")
 }
