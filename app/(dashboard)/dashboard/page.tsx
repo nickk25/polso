@@ -18,6 +18,7 @@ import { getBurnRateAndRunway, getCashFlow, getCategoryBreakdown } from "@/featu
 import { format } from "date-fns"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { getTranslations } from "next-intl/server"
 
 function formatCurrency(value: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
@@ -38,6 +39,9 @@ function formatCurrencyCompact(value: number, currency = "USD") {
 }
 
 export default async function DashboardPage() {
+  const t = await getTranslations("dashboard")
+  const tc = await getTranslations("common")
+
   const [accountsSummary, accounts, expenseStats, incomeStats, burnRateData, cashFlow, recentExpenses, recentIncomes, categoryBreakdown] = await Promise.all([
     getAccountsSummary(),
     getAccounts(),
@@ -64,9 +68,9 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Overview</h1>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Financial overview and key metrics
+          {t("subtitle")}
         </p>
       </div>
 
@@ -74,7 +78,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("currentBalance")}</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -83,15 +87,15 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               {accountsSummary.accountCount === 0
-                ? "No accounts connected"
-                : `Across ${accountsSummary.accountCount} account${accountsSummary.accountCount > 1 ? "s" : ""}`}
+                ? t("noAccountsConnected")
+                : t("acrossAccounts", { count: accountsSummary.accountCount })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Income</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("monthlyIncome")}</CardTitle>
             <TrendUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -99,14 +103,14 @@ export default async function DashboardPage() {
               +{formatCurrency(totalIncome, currency)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {incomeStats.incomeCount} transactions this month
+              {t("transactionsThisMonth", { count: incomeStats.incomeCount })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("monthlyExpenses")}</CardTitle>
             <Receipt className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -114,14 +118,14 @@ export default async function DashboardPage() {
               -{formatCurrency(totalExpenses, currency)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {expenseStats.expenseCount} transactions this month
+              {t("transactionsThisMonth", { count: expenseStats.expenseCount })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Cash Flow</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("netCashFlow")}</CardTitle>
             {netCashFlow >= 0 ? (
               <TrendUp className="h-4 w-4 text-green-500" />
             ) : (
@@ -133,14 +137,14 @@ export default async function DashboardPage() {
               {netCashFlow >= 0 ? "+" : ""}{formatCurrency(netCashFlow, currency)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Income minus expenses
+              {t("incomeMinusExpenses")}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Runway</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("runway")}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -149,7 +153,7 @@ export default async function DashboardPage() {
               <span className="text-sm font-normal text-muted-foreground"> mo</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              At current burn rate
+              {t("atCurrentBurnRate")}
             </p>
           </CardContent>
         </Card>
@@ -159,7 +163,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Fixed Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("fixedExpenses")}</CardTitle>
             <ArrowDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -182,7 +186,7 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Variable Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("variableExpenses")}</CardTitle>
             <ArrowUp className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
@@ -206,7 +210,7 @@ export default async function DashboardPage() {
         {/* Compact Cash Flow */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cash Flow (6mo)</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("cashFlow6mo")}</CardTitle>
           </CardHeader>
           <CardContent>
             {hasCashFlowData ? (
@@ -238,7 +242,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <div className="flex h-[76px] items-center justify-center text-sm text-muted-foreground">
-                No data yet
+                {t("noDataYet")}
               </div>
             )}
           </CardContent>
@@ -250,16 +254,16 @@ export default async function DashboardPage() {
         {/* Recent Transactions - Combined Expenses & Income */}
         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>{t("recentActivity")}</CardTitle>
             <div className="flex gap-1">
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/expenses">
-                  Expenses
+                  {tc("navigation.expenses")}
                 </Link>
               </Button>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/income">
-                  Income
+                  {tc("navigation.income")}
                 </Link>
               </Button>
             </div>
@@ -329,9 +333,9 @@ export default async function DashboardPage() {
             ) : (
               <div className="flex flex-col items-center justify-center h-full py-8 text-center">
                 <Receipt className="h-10 w-10 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">No transactions yet</p>
+                <p className="text-sm text-muted-foreground">{t("noTransactionsYet")}</p>
                 <Button variant="outline" size="sm" className="mt-3" asChild>
-                  <Link href="/settings/banking">Connect bank</Link>
+                  <Link href="/settings/banking">{t("connectBank")}</Link>
                 </Button>
               </div>
             )}
@@ -343,10 +347,10 @@ export default async function DashboardPage() {
           {/* Connected Accounts Status */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Connected Accounts</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("connectedAccounts")}</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/settings/banking">
-                  Manage
+                  {t("manage")}
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
@@ -399,7 +403,7 @@ export default async function DashboardPage() {
                   <Button variant="outline" size="sm" asChild>
                     <Link href="/settings/banking">
                       <Bank className="mr-2 h-4 w-4" />
-                      Connect your first account
+                      {t("connectYourFirstAccount")}
                     </Link>
                   </Button>
                 </div>
@@ -410,10 +414,10 @@ export default async function DashboardPage() {
           {/* Top Spending Categories */}
           <Card className="flex-1">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Top Categories (This Month)</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("topCategories")}</CardTitle>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/analytics">
-                  Details
+                  {t("details")}
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
@@ -449,7 +453,7 @@ export default async function DashboardPage() {
                 </div>
               ) : (
                 <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
-                  No expenses this month
+                  {t("noExpensesThisMonth")}
                 </div>
               )}
             </CardContent>

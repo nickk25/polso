@@ -7,6 +7,7 @@ import { ExpenseFilters } from "@/features/expenses/components/expense-filters"
 import { ExpensePagination } from "@/features/expenses/components/expense-pagination"
 import { ExpenseTable } from "@/features/expenses/components/expense-table"
 import { AutoCategorizeButton } from "@/features/expenses/components/auto-categorize-button"
+import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 
 const PAGE_SIZE = 25
@@ -28,6 +29,7 @@ interface PageProps {
 }
 
 export default async function ExpensesPage({ searchParams }: PageProps) {
+  const t = await getTranslations("expenses")
   const params = await searchParams
   const page = parseInt(params.page || "1", 10)
   const search = params.search || undefined
@@ -46,11 +48,11 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Expenses</h1>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">
           {total > 0
-            ? `${total} transaction${total > 1 ? "s" : ""}`
-            : "Track and categorize your expenses"}
+            ? t("transactionCount", { count: total })
+            : t("subtitle")}
         </p>
       </div>
 
@@ -60,7 +62,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                This Month
+                {t("thisMonth")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -72,7 +74,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Last Month
+                {t("lastMonth")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -84,7 +86,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Fixed
+                {t("fixed")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -96,7 +98,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Variable
+                {t("variable")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -120,7 +122,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
       {hasExpenses ? (
         <Card>
           <CardHeader>
-            <CardTitle>Transactions</CardTitle>
+            <CardTitle>{t("transactions")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ExpenseTable expenses={expenses} categories={categories} />
@@ -131,9 +133,9 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">No matching expenses</h3>
+            <h3 className="text-lg font-medium">{t("noMatchingExpenses")}</h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-              Try adjusting your search or filters
+              {t("tryAdjustingFilters")}
             </p>
           </CardContent>
         </Card>
@@ -141,13 +143,13 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">No expenses yet</h3>
+            <h3 className="text-lg font-medium">{t("noExpensesYet")}</h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-              Connect a bank account to automatically import and sync your transactions
+              {t("noExpensesDescription")}
             </p>
             <Button className="mt-4" asChild>
               <Link href="/banking">
-                Connect Bank
+                {t("connectBank")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

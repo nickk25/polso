@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,20 +41,7 @@ const TIMEZONES = [
   { value: "Australia/Sydney", label: "Sydney" },
 ]
 
-const MONTHS = [
-  { value: 1, label: "January" },
-  { value: 2, label: "February" },
-  { value: 3, label: "March" },
-  { value: 4, label: "April" },
-  { value: 5, label: "May" },
-  { value: 6, label: "June" },
-  { value: 7, label: "July" },
-  { value: 8, label: "August" },
-  { value: 9, label: "September" },
-  { value: 10, label: "October" },
-  { value: 11, label: "November" },
-  { value: 12, label: "December" },
-]
+const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 const DATE_FORMATS = [
   { value: "MM/dd/yyyy", label: "MM/DD/YYYY (01/15/2024)" },
@@ -75,6 +63,8 @@ interface OrganizationFormProps {
 
 export function OrganizationForm({ organization }: OrganizationFormProps) {
   const router = useRouter()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState(organization.name)
   const [currency, setCurrency] = useState(organization.currency)
@@ -105,27 +95,27 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>Organization Settings</CardTitle>
+          <CardTitle>{t("organizationForm.title")}</CardTitle>
           <CardDescription>
-            Configure your organization&apos;s basic settings
+            {t("organizationForm.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name">Organization Name</Label>
+            <Label htmlFor="name">{t("organizationForm.name")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your organization name"
+              placeholder={t("organizationForm.namePlaceholder")}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="currency">Default Currency</Label>
+            <Label htmlFor="currency">{t("organizationForm.currency")}</Label>
             <Select value={currency} onValueChange={setCurrency}>
               <SelectTrigger id="currency">
-                <SelectValue placeholder="Select currency" />
+                <SelectValue placeholder={t("organizationForm.currencyPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {CURRENCIES.map((curr) => (
@@ -138,10 +128,10 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="timezone">Timezone</Label>
+            <Label htmlFor="timezone">{t("organizationForm.timezone")}</Label>
             <Select value={timezone} onValueChange={setTimezone}>
               <SelectTrigger id="timezone">
-                <SelectValue placeholder="Select timezone" />
+                <SelectValue placeholder={t("organizationForm.timezonePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {TIMEZONES.map((tz) => (
@@ -154,18 +144,18 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="fiscalYearStart">Fiscal Year Starts</Label>
+            <Label htmlFor="fiscalYearStart">{t("organizationForm.fiscalYearStart")}</Label>
             <Select
               value={fiscalYearStart.toString()}
               onValueChange={(v) => setFiscalYearStart(parseInt(v))}
             >
               <SelectTrigger id="fiscalYearStart">
-                <SelectValue placeholder="Select month" />
+                <SelectValue placeholder={t("organizationForm.fiscalYearStartPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {MONTHS.map((month) => (
-                  <SelectItem key={month.value} value={month.value.toString()}>
-                    {month.label}
+                  <SelectItem key={month} value={month.toString()}>
+                    {t(`organizationForm.months.${month}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -173,10 +163,10 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dateFormat">Date Format</Label>
+            <Label htmlFor="dateFormat">{t("organizationForm.dateFormat")}</Label>
             <Select value={dateFormat} onValueChange={setDateFormat}>
               <SelectTrigger id="dateFormat">
-                <SelectValue placeholder="Select date format" />
+                <SelectValue placeholder={t("organizationForm.dateFormatPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {DATE_FORMATS.map((format) => (
@@ -189,7 +179,7 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
           </div>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? tc("actions.saving") : tc("actions.saveChanges")}
           </Button>
         </CardContent>
       </Card>

@@ -1,38 +1,25 @@
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr"
+import { getTranslations } from "next-intl/server"
 
-const personas = [
-  {
-    title: "Freelancers",
-    pain: "Chasing invoices, guessing taxes",
-    solution: "Track every payment. Know what you owe.",
-  },
-  {
-    title: "Solo founders",
-    pain: "Spreadsheets updated once a month",
-    solution: "Runway updates daily. Decide with real numbers.",
-  },
-  {
-    title: "Small teams",
-    pain: "Accountant sees last month's data",
-    solution: "Export everything in one click.",
-  },
-  {
-    title: "Side hustlers",
-    pain: "Mixed personal and business spending",
-    solution: "Finally see the real picture.",
-  },
-]
+export async function BuiltForSection() {
+  const t = await getTranslations("marketing")
 
-export function BuiltForSection() {
+  const personas = [
+    { title: t("builtFor.freelancersTitle"), pain: t("builtFor.freelancersPain"), solution: t("builtFor.freelancersSolution") },
+    { title: t("builtFor.soloFoundersTitle"), pain: t("builtFor.soloFoundersPain"), solution: t("builtFor.soloFoundersSolution") },
+    { title: t("builtFor.smallTeamsTitle"), pain: t("builtFor.smallTeamsPain"), solution: t("builtFor.smallTeamsSolution") },
+    { title: t("builtFor.sideHustlersTitle"), pain: t("builtFor.sideHustlersPain"), solution: t("builtFor.sideHustlersSolution") },
+  ]
+
   return (
     <section className="border-t bg-muted/30 py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <p className="text-sm font-medium uppercase tracking-wider text-primary">
-            Built for
+            {t("builtFor.label")}
           </p>
           <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            If this sounds familiar, Polso is for you
+            {t("builtFor.title")}
           </h2>
         </div>
 

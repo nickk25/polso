@@ -13,31 +13,9 @@ import {
   Repeat,
   Export,
 } from "@phosphor-icons/react/dist/ssr";
+import { getTranslations } from "next-intl/server";
 
-// Mock data
-const kpis = [
-  {
-    label: "Balance",
-    value: "€47,250",
-    icon: Wallet,
-    color: "text-foreground",
-  },
-  {
-    label: "Income",
-    value: "+€12,400",
-    icon: TrendUp,
-    color: "text-green-500",
-  },
-  { label: "Expenses", value: "-€8,750", icon: Receipt, color: "text-red-500" },
-  {
-    label: "Cash Flow",
-    value: "+€3,650",
-    icon: TrendDown,
-    color: "text-green-500",
-  },
-  { label: "Runway", value: "5.4 mo", icon: Clock, color: "text-foreground" },
-];
-
+// Mock data (non-translatable)
 const cashFlowData = [
   { month: "Aug", inflow: 8200, outflow: 9100 },
   { month: "Sep", inflow: 11400, outflow: 7800 },
@@ -64,18 +42,43 @@ const recentTransactions = [
   },
 ];
 
-const sidebarItems = [
-  { icon: House, label: "Overview", active: true },
-  { icon: Receipt, label: "Expenses" },
-  { icon: ArrowsDownUp, label: "Income" },
-  { icon: ChartLineUp, label: "Analytics" },
-  { icon: Repeat, label: "Recurring" },
-  { icon: Tag, label: "Categories" },
-  { icon: Export, label: "Export" },
-  { icon: Gear, label: "Settings" },
-];
+export async function DashboardMockup() {
+  const t = await getTranslations("marketing");
 
-export function DashboardMockup() {
+  const kpis = [
+    {
+      label: t("mockup.balance"),
+      value: "€47,250",
+      icon: Wallet,
+      color: "text-foreground",
+    },
+    {
+      label: t("mockup.income"),
+      value: "+€12,400",
+      icon: TrendUp,
+      color: "text-green-500",
+    },
+    { label: t("mockup.expenses"), value: "-€8,750", icon: Receipt, color: "text-red-500" },
+    {
+      label: t("mockup.cashFlow"),
+      value: "+€3,650",
+      icon: TrendDown,
+      color: "text-green-500",
+    },
+    { label: t("mockup.runway"), value: "5.4 mo", icon: Clock, color: "text-foreground" },
+  ];
+
+  const sidebarItems = [
+    { icon: House, label: t("mockup.overview"), active: true },
+    { icon: Receipt, label: t("mockup.expenses") },
+    { icon: ArrowsDownUp, label: t("mockup.income") },
+    { icon: ChartLineUp, label: "Analytics" },
+    { icon: Repeat, label: t("mockup.recurring") },
+    { icon: Tag, label: t("mockup.categories") },
+    { icon: Export, label: t("mockup.export") },
+    { icon: Gear, label: t("mockup.settings") },
+  ];
+
   return (
     <div className="relative mx-auto max-w-5xl">
       {/* Glow effect */}
@@ -131,9 +134,9 @@ export function DashboardMockup() {
           <div className="flex-1 p-4">
             {/* Page header */}
             <div className="mb-4">
-              <h2 className="text-lg font-semibold">Overview</h2>
+              <h2 className="text-lg font-semibold">{t("mockup.overview")}</h2>
               <p className="text-xs text-muted-foreground">
-                Financial overview and key metrics
+                {t("mockup.financialOverview")}
               </p>
             </div>
 
@@ -159,13 +162,13 @@ export function DashboardMockup() {
               {/* Cash Flow Chart */}
               <div className="flex flex-col border bg-card p-3">
                 <div className="mb-auto flex items-center justify-between">
-                  <span className="text-xs font-medium">Cash Flow (6mo)</span>
+                  <span className="text-xs font-medium">{t("mockup.cashFlow6mo")}</span>
                   <div className="flex items-center gap-3 text-[8px] text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <span className="h-2 w-2 bg-green-500" /> Income
+                      <span className="h-2 w-2 bg-green-500" /> {t("mockup.income")}
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="h-2 w-2 bg-red-400" /> Expenses
+                      <span className="h-2 w-2 bg-red-400" /> {t("mockup.expenses")}
                     </span>
                   </div>
                 </div>
@@ -224,7 +227,7 @@ export function DashboardMockup() {
               {/* Recent Activity */}
               <div className="border bg-card p-3">
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-xs font-medium">Recent Activity</span>
+                  <span className="text-xs font-medium">{t("mockup.recentActivity")}</span>
                   <List className="h-3 w-3 text-muted-foreground" />
                 </div>
                 <div className="space-y-2">

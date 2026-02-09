@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react"
 import { usePlaidLink, PlaidLinkOnSuccess } from "react-plaid-link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Bank, Spinner } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 
@@ -13,6 +14,7 @@ interface PlaidLinkButtonProps {
 
 export function PlaidLinkButton({ linkToken, onSuccess }: PlaidLinkButtonProps) {
   const router = useRouter()
+  const t = useTranslations("banking")
   const [isExchanging, setIsExchanging] = useState(false)
 
   const handleSuccess = useCallback<PlaidLinkOnSuccess>(
@@ -73,12 +75,12 @@ export function PlaidLinkButton({ linkToken, onSuccess }: PlaidLinkButtonProps) 
       {isExchanging ? (
         <>
           <Spinner className="h-5 w-5 animate-spin" />
-          Connecting...
+          {t("plaid.connecting")}
         </>
       ) : (
         <>
           <Bank className="h-5 w-5" />
-          Connect Bank Account
+          {t("plaid.connectBankAccount")}
         </>
       )}
     </Button>

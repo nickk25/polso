@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TrendUp, TrendDown } from "@phosphor-icons/react/dist/ssr"
+import { getTranslations } from "next-intl/server"
 import type { CashFlowForecast } from "../queries/get-forecasts"
 
 function formatCurrency(value: number, currency = "USD") {
@@ -28,7 +29,8 @@ interface CashFlowForecastCardProps {
   forecast: CashFlowForecast
 }
 
-export function CashFlowForecastCard({ forecast }: CashFlowForecastCardProps) {
+export async function CashFlowForecastCard({ forecast }: CashFlowForecastCardProps) {
+  const t = await getTranslations("analytics")
   const { months, currency, currentBalance, assumptions } = forecast
   const forecastMonths = months.filter((m) => !m.isHistorical)
   const nextMonth = forecastMonths[0]
@@ -45,10 +47,10 @@ export function CashFlowForecastCard({ forecast }: CashFlowForecastCardProps) {
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle>Cash Flow Forecast</CardTitle>
+          <CardTitle>{t("cashFlowForecast.title")}</CardTitle>
           {nextMonth && (
             <Badge variant="outline" className={getConfidenceColor(nextMonth.confidence)}>
-              {formatConfidence(nextMonth.confidence)} confidence
+              {t("confidence.label", { level: nextMonth.confidence >= 0.8 ? t("confidence.high") : nextMonth.confidence >= 0.5 ? t("confidence.medium") : t("confidence.low") })}
             </Badge>
           )}
         </div>
@@ -58,19 +60,19 @@ export function CashFlowForecastCard({ forecast }: CashFlowForecastCardProps) {
         {nextMonth && (
           <div className="grid grid-cols-3 gap-4 text-center pb-4 border-b">
             <div>
-              <p className="text-xs text-muted-foreground">Projected Income</p>
+              <p className="text-xs text-muted-foreground">{t("cashFlowForecast.projectedIncome")}</p>
               <p className="text-lg font-semibold text-green-600">
                 +{formatCurrency(nextMonth.projectedIncome, currency)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Projected Expenses</p>
+              <p className="text-xs text-muted-foreground">{t("cashFlowForecast.projectedExpenses")}</p>
               <p className="text-lg font-semibold text-red-500">
                 -{formatCurrency(nextMonth.projectedExpenses, currency)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Net Cash Flow</p>
+              <p className="text-xs text-muted-foreground">{t("cashFlowForecast.netCashFlow")}</p>
               <p className={`text-lg font-semibold flex items-center justify-center gap-1 ${
                 nextMonth.projectedNet >= 0 ? "text-green-600" : "text-red-500"
               }`}>
@@ -128,15 +130,15 @@ export function CashFlowForecastCard({ forecast }: CashFlowForecastCardProps) {
           <div className="flex justify-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
               <div className="h-2.5 w-2.5 rounded bg-green-500" />
-              <span className="text-muted-foreground">Income</span>
+              <span className="text-muted-foreground">{t("cashFlowForecast.legendIncome")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="h-2.5 w-2.5 rounded bg-red-400" />
-              <span className="text-muted-foreground">Expenses</span>
+              <span className="text-muted-foreground">{t("cashFlowForecast.legendExpenses")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="h-2.5 w-2.5 rounded border border-dashed border-primary" />
-              <span className="text-muted-foreground">Forecast</span>
+              <span className="text-muted-foreground">{t("cashFlowForecast.legendForecast")}</span>
             </div>
           </div>
         </div>
@@ -146,7 +148,7 @@ export function CashFlowForecastCard({ forecast }: CashFlowForecastCardProps) {
           <div className="pt-2 border-t">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                Projected balance in {forecastMonths.length} months
+                {t("cashFlowForecast.projectedBalance", { count: forecastMonths.length })}
               </span>
               <span className="font-semibold">
                 {formatCurrency(forecastMonths[forecastMonths.length - 1].projectedBalance, currency)}

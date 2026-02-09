@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { format, startOfQuarter, endOfQuarter, startOfMonth, endOfMonth } from "date-fns"
 import {
   Dialog,
@@ -46,6 +47,8 @@ const MONTH_NAMES = [
 ]
 
 export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
+  const t = useTranslations("export")
+  const tc = useTranslations("common")
   const currentYear = new Date().getFullYear()
   const [periodType, setPeriodType] = useState<PeriodType>("quarter")
   const [quarter, setQuarter] = useState<string>("Q1")
@@ -130,11 +133,11 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
           setPreview(response.data)
         } else {
           setPreview(null)
-          setError(response.error || "Failed to load preview")
+          setError(response.error || t("dialog.failedToLoadPreview"))
         }
       } catch (err) {
         setPreview(null)
-        setError(err instanceof Error ? err.message : "Failed to load preview")
+        setError(err instanceof Error ? err.message : t("dialog.failedToLoadPreview"))
       } finally {
         setLoadingPreview(false)
       }
@@ -167,10 +170,10 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
       if (response.success) {
         setResult(response.data)
       } else {
-        setError(response.error || "Failed to generate export")
+        setError(response.error || t("dialog.failedToGenerate"))
       }
     } catch {
-      setError("Failed to generate export")
+      setError(t("dialog.failedToGenerate"))
     } finally {
       setGenerating(false)
     }
@@ -189,9 +192,9 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New Export</DialogTitle>
+          <DialogTitle>{t("dialog.title")}</DialogTitle>
           <DialogDescription>
-            Select a period to export expenses, invoices, and summary
+            {t("dialog.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -202,14 +205,14 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
               <CheckCircle className="h-6 w-6 text-green-500" weight="fill" />
             </div>
             <div>
-              <p className="font-medium">Export completed</p>
+              <p className="font-medium">{t("dialog.exportCompleted")}</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {result.expenseCount} expenses · {result.invoiceCount} invoices
+                {t("dialog.expensesAndInvoices", { expenses: result.expenseCount, invoices: result.invoiceCount })}
               </p>
             </div>
             <Button onClick={handleDownload} className="w-full">
               <DownloadSimple className="mr-2 h-4 w-4" />
-              Download {result.fileName}
+              {t("dialog.downloadFile", { name: result.fileName })}
             </Button>
           </div>
         ) : (
@@ -217,15 +220,15 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
           <div className="space-y-4">
             {/* Period Type */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Period type</label>
+              <label className="text-sm font-medium">{t("dialog.periodType")}</label>
               <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="quarter">Quarter</SelectItem>
-                  <SelectItem value="month">Month</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
+                  <SelectItem value="quarter">{t("dialog.quarter")}</SelectItem>
+                  <SelectItem value="month">{t("dialog.month")}</SelectItem>
+                  <SelectItem value="custom">{t("dialog.custom")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -234,21 +237,21 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
             {periodType === "quarter" && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Quarter</label>
+                  <label className="text-sm font-medium">{t("dialog.quarterLabel")}</label>
                   <Select value={quarter} onValueChange={setQuarter}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Q1">Q1 (Jan-Mar)</SelectItem>
-                      <SelectItem value="Q2">Q2 (Apr-Jun)</SelectItem>
-                      <SelectItem value="Q3">Q3 (Jul-Sep)</SelectItem>
-                      <SelectItem value="Q4">Q4 (Oct-Dec)</SelectItem>
+                      <SelectItem value="Q1">{t("dialog.q1")}</SelectItem>
+                      <SelectItem value="Q2">{t("dialog.q2")}</SelectItem>
+                      <SelectItem value="Q3">{t("dialog.q3")}</SelectItem>
+                      <SelectItem value="Q4">{t("dialog.q4")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Year</label>
+                  <label className="text-sm font-medium">{t("dialog.year")}</label>
                   <Select value={year} onValueChange={setYear}>
                     <SelectTrigger>
                       <SelectValue />
@@ -268,7 +271,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
             {periodType === "month" && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Month</label>
+                  <label className="text-sm font-medium">{t("dialog.monthLabel")}</label>
                   <Select value={month} onValueChange={setMonth}>
                     <SelectTrigger>
                       <SelectValue />
@@ -283,7 +286,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Year</label>
+                  <label className="text-sm font-medium">{t("dialog.year")}</label>
                   <Select value={year} onValueChange={setYear}>
                     <SelectTrigger>
                       <SelectValue />
@@ -303,7 +306,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
             {periodType === "custom" && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">From</label>
+                  <label className="text-sm font-medium">{t("dialog.from")}</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -314,7 +317,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                         )}
                       >
                         <CalendarBlank className="mr-2 h-4 w-4" />
-                        {customStartDate ? format(customStartDate, "MMM d, yyyy") : "Select"}
+                        {customStartDate ? format(customStartDate, "MMM d, yyyy") : t("dialog.select")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -328,7 +331,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                   </Popover>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">To</label>
+                  <label className="text-sm font-medium">{t("dialog.to")}</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -339,7 +342,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                         )}
                       >
                         <CalendarBlank className="mr-2 h-4 w-4" />
-                        {customEndDate ? format(customEndDate, "MMM d, yyyy") : "Select"}
+                        {customEndDate ? format(customEndDate, "MMM d, yyyy") : t("dialog.select")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -366,28 +369,28 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                 {loadingPreview ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Spinner className="h-4 w-4 animate-spin" />
-                    Loading...
+                    {t("dialog.loading")}
                   </div>
                 ) : preview ? (
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <div className="text-2xl font-semibold">{preview.expenseCount}</div>
-                      <div className="text-xs text-muted-foreground">expenses</div>
+                      <div className="text-xs text-muted-foreground">{t("dialog.expensesLabel")}</div>
                     </div>
                     <div>
                       <div className="text-2xl font-semibold">{preview.invoiceCount}</div>
-                      <div className="text-xs text-muted-foreground">invoices</div>
+                      <div className="text-xs text-muted-foreground">{t("dialog.invoicesLabel")}</div>
                     </div>
                     <div>
                       <div className="text-2xl font-semibold">
                         {formatCurrency(preview.totalAmount, preview.currency)}
                       </div>
-                      <div className="text-xs text-muted-foreground">total</div>
+                      <div className="text-xs text-muted-foreground">{t("dialog.totalLabel")}</div>
                     </div>
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground">
-                    No expenses in this period
+                    {t("dialog.noExpensesInPeriod")}
                   </div>
                 )}
               </div>
@@ -404,7 +407,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
         {!result && (
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {tc("actions.cancel")}
             </Button>
             <Button
               onClick={handleGenerate}
@@ -413,12 +416,12 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
               {generating ? (
                 <>
                   <Spinner className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
+                  {t("dialog.generating")}
                 </>
               ) : (
                 <>
                   <FileZip className="mr-2 h-4 w-4" />
-                  Generate Export
+                  {t("dialog.generateExport")}
                 </>
               )}
             </Button>

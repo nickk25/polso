@@ -1,34 +1,40 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface TrialStartedEmailProps {
   name: string
   trialEndDate: string
   dashboardUrl: string
+  locale?: Locale
 }
 
 export default function TrialStartedEmail({
   name,
   trialEndDate,
   dashboardUrl,
+  locale = "en",
 }: TrialStartedEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview="Your 14-day free trial has started">
-      <Preview>Your 14-day free trial has started</Preview>
+    <EmailLayout preview={t("trialStarted.preview")} locale={locale}>
+      <Preview>{t("trialStarted.preview")}</Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Trial
+        {t("trialStarted.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        Your trial is active, {name}.
+        {t("trialStarted.heading", { name })}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        You now have full access to Polso for 14 days. Your trial ends on <span style={{ fontWeight: 500, color: "#18181B" }}>{trialEndDate}</span>.
+        {t("trialStarted.intro", { trialEndDate })}
       </Text>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 12px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        During your trial
+        {t("trialStarted.duringTrial")}
       </Text>
 
       <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%", marginBottom: "24px" }}>
@@ -36,7 +42,7 @@ export default function TrialStartedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Connect unlimited bank accounts
+              {t("trialStarted.feature1")}
             </Text>
           </td>
         </tr>
@@ -44,7 +50,7 @@ export default function TrialStartedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Access all features and analytics
+              {t("trialStarted.feature2")}
             </Text>
           </td>
         </tr>
@@ -52,7 +58,7 @@ export default function TrialStartedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Export reports for your accountant
+              {t("trialStarted.feature3")}
             </Text>
           </td>
         </tr>
@@ -60,7 +66,7 @@ export default function TrialStartedEmail({
           <td>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Invite team members
+              {t("trialStarted.feature4")}
             </Text>
           </td>
         </tr>
@@ -79,11 +85,11 @@ export default function TrialStartedEmail({
           textAlign: "center",
         }}
       >
-        Start Exploring
+        {t("trialStarted.button")}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        We&apos;ll remind you 3 days before your trial ends.
+        {t("trialStarted.footer")}
       </Text>
     </EmailLayout>
   )
@@ -93,4 +99,5 @@ TrialStartedEmail.PreviewProps = {
   name: "Alex",
   trialEndDate: "February 14, 2026",
   dashboardUrl: "https://polso.app/dashboard",
+  locale: "es" as const,
 } satisfies TrialStartedEmailProps

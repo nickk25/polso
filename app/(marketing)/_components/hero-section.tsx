@@ -1,7 +1,10 @@
+import { getTranslations } from "next-intl/server"
 import { DashboardMockup } from "./mockups/dashboard-mockup"
 import { WaitlistForm } from "./waitlist-form"
 
-export function HeroSection() {
+export async function HeroSection() {
+  const t = await getTranslations("marketing")
+
   return (
     <section className="relative overflow-hidden py-24 md:py-32">
       {/* Background gradient */}
@@ -13,13 +16,13 @@ export function HeroSection() {
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 border bg-muted/50 px-3 py-1 text-xs">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-            Launching soon — Join the waitlist
+            {t("hero.badge")}
           </div>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Know your numbers without waiting for your accountant
+            {t("hero.title")}
           </h1>
           <p className="mt-6 text-lg text-muted-foreground">
-            Connect your bank. See expenses categorized. Track your runway — updated daily, not monthly.
+            {t("hero.subtitle")}
           </p>
 
           {/* Waitlist form */}
@@ -27,7 +30,7 @@ export function HeroSection() {
             <WaitlistForm source="hero" />
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Be the first to know when we launch.
+            {t("hero.beFirst")}
           </p>
         </div>
 

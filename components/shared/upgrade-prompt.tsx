@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { ArrowRight, Lock } from "@phosphor-icons/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -23,11 +24,6 @@ interface UpgradePromptProps {
   description?: string
 }
 
-const LIMIT_LABELS: Record<LimitKey, string> = {
-  maxBankConnections: "bank connections",
-  maxUsers: "team members",
-}
-
 export function UpgradePrompt({
   limit,
   currentPlan,
@@ -36,12 +32,13 @@ export function UpgradePrompt({
   title,
   description,
 }: UpgradePromptProps) {
+  const t = useTranslations("billing")
   const upgradePlan = getUpgradePlan(currentPlan)
-  const limitLabel = LIMIT_LABELS[limit]
+  const limitLabel = limit === "maxBankConnections" ? t("upgrade.bankConnections") : t("upgrade.teamMembers")
   const usagePercent = Math.min(100, (currentCount / maxAllowed) * 100)
 
-  const defaultTitle = `${getPlanDisplayName(currentPlan)} plan limit reached`
-  const defaultDescription = `You've used all ${maxAllowed} ${limitLabel} available on your plan.`
+  const defaultTitle = t("upgrade.planLimitReached", { plan: getPlanDisplayName(currentPlan) })
+  const defaultDescription = t("upgrade.usedAll", { max: maxAllowed, resource: limitLabel })
 
   return (
     <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20">
@@ -60,7 +57,7 @@ export function UpgradePrompt({
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">
-              {currentCount} of {maxAllowed} {limitLabel} used
+              {t("upgrade.usageOf", { current: currentCount, max: maxAllowed, resource: limitLabel })}
             </span>
             <span className="font-medium">{Math.round(usagePercent)}%</span>
           </div>
@@ -70,11 +67,11 @@ export function UpgradePrompt({
         {upgradePlan && (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Upgrade to {getPlanDisplayName(upgradePlan)} for more capacity
+              {t("upgrade.upgradeFor", { plan: getPlanDisplayName(upgradePlan) })}
             </p>
             <Button asChild size="sm">
               <Link href="/settings/billing">
-                Upgrade
+                {t("upgrade.upgrade")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -98,8 +95,9 @@ export function UsageIndicator({
   maxAllowed,
   showUpgradeAt = 100,
 }: UsageIndicatorProps) {
+  const t = useTranslations("billing")
   const usagePercent = Math.min(100, (currentCount / maxAllowed) * 100)
-  const limitLabel = LIMIT_LABELS[limit]
+  const limitLabel = limit === "maxBankConnections" ? t("upgrade.bankConnections") : t("upgrade.teamMembers")
 
   // Determine status color
   let statusColor = "text-muted-foreground"
@@ -112,11 +110,11 @@ export function UsageIndicator({
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className={statusColor}>
-        {currentCount} of {maxAllowed} {limitLabel}
+        {t("upgrade.usageOf", { current: currentCount, max: maxAllowed, resource: limitLabel })}
       </span>
       {usagePercent >= showUpgradeAt && (
         <Button variant="link" size="sm" className="h-auto p-0" asChild>
-          <Link href="/settings/billing">Upgrade</Link>
+          <Link href="/settings/billing">{t("upgrade.upgrade")}</Link>
         </Button>
       )}
     </div>
@@ -129,6 +127,7 @@ interface InlineUpgradeProps {
 }
 
 export function InlineUpgrade({ message, planType }: InlineUpgradeProps) {
+  const t = useTranslations("billing")
   const upgradePlan = planType ? getUpgradePlan(planType) : "business"
 
   return (
@@ -138,7 +137,7 @@ export function InlineUpgrade({ message, planType }: InlineUpgradeProps) {
       {upgradePlan && (
         <Button asChild size="sm" variant="outline">
           <Link href="/settings/billing">
-            Upgrade to {getPlanDisplayName(upgradePlan)}
+            {t("upgrade.upgradeTo", { plan: getPlanDisplayName(upgradePlan) })}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>

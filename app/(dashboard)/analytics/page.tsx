@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartLine, ArrowRight, TrendUp, Binoculars } from "@phosphor-icons/react/dist/ssr"
 import {
@@ -31,6 +32,8 @@ function formatCurrency(value: number, currency = "USD") {
 }
 
 export default async function AnalyticsPage() {
+  const t = await getTranslations("analytics")
+
   const [
     burnRate,
     monthlyTrend,
@@ -65,23 +68,22 @@ export default async function AnalyticsPage() {
     return (
       <div className="flex flex-col gap-6 p-6">
         <div>
-          <h1 className="text-2xl font-semibold">Analytics</h1>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
           <p className="text-muted-foreground">
-            Deep insights into your financial data
+            {t("subtitle")}
           </p>
         </div>
 
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <ChartLine className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">Analytics require data</h3>
+            <h3 className="text-lg font-medium">{t("analyticsRequireData")}</h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-              Connect a bank account and import transactions to unlock detailed
-              analytics
+              {t("analyticsRequireDataDescription")}
             </p>
             <Button className="mt-4" asChild>
               <Link href="/banking">
-                Connect Bank Account
+                {t("connectBankAccount")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -96,9 +98,9 @@ export default async function AnalyticsPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Analytics</h1>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Deep insights into your financial data
+          {t("subtitle")}
         </p>
       </div>
 
@@ -107,7 +109,7 @@ export default async function AnalyticsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Balance
+              {t("totalBalance")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -119,7 +121,7 @@ export default async function AnalyticsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Monthly Income
+              {t("monthlyIncome")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -131,7 +133,7 @@ export default async function AnalyticsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Monthly Burn Rate
+              {t("monthlyBurnRate")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -143,7 +145,7 @@ export default async function AnalyticsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Net Cash Flow
+              {t("netCashFlow")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -155,7 +157,7 @@ export default async function AnalyticsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Runway
+              {t("runway")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -170,7 +172,7 @@ export default async function AnalyticsPage() {
         {/* Monthly Spend Trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Spend Trend</CardTitle>
+            <CardTitle>{t("monthlySpendTrend")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -211,11 +213,11 @@ export default async function AnalyticsPage() {
               <div className="flex justify-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded bg-red-500" />
-                  <span className="text-muted-foreground">Fixed</span>
+                  <span className="text-muted-foreground">{t("fixed")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded bg-amber-500" />
-                  <span className="text-muted-foreground">Variable</span>
+                  <span className="text-muted-foreground">{t("variable")}</span>
                 </div>
               </div>
             </div>
@@ -225,7 +227,7 @@ export default async function AnalyticsPage() {
         {/* Category Breakdown */}
         <Card>
           <CardHeader>
-            <CardTitle>Expense Breakdown</CardTitle>
+            <CardTitle>{t("expenseBreakdown")}</CardTitle>
           </CardHeader>
           <CardContent>
             {categoryBreakdown.length > 0 ? (
@@ -259,7 +261,7 @@ export default async function AnalyticsPage() {
             ) : (
               <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
                 <p className="text-sm text-muted-foreground">
-                  No expenses this month
+                  {t("noExpensesThisMonth")}
                 </p>
               </div>
             )}
@@ -271,7 +273,7 @@ export default async function AnalyticsPage() {
         {/* Cash Flow */}
         <Card>
           <CardHeader>
-            <CardTitle>Cash Flow</CardTitle>
+            <CardTitle>{t("cashFlow")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -314,11 +316,11 @@ export default async function AnalyticsPage() {
               <div className="flex justify-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded bg-green-500" />
-                  <span className="text-muted-foreground">Income</span>
+                  <span className="text-muted-foreground">{t("income")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded bg-red-400" />
-                  <span className="text-muted-foreground">Expenses</span>
+                  <span className="text-muted-foreground">{t("expenses")}</span>
                 </div>
               </div>
             </div>
@@ -328,7 +330,7 @@ export default async function AnalyticsPage() {
         {/* Top Vendors */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Vendors</CardTitle>
+            <CardTitle>{t("topVendors")}</CardTitle>
           </CardHeader>
           <CardContent>
             {topVendors.length > 0 ? (
@@ -360,7 +362,7 @@ export default async function AnalyticsPage() {
             ) : (
               <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
                 <p className="text-sm text-muted-foreground">
-                  No vendor data yet
+                  {t("noVendorDataYet")}
                 </p>
               </div>
             )}
@@ -373,7 +375,7 @@ export default async function AnalyticsPage() {
         {/* Income Trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Income Trend</CardTitle>
+            <CardTitle>{t("incomeTrend")}</CardTitle>
           </CardHeader>
           <CardContent>
             {incomeTrend.some((m) => m.total > 0) ? (
@@ -407,14 +409,14 @@ export default async function AnalyticsPage() {
                 <div className="flex justify-center gap-6 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 rounded bg-green-500" />
-                    <span className="text-muted-foreground">Income</span>
+                    <span className="text-muted-foreground">{t("income")}</span>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
                 <p className="text-sm text-muted-foreground">
-                  No income data yet
+                  {t("noIncomeDataYet")}
                 </p>
               </div>
             )}
@@ -424,7 +426,7 @@ export default async function AnalyticsPage() {
         {/* Income by Source */}
         <Card>
           <CardHeader>
-            <CardTitle>Income by Source</CardTitle>
+            <CardTitle>{t("incomeBySource")}</CardTitle>
           </CardHeader>
           <CardContent>
             {incomeStats.bySource.length > 0 ? (
@@ -475,7 +477,7 @@ export default async function AnalyticsPage() {
             ) : (
               <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
                 <p className="text-sm text-muted-foreground">
-                  No income data this month
+                  {t("noIncomeDataThisMonth")}
                 </p>
               </div>
             )}
@@ -487,9 +489,9 @@ export default async function AnalyticsPage() {
       <div className="pt-4 border-t">
         <div className="flex items-center gap-2 mb-4">
           <Binoculars className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">Forecasts</h2>
+          <h2 className="text-lg font-semibold">{t("forecasts")}</h2>
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-            AI-powered predictions
+            {t("aiPoweredPredictions")}
           </span>
         </div>
 

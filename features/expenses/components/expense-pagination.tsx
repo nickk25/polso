@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTransition } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { CaretLeft, CaretRight } from "@phosphor-icons/react"
 
@@ -15,6 +16,7 @@ export function ExpensePagination({ currentPage, totalPages, total }: ExpensePag
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const t = useTranslations("expenses")
 
   const goToPage = (page: number) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -36,7 +38,7 @@ export function ExpensePagination({ currentPage, totalPages, total }: ExpensePag
   return (
     <div className="flex items-center justify-between pt-4">
       <p className="text-sm text-muted-foreground">
-        Showing {startItem}-{endItem} of {total}
+        {t("pagination.showing", { start: startItem, end: endItem, total })}
       </p>
       <div className="flex items-center gap-2">
         <Button
@@ -46,10 +48,10 @@ export function ExpensePagination({ currentPage, totalPages, total }: ExpensePag
           disabled={currentPage <= 1 || isPending}
         >
           <CaretLeft className="h-4 w-4 mr-1" />
-          Previous
+          {t("pagination.previous")}
         </Button>
         <span className="text-sm text-muted-foreground px-2">
-          Page {currentPage} of {totalPages}
+          {t("pagination.page", { current: currentPage, total: totalPages })}
         </span>
         <Button
           variant="outline"
@@ -57,7 +59,7 @@ export function ExpensePagination({ currentPage, totalPages, total }: ExpensePag
           onClick={() => goToPage(currentPage + 1)}
           disabled={currentPage >= totalPages || isPending}
         >
-          Next
+          {t("pagination.next")}
           <CaretRight className="h-4 w-4 ml-1" />
         </Button>
       </div>

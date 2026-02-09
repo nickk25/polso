@@ -1,49 +1,52 @@
 import { Check } from "@phosphor-icons/react/dist/ssr"
+import { getTranslations } from "next-intl/server"
 
-const plans = [
-  {
-    name: "Starter",
-    price: "23",
-    period: "/mo",
-    description: "For freelancers and solo founders",
-    features: [
-      "3 bank connections",
-      "2 users",
-      "All features included",
-      "Email support",
-    ],
-    cta: "Start free trial",
-    highlighted: false,
-  },
-  {
-    name: "Business",
-    price: "42",
-    period: "/mo",
-    description: "For growing teams",
-    features: [
-      "8 bank connections",
-      "5 users",
-      "All features included",
-      "Priority support",
-    ],
-    cta: "Start free trial",
-    highlighted: true,
-  },
-]
+export async function PricingSection() {
+  const t = await getTranslations("marketing")
 
-export function PricingSection() {
+  const plans = [
+    {
+      name: t("pricing.starter"),
+      price: "23",
+      period: t("pricing.perMonth"),
+      description: t("pricing.starterDesc"),
+      features: [
+        t("pricing.starterFeature1"),
+        t("pricing.starterFeature2"),
+        t("pricing.starterFeature3"),
+        t("pricing.starterFeature4"),
+      ],
+      cta: t("pricing.startFreeTrial"),
+      highlighted: false,
+    },
+    {
+      name: t("pricing.business"),
+      price: "42",
+      period: t("pricing.perMonth"),
+      description: t("pricing.businessDesc"),
+      features: [
+        t("pricing.businessFeature1"),
+        t("pricing.businessFeature2"),
+        t("pricing.businessFeature3"),
+        t("pricing.businessFeature4"),
+      ],
+      cta: t("pricing.startFreeTrial"),
+      highlighted: true,
+    },
+  ]
+
   return (
     <section id="pricing" className="py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <p className="text-sm font-medium uppercase tracking-wider text-primary">
-            Pricing
+            {t("pricing.label")}
           </p>
           <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            Simple pricing by organization
+            {t("pricing.title")}
           </h2>
           <p className="mt-4 text-sm text-muted-foreground">
-            No per-seat fees. 14-day free trial. Cancel anytime.
+            {t("pricing.subtitle")}
           </p>
         </div>
 
@@ -84,7 +87,7 @@ export function PricingSection() {
               </ul>
 
               <p className="mt-8 text-center text-xs text-muted-foreground">
-                Coming soon
+                {t("pricing.comingSoon")}
               </p>
             </div>
           ))}

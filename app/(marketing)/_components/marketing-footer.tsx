@@ -1,6 +1,9 @@
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 
-export function MarketingFooter() {
+export async function MarketingFooter() {
+  const t = await getTranslations("marketing")
+
   return (
     <footer className="border-t bg-muted/30">
       <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -14,35 +17,32 @@ export function MarketingFooter() {
               <span className="text-sm font-semibold">Polso</span>
             </Link>
             <span className="hidden text-xs text-muted-foreground sm:block">
-              Real-time financial clarity
+              {t("footer.tagline")}
             </span>
           </div>
 
           {/* Links */}
           <nav className="flex items-center gap-6 text-xs text-muted-foreground">
             <a href="#features" className="hover:text-foreground">
-              Features
+              {t("footer.features")}
             </a>
             <a href="#pricing" className="hover:text-foreground">
-              Pricing
+              {t("footer.pricing")}
             </a>
             <a href="#faq" className="hover:text-foreground">
-              FAQ
+              {t("footer.faq")}
             </a>
-            <Link href="/auth/sign-in" className="hover:text-foreground">
-              Sign in
-            </Link>
           </nav>
         </div>
 
         <div className="mt-8 flex w-full flex-col items-center gap-4 border-t pt-6 text-xs text-muted-foreground sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} Polso. All rights reserved.</p>
+          <p>{t("footer.allRightsReserved", { year: new Date().getFullYear() })}</p>
           <nav className="flex items-center gap-4">
             <Link href="/privacy" className="hover:text-foreground">
-              Privacy Policy
+              {t("footer.privacyPolicy")}
             </Link>
             <Link href="/terms" className="hover:text-foreground">
-              Terms of Service
+              {t("footer.termsOfService")}
             </Link>
           </nav>
         </div>

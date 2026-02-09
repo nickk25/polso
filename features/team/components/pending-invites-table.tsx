@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useTranslations } from "next-intl"
 import {
   Copy,
   ArrowClockwise,
@@ -55,6 +56,7 @@ function formatRelativeTime(date: Date): string {
 }
 
 function EmailStatusIcon({ status }: { status: string | null }) {
+  const t = useTranslations("team")
   switch (status) {
     case "sent":
     case "delivered":
@@ -63,7 +65,7 @@ function EmailStatusIcon({ status }: { status: string | null }) {
           <TooltipTrigger>
             <CheckCircle className="h-4 w-4 text-emerald-600" />
           </TooltipTrigger>
-          <TooltipContent>Email {status}</TooltipContent>
+          <TooltipContent>{t("pending.emailStatus", { status })}</TooltipContent>
         </Tooltip>
       )
     case "bounced":
@@ -73,7 +75,7 @@ function EmailStatusIcon({ status }: { status: string | null }) {
           <TooltipTrigger>
             <WarningCircle className="h-4 w-4 text-destructive" />
           </TooltipTrigger>
-          <TooltipContent>Email {status}</TooltipContent>
+          <TooltipContent>{t("pending.emailStatus", { status })}</TooltipContent>
         </Tooltip>
       )
     default:
@@ -82,13 +84,15 @@ function EmailStatusIcon({ status }: { status: string | null }) {
           <TooltipTrigger>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </TooltipTrigger>
-          <TooltipContent>Pending</TooltipContent>
+          <TooltipContent>{t("pending.pending")}</TooltipContent>
         </Tooltip>
       )
   }
 }
 
 function InviteActions({ invite }: { invite: PendingInvite }) {
+  const t = useTranslations("team")
+  const tc = useTranslations("common")
   const [isResending, startResend] = useTransition()
   const [isRevoking, startRevoke] = useTransition()
   const [copied, setCopied] = useState(false)
@@ -132,7 +136,7 @@ function InviteActions({ invite }: { invite: PendingInvite }) {
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{copied ? "Copied!" : "Copy invite link"}</TooltipContent>
+        <TooltipContent>{copied ? t("pending.copied") : t("pending.copyLink")}</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -146,7 +150,7 @@ function InviteActions({ invite }: { invite: PendingInvite }) {
             <ArrowClockwise className={`h-4 w-4 ${isResending ? "animate-spin" : ""}`} />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Resend invitation</TooltipContent>
+        <TooltipContent>{t("pending.resend")}</TooltipContent>
       </Tooltip>
 
       <AlertDialog>
@@ -158,20 +162,19 @@ function InviteActions({ invite }: { invite: PendingInvite }) {
               </Button>
             </AlertDialogTrigger>
           </TooltipTrigger>
-          <TooltipContent>Revoke invitation</TooltipContent>
+          <TooltipContent>{t("pending.revoke")}</TooltipContent>
         </Tooltip>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
+            <AlertDialogTitle>{t("pending.revokeTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will cancel the invitation sent to {invite.email}. They won&apos;t
-              be able to join your organization with this link.
+              {t("pending.revokeDescription", { email: invite.email })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleRevoke}>
-              Revoke
+              {t("pending.revoke")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -181,6 +184,8 @@ function InviteActions({ invite }: { invite: PendingInvite }) {
 }
 
 export function PendingInvitesTable({ invites }: PendingInvitesTableProps) {
+  const t = useTranslations("team")
+
   if (invites.length === 0) {
     return null
   }
@@ -189,18 +194,18 @@ export function PendingInvitesTable({ invites }: PendingInvitesTableProps) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <EnvelopeSimple className="h-4 w-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Pending Invitations</h3>
+        <h3 className="text-sm font-medium">{t("pending.title")}</h3>
         <Badge variant="secondary">{invites.length}</Badge>
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Expires</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
+            <TableHead>{t("pending.email")}</TableHead>
+            <TableHead>{t("pending.role")}</TableHead>
+            <TableHead>{t("pending.status")}</TableHead>
+            <TableHead>{t("pending.expires")}</TableHead>
+            <TableHead className="w-[100px]">{t("pending.actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

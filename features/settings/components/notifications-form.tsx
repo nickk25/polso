@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,6 +24,8 @@ interface NotificationsFormProps {
 
 export function NotificationsForm({ settings }: NotificationsFormProps) {
   const router = useRouter()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [loading, setLoading] = useState(false)
   const [emailAlerts, setEmailAlerts] = useState(settings.emailAlerts)
   const [emailWeeklyDigest, setEmailWeeklyDigest] = useState(settings.emailWeeklyDigest)
@@ -61,17 +64,17 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Email Notifications</CardTitle>
+          <CardTitle>{t("notificationsForm.emailTitle")}</CardTitle>
           <CardDescription>
-            Configure which email notifications you receive
+            {t("notificationsForm.emailDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label htmlFor="emailAlerts">Email Alerts</Label>
+              <Label htmlFor="emailAlerts">{t("notificationsForm.emailAlerts")}</Label>
               <p className="text-sm text-muted-foreground">
-                Receive important alerts via email
+                {t("notificationsForm.emailAlertsDescription")}
               </p>
             </div>
             <Switch
@@ -83,9 +86,9 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label htmlFor="emailWeeklyDigest">Weekly Digest</Label>
+              <Label htmlFor="emailWeeklyDigest">{t("notificationsForm.weeklyDigest")}</Label>
               <p className="text-sm text-muted-foreground">
-                Get a weekly summary of your financial activity
+                {t("notificationsForm.weeklyDigestDescription")}
               </p>
             </div>
             <Switch
@@ -97,9 +100,9 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label htmlFor="emailLowBalance">Low Balance Alerts</Label>
+              <Label htmlFor="emailLowBalance">{t("notificationsForm.lowBalanceAlerts")}</Label>
               <p className="text-sm text-muted-foreground">
-                Get notified when account balance is low
+                {t("notificationsForm.lowBalanceAlertsDescription")}
               </p>
             </div>
             <Switch
@@ -111,9 +114,9 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label htmlFor="emailSyncErrors">Sync Error Alerts</Label>
+              <Label htmlFor="emailSyncErrors">{t("notificationsForm.syncErrorAlerts")}</Label>
               <p className="text-sm text-muted-foreground">
-                Get notified when bank sync fails
+                {t("notificationsForm.syncErrorAlertsDescription")}
               </p>
             </div>
             <Switch
@@ -127,17 +130,17 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>In-App Notifications</CardTitle>
+          <CardTitle>{t("notificationsForm.inAppTitle")}</CardTitle>
           <CardDescription>
-            Configure in-app notification preferences
+            {t("notificationsForm.inAppDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label htmlFor="inAppAlerts">In-App Alerts</Label>
+              <Label htmlFor="inAppAlerts">{t("notificationsForm.inAppAlerts")}</Label>
               <p className="text-sm text-muted-foreground">
-                Show alerts within the application
+                {t("notificationsForm.inAppAlertsDescription")}
               </p>
             </div>
             <Switch
@@ -151,44 +154,44 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Alert Thresholds</CardTitle>
+          <CardTitle>{t("notificationsForm.thresholdsTitle")}</CardTitle>
           <CardDescription>
-            Set thresholds for automatic alerts
+            {t("notificationsForm.thresholdsDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="lowBalanceThreshold">Low Balance Threshold</Label>
+            <Label htmlFor="lowBalanceThreshold">{t("notificationsForm.lowBalanceThreshold")}</Label>
             <Input
               id="lowBalanceThreshold"
               type="number"
-              placeholder="e.g., 1000"
+              placeholder={t("notificationsForm.lowBalanceThresholdPlaceholder")}
               value={lowBalanceThreshold}
               onChange={(e) => setLowBalanceThreshold(e.target.value)}
             />
             <p className="text-sm text-muted-foreground">
-              Get alerted when any account balance falls below this amount
+              {t("notificationsForm.lowBalanceThresholdDescription")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="highExpenseThreshold">High Expense Threshold</Label>
+            <Label htmlFor="highExpenseThreshold">{t("notificationsForm.highExpenseThreshold")}</Label>
             <Input
               id="highExpenseThreshold"
               type="number"
-              placeholder="e.g., 500"
+              placeholder={t("notificationsForm.highExpenseThresholdPlaceholder")}
               value={highExpenseThreshold}
               onChange={(e) => setHighExpenseThreshold(e.target.value)}
             />
             <p className="text-sm text-muted-foreground">
-              Get alerted when a single expense exceeds this amount
+              {t("notificationsForm.highExpenseThresholdDescription")}
             </p>
           </div>
         </CardContent>
       </Card>
 
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Save Changes"}
+        {loading ? tc("actions.saving") : tc("actions.saveChanges")}
       </Button>
     </form>
   )

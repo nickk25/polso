@@ -1,34 +1,40 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface PaymentFailedEmailProps {
   name: string
   amount: string
   updatePaymentUrl: string
+  locale?: Locale
 }
 
 export default function PaymentFailedEmail({
   name,
   amount,
   updatePaymentUrl,
+  locale = "en",
 }: PaymentFailedEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview="Action required: Payment failed">
-      <Preview>Action required: Payment failed</Preview>
+    <EmailLayout preview={t("paymentFailed.preview")} locale={locale}>
+      <Preview>{t("paymentFailed.preview")}</Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Action required
+        {t("paymentFailed.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        Payment failed
+        {t("paymentFailed.heading")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Hi {name}, we couldn&apos;t process your payment of <span style={{ fontWeight: 600, color: "#dc2626", fontFamily: "'JetBrains Mono', monospace" }}>{amount}</span> for your Polso subscription.
+        {t("paymentFailed.intro", { name, amount })}
       </Text>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 12px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        This could happen if
+        {t("paymentFailed.reasonsLabel")}
       </Text>
 
       <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%", marginBottom: "24px" }}>
@@ -36,7 +42,7 @@ export default function PaymentFailedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Your card expired
+              {t("paymentFailed.reason1")}
             </Text>
           </td>
         </tr>
@@ -44,7 +50,7 @@ export default function PaymentFailedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Insufficient funds
+              {t("paymentFailed.reason2")}
             </Text>
           </td>
         </tr>
@@ -52,14 +58,14 @@ export default function PaymentFailedEmail({
           <td>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Card was declined by your bank
+              {t("paymentFailed.reason3")}
             </Text>
           </td>
         </tr>
       </table>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Please update your payment method to keep your access.
+        {t("paymentFailed.updatePrompt")}
       </Text>
 
       <Button
@@ -75,11 +81,11 @@ export default function PaymentFailedEmail({
           textAlign: "center",
         }}
       >
-        Update Payment Method
+        {t("paymentFailed.button")}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        We&apos;ll retry the payment in 3 days. If it fails again, your account will be downgraded.
+        {t("paymentFailed.footer")}
       </Text>
     </EmailLayout>
   )
@@ -89,4 +95,5 @@ PaymentFailedEmail.PreviewProps = {
   name: "Alex",
   amount: "€23",
   updatePaymentUrl: "https://polso.app/settings/billing",
+  locale: "es" as const,
 } satisfies PaymentFailedEmailProps

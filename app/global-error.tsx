@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 
 export default function GlobalError({
@@ -9,15 +10,16 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const t = useTranslations("common")
   return (
     <html>
       <body className="flex items-center justify-center min-h-screen bg-background">
         <div className="max-w-md w-full p-8 text-center">
-          <h1 className="text-2xl font-bold mb-4">Application Error</h1>
+          <h1 className="text-2xl font-bold mb-4">{t("errors.applicationError")}</h1>
           <p className="text-muted-foreground mb-6">
-            Something went wrong. Please try refreshing the page.
+            {t("errors.refreshPage")}
           </p>
-          <Button onClick={reset}>Try again</Button>
+          <Button onClick={reset}>{t("errors.tryAgain")}</Button>
         </div>
       </body>
     </html>

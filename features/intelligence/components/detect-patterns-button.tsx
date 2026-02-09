@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { MagnifyingGlass, Spinner } from "@phosphor-icons/react"
 import { detectPatternsAction } from "../actions/detect-patterns"
+import { useTranslations } from "next-intl"
 
 export function DetectPatternsButton() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const t = useTranslations("recurring")
 
   const handleDetect = async () => {
     setLoading(true)
@@ -22,12 +24,12 @@ export function DetectPatternsButton() {
       {loading ? (
         <>
           <Spinner className="h-4 w-4 mr-2 animate-spin" />
-          Analyzing...
+          {t("analyzing")}
         </>
       ) : (
         <>
           <MagnifyingGlass className="h-4 w-4 mr-2" />
-          Detect Patterns
+          {t("detectPatterns")}
         </>
       )}
     </Button>

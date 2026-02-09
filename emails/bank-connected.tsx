@@ -1,11 +1,14 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface BankConnectedEmailProps {
   name: string
   bankName: string
   accountCount: number
   dashboardUrl: string
+  locale?: Locale
 }
 
 export default function BankConnectedEmail({
@@ -13,24 +16,27 @@ export default function BankConnectedEmail({
   bankName,
   accountCount,
   dashboardUrl,
+  locale = "en",
 }: BankConnectedEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview={`${bankName} connected successfully`}>
-      <Preview>{bankName} connected successfully</Preview>
+    <EmailLayout preview={t("bankConnected.preview", { bankName })} locale={locale}>
+      <Preview>{t("bankConnected.preview", { bankName })}</Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Bank sync
+        {t("bankConnected.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        {bankName} connected
+        {t("bankConnected.heading", { bankName })}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Hi {name}, <span style={{ fontWeight: 500, color: "#18181B" }}>{bankName}</span> is now connected to Polso. We&apos;ve synced <span style={{ fontWeight: 600, color: "#18181B", fontFamily: "'JetBrains Mono', monospace" }}>{accountCount}</span> account{accountCount > 1 ? "s" : ""}.
+        {t("bankConnected.intro", { name, bankName, accountCount })}
       </Text>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 12px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        What happens next
+        {t("bankConnected.nextLabel")}
       </Text>
 
       <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%", marginBottom: "24px" }}>
@@ -38,7 +44,7 @@ export default function BankConnectedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Your transactions are syncing now
+              {t("bankConnected.step1")}
             </Text>
           </td>
         </tr>
@@ -46,7 +52,7 @@ export default function BankConnectedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              We&apos;ll auto-categorize your expenses
+              {t("bankConnected.step2")}
             </Text>
           </td>
         </tr>
@@ -54,7 +60,7 @@ export default function BankConnectedEmail({
           <td>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Daily syncs will keep everything up to date
+              {t("bankConnected.step3")}
             </Text>
           </td>
         </tr>
@@ -73,11 +79,11 @@ export default function BankConnectedEmail({
           textAlign: "center",
         }}
       >
-        View Dashboard
+        {t("bankConnected.button")}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        Your bank connection is read-only. We can never move money or make transactions.
+        {t("bankConnected.footer")}
       </Text>
     </EmailLayout>
   )
@@ -88,4 +94,5 @@ BankConnectedEmail.PreviewProps = {
   bankName: "ING Direct",
   accountCount: 2,
   dashboardUrl: "https://polso.app/dashboard",
+  locale: "es" as const,
 } satisfies BankConnectedEmailProps

@@ -1,0 +1,125 @@
+{
+  "title": "Configuracion",
+  "subtitle": "Gestiona tu cuenta y preferencias",
+  "organization": "Organizacion",
+  "organizationDescription": "Gestiona la configuracion de la organizacion, moneda y zona horaria",
+  "manageOrganization": "Gestionar Organizacion",
+  "profile": "Perfil",
+  "profileDescription": "Gestiona la informacion de tu cuenta",
+  "editProfile": "Editar Perfil",
+  "bankConnections": "Conexiones Bancarias",
+  "bankConnectionsDescription": "Gestiona las cuentas bancarias conectadas",
+  "manageBanks": "Gestionar Bancos",
+  "notifications": "Notificaciones",
+  "notificationsDescription": "Configura alertas y notificaciones",
+  "configure": "Configurar",
+  "preferencesTitle": "Preferencias",
+  "preferencesDescription": "Tema, idioma y configuracion de visualizacion",
+  "editPreferences": "Editar Preferencias",
+  "teamTitle": "Equipo",
+  "teamDescription": "Invita y gestiona miembros del equipo",
+  "manageTeam": "Gestionar Equipo",
+  "tabs": {
+    "general": "General",
+    "preferences": "Preferencias",
+    "team": "Equipo",
+    "billing": "Facturacion",
+    "banking": "Banca"
+  },
+  "general": {
+    "title": "Configuracion General",
+    "organizationName": "Nombre de la Organizacion",
+    "organizationNameDescription": "Este es el nombre de tu organizacion.",
+    "dangerZone": "Zona de Peligro",
+    "deleteOrganization": "Eliminar Organizacion",
+    "deleteOrganizationDescription": "Eliminar permanentemente tu organizacion y todos sus datos."
+  },
+  "preferences": {
+    "title": "Preferencias de Visualizacion",
+    "description": "Personaliza como se ve y se comporta la aplicacion",
+    "theme": "Tema",
+    "themeDescription": "Elige tu esquema de colores preferido",
+    "themeSystem": "Sistema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "language": "Idioma y Region",
+    "languageDescription": "Afecta el formato de numeros y fechas",
+    "compactMode": "Modo Compacto",
+    "compactModeDescription": "Usa un diseno mas condensado con menor espaciado"
+  },
+  "team": {
+    "title": "Miembros del Equipo",
+    "subtitle": "Gestiona los miembros de tu equipo e invitaciones",
+    "invite": "Invitar Miembro",
+    "role": "Rol",
+    "roles": {
+      "owner": "Propietario",
+      "admin": "Administrador",
+      "member": "Miembro"
+    }
+  },
+  "organizationPage": {
+    "title": "Configuracion de la Organizacion",
+    "description": "Gestiona la configuracion basica de tu organizacion"
+  },
+  "preferencesPage": {
+    "title": "Preferencias",
+    "description": "Personaliza la configuracion de visualizacion y aplicacion"
+  },
+  "notificationsPage": {
+    "title": "Notificaciones",
+    "description": "Configura tus preferencias de alertas y notificaciones"
+  },
+  "organizationForm": {
+    "title": "Configuracion de la Organizacion",
+    "description": "Configura los ajustes basicos de tu organizacion",
+    "name": "Nombre de la Organizacion",
+    "namePlaceholder": "Nombre de tu organizacion",
+    "currency": "Moneda Predeterminada",
+    "currencyPlaceholder": "Seleccionar moneda",
+    "timezone": "Zona Horaria",
+    "timezonePlaceholder": "Seleccionar zona horaria",
+    "fiscalYearStart": "Inicio del Ano Fiscal",
+    "fiscalYearStartPlaceholder": "Seleccionar mes",
+    "dateFormat": "Formato de Fecha",
+    "dateFormatPlaceholder": "Seleccionar formato de fecha",
+    "months": {
+      "1": "Enero",
+      "2": "Febrero",
+      "3": "Marzo",
+      "4": "Abril",
+      "5": "Mayo",
+      "6": "Junio",
+      "7": "Julio",
+      "8": "Agosto",
+      "9": "Septiembre",
+      "10": "Octubre",
+      "11": "Noviembre",
+      "12": "Diciembre"
+    }
+  },
+  "notificationsForm": {
+    "emailTitle": "Notificaciones por Correo",
+    "emailDescription": "Configura que notificaciones recibes por correo",
+    "emailAlerts": "Alertas por Correo",
+    "emailAlertsDescription": "Recibe alertas importantes por correo",
+    "weeklyDigest": "Resumen Semanal",
+    "weeklyDigestDescription": "Recibe un resumen semanal de tu actividad financiera",
+    "lowBalanceAlerts": "Alertas de Saldo Bajo",
+    "lowBalanceAlertsDescription": "Recibe notificaciones cuando el saldo de la cuenta es bajo",
+    "syncErrorAlerts": "Alertas de Errores de Sincronizacion",
+    "syncErrorAlertsDescription": "Recibe notificaciones cuando la sincronizacion bancaria falla",
+    "inAppTitle": "Notificaciones en la Aplicacion",
+    "inAppDescription": "Configura las preferencias de notificaciones en la aplicacion",
+    "inAppAlerts": "Alertas en la Aplicacion",
+    "inAppAlertsDescription": "Mostrar alertas dentro de la aplicacion",
+    "thresholdsTitle": "Umbrales de Alertas",
+    "thresholdsDescription": "Establece umbrales para alertas automaticas",
+    "lowBalanceThreshold": "Umbral de Saldo Bajo",
+    "lowBalanceThresholdPlaceholder": "ej., 1000",
+    "lowBalanceThresholdDescription": "Recibe alertas cuando el saldo de cualquier cuenta caiga por debajo de esta cantidad",
+    "highExpenseThreshold": "Umbral de Gasto Alto",
+    "highExpenseThresholdPlaceholder": "ej., 500",
+    "highExpenseThresholdDescription": "Recibe alertas cuando un gasto individual supere esta cantidad"
+  }
+}

@@ -1,15 +1,18 @@
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Gear, Bank, User, Bell, Buildings, UsersThree } from "@phosphor-icons/react/dist/ssr"
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const t = await getTranslations("settings")
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Settings</h1>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Manage your account and preferences
+          {t("subtitle")}
         </p>
       </div>
 
@@ -18,15 +21,15 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Buildings className="h-5 w-5" />
-              <CardTitle>Organization</CardTitle>
+              <CardTitle>{t("organization")}</CardTitle>
             </div>
             <CardDescription>
-              Manage organization settings, currency, and timezone
+              {t("organizationDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>
-              <Link href="/settings/organization">Manage Organization</Link>
+              <Link href="/settings/organization">{t("manageOrganization")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -35,15 +38,15 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              <CardTitle>Profile</CardTitle>
+              <CardTitle>{t("profile")}</CardTitle>
             </div>
             <CardDescription>
-              Manage your account information
+              {t("profileDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>
-              <Link href="/settings/profile">Edit Profile</Link>
+              <Link href="/settings/profile">{t("editProfile")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -52,15 +55,15 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Bank className="h-5 w-5" />
-              <CardTitle>Bank Connections</CardTitle>
+              <CardTitle>{t("bankConnections")}</CardTitle>
             </div>
             <CardDescription>
-              Manage connected bank accounts
+              {t("bankConnectionsDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>
-              <Link href="/settings/banking">Manage Banks</Link>
+              <Link href="/settings/banking">{t("manageBanks")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -69,15 +72,15 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              <CardTitle>Notifications</CardTitle>
+              <CardTitle>{t("notifications")}</CardTitle>
             </div>
             <CardDescription>
-              Configure alerts and notifications
+              {t("notificationsDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>
-              <Link href="/settings/notifications">Configure</Link>
+              <Link href="/settings/notifications">{t("configure")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -86,15 +89,15 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Gear className="h-5 w-5" />
-              <CardTitle>Preferences</CardTitle>
+              <CardTitle>{t("preferencesTitle")}</CardTitle>
             </div>
             <CardDescription>
-              Theme, locale, and display settings
+              {t("preferencesDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>
-              <Link href="/settings/preferences">Edit Preferences</Link>
+              <Link href="/settings/preferences">{t("editPreferences")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -103,15 +106,15 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <UsersThree className="h-5 w-5" />
-              <CardTitle>Team</CardTitle>
+              <CardTitle>{t("teamTitle")}</CardTitle>
             </div>
             <CardDescription>
-              Invite and manage team members
+              {t("teamDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>
-              <Link href="/settings/team">Manage Team</Link>
+              <Link href="/settings/team">{t("manageTeam")}</Link>
             </Button>
           </CardContent>
         </Card>

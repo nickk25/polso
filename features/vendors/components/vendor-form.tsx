@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,6 +57,8 @@ function formatCurrency(value: number, currency = "USD") {
 }
 
 export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFormProps) {
+  const t = useTranslations("vendors")
+  const tc = useTranslations("common")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -158,44 +161,44 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>{isEditing ? "Edit Vendor" : "New Vendor"}</SheetTitle>
+            <SheetTitle>{isEditing ? t("form.editTitle") : t("form.newTitle")}</SheetTitle>
             <SheetDescription>
               {isEditing ? (
                 <span className="flex items-center gap-2">
                   {vendor.isAutoDetected && (
                     <span className="inline-flex items-center gap-1 text-xs text-violet-500">
                       <Sparkle weight="fill" className="h-3 w-3" />
-                      Auto-detected
+                      {t("form.autoDetected")}
                     </span>
                   )}
                   {vendor._count.expenses > 0 && (
                     <span>
-                      {vendor._count.expenses} expense{vendor._count.expenses > 1 ? "s" : ""} •{" "}
+                      {t("form.expenseCount", { count: vendor._count.expenses })} •{" "}
                       {formatCurrency(vendor.totalSpent)}
                     </span>
                   )}
                 </span>
               ) : (
-                "Create a new vendor to organize your expenses."
+                t("form.newDescription")
               )}
             </SheetDescription>
           </SheetHeader>
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 gap-6 p-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("form.name")}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Netflix"
+                placeholder={t("form.namePlaceholder")}
                 maxLength={100}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="website">Website (optional)</Label>
+              <Label htmlFor="website">{t("form.website")}</Label>
               <Input
                 id="website"
                 type="url"
@@ -206,50 +209,50 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="taxId">Tax ID (optional)</Label>
+              <Label htmlFor="taxId">{t("form.taxId")}</Label>
               <Input
                 id="taxId"
                 value={taxId}
                 onChange={(e) => setTaxId(e.target.value)}
-                placeholder="e.g., B12345678"
+                placeholder={t("form.taxIdPlaceholder")}
               />
               <p className="text-xs text-muted-foreground">
-                For invoice matching and tax purposes.
+                {t("form.taxIdDescription")}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label>Default Category</Label>
+              <Label>{t("form.defaultCategory")}</Label>
               <CategorySelect
                 value={defaultCategoryId}
                 onValueChange={setDefaultCategoryId}
                 categories={categories}
-                placeholder="No default category"
+                placeholder={t("form.noDefaultCategory")}
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground">
-                New expenses from this vendor will use this category.
+                {t("form.defaultCategoryDescription")}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label>Default Expense Type</Label>
+              <Label>{t("form.defaultExpenseType")}</Label>
               <Select value={defaultExpenseType} onValueChange={setDefaultExpenseType}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="None" />
+                  <SelectValue placeholder={t("form.none")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE_VALUE}>None</SelectItem>
+                  <SelectItem value={NONE_VALUE}>{t("form.none")}</SelectItem>
                   <SelectItem value="fixed">
                     <span className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-red-500" />
-                      Fixed
+                      {t("form.fixed")}
                     </span>
                   </SelectItem>
                   <SelectItem value="variable">
                     <span className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-amber-500" />
-                      Variable
+                      {t("form.variable")}
                     </span>
                   </SelectItem>
                 </SelectContent>
@@ -268,7 +271,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
                   className="mr-auto"
                 >
                   <Trash className="h-4 w-4 mr-2" />
-                  Delete
+                  {tc("actions.delete")}
                 </Button>
               )}
               <Button
@@ -277,18 +280,18 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
               >
-                Cancel
+                {tc("actions.cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
                   <>
                     <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                    {isEditing ? "Saving..." : "Creating..."}
+                    {isEditing ? tc("actions.saving") : tc("actions.loading")}
                   </>
                 ) : isEditing ? (
-                  "Save Changes"
+                  tc("actions.saveChanges")
                 ) : (
-                  "Create Vendor"
+                  t("addVendor")
                 )}
               </Button>
             </SheetFooter>
@@ -299,24 +302,20 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete vendor?</AlertDialogTitle>
+            <AlertDialogTitle>{t("form.deleteVendor")}</AlertDialogTitle>
             <AlertDialogDescription>
               {vendor && vendor._count.expenses > 0 ? (
                 <>
-                  This vendor has {vendor._count.expenses} linked expense
-                  {vendor._count.expenses > 1 ? "s" : ""}. You must reassign them before
-                  deleting, or merge this vendor with another.
+                  {t("form.deleteHasExpenses", { count: vendor._count.expenses })}{" "}
+                  {t("form.deleteReassign")}
                 </>
               ) : (
-                <>
-                  This will permanently delete <strong>{vendor?.name}</strong>. This action
-                  cannot be undone.
-                </>
+                t("form.deleteConfirm", { name: vendor?.name ?? "" })
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>{tc("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={loading || (vendor?._count.expenses ?? 0) > 0}
@@ -325,10 +324,10 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
               {loading ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
+                  {tc("actions.deleting")}
                 </>
               ) : (
-                "Delete"
+                tc("actions.delete")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -43,6 +44,8 @@ function formatCurrency(amount: number | null, currency: string = "USD") {
 
 export function BankAccountCard({ account }: BankAccountCardProps) {
   const router = useRouter()
+  const t = useTranslations("banking")
+  const tc = useTranslations("common")
   const [syncing, setSyncing] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
 
@@ -61,10 +64,10 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
   }
 
   const statusBadge = {
-    active: { variant: "default" as const, icon: CheckCircle, label: "Active" },
-    pending: { variant: "secondary" as const, icon: Clock, label: "Pending" },
-    expired: { variant: "destructive" as const, icon: Warning, label: "Expired" },
-    error: { variant: "destructive" as const, icon: Warning, label: "Error" },
+    active: { variant: "default" as const, icon: CheckCircle, label: t("accountCard.statusActive") },
+    pending: { variant: "secondary" as const, icon: Clock, label: t("accountCard.statusPending") },
+    expired: { variant: "destructive" as const, icon: Warning, label: t("accountCard.statusExpired") },
+    error: { variant: "destructive" as const, icon: Warning, label: t("accountCard.statusError") },
   }[account.status] ?? { variant: "secondary" as const, icon: Clock, label: account.status }
 
   const StatusIcon = statusBadge.icon
@@ -78,7 +81,7 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={account.institutionLogo.startsWith("data:") ? account.institutionLogo : `data:image/png;base64,${account.institutionLogo}`}
-                alt={account.institutionName || "Bank"}
+                alt={account.institutionName || t("accountCard.bank")}
                 className="h-8 w-8 rounded"
               />
             ) : (
@@ -97,22 +100,22 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
               )}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{account.institutionName || "Bank"}</span>
+              <span>{account.institutionName || t("accountCard.bank")}</span>
               <span>•</span>
               <span className="capitalize">{account.accountSubtype || account.accountType}</span>
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
               <span>
-                Avail: <span className="text-foreground font-medium">{formatCurrency(account.balanceAvailable, account.currency)}</span>
+                {t("accountCard.available")}: <span className="text-foreground font-medium">{formatCurrency(account.balanceAvailable, account.currency)}</span>
               </span>
               <span>
-                Curr: <span className="text-foreground font-medium">{formatCurrency(account.balanceCurrent, account.currency)}</span>
+                {t("accountCard.current")}: <span className="text-foreground font-medium">{formatCurrency(account.balanceCurrent, account.currency)}</span>
               </span>
-              <span>{account._count.transactions} txns</span>
+              <span>{t("accountCard.txns", { count: account._count.transactions })}</span>
             </div>
             {account.lastSyncedAt && (
               <p className="text-xs text-muted-foreground mt-1">
-                Last synced: {new Date(account.lastSyncedAt).toLocaleString()}
+                {t("accountCard.lastSynced", { date: new Date(account.lastSyncedAt).toLocaleString() })}
               </p>
             )}
             {account.syncError && (
@@ -134,7 +137,7 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
             size="icon"
             onClick={handleSync}
             disabled={syncing || account.status !== "active"}
-            title="Sync transactions"
+            title={t("accountCard.syncTransactions")}
           >
             <ArrowsClockwise className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
           </Button>
@@ -145,27 +148,25 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
                 variant="ghost"
                 size="icon"
                 disabled={disconnecting}
-                title="Disconnect bank"
+                title={t("accountCard.disconnectBank")}
               >
                 <Trash className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Disconnect Bank Account</AlertDialogTitle>
+                <AlertDialogTitle>{t("accountCard.disconnectTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to disconnect this bank account? This will remove the connection
-                  to {account.institutionName || "this bank"}. Your existing transactions will be preserved,
-                  but no new transactions will be synced.
+                  {t("accountCard.disconnectDescription", { bank: account.institutionName || t("accountCard.bank") })}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDisconnect}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  Disconnect
+                  {t("accountCard.disconnect")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

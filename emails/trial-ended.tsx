@@ -1,32 +1,38 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface TrialEndedEmailProps {
   name: string
   upgradeUrl: string
+  locale?: Locale
 }
 
 export default function TrialEndedEmail({
   name,
   upgradeUrl,
+  locale = "en",
 }: TrialEndedEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview="Your Polso trial has ended">
-      <Preview>Your Polso trial has ended</Preview>
+    <EmailLayout preview={t("trialEnded.preview")} locale={locale}>
+      <Preview>{t("trialEnded.preview")}</Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Trial ended
+        {t("trialEnded.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        Your trial has ended
+        {t("trialEnded.heading")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        Hi {name}, your 14-day Polso trial has ended. Your data is safe, but you no longer have access to your dashboard.
+        {t("trialEnded.intro", { name })}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Ready to keep your financial clarity?
+        {t("trialEnded.cta")}
       </Text>
 
       <Button
@@ -42,15 +48,15 @@ export default function TrialEndedEmail({
           textAlign: "center",
         }}
       >
-        Upgrade Now
+        {t("trialEnded.button")}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        Your data will be kept for 30 days. After that, it will be permanently deleted.
+        {t("trialEnded.dataRetention")}
       </Text>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "12px 0 0 0" }}>
-        Changed your mind? Just reply to this email.
+        {t("trialEnded.footer")}
       </Text>
     </EmailLayout>
   )
@@ -59,4 +65,5 @@ export default function TrialEndedEmail({
 TrialEndedEmail.PreviewProps = {
   name: "Alex",
   upgradeUrl: "https://polso.app/settings/billing",
+  locale: "es" as const,
 } satisfies TrialEndedEmailProps

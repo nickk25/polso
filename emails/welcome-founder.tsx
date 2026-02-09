@@ -1,46 +1,52 @@
 import { Preview, Text } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface WelcomeFounderEmailProps {
   name: string
+  locale?: Locale
 }
 
 export default function WelcomeFounderEmail({
   name,
+  locale = "en",
 }: WelcomeFounderEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview="A personal note from Nicolas">
-      <Preview>A personal note from Nicolas</Preview>
+    <EmailLayout preview={t("welcomeFounder.preview")} locale={locale}>
+      <Preview>{t("welcomeFounder.preview")}</Preview>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        Hey {name},
+        {t("welcomeFounder.greeting", { name })}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        Thanks for signing up for Polso. I&apos;m Nick, the founder, and I wanted to personally welcome you.
+        {t("welcomeFounder.intro")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        I built Polso because I was tired of not knowing my numbers until my accountant told me — weeks later. By then, the decisions were already made.
+        {t("welcomeFounder.why")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        You shouldn&apos;t have to wait until the end of the month to understand your finances. Connect your bank, see your expenses categorized, know how long your cash will last. That&apos;s it.
+        {t("welcomeFounder.value")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        I read every reply to this email. If something&apos;s confusing, something&apos;s missing, or you just want to share how you&apos;re using it — hit reply. I&apos;d love to hear from you.
+        {t("welcomeFounder.reply")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 4px 0", lineHeight: 1.6 }}>
-        Welcome aboard,
+        {t("welcomeFounder.signoff")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#18181B", margin: "0 0 0 0", lineHeight: 1.6, fontWeight: 500 }}>
-        Nick
+        {t("welcomeFounder.name")}
       </Text>
       <Text style={{ fontSize: "13px", color: "#71717A", margin: "0" }}>
-        Founder, Polso
+        {t("welcomeFounder.title")}
       </Text>
     </EmailLayout>
   )
@@ -48,4 +54,5 @@ export default function WelcomeFounderEmail({
 
 WelcomeFounderEmail.PreviewProps = {
   name: "Alex",
+  locale: "es" as const,
 } satisfies WelcomeFounderEmailProps

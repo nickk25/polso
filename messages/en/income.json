@@ -1,0 +1,77 @@
+{
+  "title": "Income",
+  "subtitle": "Track your incoming payments",
+  "transactionCount": "{count} {count, plural, one {transaction} other {transactions}}",
+  "thisMonth": "This Month",
+  "lastMonth": "Last Month",
+  "monthOverMonth": "Month Over Month",
+  "transactions": "Transactions",
+  "noMatchingIncome": "No matching income",
+  "tryAdjustingFilters": "Try adjusting your search or filters",
+  "noIncomeYet": "No income yet",
+  "noIncomeDescription": "Connect a bank account to automatically import and track your income",
+  "connectBank": "Connect Bank",
+  "tableHeaders": {
+    "date": "Date",
+    "description": "Description",
+    "category": "Category",
+    "source": "Source",
+    "amount": "Amount",
+    "status": "Status"
+  },
+  "statuses": {
+    "confirmed": "Confirmed",
+    "excluded": "Excluded",
+    "pending": "Pending"
+  },
+  "sources": {
+    "salary": "Salary",
+    "freelance": "Freelance",
+    "investment": "Investment",
+    "refund": "Refund",
+    "transfer": "Transfer",
+    "other": "Other"
+  },
+  "addIncome": "Add Income",
+  "editIncome": "Edit Income",
+  "deleteIncome": "Delete Income",
+  "deleteConfirm": "Are you sure you want to delete this income entry?",
+  "fields": {
+    "description": "Description",
+    "amount": "Amount",
+    "date": "Date",
+    "category": "Category",
+    "client": "Client",
+    "status": "Status",
+    "notes": "Notes",
+    "invoice": "Invoice",
+    "recurring": "Recurring"
+  },
+  "filters": {
+    "allCategories": "All Categories",
+    "allClients": "All Clients",
+    "dateRange": "Date Range"
+  },
+  "totals": {
+    "total": "Total",
+    "average": "Average",
+    "count": "{count, plural, one {# entry} other {# entries}}"
+  },
+  "tableFilters": {
+    "searchPlaceholder": "Search income...",
+    "statusPlaceholder": "Status",
+    "allStatus": "All Status",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "excluded": "Excluded",
+    "sourcePlaceholder": "Source",
+    "allSources": "All Sources",
+    "clear": "Clear"
+  },
+  "pagination": {
+    "showing": "Showing {start}-{end} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}"
+  }
+}

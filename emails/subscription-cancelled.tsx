@@ -1,34 +1,40 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface SubscriptionCancelledEmailProps {
   name: string
   accessEndDate: string
   resubscribeUrl: string
+  locale?: Locale
 }
 
 export default function SubscriptionCancelledEmail({
   name,
   accessEndDate,
   resubscribeUrl,
+  locale = "en",
 }: SubscriptionCancelledEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview="Your Polso subscription has been cancelled">
-      <Preview>Your Polso subscription has been cancelled</Preview>
+    <EmailLayout preview={t("subscriptionCancelled.preview")} locale={locale}>
+      <Preview>{t("subscriptionCancelled.preview")}</Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Subscription
+        {t("subscriptionCancelled.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        Subscription cancelled
+        {t("subscriptionCancelled.heading")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Hi {name}, your Polso subscription has been cancelled. You&apos;ll continue to have access until <span style={{ fontWeight: 500, color: "#18181B" }}>{accessEndDate}</span>.
+        {t("subscriptionCancelled.intro", { name, accessEndDate })}
       </Text>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 12px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        After that date
+        {t("subscriptionCancelled.afterDateLabel")}
       </Text>
 
       <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%", marginBottom: "24px" }}>
@@ -36,7 +42,7 @@ export default function SubscriptionCancelledEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              You won&apos;t be able to access your dashboard
+              {t("subscriptionCancelled.consequence1")}
             </Text>
           </td>
         </tr>
@@ -44,7 +50,7 @@ export default function SubscriptionCancelledEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Bank syncing will stop
+              {t("subscriptionCancelled.consequence2")}
             </Text>
           </td>
         </tr>
@@ -52,14 +58,14 @@ export default function SubscriptionCancelledEmail({
           <td>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Your data will be kept for 30 days
+              {t("subscriptionCancelled.consequence3")}
             </Text>
           </td>
         </tr>
       </table>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Changed your mind? You can resubscribe anytime.
+        {t("subscriptionCancelled.resubscribePrompt")}
       </Text>
 
       <Button
@@ -75,11 +81,11 @@ export default function SubscriptionCancelledEmail({
           textAlign: "center",
         }}
       >
-        Resubscribe
+        {t("subscriptionCancelled.button")}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        We&apos;d love to hear why you&apos;re leaving. Just reply to this email.
+        {t("subscriptionCancelled.footer")}
       </Text>
     </EmailLayout>
   )
@@ -89,4 +95,5 @@ SubscriptionCancelledEmail.PreviewProps = {
   name: "Alex",
   accessEndDate: "March 1, 2026",
   resubscribeUrl: "https://polso.app/settings/billing",
+  locale: "es" as const,
 } satisfies SubscriptionCancelledEmailProps

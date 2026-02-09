@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useTranslations } from "next-intl"
 import { UserPlus } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,6 +32,8 @@ interface InviteDialogProps {
 }
 
 export function InviteDialog({ disabled, currentPlan }: InviteDialogProps) {
+  const t = useTranslations("team")
+  const tc = useTranslations("common")
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState("")
   const [role, setRole] = useState<"member" | "admin">("member")
@@ -68,34 +71,33 @@ export function InviteDialog({ disabled, currentPlan }: InviteDialogProps) {
       <DialogTrigger asChild>
         <Button disabled={disabled}>
           <UserPlus className="h-4 w-4 mr-2" />
-          Invite Member
+          {t("invite.button")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
+            <DialogTitle>{t("invite.title")}</DialogTitle>
             <DialogDescription>
-              Send an invitation to join your organization. They&apos;ll receive an email
-              with a link to accept.
+              {t("invite.description")}
             </DialogDescription>
           </DialogHeader>
 
           {disabled ? (
             <div className="py-4">
               <InlineUpgrade
-                message="You've reached your team member limit."
+                message={t("invite.limitReached")}
                 planType={currentPlan}
               />
             </div>
           ) : (
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">{t("invite.email")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="colleague@company.com"
+                  placeholder={t("invite.emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -104,29 +106,29 @@ export function InviteDialog({ disabled, currentPlan }: InviteDialogProps) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role">{t("invite.role")}</Label>
                 <Select
                   value={role}
                   onValueChange={(value: "member" | "admin") => setRole(value)}
                   disabled={isPending}
                 >
                   <SelectTrigger id="role">
-                    <SelectValue placeholder="Select a role" />
+                    <SelectValue placeholder={t("invite.selectRole")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="member">
                       <div className="flex flex-col items-start">
-                        <span>Member</span>
+                        <span>{t("invite.memberRole")}</span>
                         <span className="text-xs text-muted-foreground">
-                          Can view and manage expenses
+                          {t("invite.memberDescription")}
                         </span>
                       </div>
                     </SelectItem>
                     <SelectItem value="admin">
                       <div className="flex flex-col items-start">
-                        <span>Admin</span>
+                        <span>{t("invite.adminRole")}</span>
                         <span className="text-xs text-muted-foreground">
-                          Full access including team management
+                          {t("invite.adminDescription")}
                         </span>
                       </div>
                     </SelectItem>
@@ -143,7 +145,7 @@ export function InviteDialog({ disabled, currentPlan }: InviteDialogProps) {
           <DialogFooter>
             {!disabled && (
               <Button type="submit" disabled={isPending || !email}>
-                {isPending ? "Sending..." : "Send Invitation"}
+                {isPending ? t("invite.sending") : t("invite.sendInvitation")}
               </Button>
             )}
           </DialogFooter>

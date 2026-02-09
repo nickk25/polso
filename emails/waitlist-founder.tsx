@@ -1,46 +1,52 @@
 import { Preview, Text } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface WaitlistFounderEmailProps {
   name: string
+  locale?: Locale
 }
 
 export default function WaitlistFounderEmail({
   name,
+  locale = "en",
 }: WaitlistFounderEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview="A personal note from Nicolas">
-      <Preview>A personal note from Nicolas</Preview>
+    <EmailLayout preview={t("waitlistFounder.preview")} locale={locale}>
+      <Preview>{t("waitlistFounder.preview")}</Preview>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        Hey {name},
+        {t("waitlistFounder.greeting", { name })}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        Thanks for joining the Polso waiting list. I&apos;m Nick, the founder, and I wanted to let you know — you&apos;re in.
+        {t("waitlistFounder.intro")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        I&apos;m building Polso for freelancers and small teams who want to know their numbers without waiting for the monthly report. Bank sync, automatic categorization, runway in real time.
+        {t("waitlistFounder.building")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        I&apos;m opening access in small batches to make sure everything works smoothly. You&apos;ll hear from me as soon as your spot is ready.
+        {t("waitlistFounder.batches")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        In the meantime, if you have questions or want to share what you&apos;re hoping Polso solves for you — just reply. I read every message.
+        {t("waitlistFounder.reply")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 4px 0", lineHeight: 1.6 }}>
-        Talk soon,
+        {t("waitlistFounder.signoff")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#18181B", margin: "0 0 0 0", lineHeight: 1.6, fontWeight: 500 }}>
-        Nick
+        {t("waitlistFounder.name")}
       </Text>
       <Text style={{ fontSize: "13px", color: "#71717A", margin: "0" }}>
-        Founder, Polso
+        {t("waitlistFounder.title")}
       </Text>
     </EmailLayout>
   )
@@ -48,4 +54,5 @@ export default function WaitlistFounderEmail({
 
 WaitlistFounderEmail.PreviewProps = {
   name: "Alex",
+  locale: "es" as const,
 } satisfies WaitlistFounderEmailProps

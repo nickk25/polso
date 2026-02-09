@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { Buildings, WarningCircle, Clock } from "@phosphor-icons/react/dist/ssr"
+import { getTranslations } from "next-intl/server"
+import { getLocale } from "@/lib/i18n/get-locale"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -20,6 +22,8 @@ interface InvitePageProps {
 export default async function InvitePage({ params }: InvitePageProps) {
   const { token } = await params
   const { user } = await neonAuth()
+  const t = await getTranslations("invite")
+  const locale = await getLocale()
 
   const validation = await validateInvitationToken(token)
 
@@ -33,25 +37,21 @@ export default async function InvitePage({ params }: InvitePageProps) {
               <WarningCircle className="h-6 w-6 text-destructive" />
             </div>
             <CardTitle>
-              {validation.reason === "not_found" && "Invitation Not Found"}
-              {validation.reason === "expired" && "Invitation Expired"}
-              {validation.reason === "already_accepted" && "Already Accepted"}
-              {validation.reason === "revoked" && "Invitation Revoked"}
+              {validation.reason === "not_found" && t("notFound")}
+              {validation.reason === "expired" && t("expired")}
+              {validation.reason === "already_accepted" && t("alreadyAccepted")}
+              {validation.reason === "revoked" && t("revoked")}
             </CardTitle>
             <CardDescription>
-              {validation.reason === "not_found" &&
-                "This invitation link is invalid or has been removed."}
-              {validation.reason === "expired" &&
-                "This invitation has expired. Please ask the team admin to send a new invitation."}
-              {validation.reason === "already_accepted" &&
-                "This invitation has already been used."}
-              {validation.reason === "revoked" &&
-                "This invitation has been cancelled by the team admin."}
+              {validation.reason === "not_found" && t("notFoundDesc")}
+              {validation.reason === "expired" && t("expiredDesc")}
+              {validation.reason === "already_accepted" && t("alreadyAcceptedDesc")}
+              {validation.reason === "revoked" && t("revokedDesc")}
             </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
             <Button asChild variant="outline">
-              <Link href="/">Go to Homepage</Link>
+              <Link href="/">{t("goToHomepage")}</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -66,7 +66,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const daysRemaining = Math.ceil(
     (invitation.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
   )
-  const expiresText = new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
+  const expiresText = new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(
     daysRemaining,
     "day"
   )
@@ -84,22 +84,20 @@ export default async function InvitePage({ params }: InvitePageProps) {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/20">
               <WarningCircle className="h-6 w-6 text-amber-600" />
             </div>
-            <CardTitle>Email Mismatch</CardTitle>
+            <CardTitle>{t("emailMismatch")}</CardTitle>
             <CardDescription>
-              This invitation was sent to <strong>{invitation.email}</strong>, but
-              you&apos;re logged in as <strong>{user?.email}</strong>.
+              {t("emailMismatchDesc", { inviteEmail: invitation.email, userEmail: user?.email ?? "" })}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center text-sm text-muted-foreground">
-            Please sign out and sign in with the correct email address, or ask the
-            team admin to send a new invitation to your current email.
+            {t("emailMismatchHelp")}
           </CardContent>
           <CardFooter className="flex-col gap-2">
             <Button asChild className="w-full">
-              <Link href="/api/auth/signout">Sign Out</Link>
+              <Link href="/api/auth/signout">{t("signOut")}</Link>
             </Button>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/dashboard">Go to Dashboard</Link>
+              <Link href="/dashboard">{t("goToDashboard")}</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -115,10 +113,9 @@ export default async function InvitePage({ params }: InvitePageProps) {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Buildings className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle>Join {invitation.organizationName}</CardTitle>
+          <CardTitle>{t("joinOrg", { orgName: invitation.organizationName })}</CardTitle>
           <CardDescription>
-            You&apos;ve been invited to join as a{" "}
-            <strong className="capitalize">{invitation.role}</strong>
+            {t("invitedAsRole", { role: invitation.role })}
           </CardDescription>
         </CardHeader>
 
@@ -131,7 +128,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
               <div>
                 <p className="font-medium">{invitation.organizationName}</p>
                 <p className="text-xs text-muted-foreground">
-                  Invitation for {invitation.email}
+                  {t("invitationFor", { email: invitation.email })}
                 </p>
               </div>
             </div>
@@ -139,7 +136,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span>Expires {expiresText}</span>
+            <span>{t("expires", { time: expiresText })}</span>
           </div>
         </CardContent>
 
@@ -150,16 +147,16 @@ export default async function InvitePage({ params }: InvitePageProps) {
             <>
               <Button asChild className="w-full">
                 <Link href={`/api/auth/signin?callbackUrl=/invite/${token}`}>
-                  Sign In to Accept
+                  {t("signInToAccept")}
                 </Link>
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                {t("noAccount")}{" "}
                 <Link
                   href={`/api/auth/signup?callbackUrl=/invite/${token}`}
                   className="underline underline-offset-4 hover:text-foreground"
                 >
-                  Sign up
+                  {t("signUp")}
                 </Link>
               </p>
             </>

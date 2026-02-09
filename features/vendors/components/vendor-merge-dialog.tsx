@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -39,6 +40,8 @@ export function VendorMergeDialog({
   onOpenChange,
   onMergeComplete,
 }: VendorMergeDialogProps) {
+  const t = useTranslations("vendors")
+  const tc = useTranslations("common")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [targetVendorId, setTargetVendorId] = useState<string>("")
@@ -65,13 +68,13 @@ export function VendorMergeDialog({
 
   const handleMerge = async () => {
     if (!targetVendorId) {
-      setError("Please select a target vendor")
+      setError(t("merge.selectTargetError"))
       return
     }
 
     const sourceIds = selectedIds.filter((id) => id !== targetVendorId)
     if (sourceIds.length === 0) {
-      setError("No vendors to merge")
+      setError(t("merge.noVendorsToMerge"))
       return
     }
 
@@ -110,20 +113,19 @@ export function VendorMergeDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitMerge className="h-5 w-5" />
-            Merge Vendors
+            {t("merge.title")}
           </DialogTitle>
           <DialogDescription>
-            Merge {selectedVendors.length} vendors into one. All expenses will be
-            reassigned to the target vendor.
+            {t("merge.description", { count: selectedVendors.length })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Keep this vendor (target)</Label>
+            <Label>{t("merge.keepTarget")}</Label>
             <Select value={targetVendorId} onValueChange={setTargetVendorId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select target vendor" />
+                <SelectValue placeholder={t("merge.selectTarget")} />
               </SelectTrigger>
               <SelectContent>
                 {selectedVendors.map((vendor) => (
@@ -142,7 +144,7 @@ export function VendorMergeDialog({
 
           {targetVendor && sourceVendors.length > 0 && (
             <div className="rounded-lg border p-4 space-y-3">
-              <p className="text-sm font-medium">What will happen:</p>
+              <p className="text-sm font-medium">{t("merge.whatWillHappen")}</p>
               <div className="space-y-2">
                 {sourceVendors.map((vendor) => (
                   <div
@@ -159,11 +161,10 @@ export function VendorMergeDialog({
               </div>
               <div className="pt-2 border-t text-sm">
                 <p>
-                  <strong>{totalExpenses}</strong> expense
-                  {totalExpenses !== 1 ? "s" : ""} will be reassigned
+                  <strong>{totalExpenses}</strong> {t("merge.willBeReassigned")}
                 </p>
                 <p className="text-muted-foreground">
-                  Total value: ${totalSpent.toLocaleString()}
+                  {t("merge.totalValue")} ${totalSpent.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -174,18 +175,18 @@ export function VendorMergeDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancel
+            {tc("actions.cancel")}
           </Button>
           <Button onClick={handleMerge} disabled={loading || !targetVendorId}>
             {loading ? (
               <>
                 <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                Merging...
+                {tc("actions.loading")}
               </>
             ) : (
               <>
                 <GitMerge className="h-4 w-4 mr-2" />
-                Merge Vendors
+                {t("merge.title")}
               </>
             )}
           </Button>

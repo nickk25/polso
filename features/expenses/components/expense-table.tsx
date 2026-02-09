@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -56,59 +57,10 @@ function formatCurrency(value: number, currency = "USD") {
   }).format(value)
 }
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "documented":
-      return <Badge variant="default">Documented</Badge>
-    case "excluded":
-      return <Badge variant="secondary">Excluded</Badge>
-    case "pending":
-    default:
-      return <Badge variant="outline">Pending</Badge>
-  }
-}
-
-function getExpenseTypeBadge(type: string) {
-  switch (type) {
-    case "fixed":
-      return (
-        <Badge
-          variant="destructive"
-          className="bg-red-500/10 text-red-500 border-red-500/20"
-        >
-          Fixed
-        </Badge>
-      )
-    case "variable":
-    default:
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-amber-500/10 text-amber-500 border-amber-500/20"
-        >
-          Variable
-        </Badge>
-      )
-  }
-}
-
-function formatCategorySource(source: string | null): string {
-  switch (source) {
-    case "vendor":
-      return "Vendor default"
-    case "plaid":
-      return "Bank category"
-    case "keyword":
-      return "Merchant match"
-    case "manual":
-      return "Manually set"
-    default:
-      return "Unknown"
-  }
-}
-
 export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
   const router = useRouter()
+  const t = useTranslations("expenses")
+  const tc = useTranslations("common")
   const [selectedExpense, setSelectedExpense] = useState<ExpenseWithRelations | null>(null)
   const [loading, setLoading] = useState(false)
   const [editedCategoryId, setEditedCategoryId] = useState<string | null>(null)
@@ -182,17 +134,68 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
       editedExpenseType !== selectedExpense.expenseType ||
       editedStatus !== selectedExpense.status)
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "documented":
+        return <Badge variant="default">{t("table.statusDocumented")}</Badge>
+      case "excluded":
+        return <Badge variant="secondary">{t("table.statusExcluded")}</Badge>
+      case "pending":
+      default:
+        return <Badge variant="outline">{t("table.statusPending")}</Badge>
+    }
+  }
+
+  const getExpenseTypeBadge = (type: string) => {
+    switch (type) {
+      case "fixed":
+        return (
+          <Badge
+            variant="destructive"
+            className="bg-red-500/10 text-red-500 border-red-500/20"
+          >
+            {t("fixed")}
+          </Badge>
+        )
+      case "variable":
+      default:
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-amber-500/10 text-amber-500 border-amber-500/20"
+          >
+            {t("variable")}
+          </Badge>
+        )
+    }
+  }
+
+  const formatCategorySource = (source: string | null): string => {
+    switch (source) {
+      case "vendor":
+        return t("table.categorySourceVendor")
+      case "plaid":
+        return t("table.categorySourcePlaid")
+      case "keyword":
+        return t("table.categorySourceKeyword")
+      case "manual":
+        return t("table.categorySourceManual")
+      default:
+        return t("table.unknown")
+    }
+  }
+
   return (
     <>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>{t("table.date")}</TableHead>
+            <TableHead>{t("table.description")}</TableHead>
+            <TableHead>{t("table.category")}</TableHead>
+            <TableHead>{t("table.type")}</TableHead>
+            <TableHead className="text-right">{t("table.amount")}</TableHead>
+            <TableHead>{t("table.status")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -212,7 +215,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                       expense.transaction?.merchantName ||
                       expense.transaction?.name ||
                       expense.description ||
-                      "Unknown"}
+                      t("table.unknown")}
                   </span>
                   {expense.transaction?.category && (
                     <span className="text-xs text-muted-foreground">
@@ -238,11 +241,11 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                           />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="font-medium">Auto-categorized</p>
+                          <p className="font-medium">{t("table.autoCategorized")}</p>
                           <p className="text-muted-foreground">
                             {formatCategorySource(expense.categorySource)}
                             {expense.categoryConfidence && (
-                              <> • {Math.round(expense.categoryConfidence * 100)}% confidence</>
+                              <> • {t("table.confidence", { percent: Math.round(expense.categoryConfidence * 100) })}</>
                             )}
                           </p>
                         </TooltipContent>
@@ -266,7 +269,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
       <Sheet open={!!selectedExpense} onOpenChange={(open) => !open && setSelectedExpense(null)}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Edit Expense</SheetTitle>
+            <SheetTitle>{t("table.editTitle")}</SheetTitle>
             <SheetDescription>
               {selectedExpense && (
                 <>
@@ -274,7 +277,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                     selectedExpense.transaction?.merchantName ||
                     selectedExpense.transaction?.name ||
                     selectedExpense.description ||
-                    "Unknown"}
+                    t("table.unknown")}
                   {" • "}
                   {formatCurrency(selectedExpense.amount, selectedExpense.currency)}
                 </>
@@ -286,21 +289,21 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
             <div className="flex flex-col flex-1 gap-6 p-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label>Category</Label>
+                  <Label>{t("table.category")}</Label>
                   {selectedExpense.categorySource && selectedExpense.categorySource !== "manual" && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="inline-flex items-center gap-1 text-xs text-violet-500">
                           <Sparkle weight="fill" className="h-3 w-3" />
-                          Auto
+                          {t("table.auto")}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="font-medium">Auto-categorized</p>
+                        <p className="font-medium">{t("table.autoCategorized")}</p>
                         <p className="text-muted-foreground">
                           {formatCategorySource(selectedExpense.categorySource)}
                           {selectedExpense.categoryConfidence && (
-                            <> • {Math.round(selectedExpense.categoryConfidence * 100)}% confidence</>
+                            <> • {t("table.confidence", { percent: Math.round(selectedExpense.categoryConfidence * 100) })}</>
                           )}
                         </p>
                       </TooltipContent>
@@ -316,7 +319,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Expense Type</Label>
+                <Label>{t("table.expenseType")}</Label>
                 <Select value={editedExpenseType} onValueChange={setEditedExpenseType}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -325,13 +328,13 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                     <SelectItem value="fixed">
                       <span className="flex items-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-red-500" />
-                        Fixed
+                        {t("fixed")}
                       </span>
                     </SelectItem>
                     <SelectItem value="variable">
                       <span className="flex items-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-amber-500" />
-                        Variable
+                        {t("variable")}
                       </span>
                     </SelectItem>
                   </SelectContent>
@@ -339,15 +342,15 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{t("table.status")}</Label>
                 <Select value={editedStatus} onValueChange={setEditedStatus}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="documented">Documented</SelectItem>
-                    <SelectItem value="excluded">Excluded</SelectItem>
+                    <SelectItem value="pending">{t("table.statusPending")}</SelectItem>
+                    <SelectItem value="documented">{t("table.statusDocumented")}</SelectItem>
+                    <SelectItem value="excluded">{t("table.statusExcluded")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -359,7 +362,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Receipt className="h-4 w-4 text-muted-foreground" />
-                    <Label>Invoices & Receipts</Label>
+                    <Label>{t("table.invoicesAndReceipts")}</Label>
                   </div>
                   {invoices.length > 0 && (
                     <Badge variant="secondary" className="text-xs">
@@ -388,16 +391,16 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                   onClick={() => setSelectedExpense(null)}
                   disabled={loading}
                 >
-                  Cancel
+                  {tc("actions.cancel")}
                 </Button>
                 <Button onClick={handleSave} disabled={loading || !hasChanges}>
                   {loading ? (
                     <>
                       <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
+                      {tc("actions.saving")}
                     </>
                   ) : (
-                    "Save Changes"
+                    tc("actions.saveChanges")
                   )}
                 </Button>
               </SheetFooter>

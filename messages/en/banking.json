@@ -1,0 +1,56 @@
+{
+  "title": "Banking",
+  "connectAccount": "Connect Account",
+  "connectedAccounts": "Connected Accounts",
+  "syncTransactions": "Sync Transactions",
+  "lastSynced": "Last synced: {date}",
+  "accounts": {
+    "checking": "Checking",
+    "savings": "Savings",
+    "credit": "Credit Card",
+    "balance": "Balance",
+    "institution": "Institution"
+  },
+  "sync": {
+    "syncing": "Syncing...",
+    "success": "Transactions synced successfully",
+    "error": "Failed to sync transactions"
+  },
+  "empty": {
+    "title": "No bank accounts connected",
+    "description": "Connect your bank account to automatically import transactions."
+  },
+  "settings": {
+    "title": "Bank Connections",
+    "description": "Manage your connected bank accounts",
+    "connectNewBank": "Connect a New Bank",
+    "connectNewBankDescription": "Securely connect your bank accounts via Plaid to automatically import transactions",
+    "connectedAccounts": "Connected Accounts",
+    "emptyTitle": "No bank accounts connected yet.",
+    "emptyDescription": "Connect your first bank account to start tracking your finances automatically."
+  },
+  "accountCard": {
+    "bank": "Bank",
+    "available": "Avail",
+    "current": "Curr",
+    "txns": "{count} txns",
+    "lastSynced": "Last synced: {date}",
+    "syncTransactions": "Sync transactions",
+    "disconnectBank": "Disconnect bank",
+    "disconnectTitle": "Disconnect Bank Account",
+    "disconnectDescription": "Are you sure you want to disconnect this bank account? This will remove the connection to {bank}. Your existing transactions will be preserved, but no new transactions will be synced.",
+    "disconnect": "Disconnect",
+    "statusActive": "Active",
+    "statusPending": "Pending",
+    "statusExpired": "Expired",
+    "statusError": "Error"
+  },
+  "connectButton": {
+    "limitTitle": "Bank connection limit reached",
+    "limitDescription": "Upgrade your plan to connect more bank accounts."
+  },
+  "plaid": {
+    "connecting": "Connecting...",
+    "connectBankAccount": "Connect Bank Account"
+  }
+}

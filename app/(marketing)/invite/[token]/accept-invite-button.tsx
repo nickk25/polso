@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { CheckCircle, Spinner } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { acceptInviteAction } from "@/features/team/actions/accept-invite"
@@ -12,6 +13,7 @@ interface AcceptInviteButtonProps {
 
 export function AcceptInviteButton({ token }: AcceptInviteButtonProps) {
   const router = useRouter()
+  const t = useTranslations("invite")
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -39,10 +41,10 @@ export function AcceptInviteButton({ token }: AcceptInviteButtonProps) {
       <div className="flex w-full flex-col items-center gap-2">
         <div className="flex items-center gap-2 text-emerald-600">
           <CheckCircle className="h-5 w-5" />
-          <span className="font-medium">Welcome to the team!</span>
+          <span className="font-medium">{t("welcomeToTeam")}</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Redirecting to dashboard...
+          {t("redirecting")}
         </p>
       </div>
     )
@@ -58,10 +60,10 @@ export function AcceptInviteButton({ token }: AcceptInviteButtonProps) {
         {isPending ? (
           <>
             <Spinner className="mr-2 h-4 w-4 animate-spin" />
-            Accepting...
+            {t("accepting")}
           </>
         ) : (
-          "Accept Invitation"
+          t("acceptInvitation")
         )}
       </Button>
       {error && (

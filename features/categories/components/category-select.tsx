@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ export function CategorySelect({
   disabled = false,
   className,
 }: CategorySelectProps) {
+  const t = useTranslations("categories")
   const systemCategories = categories.filter((c) => c.isSystem)
   const customCategories = categories.filter((c) => !c.isSystem)
 
@@ -57,14 +59,14 @@ export function CategorySelect({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={NONE_VALUE}>
-          <span className="text-muted-foreground">No category</span>
+          <span className="text-muted-foreground">{t("select.noCategory")}</span>
         </SelectItem>
 
         {customCategories.length > 0 && (
           <>
             <SelectSeparator />
             <SelectGroup>
-              <SelectLabel>Custom Categories</SelectLabel>
+              <SelectLabel>{t("select.customCategories")}</SelectLabel>
               {customCategories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   <span className="flex items-center gap-2">
@@ -84,7 +86,7 @@ export function CategorySelect({
           <>
             <SelectSeparator />
             <SelectGroup>
-              <SelectLabel>System Categories</SelectLabel>
+              <SelectLabel>{t("select.systemCategories")}</SelectLabel>
               {systemCategories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   <span className="flex items-center gap-2">

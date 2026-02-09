@@ -1,9 +1,12 @@
 import type { Metadata } from "next"
 import { JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/react"
+import { NextIntlClientProvider } from "next-intl"
 import "./globals.css"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { getLocale } from "@/lib/i18n/get-locale"
+import { getMessages } from "@/lib/i18n/messages"
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -61,15 +64,20 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getLocale()
+  const messages = getMessages(locale)
+
   return (
-    <html lang="en" className={jetbrainsMono.variable} suppressHydrationWarning>
+    <html lang={locale} className={jetbrainsMono.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <AuthProvider>{children}</AuthProvider>
+        </NextIntlClientProvider>
         <Toaster />
         <Analytics />
       </body>

@@ -1,0 +1,47 @@
+{
+  "title": "Miembros del Equipo",
+  "invite": {
+    "button": "Invitar Miembro",
+    "title": "Invitar Miembro del Equipo",
+    "description": "Envia una invitacion para unirse a tu organizacion. Recibiran un correo con un enlace para aceptar.",
+    "limitReached": "Has alcanzado el limite de miembros del equipo.",
+    "email": "Direccion de correo",
+    "emailPlaceholder": "colega@empresa.com",
+    "role": "Rol",
+    "selectRole": "Seleccionar un rol",
+    "memberRole": "Miembro",
+    "memberDescription": "Puede ver y gestionar gastos",
+    "adminRole": "Administrador",
+    "adminDescription": "Acceso completo incluyendo gestion de equipo",
+    "sending": "Enviando...",
+    "sendInvitation": "Enviar Invitacion"
+  },
+  "pending": {
+    "title": "Invitaciones Pendientes",
+    "email": "Correo",
+    "role": "Rol",
+    "status": "Estado",
+    "expires": "Expira",
+    "actions": "Acciones",
+    "emailStatus": "Correo {status}",
+    "pending": "Pendiente",
+    "copyLink": "Copiar enlace de invitacion",
+    "copied": "Copiado!",
+    "resend": "Reenviar invitacion",
+    "revoke": "Revocar invitacion",
+    "revokeTitle": "Revocar invitacion?",
+    "revokeDescription": "Esto cancelara la invitacion enviada a {email}. No podran unirse a tu organizacion con este enlace."
+  },
+  "members": {
+    "title": "Miembros del Equipo",
+    "member": "Miembro",
+    "role": "Rol",
+    "joined": "Se unio",
+    "you": "Tu",
+    "makeAdmin": "Hacer Administrador",
+    "makeMember": "Hacer Miembro",
+    "removeFromTeam": "Remover del equipo",
+    "removeTitle": "Remover miembro del equipo?",
+    "removeDescription": "Esto removera a este miembro de tu organizacion. Perdera acceso a todos los datos y funciones."
+  }
+}

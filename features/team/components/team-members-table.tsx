@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useTranslations } from "next-intl"
 import { DotsThree, Crown, ShieldCheck, User, SignOut } from "@phosphor-icons/react"
 import {
   Table,
@@ -81,6 +82,8 @@ function MemberActions({
   currentUserId: string
   currentUserRole: string
 }) {
+  const t = useTranslations("team")
+  const tc = useTranslations("common")
   const [isChangingRole, startChangeRole] = useTransition()
   const [isRemoving, startRemove] = useTransition()
   const [showRemoveDialog, setShowRemoveDialog] = useState(false)
@@ -122,13 +125,13 @@ function MemberActions({
           {member.role === "member" && (
             <DropdownMenuItem onClick={() => handleChangeRole("admin")}>
               <ShieldCheck className="h-4 w-4 mr-2" />
-              Make Admin
+              {t("members.makeAdmin")}
             </DropdownMenuItem>
           )}
           {member.role === "admin" && (
             <DropdownMenuItem onClick={() => handleChangeRole("member")}>
               <User className="h-4 w-4 mr-2" />
-              Make Member
+              {t("members.makeMember")}
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
@@ -137,7 +140,7 @@ function MemberActions({
             onClick={() => setShowRemoveDialog(true)}
           >
             <SignOut className="h-4 w-4 mr-2" />
-            Remove from team
+            {t("members.removeFromTeam")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -145,19 +148,18 @@ function MemberActions({
       <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove team member?</AlertDialogTitle>
+            <AlertDialogTitle>{t("members.removeTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove this member from your organization. They will lose
-              access to all data and features.
+              {t("members.removeDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemove}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove
+              {tc("actions.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -171,16 +173,18 @@ export function TeamMembersTable({
   currentUserId,
   currentUserRole,
 }: TeamMembersTableProps) {
+  const t = useTranslations("team")
+
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-medium">Team Members</h3>
+      <h3 className="text-sm font-medium">{t("members.title")}</h3>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Member</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Joined</TableHead>
+            <TableHead>{t("members.member")}</TableHead>
+            <TableHead>{t("members.role")}</TableHead>
+            <TableHead>{t("members.joined")}</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -197,7 +201,7 @@ export function TeamMembersTable({
                       User {member.userId.slice(0, 8)}...
                     </span>
                     {member.userId === currentUserId && (
-                      <span className="text-xs text-muted-foreground">You</span>
+                      <span className="text-xs text-muted-foreground">{t("members.you")}</span>
                     )}
                   </div>
                 </div>

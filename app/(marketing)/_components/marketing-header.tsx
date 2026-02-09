@@ -1,7 +1,10 @@
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 import { Button } from "@/components/ui/button"
 
-export function MarketingHeader() {
+export async function MarketingHeader() {
+  const t = await getTranslations("marketing")
+
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8">
@@ -19,26 +22,26 @@ export function MarketingHeader() {
             href="#features"
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            Features
+            {t("header.features")}
           </a>
           <a
             href="#pricing"
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            Pricing
+            {t("header.pricing")}
           </a>
           <a
             href="#faq"
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            FAQ
+            {t("header.faq")}
           </a>
         </nav>
 
         {/* Badge - until launch */}
         <div className="ml-auto flex items-center gap-2 border bg-muted/50 px-2.5 py-1 text-xs">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-          Coming soon
+          {t("header.comingSoon")}
         </div>
 
         {/* Right Actions - Hidden until launch */}
@@ -47,10 +50,10 @@ export function MarketingHeader() {
             href="/auth/sign-in"
             className="hidden text-xs text-muted-foreground transition-colors hover:text-foreground sm:block"
           >
-            Sign in
+            {t("header.signIn")}
           </Link>
           <Button size="sm" asChild>
-            <Link href="/auth/sign-up">Start free trial</Link>
+            <Link href="/auth/sign-up">{t("header.startFreeTrial")}</Link>
           </Button>
         </div>
       </div>

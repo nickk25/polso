@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useTransition } from "react"
+import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,6 +24,7 @@ export function ExpenseFilters({ search, status, expenseType }: ExpenseFiltersPr
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const t = useTranslations("expenses")
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -68,7 +70,7 @@ export function ExpenseFilters({ search, status, expenseType }: ExpenseFiltersPr
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             name="search"
-            placeholder="Search expenses..."
+            placeholder={t("tableFilters.searchPlaceholder")}
             defaultValue={search}
             className="pl-9"
           />
@@ -84,13 +86,13 @@ export function ExpenseFilters({ search, status, expenseType }: ExpenseFiltersPr
           onValueChange={(value) => updateParams({ status: value })}
         >
           <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("tableFilters.statusPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="documented">Documented</SelectItem>
-            <SelectItem value="excluded">Excluded</SelectItem>
+            <SelectItem value="all">{t("tableFilters.allStatus")}</SelectItem>
+            <SelectItem value="pending">{t("tableFilters.pending")}</SelectItem>
+            <SelectItem value="documented">{t("tableFilters.documented")}</SelectItem>
+            <SelectItem value="excluded">{t("tableFilters.excluded")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -99,19 +101,19 @@ export function ExpenseFilters({ search, status, expenseType }: ExpenseFiltersPr
           onValueChange={(value) => updateParams({ expenseType: value })}
         >
           <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Type" />
+            <SelectValue placeholder={t("tableFilters.typePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="fixed">Fixed</SelectItem>
-            <SelectItem value="variable">Variable</SelectItem>
+            <SelectItem value="all">{t("tableFilters.allTypes")}</SelectItem>
+            <SelectItem value="fixed">{t("tableFilters.fixed")}</SelectItem>
+            <SelectItem value="variable">{t("tableFilters.variable")}</SelectItem>
           </SelectContent>
         </Select>
 
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} disabled={isPending}>
             <X className="h-4 w-4 mr-1" />
-            Clear
+            {t("tableFilters.clear")}
           </Button>
         )}
       </div>

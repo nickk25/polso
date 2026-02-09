@@ -1,34 +1,40 @@
 import { Preview, Text } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface WaitlistConfirmationEmailProps {
   email: string
+  locale?: Locale
 }
 
 export default function WaitlistConfirmationEmail({
   email,
+  locale = "en",
 }: WaitlistConfirmationEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview="You're on the Polso waitlist!">
-      <Preview>You&apos;re on the Polso waitlist!</Preview>
+    <EmailLayout preview={t("waitlistConfirmation.preview")} locale={locale}>
+      <Preview>{t("waitlistConfirmation.preview")}</Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Waitlist
+        {t("waitlistConfirmation.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        You&apos;re on the list.
+        {t("waitlistConfirmation.heading")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        Thanks for joining. We&apos;re building something special for founders and small teams who want real-time financial clarity.
+        {t("waitlistConfirmation.intro")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        We&apos;ll notify you at <span style={{ fontWeight: 500, color: "#18181B" }}>{email}</span> as soon as we launch.
+        {t("waitlistConfirmation.notifyAt", { email })}
       </Text>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 12px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        What you&apos;ll get
+        {t("waitlistConfirmation.whatYouGet")}
       </Text>
 
       <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%", marginBottom: "24px" }}>
@@ -36,7 +42,7 @@ export default function WaitlistConfirmationEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Connect your bank securely via Open Banking
+              {t("waitlistConfirmation.feature1")}
             </Text>
           </td>
         </tr>
@@ -44,7 +50,7 @@ export default function WaitlistConfirmationEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Auto-categorize expenses with 95% accuracy
+              {t("waitlistConfirmation.feature2")}
             </Text>
           </td>
         </tr>
@@ -52,7 +58,7 @@ export default function WaitlistConfirmationEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Track your runway and burn rate daily
+              {t("waitlistConfirmation.feature3")}
             </Text>
           </td>
         </tr>
@@ -60,14 +66,14 @@ export default function WaitlistConfirmationEmail({
           <td>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Export everything for your accountant in one click
+              {t("waitlistConfirmation.feature4")}
             </Text>
           </td>
         </tr>
       </table>
 
       <Text style={{ fontSize: "13px", color: "#71717A", margin: 0 }}>
-        See you soon.
+        {t("waitlistConfirmation.closing")}
       </Text>
     </EmailLayout>
   )
@@ -75,4 +81,5 @@ export default function WaitlistConfirmationEmail({
 
 WaitlistConfirmationEmail.PreviewProps = {
   email: "founder@startup.com",
+  locale: "es" as const,
 } satisfies WaitlistConfirmationEmailProps

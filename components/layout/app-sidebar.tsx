@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ChartLine,
   Receipt,
@@ -30,27 +31,27 @@ import {
 
 const mainNavItems = [
   {
-    title: "Overview",
+    titleKey: "overview",
     href: "/dashboard",
     icon: House,
   },
   {
-    title: "Income",
+    titleKey: "income",
     href: "/income",
     icon: TrendUp,
   },
   {
-    title: "Expenses",
+    titleKey: "expenses",
     href: "/expenses",
     icon: Receipt,
   },
   {
-    title: "Recurring",
+    titleKey: "recurring",
     href: "/recurring",
     icon: Repeat,
   },
   {
-    title: "Analytics",
+    titleKey: "analytics",
     href: "/analytics",
     icon: ChartLine,
   },
@@ -58,22 +59,22 @@ const mainNavItems = [
 
 const manageNavItems = [
   {
-    title: "Vendors",
+    titleKey: "vendors",
     href: "/vendors",
     icon: Buildings,
   },
   {
-    title: "Clients",
+    titleKey: "clients",
     href: "/clients",
     icon: Users,
   },
   {
-    title: "Categories",
+    titleKey: "categories",
     href: "/categories",
     icon: Tag,
   },
   {
-    title: "Export",
+    titleKey: "export",
     href: "/export",
     icon: Export,
   },
@@ -81,7 +82,7 @@ const manageNavItems = [
 
 const settingsNavItems = [
   {
-    title: "Settings",
+    titleKey: "settings",
     href: "/settings",
     icon: Gear,
   },
@@ -102,6 +103,7 @@ function getInitials(name: string): string {
 
 export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
   const pathname = usePathname();
+  const t = useTranslations("common");
   const initials = getInitials(organizationName);
 
   return (
@@ -118,7 +120,7 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-[10px]">
-            Dashboard
+            {t("navigation.dashboard")}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -134,7 +136,7 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
                   >
                     <Link href={item.href}>
                       <item.icon className="h-3.5 w-3.5" />
-                      <span>{item.title}</span>
+                      <span>{t(`navigation.${item.titleKey}`)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -144,7 +146,7 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px]">Manage</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px]">{t("navigation.manage")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {manageNavItems.map((item) => (
@@ -156,7 +158,7 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
                   >
                     <Link href={item.href}>
                       <item.icon className="h-3.5 w-3.5" />
-                      <span>{item.title}</span>
+                      <span>{t(`navigation.${item.titleKey}`)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -177,7 +179,7 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
               >
                 <Link href={item.href}>
                   <item.icon className="h-3.5 w-3.5" />
-                  <span>{item.title}</span>
+                  <span>{t(`navigation.${item.titleKey}`)}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

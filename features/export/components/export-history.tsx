@@ -5,6 +5,7 @@ import { FileZip, DownloadSimple, Trash, Spinner, Warning, CheckCircle, Clock } 
 import { Button } from "@/components/ui/button"
 import { deleteExportAction } from "../actions/create-export"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 interface Export {
   id: string
@@ -39,9 +40,10 @@ function formatDateRange(start: Date, end: Date): string {
 
 export function ExportHistory({ exports }: ExportHistoryProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const t = useTranslations("export")
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this export?")) return
+    if (!confirm(t("deleteExport"))) return
 
     setDeletingId(id)
     try {
@@ -60,10 +62,10 @@ export function ExportHistory({ exports }: ExportHistoryProps) {
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <FileZip className="h-12 w-12 text-muted-foreground mb-3" />
         <p className="text-sm text-muted-foreground">
-          No previous exports
+          {t("noPreviousExports")}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          Exports you generate will appear here
+          {t("exportsWillAppearHere")}
         </p>
       </div>
     )
@@ -103,7 +105,7 @@ export function ExportHistory({ exports }: ExportHistoryProps) {
                 {exp.status === "processing" && (
                   <span className="text-xs text-amber-600 flex items-center gap-1">
                     <Clock className="h-3 w-3" weight="fill" />
-                    Processing
+                    {t("processing")}
                   </span>
                 )}
               </div>
@@ -112,9 +114,9 @@ export function ExportHistory({ exports }: ExportHistoryProps) {
                 {exp.status === "completed" && (
                   <>
                     <span>·</span>
-                    <span>{exp.expenseCount} expenses</span>
+                    <span>{t("expenses", { count: exp.expenseCount ?? 0 })}</span>
                     <span>·</span>
-                    <span>{exp.invoiceCount} invoices</span>
+                    <span>{t("invoices", { count: exp.invoiceCount ?? 0 })}</span>
                     <span>·</span>
                     <span>{formatFileSize(exp.fileSize)}</span>
                   </>
@@ -137,7 +139,7 @@ export function ExportHistory({ exports }: ExportHistoryProps) {
                 onClick={() => handleDownload(exp.id)}
               >
                 <DownloadSimple className="h-4 w-4 mr-1" />
-                Download
+                {t("download")}
               </Button>
             )}
             <Button

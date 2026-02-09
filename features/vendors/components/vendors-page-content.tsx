@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Plus, Storefront } from "@phosphor-icons/react"
 import { VendorTable } from "./vendor-table"
@@ -16,6 +17,7 @@ interface VendorsPageContentProps {
 }
 
 export function VendorsPageContent({ vendors, categories }: VendorsPageContentProps) {
+  const t = useTranslations("vendors")
   const [formOpen, setFormOpen] = useState(false)
   const [mergeOpen, setMergeOpen] = useState(false)
   const [editingVendor, setEditingVendor] = useState<VendorWithStats | null>(null)
@@ -45,16 +47,15 @@ export function VendorsPageContent({ vendors, categories }: VendorsPageContentPr
         <div className="rounded-full bg-muted p-4 mb-4">
           <Storefront className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold mb-2">No vendors yet</h3>
+        <h3 className="text-lg font-semibold mb-2">{t("noVendorsYet")}</h3>
         <p className="text-muted-foreground text-center mb-6 max-w-md">
-          Vendors are automatically detected when you sync bank transactions. You can also
-          create vendors manually or from existing transactions.
+          {t("noVendorsDescription")}
         </p>
         <div className="flex gap-2">
           <BackfillVendorsButton />
           <Button onClick={handleNewVendor}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Vendor
+            {t("addVendor")}
           </Button>
         </div>
 
@@ -74,14 +75,14 @@ export function VendorsPageContent({ vendors, categories }: VendorsPageContentPr
       <div className="flex items-center justify-between">
         <div>
           <p className="text-muted-foreground">
-            {vendors.length} vendor{vendors.length !== 1 ? "s" : ""}
+            {t("vendorCount", { count: vendors.length })}
           </p>
         </div>
         <div className="flex gap-2">
           <BackfillVendorsButton />
           <Button onClick={handleNewVendor}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Vendor
+            {t("addVendor")}
           </Button>
         </div>
       </div>

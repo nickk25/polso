@@ -3,12 +3,15 @@
 import { useActionState } from "react"
 import { Button } from "@/components/ui/button"
 import { joinWaitlist } from "@/features/waitlist/actions/join-waitlist"
+import { useTranslations } from "next-intl"
 
 interface WaitlistFormProps {
   source?: string
 }
 
 export function WaitlistForm({ source = "hero" }: WaitlistFormProps) {
+  const t = useTranslations("marketing")
+
   const [state, action, isPending] = useActionState(
     async (_prevState: { success: boolean; error?: string } | null, formData: FormData) => {
       formData.set("source", source)
@@ -21,7 +24,7 @@ export function WaitlistForm({ source = "hero" }: WaitlistFormProps) {
     return (
       <div className="mx-auto flex max-w-sm items-center justify-center gap-2 border bg-muted/50 px-4 py-3 text-sm">
         <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-        You&apos;re on the list. We&apos;ll be in touch.
+        {t("waitlist.success")}
       </div>
     )
   }
@@ -31,13 +34,13 @@ export function WaitlistForm({ source = "hero" }: WaitlistFormProps) {
       <input
         type="email"
         name="email"
-        placeholder="you@company.com"
+        placeholder={t("waitlist.placeholder")}
         className="h-10 flex-1 border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
         required
         disabled={isPending}
       />
       <Button type="submit" className="h-10" disabled={isPending}>
-        {isPending ? "Joining..." : "Join waitlist"}
+        {isPending ? t("waitlist.joining") : t("waitlist.joinWaitlist")}
       </Button>
       {state?.error && (
         <p className="text-xs text-destructive">{state.error}</p>

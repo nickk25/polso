@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -45,6 +46,7 @@ export function ClientTable({
   onClientClick,
   onMergeClick,
 }: ClientTableProps) {
+  const t = useTranslations("clients")
   const [search, setSearch] = useState("")
 
   // Filter clients by search
@@ -88,7 +90,7 @@ export function ClientTable({
         <div className="relative flex-1 max-w-sm">
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search clients..."
+            placeholder={t("table.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -98,7 +100,7 @@ export function ClientTable({
         {selectedIds.length >= 2 && (
           <Button variant="outline" size="sm" onClick={onMergeClick}>
             <GitMerge className="h-4 w-4 mr-2" />
-            Merge {selectedIds.length} clients
+            {t("table.mergeSelected", { count: selectedIds.length })}
           </Button>
         )}
       </div>
@@ -118,18 +120,18 @@ export function ClientTable({
                 onCheckedChange={handleSelectAll}
               />
             </TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Default Category</TableHead>
-            <TableHead className="text-right">Incomes</TableHead>
-            <TableHead className="text-right">Total Received</TableHead>
-            <TableHead>Last Income</TableHead>
+            <TableHead>{t("table.client")}</TableHead>
+            <TableHead>{t("table.defaultCategory")}</TableHead>
+            <TableHead className="text-right">{t("table.incomes")}</TableHead>
+            <TableHead className="text-right">{t("table.totalReceived")}</TableHead>
+            <TableHead>{t("table.lastIncome")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredClients.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                {search ? "No clients match your search" : "No clients yet"}
+                {search ? t("table.noMatch") : t("table.noClients")}
               </TableCell>
             </TableRow>
           ) : (
@@ -159,7 +161,7 @@ export function ClientTable({
                           />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Auto-detected from transactions</p>
+                          <p>{t("table.autoDetected")}</p>
                         </TooltipContent>
                       </Tooltip>
                     )}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef } from "react"
+import { useTranslations } from "next-intl"
 import { CloudArrowUp, Spinner } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import type { InvoiceWithUrl } from "../actions/invoice-actions"
@@ -32,16 +33,17 @@ export function InvoiceUpload({
   onUploadComplete,
   disabled = false,
 }: InvoiceUploadProps) {
+  const t = useTranslations("expenses")
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploading, setUploading] = useState<UploadingFile | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      return `Invalid file type: ${file.type}. Accepted: PDF, PNG, JPG, WEBP`
+      return t("invoices.invalidType", { type: file.type })
     }
     if (file.size > MAX_FILE_SIZE) {
-      return `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum: 10MB`
+      return t("invoices.fileTooLarge", { size: (file.size / 1024 / 1024).toFixed(1) })
     }
     return null
   }
@@ -49,7 +51,7 @@ export function InvoiceUpload({
   const uploadFile = async (file: File) => {
     const error = validateFile(file)
     if (error) {
-      toast.error("Invalid file", { description: error })
+      toast.error(t("invoices.invalidFile"), { description: error })
       return
     }
 
@@ -91,7 +93,7 @@ export function InvoiceUpload({
         downloadUrl: invoice.downloadUrl,
       })
 
-      toast.success("Invoice uploaded", {
+      toast.success(t("invoices.uploaded"), {
         description: file.name,
       })
     } catch (error) {
@@ -101,7 +103,7 @@ export function InvoiceUpload({
         progress: 0,
         error: error instanceof Error ? error.message : "Upload failed",
       })
-      toast.error("Upload failed", {
+      toast.error(t("invoices.uploadFailed"), {
         description: error instanceof Error ? error.message : "Unknown error",
       })
     } finally {
@@ -198,10 +200,10 @@ export function InvoiceUpload({
         <div className="space-y-1">
           <CloudArrowUp className="h-6 w-6 mx-auto text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            Drop file here or click to browse
+            {t("invoices.dropzone")}
           </p>
           <p className="text-xs text-muted-foreground/70">
-            PDF, PNG, JPG, WEBP (max 10MB)
+            {t("invoices.dropzoneFormats")}
           </p>
         </div>
       )}

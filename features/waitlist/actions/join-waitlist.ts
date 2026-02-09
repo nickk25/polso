@@ -2,6 +2,7 @@
 
 import { resend } from "@/lib/email/resend"
 import { sendWaitlistFounder } from "@/lib/email/send"
+import { getLocale } from "@/lib/i18n/get-locale"
 
 const WAITLIST_SEGMENT_ID = process.env.RESEND_WAITLIST_SEGMENT_ID
 
@@ -37,7 +38,8 @@ export async function joinWaitlist(
     }
 
     // Send founder welcome email
-    const { error: emailError } = await sendWaitlistFounder(normalizedEmail, "there")
+    const locale = await getLocale()
+    const { error: emailError } = await sendWaitlistFounder(normalizedEmail, "there", locale)
 
     if (emailError) {
       console.error("Email send error:", emailError)

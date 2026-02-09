@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TrendUp, TrendDown, Minus, Users } from "@phosphor-icons/react/dist/ssr"
+import { getTranslations } from "next-intl/server"
 import type { RevenueForecast } from "../queries/get-forecasts"
 
 function formatCurrency(value: number, currency = "USD") {
@@ -40,23 +41,24 @@ interface RevenueForecastCardProps {
   currency?: string
 }
 
-export function RevenueForecastCard({ forecast, currency = "USD" }: RevenueForecastCardProps) {
+export async function RevenueForecastCard({ forecast, currency = "USD" }: RevenueForecastCardProps) {
+  const t = await getTranslations("analytics")
   const { nextMonth, quarterProjection, yearProjection, monthOverMonthChange, topClients } = forecast
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle>Revenue Forecast</CardTitle>
+          <CardTitle>{t("revenueForecast.title")}</CardTitle>
           <Badge variant="outline" className={getConfidenceColor(nextMonth.confidence)}>
-            {formatConfidence(nextMonth.confidence)} confidence
+            {t("confidence.label", { level: nextMonth.confidence >= 0.8 ? t("confidence.high") : nextMonth.confidence >= 0.5 ? t("confidence.medium") : t("confidence.low") })}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Main Projection */}
         <div className="text-center pb-4 border-b">
-          <p className="text-xs text-muted-foreground mb-1">Next Month Projection</p>
+          <p className="text-xs text-muted-foreground mb-1">{t("revenueForecast.nextMonthProjection")}</p>
           <p className="text-3xl font-bold text-green-600">
             {formatCurrency(nextMonth.projected, currency)}
           </p>
@@ -68,24 +70,24 @@ export function RevenueForecastCard({ forecast, currency = "USD" }: RevenueForec
             ) : (
               <TrendDown className="h-4 w-4" />
             )}
-            {monthOverMonthChange >= 0 ? "+" : ""}{monthOverMonthChange.toFixed(1)}% vs last month
+            {t("revenueForecast.vsLastMonth", { change: (monthOverMonthChange >= 0 ? "+" : "") + monthOverMonthChange.toFixed(1) })}
           </div>
         </div>
 
         {/* Breakdown */}
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">Breakdown</p>
+          <p className="text-xs font-medium text-muted-foreground">{t("revenueForecast.breakdown")}</p>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="p-2 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground">Recurring</p>
+              <p className="text-xs text-muted-foreground">{t("revenueForecast.recurring")}</p>
               <p className="text-sm font-medium">{formatCurrency(nextMonth.breakdown.recurring, currency)}</p>
             </div>
             <div className="p-2 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground">Trending</p>
+              <p className="text-xs text-muted-foreground">{t("revenueForecast.trending")}</p>
               <p className="text-sm font-medium">{formatCurrency(nextMonth.breakdown.trending, currency)}</p>
             </div>
             <div className="p-2 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground">One-time</p>
+              <p className="text-xs text-muted-foreground">{t("revenueForecast.oneTime")}</p>
               <p className="text-sm font-medium">{formatCurrency(nextMonth.breakdown.oneTime, currency)}</p>
             </div>
           </div>
@@ -94,11 +96,11 @@ export function RevenueForecastCard({ forecast, currency = "USD" }: RevenueForec
         {/* Long-term Projections */}
         <div className="flex justify-between text-sm pt-2 border-t">
           <div>
-            <p className="text-xs text-muted-foreground">Quarter</p>
+            <p className="text-xs text-muted-foreground">{t("revenueForecast.quarter")}</p>
             <p className="font-medium">{formatCurrency(quarterProjection, currency)}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-muted-foreground">Year</p>
+            <p className="text-xs text-muted-foreground">{t("revenueForecast.year")}</p>
             <p className="font-medium">{formatCurrency(yearProjection, currency)}</p>
           </div>
         </div>
@@ -108,7 +110,7 @@ export function RevenueForecastCard({ forecast, currency = "USD" }: RevenueForec
           <div className="pt-2 border-t">
             <div className="flex items-center gap-1.5 mb-2">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <p className="text-xs font-medium text-muted-foreground">Top Clients</p>
+              <p className="text-xs font-medium text-muted-foreground">{t("revenueForecast.topClients")}</p>
             </div>
             <div className="space-y-2">
               {topClients.slice(0, 3).map((client) => (
@@ -118,7 +120,7 @@ export function RevenueForecastCard({ forecast, currency = "USD" }: RevenueForec
                     <span className="truncate max-w-[120px]">{client.clientName}</span>
                   </div>
                   <span className="font-medium">
-                    {formatCurrency(client.projectedRevenue, currency)}/mo
+                    {formatCurrency(client.projectedRevenue, currency)}{t("revenueForecast.perMonth")}
                   </span>
                 </div>
               ))}

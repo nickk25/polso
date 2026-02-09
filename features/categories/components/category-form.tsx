@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -55,6 +56,8 @@ const PRESET_COLORS = [
 
 export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps) {
   const router = useRouter()
+  const t = useTranslations("categories")
+  const tc = useTranslations("common")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -114,29 +117,29 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>{isEditing ? "Edit Category" : "New Category"}</SheetTitle>
+          <SheetTitle>{isEditing ? t("form.editTitle") : t("form.newTitle")}</SheetTitle>
           <SheetDescription>
             {isEditing
-              ? "Update the category details below."
-              : "Create a new custom category to organize your expenses."}
+              ? t("form.editDescription")
+              : t("form.newDescription")}
           </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 gap-6 p-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{t("form.name")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., SaaS Subscriptions"
+              placeholder={t("form.namePlaceholder")}
               maxLength={50}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Color</Label>
+            <Label>{t("form.color")}</Label>
             <div className="flex flex-wrap gap-2">
               {PRESET_COLORS.map((presetColor) => (
                 <button
@@ -171,19 +174,19 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="expense-type">Default Expense Type (optional)</Label>
+            <Label htmlFor="expense-type">{t("form.defaultExpenseType")}</Label>
             <Select value={expenseType} onValueChange={setExpenseType}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="None" />
+                <SelectValue placeholder={t("form.none")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE_VALUE}>None</SelectItem>
-                <SelectItem value="fixed">Fixed</SelectItem>
-                <SelectItem value="variable">Variable</SelectItem>
+                <SelectItem value={NONE_VALUE}>{t("form.none")}</SelectItem>
+                <SelectItem value="fixed">{t("form.fixed")}</SelectItem>
+                <SelectItem value="variable">{t("form.variable")}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Expenses with this category will default to this type.
+              {t("form.expenseTypeDescription")}
             </p>
           </div>
 
@@ -198,16 +201,16 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancel
+              {tc("actions.cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                  {isEditing ? "Saving..." : "Creating..."}
+                  {isEditing ? tc("actions.saving") : tc("actions.loading")}
                 </>
               ) : (
-                isEditing ? "Save Changes" : "Create Category"
+                isEditing ? tc("actions.saveChanges") : t("createCategory")
               )}
             </Button>
           </SheetFooter>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -45,6 +46,7 @@ export function VendorTable({
   onVendorClick,
   onMergeClick,
 }: VendorTableProps) {
+  const t = useTranslations("vendors")
   const [search, setSearch] = useState("")
 
   // Filter vendors by search
@@ -88,7 +90,7 @@ export function VendorTable({
         <div className="relative flex-1 max-w-sm">
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search vendors..."
+            placeholder={t("table.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -98,7 +100,7 @@ export function VendorTable({
         {selectedIds.length >= 2 && (
           <Button variant="outline" size="sm" onClick={onMergeClick}>
             <GitMerge className="h-4 w-4 mr-2" />
-            Merge {selectedIds.length} vendors
+            {t("table.mergeSelected", { count: selectedIds.length })}
           </Button>
         )}
       </div>
@@ -118,18 +120,18 @@ export function VendorTable({
                 onCheckedChange={handleSelectAll}
               />
             </TableHead>
-            <TableHead>Vendor</TableHead>
-            <TableHead>Default Category</TableHead>
-            <TableHead className="text-right">Expenses</TableHead>
-            <TableHead className="text-right">Total Spent</TableHead>
-            <TableHead>Last Expense</TableHead>
+            <TableHead>{t("table.vendor")}</TableHead>
+            <TableHead>{t("table.defaultCategory")}</TableHead>
+            <TableHead className="text-right">{t("table.expenses")}</TableHead>
+            <TableHead className="text-right">{t("table.totalSpent")}</TableHead>
+            <TableHead>{t("table.lastExpense")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredVendors.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                {search ? "No vendors match your search" : "No vendors yet"}
+                {search ? t("table.noMatch") : t("table.noVendors")}
               </TableCell>
             </TableRow>
           ) : (
@@ -159,7 +161,7 @@ export function VendorTable({
                           />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Auto-detected from transactions</p>
+                          <p>{t("table.autoDetected")}</p>
                         </TooltipContent>
                       </Tooltip>
                     )}

@@ -1,0 +1,79 @@
+{
+  "title": "Analiticas",
+  "subtitle": "Informacion detallada sobre tus datos financieros",
+  "analyticsRequireData": "Las analiticas requieren datos",
+  "analyticsRequireDataDescription": "Conecta una cuenta bancaria e importa transacciones para desbloquear analiticas detalladas",
+  "connectBankAccount": "Conectar Cuenta Bancaria",
+  "totalBalance": "Saldo Total",
+  "monthlyIncome": "Ingresos Mensuales",
+  "monthlyBurnRate": "Tasa de Gasto Mensual",
+  "netCashFlow": "Flujo de Caja Neto",
+  "runway": "Pista Financiera",
+  "monthlySpendTrend": "Tendencia de Gasto Mensual",
+  "fixed": "Fijos",
+  "variable": "Variables",
+  "expenseBreakdown": "Desglose de Gastos",
+  "noExpensesThisMonth": "Sin gastos este mes",
+  "cashFlow": "Flujo de Caja",
+  "income": "Ingresos",
+  "expenses": "Gastos",
+  "topVendors": "Principales Proveedores",
+  "noVendorDataYet": "Sin datos de proveedores aun",
+  "incomeTrend": "Tendencia de Ingresos",
+  "noIncomeDataYet": "Sin datos de ingresos aun",
+  "incomeBySource": "Ingresos por Fuente",
+  "noIncomeDataThisMonth": "Sin datos de ingresos este mes",
+  "forecasts": "Pronosticos",
+  "aiPoweredPredictions": "Predicciones impulsadas por IA",
+  "periods": {
+    "week": "Esta Semana",
+    "month": "Este Mes",
+    "quarter": "Este Trimestre",
+    "year": "Este Ano",
+    "custom": "Rango Personalizado"
+  },
+  "trends": {
+    "title": "Tendencias",
+    "increasing": "En aumento",
+    "decreasing": "En descenso",
+    "stable": "Estable"
+  },
+  "confidence": {
+    "high": "Alta",
+    "medium": "Media",
+    "low": "Baja",
+    "label": "Confianza {level}"
+  },
+  "cashFlowForecast": {
+    "title": "Pronostico de Flujo de Caja",
+    "projectedIncome": "Ingresos Proyectados",
+    "projectedExpenses": "Gastos Proyectados",
+    "netCashFlow": "Flujo de Caja Neto",
+    "legendIncome": "Ingresos",
+    "legendExpenses": "Gastos",
+    "legendForecast": "Pronostico",
+    "projectedBalance": "Saldo proyectado en {count} meses"
+  },
+  "revenueForecast": {
+    "title": "Pronostico de Ingresos",
+    "nextMonthProjection": "Proyeccion del Proximo Mes",
+    "vsLastMonth": "{change}% vs mes anterior",
+    "breakdown": "Desglose",
+    "recurring": "Recurrente",
+    "trending": "Tendencia",
+    "oneTime": "Unico",
+    "quarter": "Trimestre",
+    "year": "Ano",
+    "topClients": "Principales Clientes",
+    "perMonth": "/mes"
+  },
+  "expenseForecast": {
+    "title": "Pronostico de Gastos",
+    "nextMonthProjection": "Proyeccion del Proximo Mes",
+    "vsLastMonth": "{change}% vs mes anterior",
+    "byType": "Por Tipo",
+    "fixed": "Fijos",
+    "variable": "Variables",
+    "byCategory": "Por Categoria"
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -27,6 +28,8 @@ interface CategoryCardProps {
 
 export function CategoryCard({ category, onEdit }: CategoryCardProps) {
   const router = useRouter()
+  const t = useTranslations("categories")
+  const tc = useTranslations("common")
   const [loading, setLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
@@ -69,14 +72,14 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                 {category.isSystem && (
                   <Badge variant="secondary" className="text-xs gap-1">
                     <Lock className="h-3 w-3" />
-                    System
+                    {t("system")}
                   </Badge>
                 )}
               </div>
 
               <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                 <span>
-                  {expenseCount} expense{expenseCount !== 1 ? "s" : ""}
+                  {t("expenseCount", { count: expenseCount })}
                 </span>
                 {category.expenseType && (
                   <Badge variant="outline" className="text-xs capitalize">
@@ -94,7 +97,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                 size="icon"
                 onClick={() => onEdit?.(category)}
                 disabled={loading}
-                title="Edit category"
+                title={t("editCategory")}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <Pencil className="h-4 w-4" />
@@ -106,7 +109,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                     variant="ghost"
                     size="icon"
                     disabled={loading}
-                    title="Delete category"
+                    title={t("deleteCategory")}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash className="h-4 w-4" />
@@ -114,21 +117,21 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                    <AlertDialogTitle>{t("deleteCategoryTitle")}</AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="text-sm text-muted-foreground">
                         {expenseCount > 0 ? (
                           <>
                             <p>
-                              This category has <strong>{expenseCount} expense{expenseCount !== 1 ? "s" : ""}</strong> linked to it.
+                              {t.rich("deleteCategoryHasExpenses", { count: expenseCount, strong: (chunks) => <strong>{chunks}</strong> })}
                             </p>
                             <p className="mt-2">
-                              Please reassign these expenses to another category before deleting.
+                              {t("deleteCategoryReassign")}
                             </p>
                           </>
                         ) : (
                           <p>
-                            Are you sure you want to delete &quot;{category.name}&quot;? This action cannot be undone.
+                            {t("deleteCategoryConfirm", { name: category.name })}
                           </p>
                         )}
                         {deleteError && (
@@ -138,14 +141,14 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
                     {expenseCount === 0 && (
                       <AlertDialogAction
                         onClick={handleDelete}
                         disabled={loading}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        {loading ? "Deleting..." : "Delete"}
+                        {loading ? tc("actions.deleting") : tc("actions.delete")}
                       </AlertDialogAction>
                     )}
                   </AlertDialogFooter>

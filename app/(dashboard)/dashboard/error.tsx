@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { ErrorBoundary } from "@/components/error-boundary"
 
 export default function DashboardPageError({
@@ -9,12 +10,13 @@ export default function DashboardPageError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const t = useTranslations("common")
   return (
     <ErrorBoundary
       error={error}
       reset={reset}
-      title="Dashboard unavailable"
-      message="We couldn't load your dashboard data. Please check your connection and try again."
+      title={t("errors.dashboardUnavailable")}
+      message={t("errors.dashboardUnavailableMessage")}
     />
   )
 }

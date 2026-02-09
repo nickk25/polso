@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TrendUp, TrendDown, Warning } from "@phosphor-icons/react/dist/ssr"
+import { getTranslations } from "next-intl/server"
 import type { ExpenseForecast } from "../queries/get-forecasts"
 
 function formatCurrency(value: number, currency = "USD") {
@@ -29,23 +30,24 @@ interface ExpenseForecastCardProps {
   currency?: string
 }
 
-export function ExpenseForecastCard({ forecast, currency = "USD" }: ExpenseForecastCardProps) {
+export async function ExpenseForecastCard({ forecast, currency = "USD" }: ExpenseForecastCardProps) {
+  const t = await getTranslations("analytics")
   const { nextMonth, byCategory, alerts, monthOverMonthChange } = forecast
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle>Expense Forecast</CardTitle>
+          <CardTitle>{t("expenseForecast.title")}</CardTitle>
           <Badge variant="outline" className={getConfidenceColor(nextMonth.confidence)}>
-            {formatConfidence(nextMonth.confidence)} confidence
+            {t("confidence.label", { level: nextMonth.confidence >= 0.8 ? t("confidence.high") : nextMonth.confidence >= 0.5 ? t("confidence.medium") : t("confidence.low") })}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Main Projection */}
         <div className="text-center pb-4 border-b">
-          <p className="text-xs text-muted-foreground mb-1">Next Month Projection</p>
+          <p className="text-xs text-muted-foreground mb-1">{t("expenseForecast.nextMonthProjection")}</p>
           <p className="text-3xl font-bold text-red-500">
             {formatCurrency(nextMonth.projected, currency)}
           </p>
@@ -57,20 +59,20 @@ export function ExpenseForecastCard({ forecast, currency = "USD" }: ExpenseForec
             ) : (
               <TrendUp className="h-4 w-4" />
             )}
-            {monthOverMonthChange >= 0 ? "+" : ""}{monthOverMonthChange.toFixed(1)}% vs last month
+            {t("expenseForecast.vsLastMonth", { change: (monthOverMonthChange >= 0 ? "+" : "") + monthOverMonthChange.toFixed(1) })}
           </div>
         </div>
 
         {/* Fixed vs Variable */}
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">By Type</p>
+          <p className="text-xs font-medium text-muted-foreground">{t("expenseForecast.byType")}</p>
           <div className="flex gap-2">
             <div className="flex-1 p-2 rounded-lg bg-red-500/10">
-              <p className="text-xs text-muted-foreground">Fixed</p>
+              <p className="text-xs text-muted-foreground">{t("expenseForecast.fixed")}</p>
               <p className="text-sm font-medium">{formatCurrency(nextMonth.byType.fixed, currency)}</p>
             </div>
             <div className="flex-1 p-2 rounded-lg bg-amber-500/10">
-              <p className="text-xs text-muted-foreground">Variable</p>
+              <p className="text-xs text-muted-foreground">{t("expenseForecast.variable")}</p>
               <p className="text-sm font-medium">{formatCurrency(nextMonth.byType.variable, currency)}</p>
             </div>
           </div>
@@ -94,7 +96,7 @@ export function ExpenseForecastCard({ forecast, currency = "USD" }: ExpenseForec
         {/* Category Breakdown */}
         {byCategory.length > 0 && (
           <div className="pt-2 border-t">
-            <p className="text-xs font-medium text-muted-foreground mb-2">By Category</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2">{t("expenseForecast.byCategory")}</p>
             <div className="space-y-2">
               {byCategory.slice(0, 5).map((category) => {
                 const maxProjected = Math.max(...byCategory.map((c) => c.projected))

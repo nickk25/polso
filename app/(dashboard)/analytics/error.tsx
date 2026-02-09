@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { ErrorBoundary } from "@/components/error-boundary"
 
 export default function AnalyticsError({
@@ -9,12 +10,13 @@ export default function AnalyticsError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const t = useTranslations("common")
   return (
     <ErrorBoundary
       error={error}
       reset={reset}
-      title="Failed to load analytics"
-      message="We couldn't calculate your analytics. This might be due to insufficient data or a temporary issue."
+      title={t("errors.analyticsError")}
+      message={t("errors.analyticsErrorMessage")}
     />
   )
 }

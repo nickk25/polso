@@ -34,6 +34,7 @@ import {
   deletePatternAction,
 } from "../actions/manage-pattern"
 import type { RecurringPatternWithRelations } from "../queries/get-recurring-patterns"
+import { useTranslations } from "next-intl"
 
 type PatternState = "suggestion" | "active" | "paused"
 
@@ -43,14 +44,6 @@ interface RecurringPatternCardProps {
   state?: PatternState
 }
 
-const frequencyLabels: Record<string, string> = {
-  weekly: "Weekly",
-  biweekly: "Every 2 weeks",
-  monthly: "Monthly",
-  quarterly: "Quarterly",
-  yearly: "Yearly",
-}
-
 export function RecurringPatternCard({
   pattern,
   showActions = true,
@@ -58,6 +51,8 @@ export function RecurringPatternCard({
 }: RecurringPatternCardProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const t = useTranslations("recurring")
+  const tc = useTranslations("common")
 
   const handleConfirm = async () => {
     setLoading(true)
@@ -134,9 +129,9 @@ export function RecurringPatternCard({
     if (!pattern.pausedAt) return null
     const pauseDate = new Date(pattern.pausedAt).toLocaleDateString()
     if (pattern.pauseReason === "missed_payment") {
-      return `Paused: Payment missed (expected ${pauseDate})`
+      return t("pausedMissedPayment", { date: pauseDate })
     }
-    return `Paused on ${pauseDate}`
+    return t("pausedOn", { date: pauseDate })
   }
 
   const nextDate = getNextExpectedDate()
@@ -166,12 +161,12 @@ export function RecurringPatternCard({
                 <h3 className="font-medium truncate">{pattern.name}</h3>
                 {state === "suggestion" && (
                   <Badge variant="secondary" className="text-xs">
-                    Suggested
+                    {t("suggested")}
                   </Badge>
                 )}
                 {state === "paused" && (
                   <Badge variant="outline" className="text-xs text-muted-foreground">
-                    Paused
+                    {t("paused")}
                   </Badge>
                 )}
               </div>
@@ -179,13 +174,13 @@ export function RecurringPatternCard({
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Repeat className="h-3.5 w-3.5" />
-                  {frequencyLabels[pattern.frequency] || pattern.frequency}
+                  {t(`frequency.${pattern.frequency}` as any) || pattern.frequency}
                 </span>
 
                 {pattern.expectedDayOfMonth && (
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
-                    Day {pattern.expectedDayOfMonth}
+                    {t("day", { day: pattern.expectedDayOfMonth })}
                   </span>
                 )}
 
@@ -210,7 +205,7 @@ export function RecurringPatternCard({
 
               {state === "active" && nextDate && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Next expected: {nextDate.toLocaleDateString()}
+                  {t("nextExpected", { date: nextDate.toLocaleDateString() })}
                 </p>
               )}
 
@@ -222,9 +217,9 @@ export function RecurringPatternCard({
 
               {state === "suggestion" && pattern.confidenceScore !== null && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Confidence: {Math.round(pattern.confidenceScore * 100)}%
+                  {t("confidence", { percent: Math.round(pattern.confidenceScore * 100) })}
                   {" • "}
-                  {pattern.occurrenceCount} occurrences
+                  {t("occurrences", { count: pattern.occurrenceCount })}
                 </p>
               )}
             </div>
@@ -239,7 +234,7 @@ export function RecurringPatternCard({
                     size="icon"
                     onClick={handleConfirm}
                     disabled={loading}
-                    title="Confirm pattern"
+                    title={t("confirmPattern")}
                     className="text-green-600 hover:text-green-700 hover:bg-green-50"
                   >
                     <Check className="h-4 w-4" />
@@ -249,7 +244,7 @@ export function RecurringPatternCard({
                     size="icon"
                     onClick={handleDismiss}
                     disabled={loading}
-                    title="Dismiss suggestion"
+                    title={t("dismissSuggestion")}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <X className="h-4 w-4" />
@@ -265,7 +260,7 @@ export function RecurringPatternCard({
                         variant="ghost"
                         size="icon"
                         disabled={loading}
-                        title="Pause pattern"
+                        title={t("pausePattern")}
                         className="text-muted-foreground hover:text-foreground"
                       >
                         <Pause className="h-4 w-4" />
@@ -273,25 +268,25 @@ export function RecurringPatternCard({
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Pause Recurring Pattern</AlertDialogTitle>
+                        <AlertDialogTitle>{t("pauseDialog.title")}</AlertDialogTitle>
                         <AlertDialogDescription asChild>
                           <div className="text-sm text-muted-foreground">
-                            Pausing &quot;{pattern.name}&quot; will:
+                            {t("pauseDialog.description", { name: pattern.name })}
                             <ul className="list-disc list-inside mt-2 space-y-1">
-                              <li>Remove it from your monthly recurring total</li>
-                              <li>Stop expecting future payments</li>
-                              <li>Keep all historical expense data linked</li>
+                              <li>{t("pauseDialog.removeFromTotal")}</li>
+                              <li>{t("pauseDialog.stopExpecting")}</li>
+                              <li>{t("pauseDialog.keepHistorical")}</li>
                             </ul>
                             <p className="mt-2">
-                              If a new payment arrives, it will need to be manually resumed.
+                              {t("pauseDialog.manualResume")}
                             </p>
                           </div>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handlePause}>
-                          Pause
+                          {tc("actions.pause")}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -302,7 +297,7 @@ export function RecurringPatternCard({
                         variant="ghost"
                         size="icon"
                         disabled={loading}
-                        title="Delete pattern"
+                        title={t("deletePattern")}
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash className="h-4 w-4" />
@@ -310,20 +305,18 @@ export function RecurringPatternCard({
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Recurring Pattern</AlertDialogTitle>
+                        <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete &quot;{pattern.name}&quot;?
-                          This will unlink all associated expenses and mark them as variable.
-                          The pattern can be re-detected if it appears again.
+                          {t("deleteDialog.description", { name: pattern.name })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDelete}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          Delete
+                          {tc("actions.delete")}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -339,7 +332,7 @@ export function RecurringPatternCard({
                         variant="ghost"
                         size="icon"
                         disabled={loading}
-                        title="Resume pattern"
+                        title={t("resumePattern")}
                         className="text-green-600 hover:text-green-700 hover:bg-green-50"
                       >
                         <Play className="h-4 w-4" />
@@ -347,25 +340,25 @@ export function RecurringPatternCard({
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Resume Recurring Pattern</AlertDialogTitle>
+                        <AlertDialogTitle>{t("resumeDialog.title")}</AlertDialogTitle>
                         <AlertDialogDescription asChild>
                           <div className="text-sm text-muted-foreground">
-                            Resuming &quot;{pattern.name}&quot; will:
+                            {t("resumeDialog.description", { name: pattern.name })}
                             <ul className="list-disc list-inside mt-2 space-y-1">
-                              <li>Add it back to your monthly recurring total</li>
-                              <li>Start expecting future payments again</li>
-                              <li>Include it in analytics and forecasts</li>
+                              <li>{t("resumeDialog.addBackToTotal")}</li>
+                              <li>{t("resumeDialog.startExpecting")}</li>
+                              <li>{t("resumeDialog.includeInAnalytics")}</li>
                             </ul>
                           </div>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleResume}
                           className="bg-green-600 text-white hover:bg-green-700"
                         >
-                          Resume
+                          {tc("actions.resume")}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -376,7 +369,7 @@ export function RecurringPatternCard({
                         variant="ghost"
                         size="icon"
                         disabled={loading}
-                        title="Delete pattern"
+                        title={t("deletePattern")}
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash className="h-4 w-4" />
@@ -384,20 +377,18 @@ export function RecurringPatternCard({
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Recurring Pattern</AlertDialogTitle>
+                        <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete &quot;{pattern.name}&quot;?
-                          This will unlink all associated expenses and mark them as variable.
-                          The pattern can be re-detected if it appears again.
+                          {t("deleteDialog.description", { name: pattern.name })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDelete}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          Delete
+                          {tc("actions.delete")}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

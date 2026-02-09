@@ -1,5 +1,7 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface UserAcceptedInviteEmailProps {
   name: string
@@ -7,6 +9,7 @@ interface UserAcceptedInviteEmailProps {
   newMemberEmail: string
   organizationName: string
   teamUrl: string
+  locale?: Locale
 }
 
 export default function UserAcceptedInviteEmail({
@@ -15,22 +18,25 @@ export default function UserAcceptedInviteEmail({
   newMemberEmail,
   organizationName,
   teamUrl,
+  locale = "en",
 }: UserAcceptedInviteEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview={`${newMemberName} joined ${organizationName}`}>
+    <EmailLayout preview={t("userAcceptedInvite.preview", { newMemberName, organizationName })} locale={locale}>
       <Preview>
-        {newMemberName} joined {organizationName}
+        {t("userAcceptedInvite.preview", { newMemberName, organizationName })}
       </Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Team
+        {t("userAcceptedInvite.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        New team member
+        {t("userAcceptedInvite.heading")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Hi {name}, <span style={{ fontWeight: 500, color: "#18181B" }}>{newMemberName}</span> ({newMemberEmail}) has accepted your invitation and joined <span style={{ fontWeight: 500, color: "#18181B" }}>{organizationName}</span>.
+        {t("userAcceptedInvite.intro", { name, newMemberName, newMemberEmail, organizationName })}
       </Text>
 
       <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%", marginBottom: "24px", backgroundColor: "#fafafa" }}>
@@ -39,13 +45,13 @@ export default function UserAcceptedInviteEmail({
             <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%" }}>
               <tr>
                 <td style={{ paddingBottom: "8px" }}>
-                  <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Name</Text>
+                  <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("userAcceptedInvite.nameLabel")}</Text>
                   <Text style={{ fontSize: "14px", fontWeight: 500, color: "#18181B", margin: 0 }}>{newMemberName}</Text>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Email</Text>
+                  <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 2px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("userAcceptedInvite.emailLabel")}</Text>
                   <Text style={{ fontSize: "14px", color: "#18181B", margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>{newMemberEmail}</Text>
                 </td>
               </tr>
@@ -55,7 +61,7 @@ export default function UserAcceptedInviteEmail({
       </table>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        They now have access to your financial dashboard and reports.
+        {t("userAcceptedInvite.accessNote")}
       </Text>
 
       <Button
@@ -71,11 +77,11 @@ export default function UserAcceptedInviteEmail({
           textAlign: "center",
         }}
       >
-        Manage Team
+        {t("userAcceptedInvite.button")}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        Adjust team member permissions in Settings → Organization.
+        {t("userAcceptedInvite.footer")}
       </Text>
     </EmailLayout>
   )
@@ -87,4 +93,5 @@ UserAcceptedInviteEmail.PreviewProps = {
   newMemberEmail: "jordan@acme.com",
   organizationName: "Acme Inc",
   teamUrl: "https://polso.app/settings/organization",
+  locale: "es" as const,
 } satisfies UserAcceptedInviteEmailProps

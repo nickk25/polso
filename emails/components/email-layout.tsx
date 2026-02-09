@@ -10,15 +10,20 @@ import {
   Font,
   pixelBasedPreset,
 } from "@react-email/components"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface EmailLayoutProps {
   preview: string
   children: React.ReactNode
+  locale?: Locale
 }
 
-export function EmailLayout({ preview, children }: EmailLayoutProps) {
+export function EmailLayout({ preview, children, locale = "en" }: EmailLayoutProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <Html lang="en">
+    <Html lang={locale}>
       <Tailwind
         config={{
           presets: [pixelBasedPreset],
@@ -103,14 +108,14 @@ export function EmailLayout({ preview, children }: EmailLayoutProps) {
                 href="https://polso.app/privacy"
                 style={{ color: "#71717A", textDecoration: "underline" }}
               >
-                Privacy
+                {t("layout.privacy")}
               </Link>
               <span style={{ color: "#d4d4d8", margin: "0 8px" }}>·</span>
               <Link
                 href="https://polso.app/terms"
                 style={{ color: "#71717A", textDecoration: "underline" }}
               >
-                Terms
+                {t("layout.terms")}
               </Link>
             </Text>
           </Container>

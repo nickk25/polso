@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Plus, Users } from "@phosphor-icons/react"
 import { ClientTable } from "./client-table"
@@ -16,6 +17,7 @@ interface ClientsPageContentProps {
 }
 
 export function ClientsPageContent({ clients, categories }: ClientsPageContentProps) {
+  const t = useTranslations("clients")
   const [formOpen, setFormOpen] = useState(false)
   const [mergeOpen, setMergeOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<ClientWithStats | null>(null)
@@ -45,16 +47,15 @@ export function ClientsPageContent({ clients, categories }: ClientsPageContentPr
         <div className="rounded-full bg-muted p-4 mb-4">
           <Users className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold mb-2">No clients yet</h3>
+        <h3 className="text-lg font-semibold mb-2">{t("noClientsYet")}</h3>
         <p className="text-muted-foreground text-center mb-6 max-w-md">
-          Clients are automatically detected when you sync bank transactions. You can also
-          create clients manually or from existing income transactions.
+          {t("noClientsDescription")}
         </p>
         <div className="flex gap-2">
           <BackfillClientsButton />
           <Button onClick={handleNewClient}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Client
+            {t("addClient")}
           </Button>
         </div>
 
@@ -74,14 +75,14 @@ export function ClientsPageContent({ clients, categories }: ClientsPageContentPr
       <div className="flex items-center justify-between">
         <div>
           <p className="text-muted-foreground">
-            {clients.length} client{clients.length !== 1 ? "s" : ""}
+            {t("clientCount", { count: clients.length })}
           </p>
         </div>
         <div className="flex gap-2">
           <BackfillClientsButton />
           <Button onClick={handleNewClient}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Client
+            {t("addClient")}
           </Button>
         </div>
       </div>

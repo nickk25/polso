@@ -15,6 +15,7 @@ import { IncomeFilters } from "@/features/income/components/income-filters"
 import { IncomePagination } from "@/features/income/components/income-pagination"
 import { format } from "date-fns"
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 
 const PAGE_SIZE = 25
 
@@ -25,26 +26,26 @@ function formatCurrency(value: number, currency = "USD") {
   }).format(value)
 }
 
-function getStatusBadge(status: string) {
+function getStatusBadge(status: string, t: (key: string) => string) {
   switch (status) {
     case "confirmed":
-      return <Badge variant="default">Confirmed</Badge>
+      return <Badge variant="default">{t("statuses.confirmed")}</Badge>
     case "excluded":
-      return <Badge variant="secondary">Excluded</Badge>
+      return <Badge variant="secondary">{t("statuses.excluded")}</Badge>
     case "pending":
     default:
-      return <Badge variant="outline">Pending</Badge>
+      return <Badge variant="outline">{t("statuses.pending")}</Badge>
   }
 }
 
-function getSourceBadge(source: string) {
+function getSourceBadge(source: string, t: (key: string) => string) {
   const sourceConfig: Record<string, { className: string; label: string }> = {
-    salary: { className: "bg-green-500/10 text-green-500 border-green-500/20", label: "Salary" },
-    freelance: { className: "bg-blue-500/10 text-blue-500 border-blue-500/20", label: "Freelance" },
-    investment: { className: "bg-purple-500/10 text-purple-500 border-purple-500/20", label: "Investment" },
-    refund: { className: "bg-orange-500/10 text-orange-500 border-orange-500/20", label: "Refund" },
-    transfer: { className: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20", label: "Transfer" },
-    other: { className: "bg-gray-500/10 text-gray-500 border-gray-500/20", label: "Other" },
+    salary: { className: "bg-green-500/10 text-green-500 border-green-500/20", label: t("sources.salary") },
+    freelance: { className: "bg-blue-500/10 text-blue-500 border-blue-500/20", label: t("sources.freelance") },
+    investment: { className: "bg-purple-500/10 text-purple-500 border-purple-500/20", label: t("sources.investment") },
+    refund: { className: "bg-orange-500/10 text-orange-500 border-orange-500/20", label: t("sources.refund") },
+    transfer: { className: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20", label: t("sources.transfer") },
+    other: { className: "bg-gray-500/10 text-gray-500 border-gray-500/20", label: t("sources.other") },
   }
 
   const config = sourceConfig[source] || sourceConfig.other
@@ -61,6 +62,7 @@ interface PageProps {
 }
 
 export default async function IncomePage({ searchParams }: PageProps) {
+  const t = await getTranslations("income")
   const params = await searchParams
   const page = parseInt(params.page || "1", 10)
   const search = params.search || undefined
@@ -78,11 +80,11 @@ export default async function IncomePage({ searchParams }: PageProps) {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Income</h1>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-muted-foreground">
           {total > 0
-            ? `${total} transaction${total > 1 ? "s" : ""}`
-            : "Track your incoming payments"}
+            ? t("transactionCount", { count: total })
+            : t("subtitle")}
         </p>
       </div>
 
@@ -92,7 +94,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                This Month
+                {t("thisMonth")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -104,7 +106,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Last Month
+                {t("lastMonth")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -116,7 +118,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Month Over Month
+                {t("monthOverMonth")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -128,7 +130,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Transactions
+                {t("transactions")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -149,18 +151,18 @@ export default async function IncomePage({ searchParams }: PageProps) {
       {hasIncomes ? (
         <Card>
           <CardHeader>
-            <CardTitle>Transactions</CardTitle>
+            <CardTitle>{t("transactions")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("tableHeaders.date")}</TableHead>
+                  <TableHead>{t("tableHeaders.description")}</TableHead>
+                  <TableHead>{t("tableHeaders.category")}</TableHead>
+                  <TableHead>{t("tableHeaders.source")}</TableHead>
+                  <TableHead className="text-right">{t("tableHeaders.amount")}</TableHead>
+                  <TableHead>{t("tableHeaders.status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -197,11 +199,11 @@ export default async function IncomePage({ searchParams }: PageProps) {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell>{getSourceBadge(income.source)}</TableCell>
+                    <TableCell>{getSourceBadge(income.source, t)}</TableCell>
                     <TableCell className="text-right font-medium text-green-500">
                       +{formatCurrency(income.amount, income.currency)}
                     </TableCell>
-                    <TableCell>{getStatusBadge(income.status)}</TableCell>
+                    <TableCell>{getStatusBadge(income.status, t)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -213,9 +215,9 @@ export default async function IncomePage({ searchParams }: PageProps) {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <TrendUp className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">No matching income</h3>
+            <h3 className="text-lg font-medium">{t("noMatchingIncome")}</h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-              Try adjusting your search or filters
+              {t("tryAdjustingFilters")}
             </p>
           </CardContent>
         </Card>
@@ -223,13 +225,13 @@ export default async function IncomePage({ searchParams }: PageProps) {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <TrendUp className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">No income yet</h3>
+            <h3 className="text-lg font-medium">{t("noIncomeYet")}</h3>
             <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-              Connect a bank account to automatically import and track your income
+              {t("noIncomeDescription")}
             </p>
             <Button className="mt-4" asChild>
               <Link href="/banking">
-                Connect Bank
+                {t("connectBank")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

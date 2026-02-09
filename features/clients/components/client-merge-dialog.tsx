@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -39,6 +40,8 @@ export function ClientMergeDialog({
   onOpenChange,
   onComplete,
 }: ClientMergeDialogProps) {
+  const t = useTranslations("clients")
+  const tc = useTranslations("common")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [targetId, setTargetId] = useState<string>("")
@@ -101,20 +104,19 @@ export function ClientMergeDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitMerge className="h-5 w-5" />
-            Merge {selectedIds.length} Clients
+            {t("merge.title", { count: selectedIds.length })}
           </DialogTitle>
           <DialogDescription>
-            Select which client to keep. All income from the other clients will be
-            reassigned to this client, and the others will be deleted.
+            {t("merge.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Keep this client</Label>
+            <Label>{t("merge.keepClient")}</Label>
             <Select value={targetId} onValueChange={setTargetId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a client to keep" />
+                <SelectValue placeholder={t("merge.selectClient")} />
               </SelectTrigger>
               <SelectContent>
                 {selectedClients.map((client) => (
@@ -122,7 +124,7 @@ export function ClientMergeDialog({
                     <div className="flex items-center justify-between gap-4">
                       <span>{client.name}</span>
                       <span className="text-muted-foreground text-xs">
-                        {client._count.incomes} income{client._count.incomes !== 1 ? "s" : ""}
+                        {t("form.incomeCount", { count: client._count.incomes })}
                       </span>
                     </div>
                   </SelectItem>
@@ -133,10 +135,7 @@ export function ClientMergeDialog({
 
           <div className="rounded-lg border bg-muted/50 p-3 text-sm">
             <p className="text-muted-foreground">
-              This will merge <strong>{selectedIds.length - 1}</strong> client
-              {selectedIds.length - 1 > 1 ? "s" : ""} and reassign{" "}
-              <strong>{totalIncomes}</strong> income{totalIncomes !== 1 ? "s" : ""} to the
-              selected client.
+              {t("merge.mergeDescription", { mergeCount: selectedIds.length - 1, incomeCount: totalIncomes })}
             </p>
           </div>
 
@@ -149,18 +148,18 @@ export function ClientMergeDialog({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Cancel
+            {tc("actions.cancel")}
           </Button>
           <Button onClick={handleMerge} disabled={loading || !targetId}>
             {loading ? (
               <>
                 <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                Merging...
+                {tc("actions.loading")}
               </>
             ) : (
               <>
                 <GitMerge className="h-4 w-4 mr-2" />
-                Merge Clients
+                {t("merge.title", { count: selectedIds.length })}
               </>
             )}
           </Button>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,6 +48,8 @@ function formatCurrency(value: number, currency = "USD") {
 }
 
 export function ClientForm({ client, categories, open, onOpenChange }: ClientFormProps) {
+  const t = useTranslations("clients")
+  const tc = useTranslations("common")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -142,77 +145,77 @@ export function ClientForm({ client, categories, open, onOpenChange }: ClientFor
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>{isEditing ? "Edit Client" : "New Client"}</SheetTitle>
+            <SheetTitle>{isEditing ? t("form.editTitle") : t("form.newTitle")}</SheetTitle>
             <SheetDescription>
               {isEditing ? (
                 <span className="flex items-center gap-2">
                   {client.isAutoDetected && (
                     <span className="inline-flex items-center gap-1 text-xs text-violet-500">
                       <Sparkle weight="fill" className="h-3 w-3" />
-                      Auto-detected
+                      {t("form.autoDetected")}
                     </span>
                   )}
                   {client._count.incomes > 0 && (
                     <span>
-                      {client._count.incomes} income{client._count.incomes > 1 ? "s" : ""} •{" "}
+                      {t("form.incomeCount", { count: client._count.incomes })} •{" "}
                       {formatCurrency(client.totalReceived)}
                     </span>
                   )}
                 </span>
               ) : (
-                "Create a new client to organize your income."
+                t("form.newDescription")
               )}
             </SheetDescription>
           </SheetHeader>
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 gap-6 p-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("form.name")}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Acme Corp"
+                placeholder={t("form.namePlaceholder")}
                 maxLength={100}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="website">Website (optional)</Label>
+              <Label htmlFor="website">{t("form.website")}</Label>
               <Input
                 id="website"
                 type="url"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://example.com"
+                placeholder={t("form.websitePlaceholder")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="taxId">Tax ID (optional)</Label>
+              <Label htmlFor="taxId">{t("form.taxId")}</Label>
               <Input
                 id="taxId"
                 value={taxId}
                 onChange={(e) => setTaxId(e.target.value)}
-                placeholder="e.g., B12345678"
+                placeholder={t("form.taxIdPlaceholder")}
               />
               <p className="text-xs text-muted-foreground">
-                For invoice matching and tax purposes.
+                {t("form.taxIdDescription")}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label>Default Category</Label>
+              <Label>{t("form.defaultCategory")}</Label>
               <CategorySelect
                 value={defaultCategoryId}
                 onValueChange={setDefaultCategoryId}
                 categories={categories}
-                placeholder="No default category"
+                placeholder={t("form.noDefaultCategory")}
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground">
-                New income from this client will use this category.
+                {t("form.defaultCategoryDescription")}
               </p>
             </div>
 
@@ -228,7 +231,7 @@ export function ClientForm({ client, categories, open, onOpenChange }: ClientFor
                   className="mr-auto"
                 >
                   <Trash className="h-4 w-4 mr-2" />
-                  Delete
+                  {tc("actions.delete")}
                 </Button>
               )}
               <Button
@@ -237,18 +240,18 @@ export function ClientForm({ client, categories, open, onOpenChange }: ClientFor
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
               >
-                Cancel
+                {tc("actions.cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
                   <>
                     <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                    {isEditing ? "Saving..." : "Creating..."}
+                    {isEditing ? tc("actions.saving") : tc("actions.loading")}
                   </>
                 ) : isEditing ? (
-                  "Save Changes"
+                  tc("actions.saveChanges")
                 ) : (
-                  "Create Client"
+                  t("addClient")
                 )}
               </Button>
             </SheetFooter>
@@ -259,24 +262,20 @@ export function ClientForm({ client, categories, open, onOpenChange }: ClientFor
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete client?</AlertDialogTitle>
+            <AlertDialogTitle>{t("form.deleteClient")}</AlertDialogTitle>
             <AlertDialogDescription>
               {client && client._count.incomes > 0 ? (
                 <>
-                  This client has {client._count.incomes} linked income
-                  {client._count.incomes > 1 ? "s" : ""}. You must reassign them before
-                  deleting, or merge this client with another.
+                  {t("form.deleteHasIncomes", { count: client._count.incomes })}{" "}
+                  {t("form.deleteReassign")}
                 </>
               ) : (
-                <>
-                  This will permanently delete <strong>{client?.name}</strong>. This action
-                  cannot be undone.
-                </>
+                t("form.deleteConfirm", { name: client?.name ?? "" })
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>{tc("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={loading || (client?._count.incomes ?? 0) > 0}
@@ -285,10 +284,10 @@ export function ClientForm({ client, categories, open, onOpenChange }: ClientFor
               {loading ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
+                  {tc("actions.deleting")}
                 </>
               ) : (
-                "Delete"
+                tc("actions.delete")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

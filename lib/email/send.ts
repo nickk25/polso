@@ -1,4 +1,6 @@
 import { resend, FROM_EMAIL, FROM_FOUNDER } from "./resend"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 // Onboarding emails
 import WaitlistConfirmationEmail from "@/emails/waitlist-confirmation"
@@ -34,42 +36,47 @@ import UserAcceptedInviteEmail from "@/emails/user-accepted-invite"
 // ONBOARDING
 // =============================================================================
 
-export async function sendWaitlistConfirmation(email: string) {
+export async function sendWaitlistConfirmation(email: string, locale?: Locale) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: "You're on the Polso waitlist!",
-    react: WaitlistConfirmationEmail({ email }),
+    subject: t("waitlistConfirmation.preview"),
+    react: WaitlistConfirmationEmail({ email, locale }),
   })
 }
 
-export async function sendWelcome(to: string, name: string) {
+export async function sendWelcome(to: string, name: string, locale?: Locale) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "Welcome to Polso!",
+    subject: t("welcome.preview"),
     react: WelcomeEmail({
       name,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      locale,
     }),
   })
 }
 
-export async function sendWelcomeFounder(to: string, name: string) {
+export async function sendWelcomeFounder(to: string, name: string, locale?: Locale) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_FOUNDER,
     to,
-    subject: "Welcome to Polso",
-    react: WelcomeFounderEmail({ name }),
+    subject: t("welcomeFounder.preview"),
+    react: WelcomeFounderEmail({ name, locale }),
   })
 }
 
-export async function sendWaitlistFounder(to: string, name: string) {
+export async function sendWaitlistFounder(to: string, name: string, locale?: Locale) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_FOUNDER,
     to,
-    subject: "You're on the list",
-    react: WaitlistFounderEmail({ name }),
+    subject: t("waitlistFounder.preview"),
+    react: WaitlistFounderEmail({ name, locale }),
   })
 }
 
@@ -80,16 +87,19 @@ export async function sendWaitlistFounder(to: string, name: string) {
 export async function sendTrialStarted(
   to: string,
   name: string,
-  trialEndDate: string
+  trialEndDate: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "Your 14-day free trial has started",
+    subject: t("trialStarted.subject"),
     react: TrialStartedEmail({
       name,
       trialEndDate,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      locale,
     }),
   })
 }
@@ -98,29 +108,34 @@ export async function sendTrialEnding(
   to: string,
   name: string,
   daysLeft: number,
-  trialEndDate: string
+  trialEndDate: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Your trial ends in ${daysLeft} days`,
+    subject: t("trialEnding.subject", { daysLeft }),
     react: TrialEndingEmail({
       name,
       daysLeft,
       trialEndDate,
       upgradeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
+      locale,
     }),
   })
 }
 
-export async function sendTrialEnded(to: string, name: string) {
+export async function sendTrialEnded(to: string, name: string, locale?: Locale) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "Your Polso trial has ended",
+    subject: t("trialEnded.subject"),
     react: TrialEndedEmail({
       name,
       upgradeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
+      locale,
     }),
   })
 }
@@ -130,31 +145,36 @@ export async function sendSubscriptionConfirmed(
   name: string,
   planName: string,
   amount: string,
-  nextBillingDate: string
+  nextBillingDate: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "Your Polso subscription is active",
+    subject: t("subscriptionConfirmed.subject"),
     react: SubscriptionConfirmedEmail({
       name,
       planName,
       amount,
       nextBillingDate,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      locale,
     }),
   })
 }
 
-export async function sendPaymentFailed(to: string, name: string, amount: string) {
+export async function sendPaymentFailed(to: string, name: string, amount: string, locale?: Locale) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "Action required: Payment failed",
+    subject: t("paymentFailed.subject"),
     react: PaymentFailedEmail({
       name,
       amount,
       updatePaymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
+      locale,
     }),
   })
 }
@@ -162,16 +182,19 @@ export async function sendPaymentFailed(to: string, name: string, amount: string
 export async function sendSubscriptionCancelled(
   to: string,
   name: string,
-  accessEndDate: string
+  accessEndDate: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: "Your Polso subscription has been cancelled",
+    subject: t("subscriptionCancelled.subject"),
     react: SubscriptionCancelledEmail({
       name,
       accessEndDate,
       resubscribeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
+      locale,
     }),
   })
 }
@@ -184,17 +207,20 @@ export async function sendBankConnected(
   to: string,
   name: string,
   bankName: string,
-  accountCount: number
+  accountCount: number,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `${bankName} connected successfully`,
+    subject: t("bankConnected.subject", { bankName }),
     react: BankConnectedEmail({
       name,
       bankName,
       accountCount,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      locale,
     }),
   })
 }
@@ -202,16 +228,19 @@ export async function sendBankConnected(
 export async function sendBankDisconnected(
   to: string,
   name: string,
-  bankName: string
+  bankName: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Action required: ${bankName} disconnected`,
+    subject: t("bankDisconnected.subject", { bankName }),
     react: BankDisconnectedEmail({
       name,
       bankName,
       reconnectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/banking`,
+      locale,
     }),
   })
 }
@@ -220,17 +249,20 @@ export async function sendSyncError(
   to: string,
   name: string,
   bankName: string,
-  errorMessage: string
+  errorMessage: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Sync error with ${bankName}`,
+    subject: t("syncError.subject", { bankName }),
     react: SyncErrorEmail({
       name,
       bankName,
       errorMessage,
       settingsUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/banking`,
+      locale,
     }),
   })
 }
@@ -244,18 +276,21 @@ export async function sendLowBalanceAlert(
   name: string,
   accountName: string,
   currentBalance: string,
-  threshold: string
+  threshold: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Low balance alert: ${accountName}`,
+    subject: t("alertLowBalance.subject", { accountName }),
     react: LowBalanceAlertEmail({
       name,
       accountName,
       currentBalance,
       threshold,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      locale,
     }),
   })
 }
@@ -266,12 +301,14 @@ export async function sendHighSpendAlert(
   category: string,
   amount: string,
   threshold: string,
-  period: string
+  period: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `High spend alert: ${category}`,
+    subject: t("alertHighSpend.subject", { category }),
     react: HighSpendAlertEmail({
       name,
       category,
@@ -279,6 +316,7 @@ export async function sendHighSpendAlert(
       threshold,
       period,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/expenses`,
+      locale,
     }),
   })
 }
@@ -288,18 +326,21 @@ export async function sendMissingRecurringAlert(
   name: string,
   vendorName: string,
   expectedAmount: string,
-  expectedDate: string
+  expectedDate: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Missing payment: ${vendorName}`,
+    subject: t("alertMissingRecurring.subject", { vendorName }),
     react: MissingRecurringAlertEmail({
       name,
       vendorName,
       expectedAmount,
       expectedDate,
       recurringUrl: `${process.env.NEXT_PUBLIC_APP_URL}/recurring`,
+      locale,
     }),
   })
 }
@@ -310,12 +351,14 @@ export async function sendUnusualActivityAlert(
   category: string,
   amount: string,
   averageAmount: string,
-  multiplier: string
+  multiplier: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Unusual activity: ${category}`,
+    subject: t("alertUnusualActivity.subject", { category }),
     react: UnusualActivityAlertEmail({
       name,
       category,
@@ -323,6 +366,7 @@ export async function sendUnusualActivityAlert(
       averageAmount,
       multiplier,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/expenses`,
+      locale,
     }),
   })
 }
@@ -333,12 +377,14 @@ export async function sendRunwayCriticalAlert(
   runwayMonths: string,
   threshold: string,
   currentBalance: string,
-  monthlyBurn: string
+  monthlyBurn: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Runway alert: ${runwayMonths} months remaining`,
+    subject: t("alertRunwayCritical.subject", { runwayMonths }),
     react: RunwayCriticalAlertEmail({
       name,
       runwayMonths,
@@ -346,6 +392,7 @@ export async function sendRunwayCriticalAlert(
       currentBalance,
       monthlyBurn,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/analytics`,
+      locale,
     }),
   })
 }
@@ -358,16 +405,19 @@ export async function sendUserInvited(
   to: string,
   inviterName: string,
   organizationName: string,
-  inviteToken: string
+  inviteToken: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `${inviterName} invited you to ${organizationName}`,
+    subject: t("userInvited.subject", { inviterName, organizationName }),
     react: UserInvitedEmail({
       inviterName,
       organizationName,
       inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/invite/${inviteToken}`,
+      locale,
     }),
   })
 }
@@ -377,18 +427,21 @@ export async function sendUserAcceptedInvite(
   name: string,
   newMemberName: string,
   newMemberEmail: string,
-  organizationName: string
+  organizationName: string,
+  locale?: Locale
 ) {
+  const t = getEmailTranslations(locale)
   return resend.emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `${newMemberName} joined ${organizationName}`,
+    subject: t("userAcceptedInvite.subject", { newMemberName, organizationName }),
     react: UserAcceptedInviteEmail({
       name,
       newMemberName,
       newMemberEmail,
       organizationName,
       teamUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/organization`,
+      locale,
     }),
   })
 }

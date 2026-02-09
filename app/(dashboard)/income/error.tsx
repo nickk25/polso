@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { ErrorBoundary } from "@/components/error-boundary"
 
 export default function IncomeError({
@@ -9,12 +10,13 @@ export default function IncomeError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const t = useTranslations("common")
   return (
     <ErrorBoundary
       error={error}
       reset={reset}
-      title="Failed to load income"
-      message="We couldn't load your income data. This might be a database connection issue. Please try again."
+      title={t("errors.incomeError")}
+      message={t("errors.incomeErrorMessage")}
     />
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { FilePdf, Image, Trash, Eye, DownloadSimple, Spinner } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import {
@@ -46,6 +47,8 @@ function getFileIcon(mimeType: string | null) {
 }
 
 export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceListProps) {
+  const t = useTranslations("expenses")
+  const tc = useTranslations("common")
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceWithUrl | null>(null)
   const [deleteInvoice, setDeleteInvoice] = useState<InvoiceWithUrl | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -62,10 +65,10 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
       }
 
       onDelete(deleteInvoice.id)
-      toast.success("Invoice deleted")
+      toast.success(t("invoices.deleted"))
     } catch (error) {
       console.error("Delete error:", error)
-      toast.error("Failed to delete invoice", {
+      toast.error(t("invoices.deleteFailed"), {
         description: error instanceof Error ? error.message : "Unknown error",
       })
     } finally {
@@ -88,7 +91,7 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
       document.body.removeChild(a)
     } catch (error) {
       console.error("Download error:", error)
-      toast.error("Failed to download invoice")
+      toast.error(t("invoices.downloadFailed"))
     }
   }
 
@@ -129,7 +132,7 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
                 size="icon"
                 className="h-7 w-7"
                 onClick={() => setPreviewInvoice(invoice)}
-                title="Preview"
+                title={t("invoices.preview")}
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -138,7 +141,7 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
                 size="icon"
                 className="h-7 w-7"
                 onClick={() => handleDownload(invoice)}
-                title="Download"
+                title={t("invoices.download")}
               >
                 <DownloadSimple className="h-4 w-4" />
               </Button>
@@ -147,7 +150,7 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
                 size="icon"
                 className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10"
                 onClick={() => setDeleteInvoice(invoice)}
-                title="Delete"
+                title={tc("actions.delete")}
               >
                 <Trash className="h-4 w-4" />
               </Button>
@@ -167,14 +170,13 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
       <AlertDialog open={!!deleteInvoice} onOpenChange={() => setDeleteInvoice(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete invoice?</AlertDialogTitle>
+            <AlertDialogTitle>{t("invoices.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{deleteInvoice?.fileName}". This action cannot
-              be undone.
+              {t("invoices.deleteDescription", { name: deleteInvoice?.fileName ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{tc("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
@@ -183,10 +185,10 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
               {deleting ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
+                  {tc("actions.deleting")}
                 </>
               ) : (
-                "Delete"
+                tc("actions.delete")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

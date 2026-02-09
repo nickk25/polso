@@ -8,6 +8,7 @@ import { generateInviteToken, getInviteExpiryDate } from "../lib/generate-token"
 import { requireLimit, LimitExceededError } from "@/features/billing/lib/require-limit"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 import { neonAuth } from "@neondatabase/auth/next/server"
+import { getLocale } from "@/lib/i18n/get-locale"
 
 interface SendInviteInput {
   email: string
@@ -135,12 +136,14 @@ export async function sendInviteAction(
 
     // Send invitation email
     try {
+      const locale = await getLocale()
       const inviterName = user.name ?? user.email ?? "A team member"
       const result = await sendUserInvited(
         normalizedEmail,
         inviterName,
         organization.name,
-        token
+        token,
+        locale
       )
 
       // Update email tracking

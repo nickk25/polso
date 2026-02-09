@@ -1,67 +1,69 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { updatePreferencesAction } from "../actions/update-preferences"
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { updatePreferencesAction } from "../actions/update-preferences";
 
 const THEMES = [
   { value: "system", label: "System" },
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
-]
+];
 
 const LOCALES = [
-  { value: "en-US", label: "English (US)" },
-  { value: "en-GB", label: "English (UK)" },
-  { value: "de-DE", label: "German" },
-  { value: "fr-FR", label: "French" },
-  { value: "es-ES", label: "Spanish" },
-  { value: "it-IT", label: "Italian" },
-  { value: "pt-BR", label: "Portuguese (Brazil)" },
-  { value: "ja-JP", label: "Japanese" },
-  { value: "zh-CN", label: "Chinese (Simplified)" },
-]
+  { value: "en-US", label: "English" },
+  { value: "es-ES", label: "Español" },
+];
 
 interface PreferencesFormProps {
   preferences: {
-    theme: string
-    locale: string
-    compactMode: boolean
-  }
+    theme: string;
+    locale: string;
+    compactMode: boolean;
+  };
 }
 
 export function PreferencesForm({ preferences }: PreferencesFormProps) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [theme, setTheme] = useState(preferences.theme)
-  const [locale, setLocale] = useState(preferences.locale)
-  const [compactMode, setCompactMode] = useState(preferences.compactMode)
+  const router = useRouter();
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
+  const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState(preferences.theme);
+  const [locale, setLocale] = useState(preferences.locale);
+  const [compactMode, setCompactMode] = useState(preferences.compactMode);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     const result = await updatePreferencesAction({
       theme,
       locale,
       compactMode,
-    })
+    });
 
-    setLoading(false)
+    setLoading(false);
 
     if (result.success) {
-      router.refresh()
+      router.refresh();
     }
   }
 
@@ -69,33 +71,33 @@ export function PreferencesForm({ preferences }: PreferencesFormProps) {
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>Display Preferences</CardTitle>
+          <CardTitle>{t("preferences.title")}</CardTitle>
           <CardDescription>
-            Customize how the application looks and behaves
+            {t("preferences.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="theme">Theme</Label>
+            <Label htmlFor="theme">{t("preferences.theme")}</Label>
             <Select value={theme} onValueChange={setTheme}>
               <SelectTrigger id="theme">
                 <SelectValue placeholder="Select theme" />
               </SelectTrigger>
               <SelectContent>
-                {THEMES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
+                {THEMES.map((themeOption) => (
+                  <SelectItem key={themeOption.value} value={themeOption.value}>
+                    {themeOption.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              Choose your preferred color scheme
+              {t("preferences.themeDescription")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="locale">Language &amp; Region</Label>
+            <Label htmlFor="locale">{t("preferences.language")}</Label>
             <Select value={locale} onValueChange={setLocale}>
               <SelectTrigger id="locale">
                 <SelectValue placeholder="Select locale" />
@@ -109,15 +111,15 @@ export function PreferencesForm({ preferences }: PreferencesFormProps) {
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              Affects number and date formatting
+              {t("preferences.languageDescription")}
             </p>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label htmlFor="compactMode">Compact Mode</Label>
+              <Label htmlFor="compactMode">{t("preferences.compactMode")}</Label>
               <p className="text-sm text-muted-foreground">
-                Use a more condensed layout with smaller spacing
+                {t("preferences.compactModeDescription")}
               </p>
             </div>
             <Switch
@@ -128,10 +130,10 @@ export function PreferencesForm({ preferences }: PreferencesFormProps) {
           </div>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? tc("actions.saving") : tc("actions.saveChanges")}
           </Button>
         </CardContent>
       </Card>
     </form>
-  )
+  );
 }

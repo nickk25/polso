@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sparkle, Spinner } from "@phosphor-icons/react"
@@ -8,6 +9,7 @@ import { toast } from "sonner"
 import { backfillVendorsAction } from "../actions/backfill-vendors"
 
 export function BackfillVendorsButton() {
+  const t = useTranslations("vendors")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -22,22 +24,22 @@ export function BackfillVendorsButton() {
       const { vendorsCreated, expensesLinked, alreadyLinked } = response.data
 
       if (vendorsCreated === 0 && expensesLinked === 0) {
-        toast.info("No new vendors to create", {
-          description: "All transactions already have vendors assigned.",
+        toast.info(t("backfill.noNewVendors"), {
+          description: t("backfill.allAssigned"),
         })
       } else if (vendorsCreated > 0) {
-        toast.success(`Created ${vendorsCreated} vendor${vendorsCreated > 1 ? "s" : ""}`, {
-          description: `${expensesLinked} expense${expensesLinked > 1 ? "s" : ""} linked to vendors.`,
+        toast.success(t("backfill.created", { count: vendorsCreated }), {
+          description: t("backfill.linked", { count: expensesLinked }),
         })
       } else {
-        toast.success(`Linked ${expensesLinked} expense${expensesLinked > 1 ? "s" : ""}`, {
-          description: "Expenses linked to existing vendors.",
+        toast.success(t("backfill.linkedOnly", { count: expensesLinked }), {
+          description: t("backfill.linkedDescription"),
         })
       }
 
       router.refresh()
     } else {
-      toast.error("Failed to create vendors", {
+      toast.error(t("backfill.failed"), {
         description: "error" in response ? response.error : "An error occurred.",
       })
     }
@@ -48,12 +50,12 @@ export function BackfillVendorsButton() {
       {loading ? (
         <>
           <Spinner className="h-4 w-4 mr-2 animate-spin" />
-          Creating...
+          {t("backfill.creating")}
         </>
       ) : (
         <>
           <Sparkle weight="fill" className="h-4 w-4 mr-2" />
-          Create from transactions
+          {t("backfill.createFromTransactions")}
         </>
       )}
     </Button>

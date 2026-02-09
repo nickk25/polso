@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { PlaidLinkButton } from "@/components/banking/plaid-link-button"
 import { UpgradePrompt } from "@/components/shared/upgrade-prompt"
 import type { PlanType } from "@/lib/plans"
@@ -25,6 +26,7 @@ function isLimitExceeded(response: ApiResponse): response is LimitExceededRespon
 }
 
 export function ConnectBankButton() {
+  const t = useTranslations("banking")
   const [linkToken, setLinkToken] = useState<string | null>(null)
   const [limitInfo, setLimitInfo] = useState<LimitExceededResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -67,8 +69,8 @@ export function ConnectBankButton() {
         currentPlan={limitInfo.plan}
         currentCount={limitInfo.current}
         maxAllowed={limitInfo.limit}
-        title="Bank connection limit reached"
-        description="Upgrade your plan to connect more bank accounts."
+        title={t("connectButton.limitTitle")}
+        description={t("connectButton.limitDescription")}
       />
     )
   }

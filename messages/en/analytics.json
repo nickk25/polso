@@ -1,0 +1,79 @@
+{
+  "title": "Analytics",
+  "subtitle": "Deep insights into your financial data",
+  "analyticsRequireData": "Analytics require data",
+  "analyticsRequireDataDescription": "Connect a bank account and import transactions to unlock detailed analytics",
+  "connectBankAccount": "Connect Bank Account",
+  "totalBalance": "Total Balance",
+  "monthlyIncome": "Monthly Income",
+  "monthlyBurnRate": "Monthly Burn Rate",
+  "netCashFlow": "Net Cash Flow",
+  "runway": "Runway",
+  "monthlySpendTrend": "Monthly Spend Trend",
+  "fixed": "Fixed",
+  "variable": "Variable",
+  "expenseBreakdown": "Expense Breakdown",
+  "noExpensesThisMonth": "No expenses this month",
+  "cashFlow": "Cash Flow",
+  "income": "Income",
+  "expenses": "Expenses",
+  "topVendors": "Top Vendors",
+  "noVendorDataYet": "No vendor data yet",
+  "incomeTrend": "Income Trend",
+  "noIncomeDataYet": "No income data yet",
+  "incomeBySource": "Income by Source",
+  "noIncomeDataThisMonth": "No income data this month",
+  "forecasts": "Forecasts",
+  "aiPoweredPredictions": "AI-powered predictions",
+  "periods": {
+    "week": "This Week",
+    "month": "This Month",
+    "quarter": "This Quarter",
+    "year": "This Year",
+    "custom": "Custom Range"
+  },
+  "trends": {
+    "title": "Trends",
+    "increasing": "Increasing",
+    "decreasing": "Decreasing",
+    "stable": "Stable"
+  },
+  "confidence": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "label": "{level} confidence"
+  },
+  "cashFlowForecast": {
+    "title": "Cash Flow Forecast",
+    "projectedIncome": "Projected Income",
+    "projectedExpenses": "Projected Expenses",
+    "netCashFlow": "Net Cash Flow",
+    "legendIncome": "Income",
+    "legendExpenses": "Expenses",
+    "legendForecast": "Forecast",
+    "projectedBalance": "Projected balance in {count} months"
+  },
+  "revenueForecast": {
+    "title": "Revenue Forecast",
+    "nextMonthProjection": "Next Month Projection",
+    "vsLastMonth": "{change}% vs last month",
+    "breakdown": "Breakdown",
+    "recurring": "Recurring",
+    "trending": "Trending",
+    "oneTime": "One-time",
+    "quarter": "Quarter",
+    "year": "Year",
+    "topClients": "Top Clients",
+    "perMonth": "/mo"
+  },
+  "expenseForecast": {
+    "title": "Expense Forecast",
+    "nextMonthProjection": "Next Month Projection",
+    "vsLastMonth": "{change}% vs last month",
+    "byType": "By Type",
+    "fixed": "Fixed",
+    "variable": "Variable",
+    "byCategory": "By Category"
+  }
+}

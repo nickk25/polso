@@ -1,5 +1,7 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface UnusualActivityAlertEmailProps {
   name: string
@@ -8,6 +10,7 @@ interface UnusualActivityAlertEmailProps {
   averageAmount: string
   multiplier: string
   dashboardUrl: string
+  locale?: Locale
 }
 
 export default function UnusualActivityAlertEmail({
@@ -17,20 +20,23 @@ export default function UnusualActivityAlertEmail({
   averageAmount,
   multiplier,
   dashboardUrl,
+  locale = "en",
 }: UnusualActivityAlertEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview={`Unusual activity: ${category}`}>
-      <Preview>Unusual activity: {category}</Preview>
+    <EmailLayout preview={t("alertUnusualActivity.preview", { category })} locale={locale}>
+      <Preview>{t("alertUnusualActivity.preview", { category })}</Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Alert
+        {t("alertUnusualActivity.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        Unusual spending detected
+        {t("alertUnusualActivity.heading")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Hi {name}, we noticed an unusual expense in <span style={{ fontWeight: 500, color: "#18181B" }}>{category}</span> that&apos;s <span style={{ fontWeight: 600, color: "#18181B", fontFamily: "'JetBrains Mono', monospace" }}>{multiplier}x higher</span> than your average.
+        {t("alertUnusualActivity.intro", { name, category, multiplier })}
       </Text>
 
       <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%", marginBottom: "24px", backgroundColor: "#fafafa" }}>
@@ -39,11 +45,11 @@ export default function UnusualActivityAlertEmail({
             <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%" }}>
               <tr>
                 <td>
-                  <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 4px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>This expense</Text>
+                  <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 4px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("alertUnusualActivity.thisExpenseLabel")}</Text>
                   <Text style={{ fontSize: "24px", fontWeight: 600, color: "#18181B", margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>{amount}</Text>
                 </td>
                 <td style={{ textAlign: "right" }}>
-                  <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 4px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Your average</Text>
+                  <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 4px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("alertUnusualActivity.yourAverageLabel")}</Text>
                   <Text style={{ fontSize: "14px", color: "#71717A", margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>{averageAmount}</Text>
                 </td>
               </tr>
@@ -53,7 +59,7 @@ export default function UnusualActivityAlertEmail({
       </table>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        This might be expected (annual payment, one-time purchase) or it could be worth reviewing.
+        {t("alertUnusualActivity.context")}
       </Text>
 
       <Button
@@ -69,11 +75,11 @@ export default function UnusualActivityAlertEmail({
           textAlign: "center",
         }}
       >
-        Review Transaction
+        {t("alertUnusualActivity.button")}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        We alert you when spending is 2x or more above your category average.
+        {t("alertUnusualActivity.footer")}
       </Text>
     </EmailLayout>
   )
@@ -86,4 +92,5 @@ UnusualActivityAlertEmail.PreviewProps = {
   averageAmount: "€120",
   multiplier: "7",
   dashboardUrl: "https://polso.app/expenses",
+  locale: "es" as const,
 } satisfies UnusualActivityAlertEmailProps

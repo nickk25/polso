@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { UserCircle, Lock, ArrowSquareOut } from "@phosphor-icons/react/dist/ssr"
+import { getTranslations } from "next-intl/server"
 
 export default async function ProfilePage() {
+  const t = await getTranslations("profile")
   const { user } = await neonAuth()
 
   if (!user) {
@@ -21,15 +23,15 @@ export default async function ProfilePage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <SettingsHeader
-        title="Profile"
-        description="View and manage your account"
+        title={t("title")}
+        description={t("subtitle")}
       />
       <div className="max-w-2xl space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Your Profile</CardTitle>
+            <CardTitle>{t("yourProfile")}</CardTitle>
             <CardDescription>
-              Your account information managed by Neon Auth
+              {t("accountManagedBy")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -48,22 +50,21 @@ export default async function ProfilePage() {
               <Button variant="outline" asChild>
                 <Link href="/account/settings" className="inline-flex items-center gap-2">
                   <UserCircle className="h-4 w-4" />
-                  Manage Profile
+                  {t("manageProfile")}
                   <ArrowSquareOut className="h-3 w-3 ml-1" />
                 </Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link href="/account/security" className="inline-flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Security Settings
+                  {t("securitySettings")}
                   <ArrowSquareOut className="h-3 w-3 ml-1" />
                 </Link>
               </Button>
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Profile and security settings are managed through Neon Auth.
-              Click the buttons above to access these settings.
+              {t("managedByNeonAuth")}
             </p>
           </CardContent>
         </Card>

@@ -6,6 +6,7 @@ import { getAuthContext } from "@/lib/auth/get-session"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { sendUserInvited } from "@/lib/email/send"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
+import { getLocale } from "@/lib/i18n/get-locale"
 
 /**
  * Resend an invitation email
@@ -67,12 +68,14 @@ export async function resendInviteAction(
 
     // Resend the email
     try {
+      const locale = await getLocale()
       const inviterName = user.name ?? user.email ?? "A team member"
       const result = await sendUserInvited(
         invitation.email,
         inviterName,
         invitation.organization.name,
-        invitation.token
+        invitation.token,
+        locale
       )
 
       // Update email tracking

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useTransition } from "react"
+import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,6 +24,7 @@ export function IncomeFilters({ search, status, source }: IncomeFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const t = useTranslations("income")
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -68,7 +70,7 @@ export function IncomeFilters({ search, status, source }: IncomeFiltersProps) {
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             name="search"
-            placeholder="Search income..."
+            placeholder={t("tableFilters.searchPlaceholder")}
             defaultValue={search}
             className="pl-9"
           />
@@ -84,13 +86,13 @@ export function IncomeFilters({ search, status, source }: IncomeFiltersProps) {
           onValueChange={(value) => updateParams({ status: value })}
         >
           <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("tableFilters.statusPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="excluded">Excluded</SelectItem>
+            <SelectItem value="all">{t("tableFilters.allStatus")}</SelectItem>
+            <SelectItem value="pending">{t("tableFilters.pending")}</SelectItem>
+            <SelectItem value="confirmed">{t("tableFilters.confirmed")}</SelectItem>
+            <SelectItem value="excluded">{t("tableFilters.excluded")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -99,23 +101,23 @@ export function IncomeFilters({ search, status, source }: IncomeFiltersProps) {
           onValueChange={(value) => updateParams({ source: value })}
         >
           <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Source" />
+            <SelectValue placeholder={t("tableFilters.sourcePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Sources</SelectItem>
-            <SelectItem value="salary">Salary</SelectItem>
-            <SelectItem value="freelance">Freelance</SelectItem>
-            <SelectItem value="investment">Investment</SelectItem>
-            <SelectItem value="refund">Refund</SelectItem>
-            <SelectItem value="transfer">Transfer</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
+            <SelectItem value="all">{t("tableFilters.allSources")}</SelectItem>
+            <SelectItem value="salary">{t("sources.salary")}</SelectItem>
+            <SelectItem value="freelance">{t("sources.freelance")}</SelectItem>
+            <SelectItem value="investment">{t("sources.investment")}</SelectItem>
+            <SelectItem value="refund">{t("sources.refund")}</SelectItem>
+            <SelectItem value="transfer">{t("sources.transfer")}</SelectItem>
+            <SelectItem value="other">{t("sources.other")}</SelectItem>
           </SelectContent>
         </Select>
 
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} disabled={isPending}>
             <X className="h-4 w-4 mr-1" />
-            Clear
+            {t("tableFilters.clear")}
           </Button>
         )}
       </div>

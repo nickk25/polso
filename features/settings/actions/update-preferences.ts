@@ -1,9 +1,11 @@
 "use server"
 
+import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@/lib/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
+import { localeMap } from "@/lib/i18n/config"
 
 interface UpdatePreferencesInput {
   theme: string
@@ -30,6 +32,15 @@ export async function updatePreferencesAction(
         locale: input.locale,
         compactMode: input.compactMode,
       },
+    })
+
+    // Sync locale to cookie for next-intl
+    const baseLocale = localeMap[input.locale] ?? "en"
+    const cookieStore = await cookies()
+    cookieStore.set("NEXT_LOCALE", baseLocale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+      sameSite: "lax",
     })
 
     revalidatePath("/settings")

@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { DownloadSimple, X } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,8 @@ export function InvoicePreviewDialog({
   onClose,
   onDownload,
 }: InvoicePreviewDialogProps) {
+  const t = useTranslations("expenses")
+
   if (!invoice) return null
 
   const isPdf = invoice.mimeType === "application/pdf"
@@ -39,7 +42,7 @@ export function InvoicePreviewDialog({
               className="flex-shrink-0"
             >
               <DownloadSimple className="h-4 w-4 mr-2" />
-              Download
+              {t("invoices.download")}
             </Button>
           </div>
         </DialogHeader>
@@ -66,11 +69,11 @@ export function InvoicePreviewDialog({
           {!isPdf && !isImage && (
             <div className="flex flex-col items-center justify-center p-8 text-center min-h-[300px]">
               <p className="text-muted-foreground mb-4">
-                Preview not available for this file type
+                {t("invoices.previewNotAvailable")}
               </p>
               <Button onClick={() => onDownload(invoice)}>
                 <DownloadSimple className="h-4 w-4 mr-2" />
-                Download to view
+                {t("invoices.downloadToView")}
               </Button>
             </div>
           )}

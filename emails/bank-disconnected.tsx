@@ -1,34 +1,40 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface BankDisconnectedEmailProps {
   name: string
   bankName: string
   reconnectUrl: string
+  locale?: Locale
 }
 
 export default function BankDisconnectedEmail({
   name,
   bankName,
   reconnectUrl,
+  locale = "en",
 }: BankDisconnectedEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview={`Action required: ${bankName} disconnected`}>
-      <Preview>Action required: {bankName} disconnected</Preview>
+    <EmailLayout preview={t("bankDisconnected.preview", { bankName })} locale={locale}>
+      <Preview>{t("bankDisconnected.preview", { bankName })}</Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Action required
+        {t("bankDisconnected.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        {bankName} disconnected
+        {t("bankDisconnected.heading", { bankName })}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Hi {name}, your connection to <span style={{ fontWeight: 500, color: "#18181B" }}>{bankName}</span> has been lost. Until reconnected, we can&apos;t sync new transactions.
+        {t("bankDisconnected.intro", { name, bankName })}
       </Text>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 12px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        This usually happens when
+        {t("bankDisconnected.reasonsLabel")}
       </Text>
 
       <table cellPadding="0" cellSpacing="0" role="presentation" style={{ width: "100%", marginBottom: "24px" }}>
@@ -36,7 +42,7 @@ export default function BankDisconnectedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Your bank requires re-authentication
+              {t("bankDisconnected.reason1")}
             </Text>
           </td>
         </tr>
@@ -44,7 +50,7 @@ export default function BankDisconnectedEmail({
           <td style={{ paddingBottom: "8px" }}>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              Your bank credentials changed
+              {t("bankDisconnected.reason2")}
             </Text>
           </td>
         </tr>
@@ -52,7 +58,7 @@ export default function BankDisconnectedEmail({
           <td>
             <Text style={{ fontSize: "13px", color: "#3f3f46", margin: 0 }}>
               <span style={{ color: "#a1a1aa", marginRight: "8px" }}>—</span>
-              The bank temporarily revoked API access
+              {t("bankDisconnected.reason3")}
             </Text>
           </td>
         </tr>
@@ -71,11 +77,11 @@ export default function BankDisconnectedEmail({
           textAlign: "center",
         }}
       >
-        Reconnect {bankName}
+        {t("bankDisconnected.button", { bankName })}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        This takes less than a minute. Your historical data is safe.
+        {t("bankDisconnected.footer")}
       </Text>
     </EmailLayout>
   )
@@ -85,4 +91,5 @@ BankDisconnectedEmail.PreviewProps = {
   name: "Alex",
   bankName: "ING Direct",
   reconnectUrl: "https://polso.app/settings/banking",
+  locale: "es" as const,
 } satisfies BankDisconnectedEmailProps

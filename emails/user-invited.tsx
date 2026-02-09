@@ -1,36 +1,42 @@
 import { Preview, Text, Button } from "@react-email/components"
 import { EmailLayout } from "./components/email-layout"
+import type { Locale } from "@/lib/i18n/config"
+import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
 interface UserInvitedEmailProps {
   inviterName: string
   organizationName: string
   inviteUrl: string
+  locale?: Locale
 }
 
 export default function UserInvitedEmail({
   inviterName,
   organizationName,
   inviteUrl,
+  locale = "en",
 }: UserInvitedEmailProps) {
+  const t = getEmailTranslations(locale)
+
   return (
-    <EmailLayout preview={`${inviterName} invited you to ${organizationName}`}>
+    <EmailLayout preview={t("userInvited.preview", { inviterName, organizationName })} locale={locale}>
       <Preview>
-        {inviterName} invited you to {organizationName}
+        {t("userInvited.preview", { inviterName, organizationName })}
       </Preview>
 
       <Text style={{ fontSize: "11px", color: "#a1a1aa", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        Invitation
+        {t("userInvited.badge")}
       </Text>
       <Text style={{ fontSize: "20px", fontWeight: 600, color: "#18181B", margin: "0 0 24px 0", lineHeight: 1.3 }}>
-        You&apos;ve been invited
+        {t("userInvited.heading")}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 16px 0", lineHeight: 1.6 }}>
-        <span style={{ fontWeight: 500, color: "#18181B" }}>{inviterName}</span> has invited you to join <span style={{ fontWeight: 500, color: "#18181B" }}>{organizationName}</span> on Polso.
+        {t("userInvited.intro", { inviterName, organizationName })}
       </Text>
 
       <Text style={{ fontSize: "14px", color: "#3f3f46", margin: "0 0 24px 0", lineHeight: 1.6 }}>
-        Polso helps teams track expenses, monitor cash flow, and stay on top of their finances.
+        {t("userInvited.description")}
       </Text>
 
       <Button
@@ -46,11 +52,11 @@ export default function UserInvitedEmail({
           textAlign: "center",
         }}
       >
-        Accept Invitation
+        {t("userInvited.button")}
       </Button>
 
       <Text style={{ fontSize: "12px", color: "#71717A", margin: "24px 0 0 0" }}>
-        This invitation expires in 7 days.
+        {t("userInvited.footer")}
       </Text>
     </EmailLayout>
   )
@@ -60,4 +66,5 @@ UserInvitedEmail.PreviewProps = {
   inviterName: "Alex",
   organizationName: "Acme Inc",
   inviteUrl: "https://polso.app/invite/abc123",
+  locale: "es" as const,
 } satisfies UserInvitedEmailProps
