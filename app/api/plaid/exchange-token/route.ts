@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Get institution details for logo
     let institutionLogo: string | null = null
     try {
-      const institution = await getInstitution(institutionId, [CountryCode.Us])
+      const institution = await getInstitution(institutionId, [CountryCode.Es])
       institutionLogo = institution.logo || null
     } catch (error) {
       console.warn("Failed to get institution details:", error)

@@ -42,7 +42,7 @@ export interface CreateLinkTokenParams {
 export async function createLinkToken({
   userId,
   products = [Products.Transactions],
-  countryCodes = [CountryCode.Us],
+  countryCodes = [CountryCode.Es],
 }: CreateLinkTokenParams) {
   const request: LinkTokenCreateRequest = {
     user: {
@@ -51,7 +51,7 @@ export async function createLinkToken({
     client_name: "Polso",
     products,
     country_codes: countryCodes,
-    language: "en",
+    language: "es",
   }
 
   const response = await plaidClient.linkTokenCreate(request)
@@ -118,7 +118,7 @@ export async function removeItem(accessToken: string) {
 // Institution
 // ============================================
 
-export async function getInstitution(institutionId: string, countryCodes: CountryCode[] = [CountryCode.Us]) {
+export async function getInstitution(institutionId: string, countryCodes: CountryCode[] = [CountryCode.Es]) {
   const request: InstitutionsGetByIdRequest = {
     institution_id: institutionId,
     country_codes: countryCodes,

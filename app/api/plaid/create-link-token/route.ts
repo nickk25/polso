@@ -64,7 +64,7 @@ export async function POST() {
     const linkTokenResponse = await createLinkToken({
       userId: user.id,
       products: [Products.Transactions],
-      countryCodes: [CountryCode.Us],
+      countryCodes: [CountryCode.Es],
     })
 
     return NextResponse.json({
