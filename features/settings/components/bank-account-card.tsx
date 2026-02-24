@@ -63,11 +63,14 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
     router.refresh()
   }
 
+  const isDisconnected = account.status === "disconnected"
+
   const statusBadge = {
     active: { variant: "default" as const, icon: CheckCircle, label: t("accountCard.statusActive") },
     pending: { variant: "secondary" as const, icon: Clock, label: t("accountCard.statusPending") },
     expired: { variant: "destructive" as const, icon: Warning, label: t("accountCard.statusExpired") },
     error: { variant: "destructive" as const, icon: Warning, label: t("accountCard.statusError") },
+    disconnected: { variant: "secondary" as const, icon: Warning, label: t("accountCard.statusDisconnected") },
   }[account.status] ?? { variant: "secondary" as const, icon: Clock, label: account.status }
 
   const StatusIcon = statusBadge.icon
@@ -132,45 +135,49 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
             {statusBadge.label}
           </Badge>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSync}
-            disabled={syncing || account.status !== "active"}
-            title={t("accountCard.syncTransactions")}
-          >
-            <ArrowsClockwise className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-          </Button>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          {!isDisconnected && (
+            <>
               <Button
                 variant="ghost"
                 size="icon"
-                disabled={disconnecting}
-                title={t("accountCard.disconnectBank")}
+                onClick={handleSync}
+                disabled={syncing || account.status !== "active"}
+                title={t("accountCard.syncTransactions")}
               >
-                <Trash className="h-4 w-4" />
+                <ArrowsClockwise className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("accountCard.disconnectTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("accountCard.disconnectDescription", { bank: account.institutionName || t("accountCard.bank") })}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDisconnect}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {t("accountCard.disconnect")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={disconnecting}
+                    title={t("accountCard.disconnectBank")}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("accountCard.disconnectTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("accountCard.disconnectDescription", { bank: account.institutionName || t("accountCard.bank") })}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDisconnect}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {t("accountCard.disconnect")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

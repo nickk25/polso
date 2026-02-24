@@ -43,7 +43,12 @@
     "statusActive": "Active",
     "statusPending": "Pending",
     "statusExpired": "Expired",
-    "statusError": "Error"
+    "statusError": "Error",
+    "statusDisconnected": "Disconnected"
+  },
+  "connection": {
+    "accountCount": "{count, plural, one {# account} other {# accounts}}",
+    "disconnectDescription": "This will disconnect all {count, plural, one {# account} other {# accounts}} linked to {bank}. Your existing transactions will be preserved, but no new transactions will be synced."
   },
   "connectButton": {
     "limitTitle": "Bank connection limit reached",

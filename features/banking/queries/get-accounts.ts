@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@/lib/auth/get-session"
 
-export async function getAccounts() {
+export async function getAccounts(includeDisconnected = false) {
   const { organizationId } = await getAuthContext()
 
   return prisma.account.findMany({
-    where: { organizationId },
+    where: {
+      organizationId,
+      ...(!includeDisconnected && { status: { not: "disconnected" } }),
+    },
     orderBy: { createdAt: "desc" },
     include: {
       _count: {

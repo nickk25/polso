@@ -43,7 +43,12 @@
     "statusActive": "Activo",
     "statusPending": "Pendiente",
     "statusExpired": "Expirado",
-    "statusError": "Error"
+    "statusError": "Error",
+    "statusDisconnected": "Desconectado"
+  },
+  "connection": {
+    "accountCount": "{count, plural, one {# cuenta} other {# cuentas}}",
+    "disconnectDescription": "Esto desconectara {count, plural, one {la cuenta vinculada} other {las # cuentas vinculadas}} a {bank}. Tus transacciones existentes se conservaran, pero no se sincronizaran nuevas transacciones."
   },
   "connectButton": {
     "limitTitle": "Limite de conexiones bancarias alcanzado",

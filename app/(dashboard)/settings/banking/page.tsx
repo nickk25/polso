@@ -1,5 +1,5 @@
 import { SettingsHeader } from "@/features/settings/components/settings-header"
-import { BankAccountCard } from "@/features/settings/components/bank-account-card"
+import { BankConnectionCard, type BankConnection } from "@/features/settings/components/bank-connection-card"
 import { ConnectBankButton } from "@/features/settings/components/connect-bank-button"
 import { getAccounts } from "@/features/banking/queries/get-accounts"
 import { getSubscription } from "@/features/billing/queries/get-subscription"
@@ -19,6 +19,25 @@ export default async function BankingSettingsPage() {
 
   const plan = subscription?.plan ?? "starter"
   const maxConnections = getLimit(plan, "maxBankConnections")
+
+  // Group accounts by Plaid Item (bank connection)
+  const connectionMap = new Map<string, BankConnection>()
+  for (const account of accounts) {
+    const key = account.plaidItemId ?? account.id // fallback for manual accounts
+    const existing = connectionMap.get(key)
+    if (existing) {
+      existing.accounts.push(account)
+    } else {
+      connectionMap.set(key, {
+        plaidItemId: account.plaidItemId,
+        institutionName: account.institutionName,
+        institutionLogo: account.institutionLogo,
+        accounts: [account],
+      })
+    }
+  }
+
+  const connections = Array.from(connectionMap.values())
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -49,18 +68,21 @@ export default async function BankingSettingsPage() {
           </CardContent>
         </Card>
 
-        {accounts.length > 0 && (
+        {connections.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">{t("settings.connectedAccounts")}</h2>
             <div className="space-y-3">
-              {accounts.map((account) => (
-                <BankAccountCard key={account.id} account={account} />
+              {connections.map((connection) => (
+                <BankConnectionCard
+                  key={connection.plaidItemId ?? connection.accounts[0].id}
+                  connection={connection}
+                />
               ))}
             </div>
           </div>
         )}
 
-        {accounts.length === 0 && (
+        {connections.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-10 text-center">
               <p className="text-muted-foreground">

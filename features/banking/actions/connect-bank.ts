@@ -51,6 +51,7 @@ export async function disconnectBankAction(
           status: "disconnected",
           plaidAccessToken: null, // Token is revoked, clear it
           plaidCursor: null, // Reset cursor for fresh sync on reconnect
+          syncError: null, // Clear any sync errors
         },
       })
     } else {
@@ -60,11 +61,13 @@ export async function disconnectBankAction(
           status: "disconnected",
           plaidAccessToken: null,
           plaidCursor: null,
+          syncError: null,
         },
       })
     }
 
     revalidatePath("/banking")
+    revalidatePath("/settings/banking")
 
     return successResponse(undefined)
   } catch (error) {
