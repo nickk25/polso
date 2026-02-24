@@ -230,7 +230,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
               {t("noIncomeDescription")}
             </p>
             <Button className="mt-4" asChild>
-              <Link href="/banking">
+              <Link href="/settings/banking">
                 {t("connectBank")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

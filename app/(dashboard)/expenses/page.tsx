@@ -148,7 +148,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
               {t("noExpensesDescription")}
             </p>
             <Button className="mt-4" asChild>
-              <Link href="/banking">
+              <Link href="/settings/banking">
                 {t("connectBank")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

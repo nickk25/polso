@@ -218,7 +218,7 @@ export async function syncTransactionsAction(
       }
     }
 
-    revalidatePath("/banking")
+    revalidatePath("/settings/banking")
     revalidatePath("/expenses")
     revalidatePath("/income")
     revalidatePath("/dashboard")

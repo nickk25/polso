@@ -66,7 +66,6 @@ export async function disconnectBankAction(
       })
     }
 
-    revalidatePath("/banking")
     revalidatePath("/settings/banking")
 
     return successResponse(undefined)
@@ -108,7 +107,7 @@ export async function refreshBankConnectionAction(
       },
     })
 
-    revalidatePath("/banking")
+    revalidatePath("/settings/banking")
 
     return successResponse(undefined)
   } catch (error) {

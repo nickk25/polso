@@ -39,7 +39,7 @@ export function PlaidLinkButton({ linkToken, onSuccess }: PlaidLinkButtonProps) 
         }
 
         onSuccess?.()
-        router.push("/banking")
+        router.push("/settings/banking")
         router.refresh()
       } catch (error) {
         console.error("Error exchanging token:", error)

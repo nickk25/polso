@@ -82,7 +82,7 @@ export default async function AnalyticsPage() {
               {t("analyticsRequireDataDescription")}
             </p>
             <Button className="mt-4" asChild>
-              <Link href="/banking">
+              <Link href="/settings/banking">
                 {t("connectBankAccount")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
