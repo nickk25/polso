@@ -6,9 +6,6 @@ import {
   getAccounts,
   getBalances,
   getInstitution,
-  syncTransactions,
-  normalizeCounterpartyName,
-  getTransactionType,
 } from "@/features/banking/lib/plaid-client"
 import { CountryCode } from "plaid"
 
@@ -49,7 +46,7 @@ export async function POST(request: NextRequest) {
     const exchangeResponse = await exchangePublicToken(publicToken)
     const { access_token: accessToken, item_id: itemId } = exchangeResponse
 
-    // Get institution details for logo
+    // Get institution details for logo (non-blocking, don't fail if it errors)
     let institutionLogo: string | null = null
     try {
       const institution = await getInstitution(institutionId, [CountryCode.Es])
@@ -58,11 +55,11 @@ export async function POST(request: NextRequest) {
       console.warn("Failed to get institution details:", error)
     }
 
-    // Get accounts from Plaid
-    const accountsResponse = await getAccounts(accessToken)
-
-    // Get balances
-    const balancesResponse = await getBalances(accessToken)
+    // Get accounts and balances from Plaid
+    const [accountsResponse, balancesResponse] = await Promise.all([
+      getAccounts(accessToken),
+      getBalances(accessToken),
+    ])
 
     // Create accounts in database
     const createdAccounts = await Promise.all(
@@ -83,7 +80,7 @@ export async function POST(request: NextRequest) {
             officialName: plaidAccount.official_name || null,
             accountType: plaidAccount.type,
             accountSubtype: plaidAccount.subtype || null,
-            currency: balance?.balances.iso_currency_code || "USD",
+            currency: balance?.balances.iso_currency_code || "EUR",
             institutionName: institutionName,
             institutionLogo: institutionLogo,
             status: "active",
@@ -96,105 +93,11 @@ export async function POST(request: NextRequest) {
       })
     )
 
-    // Initial transaction sync
-    const syncResult = await syncTransactions(accessToken)
-
-    // Import transactions for each account
-    let transactionsImported = 0
-    let expensesCreated = 0
-
-    for (const tx of syncResult.added) {
-      const account = createdAccounts.find(
-        (a: { plaidAccountId: string | null }) => a.plaidAccountId === tx.account_id
-      )
-      if (!account) continue
-
-      // Determine counterparty name
-      const counterpartyName = tx.merchant_name || tx.name || null
-      const normalizedCounterparty = counterpartyName
-        ? normalizeCounterpartyName(counterpartyName)
-        : null
-
-      // Upsert transaction - handles duplicates when relinking bank
-      // Uses organizationId + plaidTransactionId as unique key
-      const transaction = await prisma.transaction.upsert({
-        where: {
-          organizationId_plaidTransactionId: {
-            organizationId: userOrg.organizationId,
-            plaidTransactionId: tx.transaction_id,
-          },
-        },
-        update: {
-          // Update to link to new account when relinking
-          accountId: account.id,
-          amount: tx.amount,
-          pending: tx.pending,
-          merchantName: tx.merchant_name || null,
-          category: tx.personal_finance_category?.primary || null,
-          categoryDetailed: tx.personal_finance_category?.detailed || null,
-        },
-        create: {
-          organizationId: userOrg.organizationId,
-          accountId: account.id,
-          plaidTransactionId: tx.transaction_id,
-          amount: tx.amount,
-          currency: tx.iso_currency_code || "USD",
-          date: new Date(tx.date),
-          authorizedDate: tx.authorized_date
-            ? new Date(tx.authorized_date)
-            : null,
-          name: tx.name,
-          merchantName: tx.merchant_name || null,
-          pending: tx.pending,
-          paymentChannel: tx.payment_channel,
-          transactionType: getTransactionType(tx.amount),
-          category: tx.personal_finance_category?.primary || null,
-          categoryDetailed: tx.personal_finance_category?.detailed || null,
-          counterpartyName: normalizedCounterparty,
-        },
-        include: {
-          expense: true, // Check if expense already exists
-        },
-      })
-
-      transactionsImported++
-
-      // Create expense for outgoing transactions (positive amounts in Plaid = money out)
-      // Only create if expense doesn't already exist (prevents duplicates on relink)
-      if (tx.amount > 0 && !tx.pending && !transaction.expense) {
-        await prisma.expense.create({
-          data: {
-            organizationId: userOrg.organizationId,
-            transactionId: transaction.id,
-            amount: tx.amount,
-            currency: tx.iso_currency_code || "USD",
-            date: new Date(tx.date),
-            description: tx.merchant_name || tx.name,
-            expenseType: "variable",
-            status: "pending",
-            isManual: false,
-          },
-        })
-
-        expensesCreated++
-      }
-    }
-
-    // Update cursor for incremental sync
-    await prisma.account.updateMany({
-      where: {
-        plaidItemId: itemId,
-      },
-      data: {
-        plaidCursor: syncResult.nextCursor,
-      },
-    })
-
+    // Return immediately with the created accounts
+    // Transaction sync will happen on first manual sync or cron job
     return NextResponse.json({
       success: true,
       accountsCreated: createdAccounts.length,
-      transactionsImported,
-      expensesCreated,
       accounts: createdAccounts.map((a: { id: string; name: string; mask: string | null; accountType: string | null; accountSubtype: string | null }) => ({
         id: a.id,
         name: a.name,

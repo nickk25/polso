@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Bank, Spinner } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 interface PlaidLinkButtonProps {
   linkToken: string | null
@@ -35,19 +36,22 @@ export function PlaidLinkButton({ linkToken, onSuccess }: PlaidLinkButtonProps) 
         })
 
         if (!response.ok) {
-          throw new Error("Failed to connect bank account")
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data.error || "Failed to connect bank account")
         }
 
         onSuccess?.()
+        toast.success(t("sync.success"))
         router.push("/settings/banking")
         router.refresh()
       } catch (error) {
         console.error("Error exchanging token:", error)
+        toast.error(error instanceof Error ? error.message : t("sync.error"))
       } finally {
         setIsExchanging(false)
       }
     },
-    [onSuccess, router]
+    [onSuccess, router, t]
   )
 
   const { open, ready } = usePlaidLink({
