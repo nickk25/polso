@@ -7,7 +7,7 @@ const LOCALE_COOKIE = "NEXT_LOCALE"
 const protectedPaths = [
   "/dashboard",
   "/expenses",
-  "/income",
+  "/incomes",
   "/analytics",
   "/recurring",
   "/categories",
@@ -72,7 +72,7 @@ export const config = {
     // Protected routes
     "/dashboard/:path*",
     "/expenses/:path*",
-    "/income/:path*",
+    "/incomes/:path*",
     "/analytics/:path*",
     "/recurring/:path*",
     "/categories/:path*",

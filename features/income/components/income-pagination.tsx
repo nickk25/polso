@@ -26,7 +26,7 @@ export function IncomePagination({ currentPage, totalPages, total }: IncomePagin
       params.set("page", page.toString())
     }
     startTransition(() => {
-      router.push(`/income?${params.toString()}`)
+      router.push(`/incomes?${params.toString()}`)
     })
   }
 

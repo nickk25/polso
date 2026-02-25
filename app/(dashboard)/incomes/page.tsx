@@ -1,19 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { TrendUp, ArrowRight } from "@phosphor-icons/react/dist/ssr"
 import { getIncomes, getIncomeStats } from "@/features/income/queries/get-income"
+import { getAllCategories } from "@/features/categories/queries/get-categories"
 import { IncomeFilters } from "@/features/income/components/income-filters"
+import { IncomeTable } from "@/features/income/components/income-table"
 import { IncomePagination } from "@/features/income/components/income-pagination"
-import { format } from "date-fns"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 
@@ -26,38 +18,13 @@ function formatCurrency(value: number, currency = "USD") {
   }).format(value)
 }
 
-function getStatusBadge(status: string, t: (key: string) => string) {
-  switch (status) {
-    case "confirmed":
-      return <Badge variant="default">{t("statuses.confirmed")}</Badge>
-    case "excluded":
-      return <Badge variant="secondary">{t("statuses.excluded")}</Badge>
-    case "pending":
-    default:
-      return <Badge variant="outline">{t("statuses.pending")}</Badge>
-  }
-}
-
-function getSourceBadge(source: string, t: (key: string) => string) {
-  const sourceConfig: Record<string, { className: string; label: string }> = {
-    salary: { className: "bg-green-500/10 text-green-500 border-green-500/20", label: t("sources.salary") },
-    freelance: { className: "bg-blue-500/10 text-blue-500 border-blue-500/20", label: t("sources.freelance") },
-    investment: { className: "bg-purple-500/10 text-purple-500 border-purple-500/20", label: t("sources.investment") },
-    refund: { className: "bg-orange-500/10 text-orange-500 border-orange-500/20", label: t("sources.refund") },
-    transfer: { className: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20", label: t("sources.transfer") },
-    other: { className: "bg-gray-500/10 text-gray-500 border-gray-500/20", label: t("sources.other") },
-  }
-
-  const config = sourceConfig[source] || sourceConfig.other
-  return <Badge variant="secondary" className={config.className}>{config.label}</Badge>
-}
-
 interface PageProps {
   searchParams: Promise<{
     page?: string
     search?: string
     status?: string
     source?: string
+    category?: string
   }>
 }
 
@@ -68,10 +35,12 @@ export default async function IncomePage({ searchParams }: PageProps) {
   const search = params.search || undefined
   const status = params.status || undefined
   const source = params.source || undefined
+  const category = params.category || undefined
 
-  const [{ incomes, total, pages }, stats] = await Promise.all([
-    getIncomes({ search, status, source }, page, PAGE_SIZE),
+  const [{ incomes, total, pages }, stats, categories] = await Promise.all([
+    getIncomes({ search, status, source, categoryId: category }, page, PAGE_SIZE),
     getIncomeStats(),
+    getAllCategories(),
   ])
 
   const hasIncomes = incomes.length > 0
@@ -144,7 +113,9 @@ export default async function IncomePage({ searchParams }: PageProps) {
 
       {/* Filters */}
       {hasAnyIncomes && (
-        <IncomeFilters search={search} status={status} source={source} />
+        <div className="flex items-center justify-between gap-4">
+          <IncomeFilters search={search} status={status} source={source} category={category} categories={categories} />
+        </div>
       )}
 
       {/* Income Table */}
@@ -154,60 +125,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
             <CardTitle>{t("transactions")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("tableHeaders.date")}</TableHead>
-                  <TableHead>{t("tableHeaders.description")}</TableHead>
-                  <TableHead>{t("tableHeaders.category")}</TableHead>
-                  <TableHead>{t("tableHeaders.source")}</TableHead>
-                  <TableHead className="text-right">{t("tableHeaders.amount")}</TableHead>
-                  <TableHead>{t("tableHeaders.status")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {incomes.map((income) => (
-                  <TableRow key={income.id}>
-                    <TableCell className="font-medium">
-                      {format(new Date(income.date), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {income.transaction?.merchantName ||
-                            income.transaction?.name ||
-                            income.description ||
-                            "Unknown"}
-                        </span>
-                        {income.transaction?.category && (
-                          <span className="text-xs text-muted-foreground">
-                            {income.transaction.category}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {income.category ? (
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: income.category.color }}
-                          />
-                          <span>{income.category.name}</span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{getSourceBadge(income.source, t)}</TableCell>
-                    <TableCell className="text-right font-medium text-green-500">
-                      +{formatCurrency(income.amount, income.currency)}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(income.status, t)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <IncomeTable incomes={incomes} categories={categories} />
             <IncomePagination currentPage={page} totalPages={pages} total={total} />
           </CardContent>
         </Card>

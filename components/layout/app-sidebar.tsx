@@ -37,7 +37,7 @@ const mainNavItems = [
   },
   {
     titleKey: "income",
-    href: "/income",
+    href: "/incomes",
     icon: TrendUp,
   },
   {
@@ -119,9 +119,6 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px]">
-            {t("navigation.dashboard")}
-          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
