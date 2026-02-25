@@ -25,6 +25,7 @@ interface PageProps {
     search?: string
     status?: string
     expenseType?: string
+    category?: string
   }>
 }
 
@@ -35,9 +36,10 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
   const search = params.search || undefined
   const status = params.status || undefined
   const expenseType = params.expenseType || undefined
+  const category = params.category || undefined
 
   const [{ expenses, total, pages }, stats, categories] = await Promise.all([
-    getExpenses({ search, status, expenseType }, page, PAGE_SIZE),
+    getExpenses({ search, status, expenseType, categoryId: category }, page, PAGE_SIZE),
     getExpenseStats(),
     getAllCategories(),
   ])
@@ -113,7 +115,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
       {/* Filters */}
       {hasAnyExpenses && (
         <div className="flex items-center justify-between gap-4">
-          <ExpenseFilters search={search} status={status} expenseType={expenseType} />
+          <ExpenseFilters search={search} status={status} expenseType={expenseType} category={category} categories={categories} />
           <AutoCategorizeButton />
         </div>
       )}

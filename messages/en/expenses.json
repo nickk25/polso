@@ -76,7 +76,18 @@
     "allTypes": "All Types",
     "fixed": "Fixed",
     "variable": "Variable",
+    "categoryPlaceholder": "Category",
+    "allCategories": "All Categories",
     "clear": "Clear"
+  },
+  "bulk": {
+    "selected": "{count} selected",
+    "categorize": "Categorize",
+    "setType": "Set Type",
+    "setStatus": "Set Status",
+    "deselect": "Deselect all",
+    "updated": "Updated {count} expenses",
+    "failed": "Failed to update expenses"
   },
   "pagination": {
     "showing": "Showing {start}-{end} of {total}",

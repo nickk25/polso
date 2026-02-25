@@ -34,6 +34,13 @@
   },
   "addIncome": "Agregar Ingreso",
   "editIncome": "Editar Ingreso",
+  "editSheet": {
+    "title": "Editar Ingreso",
+    "source": "Fuente",
+    "saveChanges": "Guardar Cambios",
+    "cancel": "Cancelar",
+    "saving": "Guardando..."
+  },
   "deleteIncome": "Eliminar Ingreso",
   "deleteConfirm": "Estas seguro de que deseas eliminar este ingreso?",
   "fields": {
@@ -66,7 +73,18 @@
     "excluded": "Excluido",
     "sourcePlaceholder": "Fuente",
     "allSources": "Todas las Fuentes",
+    "categoryPlaceholder": "Categoría",
+    "allCategories": "Todas las Categorías",
     "clear": "Limpiar"
+  },
+  "bulk": {
+    "selected": "{count} seleccionados",
+    "categorize": "Categoría",
+    "setSource": "Fuente",
+    "setStatus": "Estado",
+    "deselect": "Deseleccionar todo",
+    "updated": "Se actualizaron {count} ingresos",
+    "failed": "Error al actualizar ingresos"
   },
   "pagination": {
     "showing": "Mostrando {start}-{end} de {total}",

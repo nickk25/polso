@@ -76,7 +76,18 @@
     "allTypes": "Todos los Tipos",
     "fixed": "Fijo",
     "variable": "Variable",
+    "categoryPlaceholder": "Categoría",
+    "allCategories": "Todas las Categorías",
     "clear": "Limpiar"
+  },
+  "bulk": {
+    "selected": "{count} seleccionados",
+    "categorize": "Categorizar",
+    "setType": "Tipo",
+    "setStatus": "Estado",
+    "deselect": "Deseleccionar todo",
+    "updated": "Se actualizaron {count} gastos",
+    "failed": "Error al actualizar gastos"
   },
   "pagination": {
     "showing": "Mostrando {start}-{end} de {total}",

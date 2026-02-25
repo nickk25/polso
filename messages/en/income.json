@@ -34,6 +34,13 @@
   },
   "addIncome": "Add Income",
   "editIncome": "Edit Income",
+  "editSheet": {
+    "title": "Edit Income",
+    "source": "Source",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "saving": "Saving..."
+  },
   "deleteIncome": "Delete Income",
   "deleteConfirm": "Are you sure you want to delete this income entry?",
   "fields": {
@@ -66,7 +73,18 @@
     "excluded": "Excluded",
     "sourcePlaceholder": "Source",
     "allSources": "All Sources",
+    "categoryPlaceholder": "Category",
+    "allCategories": "All Categories",
     "clear": "Clear"
+  },
+  "bulk": {
+    "selected": "{count} selected",
+    "categorize": "Category",
+    "setSource": "Set Source",
+    "setStatus": "Set Status",
+    "deselect": "Deselect all",
+    "updated": "Updated {count} income entries",
+    "failed": "Failed to update income"
   },
   "pagination": {
     "showing": "Showing {start}-{end} of {total}",

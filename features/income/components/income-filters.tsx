@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useTransition } from "react"
+import { useState, useEffect, useCallback, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -13,14 +13,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { MagnifyingGlass, X } from "@phosphor-icons/react"
+import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 
 interface IncomeFiltersProps {
   search?: string
   status?: string
   source?: string
+  category?: string
+  categories: CategoryWithCount[]
 }
 
-export function IncomeFilters({ search, status, source }: IncomeFiltersProps) {
+export function IncomeFilters({ search, status, source, category, categories }: IncomeFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
@@ -42,45 +45,72 @@ export function IncomeFilters({ search, status, source }: IncomeFiltersProps) {
       params.delete("page")
 
       startTransition(() => {
-        router.push(`/income?${params.toString()}`)
+        router.push(`/incomes?${params.toString()}`)
       })
     },
     [router, searchParams]
   )
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const searchValue = formData.get("search") as string
-    updateParams({ search: searchValue })
-  }
+  const [searchValue, setSearchValue] = useState(search || "")
+
+  useEffect(() => {
+    setSearchValue(search || "")
+  }, [search])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchValue !== (search || "")) {
+        updateParams({ search: searchValue })
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchValue])
 
   const clearFilters = () => {
     startTransition(() => {
-      router.push("/income")
+      router.push("/incomes")
     })
   }
 
-  const hasFilters = search || status || source
+  const hasFilters = search || status || source || category
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <form onSubmit={handleSearch} className="flex gap-2 flex-1 max-w-sm">
-        <div className="relative flex-1">
-          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            name="search"
-            placeholder={t("tableFilters.searchPlaceholder")}
-            defaultValue={search}
-            className="pl-9"
-          />
-        </div>
-        <Button type="submit" variant="secondary" size="icon" disabled={isPending}>
-          <MagnifyingGlass className="h-4 w-4" />
-        </Button>
-      </form>
+      <div className="relative flex-1 max-w-sm">
+        <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={t("tableFilters.searchPlaceholder")}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          className="pl-9"
+        />
+      </div>
 
       <div className="flex gap-2 flex-wrap">
+        <Select
+          value={category || "all"}
+          onValueChange={(value) => updateParams({ category: value })}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder={t("tableFilters.categoryPlaceholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("tableFilters.allCategories")}</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: cat.color }}
+                  />
+                  {cat.name}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select
           value={status || "all"}
           onValueChange={(value) => updateParams({ status: value })}
@@ -115,7 +145,7 @@ export function IncomeFilters({ search, status, source }: IncomeFiltersProps) {
         </Select>
 
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={isPending}>
+          <Button variant="ghost" onClick={clearFilters} disabled={isPending}>
             <X className="h-4 w-4 mr-1" />
             {t("tableFilters.clear")}
           </Button>
