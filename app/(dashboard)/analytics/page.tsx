@@ -19,6 +19,9 @@ import {
   RevenueForecastCard,
   ExpenseForecastCard,
 } from "@/features/analytics/components"
+import { MonthlySpendChart } from "@/features/analytics/components/monthly-spend-chart"
+import { CashFlowChart } from "@/features/analytics/components/cash-flow-chart"
+import { IncomeTrendChart } from "@/features/analytics/components/income-trend-chart"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -175,52 +178,7 @@ export default async function AnalyticsPage() {
             <CardTitle>{t("monthlySpendTrend")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {/* Bar chart */}
-              <div className="flex h-[180px] gap-2">
-                {monthlyTrend.map((month) => {
-                  const maxValue = Math.max(...monthlyTrend.map((m) => m.total))
-                  const height = maxValue > 0 ? (month.total / maxValue) * 100 : 0
-                  const fixedHeight =
-                    month.total > 0 ? (month.fixed / month.total) * height : 0
-                  const variableHeight = height - fixedHeight
-
-                  return (
-                    <div
-                      key={month.month}
-                      className="flex-1 flex flex-col items-center gap-1"
-                    >
-                      <div className="flex-1 w-full flex flex-col justify-end">
-                        <div
-                          className="w-full bg-amber-500 rounded-t transition-all"
-                          style={{ height: `${variableHeight}%` }}
-                          title={`Variable: ${formatCurrency(month.variable, currency)}`}
-                        />
-                        <div
-                          className="w-full bg-red-500 transition-all"
-                          style={{ height: `${fixedHeight}%` }}
-                          title={`Fixed: ${formatCurrency(month.fixed, currency)}`}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {month.month}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-              {/* Legend */}
-              <div className="flex justify-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded bg-red-500" />
-                  <span className="text-muted-foreground">{t("fixed")}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded bg-amber-500" />
-                  <span className="text-muted-foreground">{t("variable")}</span>
-                </div>
-              </div>
-            </div>
+            <MonthlySpendChart data={monthlyTrend} currency={currency} />
           </CardContent>
         </Card>
 
@@ -276,54 +234,7 @@ export default async function AnalyticsPage() {
             <CardTitle>{t("cashFlow")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {/* Bar chart */}
-              <div className="flex h-[180px] gap-2">
-                {cashFlow.map((month) => {
-                  const maxValue = Math.max(
-                    ...cashFlow.flatMap((d) => [d.inflow, d.outflow])
-                  )
-                  const inflowHeight =
-                    maxValue > 0 ? (month.inflow / maxValue) * 100 : 0
-                  const outflowHeight =
-                    maxValue > 0 ? (month.outflow / maxValue) * 100 : 0
-
-                  return (
-                    <div
-                      key={month.month}
-                      className="flex-1 flex flex-col items-center gap-1"
-                    >
-                      <div className="flex-1 w-full flex items-end gap-0.5">
-                        <div
-                          className="flex-1 bg-green-500 rounded-t transition-all"
-                          style={{ height: `${inflowHeight}%` }}
-                          title={`Income: ${formatCurrency(month.inflow, currency)}`}
-                        />
-                        <div
-                          className="flex-1 bg-red-400 rounded-t transition-all"
-                          style={{ height: `${outflowHeight}%` }}
-                          title={`Expenses: ${formatCurrency(month.outflow, currency)}`}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {month.month}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-              {/* Legend */}
-              <div className="flex justify-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded bg-green-500" />
-                  <span className="text-muted-foreground">{t("income")}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded bg-red-400" />
-                  <span className="text-muted-foreground">{t("expenses")}</span>
-                </div>
-              </div>
-            </div>
+            <CashFlowChart data={cashFlow} currency={currency} />
           </CardContent>
         </Card>
 
@@ -379,40 +290,7 @@ export default async function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {incomeTrend.some((m) => m.total > 0) ? (
-              <div className="space-y-4">
-                {/* Bar chart */}
-                <div className="flex h-[180px] gap-2">
-                  {incomeTrend.map((month) => {
-                    const maxValue = Math.max(...incomeTrend.map((m) => m.total))
-                    const height = maxValue > 0 ? (month.total / maxValue) * 100 : 0
-
-                    return (
-                      <div
-                        key={month.month}
-                        className="flex-1 flex flex-col items-center gap-1"
-                      >
-                        <div className="flex-1 w-full flex flex-col justify-end">
-                          <div
-                            className="w-full bg-green-500 rounded-t transition-all"
-                            style={{ height: `${height}%`, minHeight: height > 0 ? '2px' : '0' }}
-                            title={`${month.month}: ${formatCurrency(month.total, currency)}`}
-                          />
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {month.month}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-                {/* Legend */}
-                <div className="flex justify-center gap-6 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded bg-green-500" />
-                    <span className="text-muted-foreground">{t("income")}</span>
-                  </div>
-                </div>
-              </div>
+              <IncomeTrendChart data={incomeTrend} currency={currency} />
             ) : (
               <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
                 <p className="text-sm text-muted-foreground">
