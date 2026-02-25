@@ -15,6 +15,7 @@ import { getAccountsSummary, getAccounts } from "@/features/banking/queries/get-
 import { getExpenseStats, getRecentExpenses } from "@/features/expenses/queries/get-expenses"
 import { getIncomeStats, getRecentIncomes } from "@/features/income/queries/get-income"
 import { getBurnRateAndRunway, getCashFlow, getCategoryBreakdown } from "@/features/analytics/queries/get-analytics"
+import { MiniCashFlowChart } from "@/features/analytics/components/mini-cash-flow-chart"
 import { format } from "date-fns"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -214,32 +215,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {hasCashFlowData ? (
-              <div className="space-y-2">
-                <div className="flex h-[60px] gap-1">
-                  {cashFlow.map((month) => {
-                    const maxValue = Math.max(...cashFlow.flatMap((d) => [d.inflow, d.outflow]))
-                    const inflowHeight = maxValue > 0 ? (month.inflow / maxValue) * 100 : 0
-                    const outflowHeight = maxValue > 0 ? (month.outflow / maxValue) * 100 : 0
-                    return (
-                      <div key={month.month} className="flex-1 flex items-end gap-0.5">
-                        <div
-                          className="flex-1 bg-green-500 rounded-t transition-all"
-                          style={{ height: `${inflowHeight}%`, minHeight: inflowHeight > 0 ? '2px' : '0' }}
-                        />
-                        <div
-                          className="flex-1 bg-red-400 rounded-t transition-all"
-                          style={{ height: `${outflowHeight}%`, minHeight: outflowHeight > 0 ? '2px' : '0' }}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  {cashFlow.map((m) => (
-                    <span key={m.month}>{m.month}</span>
-                  ))}
-                </div>
-              </div>
+              <MiniCashFlowChart data={cashFlow} currency={currency} />
             ) : (
               <div className="flex h-[76px] items-center justify-center text-sm text-muted-foreground">
                 {t("noDataYet")}
@@ -262,7 +238,7 @@ export default async function DashboardPage() {
                 </Link>
               </Button>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/income">
+                <Link href="/incomes">
                   {tc("navigation.income")}
                 </Link>
               </Button>

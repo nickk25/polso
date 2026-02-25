@@ -135,3 +135,69 @@ export async function bulkUpdateExpenseCategoryAction(
     )
   }
 }
+
+/**
+ * Bulk update expense type for multiple expenses
+ */
+export async function bulkUpdateExpenseTypeAction(
+  expenseIds: string[],
+  expenseType: "fixed" | "variable"
+): Promise<ActionResponse<{ count: number }>> {
+  try {
+    const { organizationId } = await getAuthContext()
+
+    const result = await prisma.expense.updateMany({
+      where: {
+        id: { in: expenseIds },
+        organizationId,
+      },
+      data: {
+        expenseType,
+      },
+    })
+
+    revalidatePath("/expenses")
+    revalidatePath("/dashboard")
+
+    return successResponse({ count: result.count })
+  } catch (error) {
+    console.error("Error bulk updating expense type:", error)
+    return errorResponse(
+      error instanceof Error ? error.message : "Failed to update expenses",
+      "ERROR"
+    )
+  }
+}
+
+/**
+ * Bulk update status for multiple expenses
+ */
+export async function bulkUpdateExpenseStatusAction(
+  expenseIds: string[],
+  status: "pending" | "documented" | "excluded"
+): Promise<ActionResponse<{ count: number }>> {
+  try {
+    const { organizationId } = await getAuthContext()
+
+    const result = await prisma.expense.updateMany({
+      where: {
+        id: { in: expenseIds },
+        organizationId,
+      },
+      data: {
+        status,
+      },
+    })
+
+    revalidatePath("/expenses")
+    revalidatePath("/dashboard")
+
+    return successResponse({ count: result.count })
+  } catch (error) {
+    console.error("Error bulk updating expense status:", error)
+    return errorResponse(
+      error instanceof Error ? error.message : "Failed to update expenses",
+      "ERROR"
+    )
+  }
+}

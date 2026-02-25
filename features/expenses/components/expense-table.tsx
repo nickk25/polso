@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -38,6 +39,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { CategorySelect } from "@/features/categories/components/category-select"
+import { ExpenseBulkActionBar } from "./expense-bulk-action-bar"
 import { updateExpenseAction } from "../actions/update-expense"
 import { getExpenseInvoicesAction, type InvoiceWithUrl } from "../actions/invoice-actions"
 import { InvoiceUpload } from "./invoice-upload"
@@ -68,6 +70,27 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
   const [editedStatus, setEditedStatus] = useState<string>("")
   const [invoices, setInvoices] = useState<InvoiceWithUrl[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === expenses.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(expenses.map((e) => e.id)))
+    }
+  }
+
+  const allSelected = expenses.length > 0 && selectedIds.size === expenses.length
+  const someSelected = selectedIds.size > 0 && selectedIds.size < expenses.length
 
   // Load invoices when expense is selected
   useEffect(() => {
@@ -190,6 +213,13 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[40px]">
+              <Checkbox
+                checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                onCheckedChange={toggleSelectAll}
+                aria-label="Select all"
+              />
+            </TableHead>
             <TableHead>{t("table.date")}</TableHead>
             <TableHead>{t("table.description")}</TableHead>
             <TableHead>{t("table.category")}</TableHead>
@@ -204,7 +234,16 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
               key={expense.id}
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => handleRowClick(expense)}
+              data-state={selectedIds.has(expense.id) ? "selected" : undefined}
             >
+              <TableCell>
+                <Checkbox
+                  checked={selectedIds.has(expense.id)}
+                  onCheckedChange={() => toggleSelect(expense.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`Select row`}
+                />
+              </TableCell>
               <TableCell className="font-medium">
                 {format(new Date(expense.date), "MMM d, yyyy")}
               </TableCell>
@@ -265,6 +304,14 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
           ))}
         </TableBody>
       </Table>
+
+      {selectedIds.size > 0 && (
+        <ExpenseBulkActionBar
+          selectedIds={selectedIds}
+          onClearSelection={() => setSelectedIds(new Set())}
+          categories={categories}
+        />
+      )}
 
       <Sheet open={!!selectedExpense} onOpenChange={(open) => !open && setSelectedExpense(null)}>
         <SheetContent>
