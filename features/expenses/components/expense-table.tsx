@@ -208,9 +208,9 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
               <TableCell className="font-medium">
                 {format(new Date(expense.date), "MMM d, yyyy")}
               </TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-medium">
+              <TableCell className="max-w-[300px] whitespace-normal">
+                <div className="flex flex-col min-w-0">
+                  <span className="font-medium truncate">
                     {expense.vendor?.name ||
                       expense.transaction?.merchantName ||
                       expense.transaction?.name ||
@@ -218,7 +218,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                       t("table.unknown")}
                   </span>
                   {expense.transaction?.category && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground truncate">
                       {expense.transaction.category}
                     </span>
                   )}

@@ -177,7 +177,7 @@ export default async function AnalyticsPage() {
           <CardContent>
             <div className="space-y-4">
               {/* Bar chart */}
-              <div className="flex h-[180px] items-end gap-2">
+              <div className="flex h-[180px] gap-2">
                 {monthlyTrend.map((month) => {
                   const maxValue = Math.max(...monthlyTrend.map((m) => m.total))
                   const height = maxValue > 0 ? (month.total / maxValue) * 100 : 0
@@ -278,7 +278,7 @@ export default async function AnalyticsPage() {
           <CardContent>
             <div className="space-y-4">
               {/* Bar chart */}
-              <div className="flex h-[180px] items-end gap-2">
+              <div className="flex h-[180px] gap-2">
                 {cashFlow.map((month) => {
                   const maxValue = Math.max(
                     ...cashFlow.flatMap((d) => [d.inflow, d.outflow])
@@ -381,7 +381,7 @@ export default async function AnalyticsPage() {
             {incomeTrend.some((m) => m.total > 0) ? (
               <div className="space-y-4">
                 {/* Bar chart */}
-                <div className="flex h-[180px] items-end gap-2">
+                <div className="flex h-[180px] gap-2">
                   {incomeTrend.map((month) => {
                     const maxValue = Math.max(...incomeTrend.map((m) => m.total))
                     const height = maxValue > 0 ? (month.total / maxValue) * 100 : 0
@@ -490,9 +490,6 @@ export default async function AnalyticsPage() {
         <div className="flex items-center gap-2 mb-4">
           <Binoculars className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">{t("forecasts")}</h2>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-            {t("aiPoweredPredictions")}
-          </span>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">

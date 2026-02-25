@@ -24,7 +24,6 @@
   "incomeBySource": "Ingresos por Fuente",
   "noIncomeDataThisMonth": "Sin datos de ingresos este mes",
   "forecasts": "Pronosticos",
-  "aiPoweredPredictions": "Predicciones impulsadas por IA",
   "periods": {
     "week": "Esta Semana",
     "month": "Este Mes",

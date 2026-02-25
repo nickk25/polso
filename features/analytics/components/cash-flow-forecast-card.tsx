@@ -90,7 +90,7 @@ export async function CashFlowForecastCard({ forecast }: CashFlowForecastCardPro
 
         {/* Chart */}
         <div className="space-y-2">
-          <div className="flex h-[160px] items-end gap-1">
+          <div className="flex h-[160px] gap-1">
             {months.map((month, idx) => {
               const incomeHeight = (month.projectedIncome / maxValue) * 100
               const expenseHeight = (month.projectedExpenses / maxValue) * 100

@@ -215,7 +215,7 @@ export default async function DashboardPage() {
           <CardContent>
             {hasCashFlowData ? (
               <div className="space-y-2">
-                <div className="flex h-[60px] items-end gap-1">
+                <div className="flex h-[60px] gap-1">
                   {cashFlow.map((month) => {
                     const maxValue = Math.max(...cashFlow.flatMap((d) => [d.inflow, d.outflow]))
                     const inflowHeight = maxValue > 0 ? (month.inflow / maxValue) * 100 : 0

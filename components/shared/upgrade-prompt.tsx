@@ -108,13 +108,16 @@ export function UsageIndicator({
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-3 text-sm">
       <span className={statusColor}>
         {t("upgrade.usageOf", { current: currentCount, max: maxAllowed, resource: limitLabel })}
       </span>
       {usagePercent >= showUpgradeAt && (
-        <Button variant="link" size="sm" className="h-auto p-0" asChild>
-          <Link href="/settings/billing">{t("upgrade.upgrade")}</Link>
+        <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs px-2.5" asChild>
+          <Link href="/settings/billing">
+            <ArrowRight className="h-3 w-3" />
+            {t("upgrade.upgrade")}
+          </Link>
         </Button>
       )}
     </div>
