@@ -202,6 +202,13 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
 // Revenue Forecast
 // ============================================================================
 
+export interface CategoryRevenueForecast {
+  categoryId: string | null
+  categoryName: string
+  categoryColor: string
+  projected: number
+}
+
 export interface ClientRevenueForecast {
   clientId: string
   clientName: string
@@ -212,6 +219,8 @@ export interface ClientRevenueForecast {
 }
 
 export interface RevenueForecast {
+  lastMonth: number
+  currentMonth: number
   nextMonth: {
     projected: number
     breakdown: {
@@ -225,6 +234,7 @@ export interface RevenueForecast {
   yearProjection: number
   monthOverMonthChange: number
   topClients: ClientRevenueForecast[]
+  byCategory: CategoryRevenueForecast[]
 }
 
 export async function getRevenueForecast(): Promise<RevenueForecast> {
@@ -233,7 +243,7 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
   const now = new Date()
   const threeMonthsAgo = startOfMonth(subMonths(now, 3))
 
-  // Get income data with client info
+  // Get income data with client and category info
   const incomes = await prisma.income.findMany({
     where: {
       organizationId,
@@ -245,13 +255,16 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
       date: true,
       clientId: true,
       client: { select: { id: true, name: true } },
+      categoryId: true,
+      category: { select: { id: true, name: true, color: true } },
     },
   })
 
-  // Calculate monthly totals and per-client monthly totals
+  // Calculate monthly totals, per-client totals, and per-category totals
   const monthlyTotals = new Map<string, number>()
   const clientMonthlyTotals = new Map<string, Map<string, number>>()
   const clientsMap = new Map<string, { name: string }>()
+  const categoryMonthly = new Map<string | null, Map<string, { amount: number; name: string; color: string }>>()
 
   for (const income of incomes) {
     const monthKey = format(new Date(income.date), "yyyy-MM")
@@ -265,40 +278,61 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
       const clientMap = clientMonthlyTotals.get(income.clientId)!
       clientMap.set(monthKey, (clientMap.get(monthKey) || 0) + income.amount)
     }
+
+    // Category tracking
+    const catKey = income.categoryId
+    if (!categoryMonthly.has(catKey)) {
+      categoryMonthly.set(catKey, new Map())
+    }
+    const catMap = categoryMonthly.get(catKey)!
+    const existing = catMap.get(monthKey) || {
+      amount: 0,
+      name: income.category?.name || "Uncategorized",
+      color: income.category?.color || "#6b7280",
+    }
+    existing.amount += income.amount
+    catMap.set(monthKey, existing)
   }
 
-  // Determine recurring vs one-time from actual client data
-  // A client is "recurring" if they appear in 2+ of the last 3 months
-  const recentMonthKeys = [1, 2, 3].map(i => format(subMonths(now, i), "yyyy-MM"))
-  let recurringRevenue = 0
-  let oneTimeRevenue = 0
-
-  for (const [, monthlyData] of clientMonthlyTotals) {
-    const monthsPresent = recentMonthKeys.filter(mk => monthlyData.has(mk)).length
-    const clientValues = Array.from(monthlyData.values())
-    const clientAvg = clientValues.reduce((a, b) => a + b, 0) / clientValues.length
-
-    if (monthsPresent >= 2) {
-      recurringRevenue += clientAvg
-    } else {
-      oneTimeRevenue += clientAvg
+  // Split recurring vs one-time by client frequency
+  // Clients appearing in 2+ of the last 3 months = recurring
+  const recurringClientIds = new Set<string>()
+  for (const [clientId, monthlyData] of clientMonthlyTotals) {
+    if (monthlyData.size >= 2) {
+      recurringClientIds.add(clientId)
     }
   }
 
-  // Income without a client — count as one-time
-  const totalAvgWithClients = recurringRevenue + oneTimeRevenue
+  const monthlyRecurring = new Map<string, number>()
+  const monthlyOneTime = new Map<string, number>()
+
+  for (const income of incomes) {
+    const monthKey = format(new Date(income.date), "yyyy-MM")
+    if (income.clientId && recurringClientIds.has(income.clientId)) {
+      monthlyRecurring.set(monthKey, (monthlyRecurring.get(monthKey) || 0) + income.amount)
+    } else {
+      monthlyOneTime.set(monthKey, (monthlyOneTime.get(monthKey) || 0) + income.amount)
+    }
+  }
+
+  // Calculate averages — same denominator so recurring + oneTime = total
+  const recurringValues = Array.from(monthlyRecurring.values())
+  const oneTimeValues = Array.from(monthlyOneTime.values())
   const monthlyValues = Array.from(monthlyTotals.values())
-  const avgMonthlyRevenue = monthlyValues.length > 0
-    ? monthlyValues.reduce((a, b) => a + b, 0) / monthlyValues.length
-    : 0
-  const unattributedRevenue = Math.max(0, avgMonthlyRevenue - totalAvgWithClients)
-  oneTimeRevenue += unattributedRevenue
+  const totalMonths = Math.max(monthlyValues.length, 1)
 
-  const nextMonthProjected = recurringRevenue + oneTimeRevenue
+  const totalRecurring = recurringValues.reduce((a, b) => a + b, 0)
+  const totalOneTime = oneTimeValues.reduce((a, b) => a + b, 0)
+  const avgRecurring = totalRecurring / totalMonths
+  const avgOneTime = totalOneTime / totalMonths
 
-  // Month-over-month: compare last two full months
+  const nextMonthProjected = avgRecurring + avgOneTime
+
+  // Monthly actuals
+  const currentMonthKey = format(now, "yyyy-MM")
   const lastMonthKey = format(subMonths(now, 1), "yyyy-MM")
   const twoMonthsAgoKey = format(subMonths(now, 2), "yyyy-MM")
+  const currentMonthRevenue = monthlyTotals.get(currentMonthKey) || 0
   const lastMonthRevenue = monthlyTotals.get(lastMonthKey) || 0
   const twoMonthsAgoRevenue = monthlyTotals.get(twoMonthsAgoKey) || 0
 
@@ -336,18 +370,39 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
 
   clientForecasts.sort((a, b) => b.projectedRevenue - a.projectedRevenue)
 
+  // Build category forecasts
+  const categoryForecasts: CategoryRevenueForecast[] = []
+  for (const [catId, monthlyData] of categoryMonthly) {
+    const values = Array.from(monthlyData.values())
+    const firstEntry = values[0] || { name: "Uncategorized", color: "#6b7280", amount: 0 }
+    const amounts = values.map(v => v.amount)
+    const avgAmount = amounts.length > 0
+      ? amounts.reduce((a, b) => a + b, 0) / totalMonths
+      : 0
+
+    categoryForecasts.push({
+      categoryId: catId,
+      categoryName: firstEntry.name,
+      categoryColor: firstEntry.color,
+      projected: avgAmount,
+    })
+  }
+  categoryForecasts.sort((a, b) => b.projected - a.projected)
+
   // Confidence based on data quality
   const hasMultipleMonths = monthlyValues.length >= 2
-  const hasRecurringClients = recurringRevenue > 0
-  const confidence = hasRecurringClients ? 0.8 : (hasMultipleMonths ? 0.6 : 0.4)
+  const hasRecurringIncome = avgRecurring > 0
+  const confidence = hasRecurringIncome ? 0.8 : (hasMultipleMonths ? 0.6 : 0.4)
 
   return {
+    lastMonth: lastMonthRevenue,
+    currentMonth: currentMonthRevenue,
     nextMonth: {
       projected: nextMonthProjected,
       breakdown: {
-        recurring: recurringRevenue,
+        recurring: avgRecurring,
         trending: 0,
-        oneTime: oneTimeRevenue,
+        oneTime: avgOneTime,
       },
       confidence,
     },
@@ -355,6 +410,7 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
     yearProjection: nextMonthProjected * 12,
     monthOverMonthChange,
     topClients: clientForecasts.slice(0, 5),
+    byCategory: categoryForecasts.slice(0, 5),
   }
 }
 
@@ -379,6 +435,8 @@ export interface ExpenseForecastAlert {
 }
 
 export interface ExpenseForecast {
+  lastMonth: number
+  currentMonth: number
   nextMonth: {
     projected: number
     byType: {
@@ -477,10 +535,12 @@ export async function getExpenseForecast(): Promise<ExpenseForecast> {
 
   const projectedFixed = Math.max(avgFixed, recurringFixed)
 
-  // Calculate month-over-month change
+  // Monthly actuals
+  const currentMonthKey = format(now, "yyyy-MM")
   const lastMonthKey = format(subMonths(now, 1), "yyyy-MM")
   const twoMonthsAgoKey = format(subMonths(now, 2), "yyyy-MM")
 
+  const currentMonthTotal = (monthlyFixed.get(currentMonthKey) || 0) + (monthlyVariable.get(currentMonthKey) || 0)
   const lastMonthTotal = (monthlyFixed.get(lastMonthKey) || 0) + (monthlyVariable.get(lastMonthKey) || 0)
   const twoMonthsAgoTotal = (monthlyFixed.get(twoMonthsAgoKey) || 0) + (monthlyVariable.get(twoMonthsAgoKey) || 0)
 
@@ -540,6 +600,8 @@ export async function getExpenseForecast(): Promise<ExpenseForecast> {
   const confidence = hasRecurring ? 0.8 : (hasHistory ? 0.6 : 0.4)
 
   return {
+    lastMonth: lastMonthTotal,
+    currentMonth: currentMonthTotal,
     nextMonth: {
       projected: projectedFixed + avgVariable,
       byType: {

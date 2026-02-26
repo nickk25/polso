@@ -202,6 +202,62 @@ export async function getCategoryBreakdown(date = new Date()): Promise<CategoryB
     .sort((a, b) => b.total - a.total)
 }
 
+export async function getIncomeCategoryBreakdown(date = new Date()): Promise<CategoryBreakdown[]> {
+  const { organizationId } = await getAuthContext()
+
+  const monthStart = startOfMonth(date)
+  const monthEnd = endOfMonth(date)
+
+  const incomes = await prisma.income.findMany({
+    where: {
+      organizationId,
+      date: { gte: monthStart, lte: monthEnd },
+      status: { not: "excluded" },
+    },
+    select: {
+      amount: true,
+      category: {
+        select: {
+          id: true,
+          name: true,
+          color: true,
+        },
+      },
+    },
+  })
+
+  const categoryTotals = new Map<
+    string | null,
+    { name: string; color: string; total: number; count: number }
+  >()
+
+  for (const income of incomes) {
+    const key = income.category?.id || null
+    const current = categoryTotals.get(key) || {
+      name: income.category?.name || "Uncategorized",
+      color: income.category?.color || "#6b7280",
+      total: 0,
+      count: 0,
+    }
+    current.total += income.amount
+    current.count += 1
+    categoryTotals.set(key, current)
+  }
+
+  const grandTotal = Array.from(categoryTotals.values()).reduce((sum, c) => sum + c.total, 0)
+
+  return Array.from(categoryTotals.entries())
+    .map(([id, data]) => ({
+      categoryId: id,
+      categoryName: data.name,
+      categoryColor: data.color,
+      total: data.total,
+      percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
+      count: data.count,
+    }))
+    .sort((a, b) => b.total - a.total)
+}
+
 export interface TopVendor {
   vendorId: string | null
   vendorName: string
