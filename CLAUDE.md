@@ -232,7 +232,7 @@ NEXT_PUBLIC_APP_URL       # Application URL
 - Skip elegance optimization for simple/obvious fixes
 
 ### Commits & Shipping
-- **Granular commits** — one commit per feature, fix, or refactor. Never bundle unrelated changes.
+- **Granular commits** — one commit per concern. Never bundle unrelated changes.
 - **Format**: `type: :emoji: description` (lowercase, imperative mood)
 - **Types**: `feat`, `fix`, `refactor`, `docs`, `style`, `chore`, `perf`
 - **Examples** (from this repo):
@@ -240,6 +240,25 @@ NEXT_PUBLIC_APP_URL       # Application URL
   - `fix: :bug: Fix stale /banking route references causing infinite loading`
   - `refactor: :truck: Rename /income route to /incomes to match /expenses pattern`
   - `docs: :memo: Add code generation patterns and workflow rules`
+
+**Multi-layer features must be split into commits by layer.** When a feature touches more than one of the layers below, create a separate commit for each layer that has changes:
+
+| Layer | What belongs here |
+|-------|-------------------|
+| `schema` | `prisma/schema.prisma` only |
+| `backend` | `features/*/lib/`, `features/*/queries/`, `features/*/actions/` |
+| `frontend` | `features/*/components/`, `app/(dashboard)/*/page.tsx`, `messages/*/[feature].json`, `lib/i18n/messages.ts` |
+| `navigation` | `components/layout/app-sidebar.tsx`, `messages/*/common.json` |
+| `settings` | `features/settings/**`, `messages/*/settings.json` |
+| `infra` | `app/api/cron/`, `vercel.json`, config files |
+
+Example for a full feature like Alerts:
+1. `chore: :card_file_box: Add NotificationSetting alert fields to schema` — schema only
+2. `feat: :brain: Add alert detection logic, queries, and actions` — backend layer
+3. `feat: :bell: Add alerts UI (page, components, i18n)` — frontend layer
+4. `feat: :compass: Add Alerts to sidebar navigation` — navigation layer
+5. `feat: :gear: Add alert type toggles to notification settings` — settings layer
+6. `feat: :alarm_clock: Add detect-alerts cron endpoint` — infra layer
 
 **⚠️ MANDATORY pre-push gate — never push without reviewing:**
 1. Run `/review` on the changes (staged, unstaged, or last commit)
