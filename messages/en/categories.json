@@ -11,6 +11,7 @@
   "systemCategoriesDescription": "Default categories available to all organizations.",
   "noCategory": "No category",
   "expenseCount": "{count, plural, one {# expense} other {# expenses}}",
+  "incomeCount": "{count, plural, one {# income} other {# incomes}}",
   "editCategory": "Edit category",
   "deleteCategory": "Delete category",
   "hideCategory": "Hide from filters",

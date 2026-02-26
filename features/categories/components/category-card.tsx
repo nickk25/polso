@@ -58,6 +58,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
   }
 
   const expenseCount = category._count.expenses
+  const incomeCount = category._count.incomes
 
   return (
     <Card>
@@ -93,6 +94,11 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
               <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                 <span>
                   {t("expenseCount", { count: expenseCount })}
+                  {incomeCount > 0 && (
+                    <span className="text-xs ml-1.5">
+                      {"| "}{t("incomeCount", { count: incomeCount })}
+                    </span>
+                  )}
                 </span>
                 {category.expenseType && (
                   <Badge variant="outline" className="text-xs capitalize">
