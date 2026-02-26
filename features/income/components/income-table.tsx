@@ -227,16 +227,16 @@ export function IncomeTable({ incomes, categories }: IncomeTableProps) {
               <TableCell className="font-medium">
                 {format(new Date(income.date), "MMM d, yyyy")}
               </TableCell>
-              <TableCell>
+              <TableCell className="max-w-[300px] whitespace-normal">
                 <div className="flex flex-col">
-                  <span className="font-medium">
+                  <span className="font-medium truncate">
                     {income.transaction?.merchantName ||
                       income.transaction?.name ||
                       income.description ||
                       "Unknown"}
                   </span>
                   {income.transaction?.category && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground truncate">
                       {income.transaction.category}
                     </span>
                   )}
