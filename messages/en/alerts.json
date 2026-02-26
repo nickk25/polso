@@ -58,5 +58,6 @@
     "total": "Total Alerts",
     "unread": "Unread",
     "critical": "Critical"
-  }
+  },
+  "configure": "Configure alerts"
 }

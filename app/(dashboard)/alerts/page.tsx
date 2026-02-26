@@ -1,6 +1,8 @@
+import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bell } from "@phosphor-icons/react/dist/ssr"
+import { Button } from "@/components/ui/button"
+import { Bell, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr"
 import { getAlerts, getAlertStats } from "@/features/alerts/queries/get-alerts"
 import { AlertTable } from "@/features/alerts/components/alert-table"
 import { AlertFilters } from "@/features/alerts/components/alert-filters"
@@ -35,9 +37,17 @@ export default async function AlertsPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("subtitle")}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/settings/notifications">
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            {t("configure")}
+          </Link>
+        </Button>
       </div>
 
       {/* Stats Cards */}

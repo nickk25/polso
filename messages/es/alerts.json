@@ -58,5 +58,6 @@
     "total": "Total de alertas",
     "unread": "Sin leer",
     "critical": "Críticas"
-  }
+  },
+  "configure": "Configurar alertas"
 }
