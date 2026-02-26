@@ -44,6 +44,11 @@ export async function createLinkToken({
   products = [Products.Transactions],
   countryCodes = [CountryCode.Es],
 }: CreateLinkTokenParams) {
+  // Webhook URL receives TRANSACTIONS and ITEM events for this Item.
+  // Must be set here (not in the Plaid Dashboard) for transaction webhooks.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const webhookUrl = appUrl ? `${appUrl}/api/webhooks/plaid` : undefined
+
   const request: LinkTokenCreateRequest = {
     user: {
       client_user_id: userId,
@@ -52,6 +57,7 @@ export async function createLinkToken({
     products,
     country_codes: countryCodes,
     language: "es",
+    webhook: webhookUrl,
   }
 
   const response = await plaidClient.linkTokenCreate(request)
