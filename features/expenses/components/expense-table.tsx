@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
@@ -71,6 +71,8 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
   const [invoices, setInvoices] = useState<InvoiceWithUrl[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const lastClickedIndex = useRef<number | null>(null)
+  const shiftHeld = useRef(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -82,13 +84,26 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [selectedIds.size])
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const toggleSelect = (id: string, index: number, shiftKey: boolean) => {
+    if (shiftKey && lastClickedIndex.current !== null) {
+      const start = Math.min(lastClickedIndex.current, index)
+      const end = Math.max(lastClickedIndex.current, index)
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        for (let i = start; i <= end; i++) {
+          next.add(expenses[i].id)
+        }
+        return next
+      })
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+    }
+    lastClickedIndex.current = index
   }
 
   const toggleSelectAll = () => {
@@ -239,7 +254,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {expenses.map((expense) => (
+          {expenses.map((expense, index) => (
             <TableRow
               key={expense.id}
               className="cursor-pointer hover:bg-muted/50"
@@ -249,8 +264,11 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
               <TableCell>
                 <Checkbox
                   checked={selectedIds.has(expense.id)}
-                  onCheckedChange={() => toggleSelect(expense.id)}
-                  onClick={(e) => e.stopPropagation()}
+                  onCheckedChange={() => toggleSelect(expense.id, index, shiftHeld.current)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    shiftHeld.current = e.shiftKey
+                  }}
                   aria-label={`Select row`}
                 />
               </TableCell>
