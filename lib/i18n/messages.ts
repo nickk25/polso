@@ -17,6 +17,7 @@ import enProfile from "@/messages/en/profile.json"
 import enCategories from "@/messages/en/categories.json"
 import enTeam from "@/messages/en/team.json"
 import enInvite from "@/messages/en/invite.json"
+import enAlerts from "@/messages/en/alerts.json"
 import enLegal from "@/messages/en/legal.json"
 
 import esCommon from "@/messages/es/common.json"
@@ -36,6 +37,7 @@ import esProfile from "@/messages/es/profile.json"
 import esCategories from "@/messages/es/categories.json"
 import esTeam from "@/messages/es/team.json"
 import esInvite from "@/messages/es/invite.json"
+import esAlerts from "@/messages/es/alerts.json"
 import esLegal from "@/messages/es/legal.json"
 
 const messages = {
@@ -57,6 +59,7 @@ const messages = {
     categories: enCategories,
     team: enTeam,
     invite: enInvite,
+    alerts: enAlerts,
     legal: enLegal,
   },
   es: {
@@ -77,6 +80,7 @@ const messages = {
     categories: esCategories,
     team: esTeam,
     invite: esInvite,
+    alerts: esAlerts,
     legal: esLegal,
   },
 } as const
