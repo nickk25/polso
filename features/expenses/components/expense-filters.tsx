@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect, useCallback, useTransition } from "react"
 import { useTranslations } from "next-intl"
+import { format } from "date-fns"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,7 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { MagnifyingGlass, X } from "@phosphor-icons/react"
+import { type DateRange } from "react-day-picker"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 
 interface ExpenseFiltersProps {
@@ -20,10 +23,12 @@ interface ExpenseFiltersProps {
   status?: string
   expenseType?: string
   category?: string
+  dateFrom?: string
+  dateTo?: string
   categories: CategoryWithCount[]
 }
 
-export function ExpenseFilters({ search, status, expenseType, category, categories }: ExpenseFiltersProps) {
+export function ExpenseFilters({ search, status, expenseType, category, dateFrom, dateTo, categories }: ExpenseFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
@@ -69,13 +74,23 @@ export function ExpenseFilters({ search, status, expenseType, category, categori
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchValue])
 
+  const handleDateSelect = (range: DateRange | undefined) => {
+    updateParams({
+      dateFrom: range?.from ? format(range.from, "yyyy-MM-dd") : null,
+      dateTo: range?.to ? format(range.to, "yyyy-MM-dd") : null,
+    })
+  }
+
   const clearFilters = () => {
     startTransition(() => {
       router.push("/expenses")
     })
   }
 
-  const hasFilters = search || status || expenseType || category
+  const hasFilters = search || status || expenseType || category || dateFrom || dateTo
+
+  const fromDate = dateFrom ? new Date(dateFrom) : undefined
+  const toDate = dateTo ? new Date(dateTo) : undefined
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -90,6 +105,13 @@ export function ExpenseFilters({ search, status, expenseType, category, categori
       </div>
 
       <div className="flex gap-2 flex-wrap">
+        <DateRangePicker
+          from={fromDate}
+          to={toDate}
+          onSelect={handleDateSelect}
+          placeholder={t("tableFilters.dateRange")}
+        />
+
         <Select
           value={category || "all"}
           onValueChange={(value) => updateParams({ category: value })}
@@ -99,6 +121,7 @@ export function ExpenseFilters({ search, status, expenseType, category, categori
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("tableFilters.allCategories")}</SelectItem>
+            <SelectItem value="none">{t("tableFilters.noCategory")}</SelectItem>
             {categories.map((cat) => (
               <SelectItem key={cat.id} value={cat.id}>
                 <span className="flex items-center gap-2">

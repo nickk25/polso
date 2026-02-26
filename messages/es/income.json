@@ -66,6 +66,7 @@
   },
   "tableFilters": {
     "searchPlaceholder": "Buscar ingresos...",
+    "dateRange": "Rango de fechas",
     "statusPlaceholder": "Estado",
     "allStatus": "Todos los Estados",
     "pending": "Pendiente",
@@ -75,7 +76,8 @@
     "allSources": "Todas las Fuentes",
     "categoryPlaceholder": "Categoría",
     "allCategories": "Todas las Categorías",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "noCategory": "Sin categoría"
   },
   "bulk": {
     "selected": "{count} seleccionados",

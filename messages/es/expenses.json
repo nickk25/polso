@@ -67,6 +67,7 @@
   },
   "tableFilters": {
     "searchPlaceholder": "Buscar gastos...",
+    "dateRange": "Rango de fechas",
     "statusPlaceholder": "Estado",
     "allStatus": "Todos los Estados",
     "pending": "Pendiente",
@@ -78,7 +79,8 @@
     "variable": "Variable",
     "categoryPlaceholder": "Categoría",
     "allCategories": "Todas las Categorías",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "noCategory": "Sin categoría"
   },
   "bulk": {
     "selected": "{count} seleccionados",

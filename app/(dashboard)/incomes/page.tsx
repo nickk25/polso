@@ -25,6 +25,8 @@ interface PageProps {
     status?: string
     source?: string
     category?: string
+    dateFrom?: string
+    dateTo?: string
   }>
 }
 
@@ -36,9 +38,22 @@ export default async function IncomePage({ searchParams }: PageProps) {
   const status = params.status || undefined
   const source = params.source || undefined
   const category = params.category || undefined
+  const dateFrom = params.dateFrom || undefined
+  const dateTo = params.dateTo || undefined
 
   const [{ incomes, total, pages }, stats, categories] = await Promise.all([
-    getIncomes({ search, status, source, categoryId: category }, page, PAGE_SIZE),
+    getIncomes(
+      {
+        search,
+        status,
+        source,
+        categoryId: category,
+        dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+        dateTo: dateTo ? new Date(dateTo) : undefined,
+      },
+      page,
+      PAGE_SIZE
+    ),
     getIncomeStats(),
     getAllCategories(),
   ])
@@ -114,7 +129,15 @@ export default async function IncomePage({ searchParams }: PageProps) {
       {/* Filters */}
       {hasAnyIncomes && (
         <div className="flex items-center justify-between gap-4">
-          <IncomeFilters search={search} status={status} source={source} category={category} categories={categories} />
+          <IncomeFilters
+            search={search}
+            status={status}
+            source={source}
+            category={category}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            categories={categories}
+          />
         </div>
       )}
 

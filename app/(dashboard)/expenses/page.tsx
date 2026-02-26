@@ -26,6 +26,8 @@ interface PageProps {
     status?: string
     expenseType?: string
     category?: string
+    dateFrom?: string
+    dateTo?: string
   }>
 }
 
@@ -37,9 +39,22 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
   const status = params.status || undefined
   const expenseType = params.expenseType || undefined
   const category = params.category || undefined
+  const dateFrom = params.dateFrom || undefined
+  const dateTo = params.dateTo || undefined
 
   const [{ expenses, total, pages }, stats, categories] = await Promise.all([
-    getExpenses({ search, status, expenseType, categoryId: category }, page, PAGE_SIZE),
+    getExpenses(
+      {
+        search,
+        status,
+        expenseType,
+        categoryId: category,
+        dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+        dateTo: dateTo ? new Date(dateTo) : undefined,
+      },
+      page,
+      PAGE_SIZE
+    ),
     getExpenseStats(),
     getAllCategories(),
   ])
@@ -115,7 +130,15 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
       {/* Filters */}
       {hasAnyExpenses && (
         <div className="flex items-center justify-between gap-4">
-          <ExpenseFilters search={search} status={status} expenseType={expenseType} category={category} categories={categories} />
+          <ExpenseFilters
+            search={search}
+            status={status}
+            expenseType={expenseType}
+            category={category}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            categories={categories}
+          />
           <AutoCategorizeButton />
         </div>
       )}

@@ -67,6 +67,7 @@
   },
   "tableFilters": {
     "searchPlaceholder": "Search expenses...",
+    "dateRange": "Date range",
     "statusPlaceholder": "Status",
     "allStatus": "All Status",
     "pending": "Pending",
@@ -78,7 +79,8 @@
     "variable": "Variable",
     "categoryPlaceholder": "Category",
     "allCategories": "All Categories",
-    "clear": "Clear"
+    "clear": "Clear",
+    "noCategory": "No category"
   },
   "bulk": {
     "selected": "{count} selected",

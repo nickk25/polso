@@ -1,0 +1,70 @@
+"use client"
+
+import * as React from "react"
+import { format } from "date-fns"
+import { CalendarBlank } from "@phosphor-icons/react"
+import { type DateRange } from "react-day-picker"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+interface DateRangePickerProps {
+  from?: Date
+  to?: Date
+  onSelect: (range: DateRange | undefined) => void
+  placeholder?: string
+  className?: string
+}
+
+export function DateRangePicker({
+  from,
+  to,
+  onSelect,
+  placeholder = "Pick a date",
+  className,
+}: DateRangePickerProps) {
+  const date: DateRange | undefined = from ? { from, to } : undefined
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "w-[260px] justify-start text-left font-normal",
+            !date && "text-muted-foreground",
+            className
+          )}
+        >
+          <CalendarBlank className="mr-2 h-4 w-4 shrink-0" />
+          {date?.from ? (
+            date.to ? (
+              <>
+                {format(date.from, "LLL dd, y")} – {format(date.to, "LLL dd, y")}
+              </>
+            ) : (
+              format(date.from, "LLL dd, y")
+            )
+          ) : (
+            <span>{placeholder}</span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="range"
+          defaultMonth={date?.from}
+          selected={date}
+          onSelect={onSelect}
+          numberOfMonths={2}
+        />
+      </PopoverContent>
+    </Popover>
+  )
+}

@@ -66,6 +66,7 @@
   },
   "tableFilters": {
     "searchPlaceholder": "Search income...",
+    "dateRange": "Date range",
     "statusPlaceholder": "Status",
     "allStatus": "All Status",
     "pending": "Pending",
@@ -75,7 +76,8 @@
     "allSources": "All Sources",
     "categoryPlaceholder": "Category",
     "allCategories": "All Categories",
-    "clear": "Clear"
+    "clear": "Clear",
+    "noCategory": "No category"
   },
   "bulk": {
     "selected": "{count} selected",
