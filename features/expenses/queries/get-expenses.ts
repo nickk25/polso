@@ -59,7 +59,11 @@ export async function getExpenses(
     if (filters.dateTo) (where.date as Record<string, Date>).lte = filters.dateTo
   }
 
-  if (filters.categoryId) where.categoryId = filters.categoryId
+  if (filters.categoryId === "none") {
+    where.categoryId = null
+  } else if (filters.categoryId) {
+    where.categoryId = filters.categoryId
+  }
   if (filters.vendorId) where.vendorId = filters.vendorId
   if (filters.status) where.status = filters.status
   if (filters.expenseType) where.expenseType = filters.expenseType

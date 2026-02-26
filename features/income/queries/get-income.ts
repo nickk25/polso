@@ -49,7 +49,11 @@ export async function getIncomes(
     if (filters.dateTo) (where.date as Record<string, Date>).lte = filters.dateTo
   }
 
-  if (filters.categoryId) where.categoryId = filters.categoryId
+  if (filters.categoryId === "none") {
+    where.categoryId = null
+  } else if (filters.categoryId) {
+    where.categoryId = filters.categoryId
+  }
   if (filters.source) where.source = filters.source
   if (filters.status) where.status = filters.status
 
