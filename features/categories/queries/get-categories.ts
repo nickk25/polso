@@ -14,6 +14,7 @@ export interface CategoryWithCount {
   isHidden: boolean
   _count: {
     expenses: number
+    incomes: number
   }
 }
 
@@ -45,7 +46,7 @@ export async function getSystemCategories(): Promise<CategoryWithCount[]> {
 
   const categories = await prisma.category.findMany({
     where: { isSystem: true },
-    include: { _count: { select: { expenses: true } } },
+    include: { _count: { select: { expenses: true, incomes: true } } },
     orderBy: { name: "asc" },
   })
 
@@ -60,7 +61,7 @@ export async function getCustomCategories(): Promise<CategoryWithCount[]> {
 
   const categories = await prisma.category.findMany({
     where: { organizationId, isSystem: false },
-    include: { _count: { select: { expenses: true } } },
+    include: { _count: { select: { expenses: true, incomes: true } } },
     orderBy: { name: "asc" },
   })
 
@@ -75,7 +76,7 @@ export async function getAllCategories(): Promise<CategoryWithCount[]> {
 
   const categories = await prisma.category.findMany({
     where: { OR: [{ isSystem: true }, { organizationId }] },
-    include: { _count: { select: { expenses: true } } },
+    include: { _count: { select: { expenses: true, incomes: true } } },
     orderBy: [{ isSystem: "desc" }, { name: "asc" }],
   })
 
@@ -101,6 +102,6 @@ export async function getCategoryById(id: string) {
       id,
       OR: [{ isSystem: true }, { organizationId }],
     },
-    include: { _count: { select: { expenses: true } } },
+    include: { _count: { select: { expenses: true, incomes: true } } },
   })
 }
