@@ -1,13 +1,13 @@
 import { ClientsPageContent } from "@/features/clients/components/clients-page-content"
 import { getClients } from "@/features/clients/queries/get-clients"
-import { getAllCategories } from "@/features/categories/queries/get-categories"
+import { getActiveCategories } from "@/features/categories/queries/get-categories"
 import { getTranslations } from "next-intl/server"
 
 export default async function ClientsPage() {
   const t = await getTranslations("clients")
   const [clients, categories] = await Promise.all([
     getClients(),
-    getAllCategories(),
+    getActiveCategories(),
   ])
 
   return (

@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Receipt, ArrowRight } from "@phosphor-icons/react/dist/ssr"
 import { getExpenses, getExpenseStats } from "@/features/expenses/queries/get-expenses"
-import { getAllCategories } from "@/features/categories/queries/get-categories"
+import { getActiveCategories } from "@/features/categories/queries/get-categories"
 import { ExpenseFilters } from "@/features/expenses/components/expense-filters"
 import { ExpensePagination } from "@/features/expenses/components/expense-pagination"
 import { ExpenseTable } from "@/features/expenses/components/expense-table"
@@ -56,7 +56,7 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
       PAGE_SIZE
     ),
     getExpenseStats(),
-    getAllCategories(),
+    getActiveCategories(),
   ])
 
   const hasExpenses = expenses.length > 0

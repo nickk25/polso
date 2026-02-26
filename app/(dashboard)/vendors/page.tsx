@@ -1,13 +1,13 @@
 import { VendorsPageContent } from "@/features/vendors/components/vendors-page-content"
 import { getVendors } from "@/features/vendors/queries/get-vendors"
-import { getAllCategories } from "@/features/categories/queries/get-categories"
+import { getActiveCategories } from "@/features/categories/queries/get-categories"
 import { getTranslations } from "next-intl/server"
 
 export default async function VendorsPage() {
   const t = await getTranslations("vendors")
   const [vendors, categories] = await Promise.all([
     getVendors(),
-    getAllCategories(),
+    getActiveCategories(),
   ])
 
   return (

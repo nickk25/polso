@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TrendUp, ArrowRight } from "@phosphor-icons/react/dist/ssr"
 import { getIncomes, getIncomeStats } from "@/features/income/queries/get-income"
-import { getAllCategories } from "@/features/categories/queries/get-categories"
+import { getActiveCategories } from "@/features/categories/queries/get-categories"
 import { IncomeFilters } from "@/features/income/components/income-filters"
 import { IncomeTable } from "@/features/income/components/income-table"
 import { IncomePagination } from "@/features/income/components/income-pagination"
@@ -55,7 +55,7 @@ export default async function IncomePage({ searchParams }: PageProps) {
       PAGE_SIZE
     ),
     getIncomeStats(),
-    getAllCategories(),
+    getActiveCategories(),
   ])
 
   const hasIncomes = incomes.length > 0

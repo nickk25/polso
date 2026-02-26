@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Pencil, Trash, Lock } from "@phosphor-icons/react"
-import { deleteCategoryAction } from "../actions/manage-category"
+import { deleteCategoryAction, toggleCategoryVisibilityAction } from "../actions/manage-category"
 import type { CategoryWithCount } from "../queries/get-categories"
 
 interface CategoryCardProps {
@@ -32,6 +33,13 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
   const tc = useTranslations("common")
   const [loading, setLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isHidden, setIsHidden] = useState(category.isHidden)
+
+  const handleToggleVisibility = async (hidden: boolean) => {
+    setIsHidden(hidden)
+    await toggleCategoryVisibilityAction(category.id, hidden)
+    router.refresh()
+  }
 
   const handleDelete = async () => {
     setLoading(true)
@@ -68,11 +76,16 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="font-medium truncate">{category.name}</h3>
+                <h3 className={`font-medium truncate ${isHidden ? "text-muted-foreground" : ""}`}>{category.name}</h3>
                 {category.isSystem && (
                   <Badge variant="secondary" className="text-xs gap-1">
                     <Lock className="h-3 w-3" />
                     {t("system")}
+                  </Badge>
+                )}
+                {isHidden && (
+                  <Badge variant="outline" className="text-xs text-muted-foreground">
+                    {t("hiddenBadge")}
                   </Badge>
                 )}
               </div>
@@ -90,20 +103,27 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
             </div>
           </div>
 
-          {!category.isSystem && (
-            <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onEdit?.(category)}
-                disabled={loading}
-                title={t("editCategory")}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Switch
+              checked={!isHidden}
+              onCheckedChange={(checked) => handleToggleVisibility(!checked)}
+              title={isHidden ? t("showCategory") : t("hideCategory")}
+            />
 
-              <AlertDialog>
+            {!category.isSystem && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEdit?.(category)}
+                  disabled={loading}
+                  title={t("editCategory")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+
+                <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="ghost"
@@ -153,9 +173,10 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                     )}
                   </AlertDialogFooter>
                 </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
+                </AlertDialog>
+              </>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
