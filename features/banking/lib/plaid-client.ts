@@ -120,6 +120,16 @@ export async function removeItem(accessToken: string) {
   return response.data
 }
 
+export async function updateItemWebhook(
+  accessToken: string,
+  webhookUrl: string
+): Promise<void> {
+  await plaidClient.itemWebhookUpdate({
+    access_token: accessToken,
+    webhook: webhookUrl,
+  })
+}
+
 // ============================================
 // Institution
 // ============================================
