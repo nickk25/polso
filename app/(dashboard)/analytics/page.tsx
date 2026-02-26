@@ -22,8 +22,10 @@ import {
 import { MonthlySpendChart } from "@/features/analytics/components/monthly-spend-chart"
 import { CashFlowChart } from "@/features/analytics/components/cash-flow-chart"
 import { IncomeTrendChart } from "@/features/analytics/components/income-trend-chart"
+import { AnalyticsFilters } from "@/features/analytics/components/analytics-filters"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { format, startOfMonth, parse } from "date-fns"
 
 function formatCurrency(value: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
@@ -34,8 +36,17 @@ function formatCurrency(value: number, currency = "USD") {
   }).format(value)
 }
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>
+}) {
   const t = await getTranslations("analytics")
+  const { month } = await searchParams
+
+  const currentMonthStr = format(new Date(), "yyyy-MM")
+  const selectedMonthStr = month && /^\d{4}-\d{2}$/.test(month) ? month : currentMonthStr
+  const selectedDate = startOfMonth(parse(selectedMonthStr, "yyyy-MM", new Date()))
 
   const [
     burnRate,
@@ -50,12 +61,12 @@ export default async function AnalyticsPage() {
     expenseForecast,
   ] = await Promise.all([
     getBurnRateAndRunway(),
-    getMonthlySpendTrend(6),
-    getCategoryBreakdown(),
-    getTopVendors(5),
-    getCashFlow(6),
-    getIncomeStats(),
-    getMonthlyIncomeTrend(6),
+    getMonthlySpendTrend(6, selectedDate),
+    getCategoryBreakdown(selectedDate),
+    getTopVendors(5, selectedDate),
+    getCashFlow(6, selectedDate),
+    getIncomeStats(selectedDate),
+    getMonthlyIncomeTrend(6, selectedDate),
     getCashFlowForecast(3),
     getRevenueForecast(),
     getExpenseForecast(),
@@ -100,11 +111,14 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <p className="text-muted-foreground">
-          {t("subtitle")}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <p className="text-muted-foreground">
+            {t("subtitle")}
+          </p>
+        </div>
+        <AnalyticsFilters selectedMonth={selectedMonthStr} />
       </div>
 
       {/* Key Metrics */}

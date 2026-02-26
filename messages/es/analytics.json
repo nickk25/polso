@@ -24,6 +24,11 @@
   "incomeBySource": "Ingresos por Fuente",
   "noIncomeDataThisMonth": "Sin datos de ingresos este mes",
   "forecasts": "Pronosticos",
+  "filters": {
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "current": "Actual"
+  },
   "periods": {
     "week": "Esta Semana",
     "month": "Este Mes",

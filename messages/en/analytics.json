@@ -24,6 +24,11 @@
   "incomeBySource": "Income by Source",
   "noIncomeDataThisMonth": "No income data this month",
   "forecasts": "Forecasts",
+  "filters": {
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "current": "Current"
+  },
   "periods": {
     "week": "This Week",
     "month": "This Month",
