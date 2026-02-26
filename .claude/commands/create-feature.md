@@ -1,3 +1,6 @@
+---
+description: Scaffold a complete feature module with all standard files following project patterns.
+---
 # Create Feature Module
 
 Scaffold an entire feature module with all standard files following the project's established patterns.

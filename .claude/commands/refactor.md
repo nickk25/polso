@@ -1,3 +1,6 @@
+---
+description: Improve existing code structure, readability, or patterns — without changing behavior.
+---
 # Refactor
 
 Improve existing code to align with project patterns, improve readability, or reduce duplication — without changing behavior.

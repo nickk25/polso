@@ -1,3 +1,6 @@
+---
+description: Systematically diagnose and fix a bug, build failure, or runtime error.
+---
 # Debug
 
 Systematically diagnose and fix a bug, build failure, or runtime error.

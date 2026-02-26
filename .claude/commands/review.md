@@ -1,3 +1,6 @@
+---
+description: Review code changes against project patterns and conventions. Reports Errors, Warnings, and Info findings.
+---
 # Code Review
 
 Review code changes against this project's established patterns and conventions.

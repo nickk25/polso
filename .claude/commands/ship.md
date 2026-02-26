@@ -1,3 +1,6 @@
+---
+description: Review, commit, and push changes in one flow. Standard way to land code — never push without reviewing first.
+---
 # Ship
 
 Review, commit, and push changes in one flow. This is the standard way to land code — never push without reviewing first.
