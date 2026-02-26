@@ -130,7 +130,7 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
                 onClick={() => setPreviewInvoice(invoice)}
                 title={t("invoices.preview")}
               >
@@ -139,7 +139,7 @@ export function InvoiceList({ invoices, onDelete, loading = false }: InvoiceList
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
                 onClick={() => handleDownload(invoice)}
                 title={t("invoices.download")}
               >

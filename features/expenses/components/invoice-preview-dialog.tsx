@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { DownloadSimple, X } from "@phosphor-icons/react"
+import { DownloadSimple } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -33,18 +33,7 @@ export function InvoicePreviewDialog({
     <Dialog open={!!invoice} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="truncate pr-4">{invoice.fileName}</DialogTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDownload(invoice)}
-              className="flex-shrink-0"
-            >
-              <DownloadSimple className="h-4 w-4 mr-2" />
-              {t("invoices.download")}
-            </Button>
-          </div>
+          <DialogTitle className="truncate">{invoice.fileName}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-auto bg-muted rounded-lg">
