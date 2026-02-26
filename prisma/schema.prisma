@@ -53,8 +53,9 @@ model Organization {
   recurringPatterns RecurringPattern[]
   dismissedPatterns DismissedPattern[]
   alerts            Alert[]
-  exports           Export[]
-  invitations       Invitation[]
+  exports               Export[]
+  invitations           Invitation[]
+  categoryPreferences   CategoryPreference[]
 
   @@map("organizations")
 }
@@ -168,19 +169,32 @@ model Category {
   createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations
-  organization      Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parent            Category?          @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children          Category[]         @relation("CategoryHierarchy")
+  organization      Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent            Category?            @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children          Category[]           @relation("CategoryHierarchy")
   vendors           Vendor[]
-  clientDefaults    Client[]           @relation("ClientDefaultCategory")
+  clientDefaults    Client[]             @relation("ClientDefaultCategory")
   expenses          Expense[]
   incomes           Income[]
   recurringPatterns RecurringPattern[]
+  preferences       CategoryPreference[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
   @@index([isSystem])
   @@map("categories")
+}
+
+model CategoryPreference {
+  organizationId String @map("organization_id")
+  categoryId     String @map("category_id")
+  isHidden       Boolean @default(false) @map("is_hidden")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category     Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, categoryId])
+  @@map("category_preferences")
 }
 
 // ============================================
