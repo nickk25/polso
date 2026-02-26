@@ -327,3 +327,45 @@ export async function getCategoryUsageAction(
     )
   }
 }
+
+/**
+ * Toggle the hidden state of a category for the current organization
+ */
+export async function toggleCategoryVisibilityAction(
+  categoryId: string,
+  isHidden: boolean
+): Promise<ActionResponse<{ isHidden: boolean }>> {
+  try {
+    const { organizationId } = await getAuthContext()
+
+    // Verify the category exists and is accessible
+    const category = await prisma.category.findFirst({
+      where: {
+        id: categoryId,
+        OR: [{ isSystem: true }, { organizationId }],
+      },
+    })
+
+    if (!category) {
+      return errorResponse("Category not found", "NOT_FOUND")
+    }
+
+    await prisma.categoryPreference.upsert({
+      where: { organizationId_categoryId: { organizationId, categoryId } },
+      update: { isHidden },
+      create: { organizationId, categoryId, isHidden },
+    })
+
+    revalidatePath("/categories")
+    revalidatePath("/expenses")
+    revalidatePath("/incomes")
+
+    return successResponse({ isHidden })
+  } catch (error) {
+    console.error("Error toggling category visibility:", error)
+    return errorResponse(
+      error instanceof Error ? error.message : "Failed to update category visibility",
+      "ERROR"
+    )
+  }
+}
