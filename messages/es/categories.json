@@ -8,6 +8,7 @@
   "system": "Sistema",
   "noCustomCategories": "Sin categorias personalizadas",
   "noCustomCategoriesDescription": "Crea categorias personalizadas para organizar mejor tus gastos.",
+  "customCategoriesDescription": "Tus propias categorias para organizar gastos e ingresos.",
   "systemCategoriesDescription": "Categorias predeterminadas disponibles para todas las organizaciones.",
   "noCategory": "Sin categoria",
   "expenseCount": "{count, plural, one {# gasto} other {# gastos}}",

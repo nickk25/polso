@@ -8,6 +8,7 @@
   "system": "System",
   "noCustomCategories": "No custom categories",
   "noCustomCategoriesDescription": "Create custom categories to better organize your expenses.",
+  "customCategoriesDescription": "Your own categories for organizing expenses and incomes.",
   "systemCategoriesDescription": "Default categories available to all organizations.",
   "noCategory": "No category",
   "expenseCount": "{count, plural, one {# expense} other {# expenses}}",

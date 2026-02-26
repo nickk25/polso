@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Pencil, Trash, Lock } from "@phosphor-icons/react"
+import { Pencil, Trash } from "@phosphor-icons/react"
 import { deleteCategoryAction, toggleCategoryVisibilityAction } from "../actions/manage-category"
 import type { CategoryWithCount } from "../queries/get-categories"
 
@@ -78,12 +78,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h3 className={`font-medium truncate ${isHidden ? "text-muted-foreground" : ""}`}>{category.name}</h3>
-                {category.isSystem && (
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    <Lock className="h-3 w-3" />
-                    {t("system")}
-                  </Badge>
-                )}
+
                 {isHidden && (
                   <Badge variant="outline" className="text-xs text-muted-foreground">
                     {t("hiddenBadge")}
@@ -98,11 +93,6 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                     {"| "}{t("incomeCount", { count: incomeCount })}
                   </span>
                 </span>
-                {category.expenseType && (
-                  <Badge variant="outline" className="text-xs capitalize">
-                    {category.expenseType}
-                  </Badge>
-                )}
               </div>
             </div>
           </div>

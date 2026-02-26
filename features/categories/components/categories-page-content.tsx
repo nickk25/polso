@@ -56,6 +56,9 @@ export function CategoriesPageContent({
             ({customCategories.length})
           </span>
         </div>
+        <p className="text-sm text-muted-foreground">
+          {t("customCategoriesDescription")}
+        </p>
 
         {customCategories.length > 0 ? (
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
