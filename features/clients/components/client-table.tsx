@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
@@ -48,6 +48,16 @@ export function ClientTable({
 }: ClientTableProps) {
   const t = useTranslations("clients")
   const [search, setSearch] = useState("")
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedIds.length > 0) {
+        onSelectionChange([])
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [selectedIds.length, onSelectionChange])
 
   // Filter clients by search
   const filteredClients = clients.filter((client) => {
