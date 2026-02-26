@@ -19,16 +19,29 @@ import {
 } from "../actions/update-expense"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 
+function formatCurrency(value: number, currency = "USD") {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
 interface ExpenseBulkActionBarProps {
   selectedIds: Set<string>
   onClearSelection: () => void
   categories: CategoryWithCount[]
+  selectedTotal: number
+  currency?: string
 }
 
 export function ExpenseBulkActionBar({
   selectedIds,
   onClearSelection,
   categories,
+  selectedTotal,
+  currency = "USD",
 }: ExpenseBulkActionBarProps) {
   const router = useRouter()
   const t = useTranslations("expenses")
@@ -70,6 +83,10 @@ export function ExpenseBulkActionBar({
 
       <span className="text-sm font-medium">
         {t("bulk.selected", { count })}
+      </span>
+
+      <span className="text-sm text-muted-foreground">
+        {formatCurrency(selectedTotal, currency)}
       </span>
 
       <div className="h-4 w-px bg-border" />

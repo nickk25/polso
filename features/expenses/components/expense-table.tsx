@@ -320,6 +320,10 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
           selectedIds={selectedIds}
           onClearSelection={() => setSelectedIds(new Set())}
           categories={categories}
+          selectedTotal={expenses
+            .filter((e) => selectedIds.has(e.id))
+            .reduce((sum, e) => sum + e.amount, 0)}
+          currency={expenses[0]?.currency}
         />
       )}
 
