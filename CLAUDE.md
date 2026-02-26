@@ -146,3 +146,103 @@ PLAID_ENV                 # Plaid environment (sandbox|development|production)
 CRON_SECRET               # Secret for cron job authentication
 NEXT_PUBLIC_APP_URL       # Application URL
 ```
+
+## Code Generation Rules
+
+**Code patterns reference**: See `docs/CODE_PATTERNS.md` for full annotated templates of every pattern below.
+
+### Server Actions
+- File: `features/<module>/actions/<verb>-<entity>.ts`
+- Always start with `"use server"` directive
+- First line in try block: `const { organizationId } = await getAuthContext()`
+- Return type: `Promise<ActionResponse<T>>` using `successResponse()` / `errorResponse()`
+- Error codes: `VALIDATION_ERROR`, `NOT_FOUND`, `FORBIDDEN`, `DUPLICATE_ERROR`, `ERROR`
+- Always `revalidatePath()` after mutations (feature route + `/dashboard`)
+- Function naming: `verbEntityAction()` — e.g., `updateExpenseAction`, `createCategoryAction`
+- Bulk actions: `bulkUpdateEntityFieldAction(ids: string[], value: T)`
+- Define input/result interfaces locally in the file, not in shared types
+
+### Queries
+- File: `features/<module>/queries/get-<entity>.ts`
+- Export typed interfaces: `EntityWithRelations`, `EntityFilters`, `EntityStats`
+- Always filter by `organizationId` first
+- Use `Promise.all()` for parallel queries (data + count)
+- Relations: always use `include` with explicit `select` — never include all fields
+- Stats: use `.aggregate()` with `_sum`, `_count`
+- Named exports only (no default exports)
+
+### Components
+- File: `features/<module>/components/<entity>-<type>.tsx`
+- `"use client"` for interactive components
+- Use `useTranslations("namespace")` for i18n (client) or `getTranslations` (server)
+- Icons: `@phosphor-icons/react` (client) or `@phosphor-icons/react/dist/ssr` (server)
+- Table components: checkbox selection, row click → Sheet edit, bulk action bar
+- Sheet edit pattern: `selectedEntity` state, `handleRowClick`, `handleSave` with `router.refresh()`
+- Filter components: read from props (searchParams), update URL via `router.push()`, debounce search 300ms, reset page on filter change
+- Form fields: wrap in `<div className="space-y-2"><Label>...</Label><Control /></div>`
+- Named exports for components, no default exports
+
+### Pages
+- File: `app/(dashboard)/<route>/page.tsx`
+- Server components (no "use client")
+- Props: `{ searchParams: Promise<{ page?: string; ... }> }`
+- Use `await getTranslations("namespace")` for translations
+- Parallel data fetching with `Promise.all([])`
+- Layout: `<div className="flex flex-col gap-6 p-6">` → title → stats grid → filters → Card with table
+
+### i18n
+- Files: `messages/{en,es}/<namespace>.json`
+- One file per feature namespace matching the feature directory name
+- Nested keys: `table.*`, `fields.*`, `bulk.*`, `pagination.*`, `editSheet.*`
+- Interpolation: `{count}`, `{start}`, `{end}`, `{total}`
+- Common keys in `messages/{en,es}/common.json`
+
+### Naming Conventions
+- Files: kebab-case always (`expense-table.tsx`, `get-expenses.ts`)
+- Components: PascalCase exports (`ExpenseTable`)
+- Functions: camelCase exports (`updateExpenseAction`, `getExpenses`)
+- Routes: plural nouns (`/expenses`, `/incomes`, `/vendors`)
+- Feature dirs: `features/<plural>/` matching existing pattern
+
+### UI Rules
+- Always use Shadcn/ui components — query shadcn MCP before creating custom ones
+- Import from `@/components/ui/<kebab-case>`
+- Badge variants: `default` (positive), `outline` (neutral), `secondary` (muted), `destructive` (error)
+- Buttons: `variant="ghost" size="sm"` for toolbar actions
+- Loading state: `<Spinner className="h-4 w-4 animate-spin" />` from Phosphor icons
+- Sheet footer: `<SheetFooter className="mt-auto p-0">` with Cancel (outline) + Save (default)
+
+## Workflow Rules
+
+### Planning
+- Enter plan mode for any task with 3+ steps or architectural decisions
+- If something goes wrong mid-implementation, STOP and re-plan
+- Write a verification plan before starting, not just after
+
+### Verification
+- Never mark a task complete without proving it works
+- Run `pnpm build` to check types after any code change
+- Use preview tools to verify UI changes visually
+- Ask: "Would a staff engineer approve this PR?"
+
+### Simplicity
+- Make every change as simple as possible with minimal code impact
+- Find root causes — no temporary fixes
+- Only touch what's necessary to avoid introducing bugs
+- Skip elegance optimization for simple/obvious fixes
+
+### Commits
+- **Granular commits** — one commit per feature, fix, or refactor. Never bundle unrelated changes.
+- **Format**: `type: :emoji: description` (lowercase, imperative mood)
+- **Types**: `feat`, `fix`, `refactor`, `docs`, `style`, `chore`, `perf`
+- **Examples** (from this repo):
+  - `feat: :sparkles: Add expense edit sheet and bulk actions`
+  - `fix: :bug: Fix stale /banking route references causing infinite loading`
+  - `refactor: :truck: Rename /income route to /incomes to match /expenses pattern`
+  - `docs: :memo: Add code generation patterns and workflow rules`
+- **Before pushing**: always run the `/review` command on the changes to catch pattern violations
+
+### Self-Correction
+- After any correction from the user, note the pattern to avoid repeating it
+- Review existing patterns in the codebase before generating new code
+- When unsure, read the analogous existing implementation first
