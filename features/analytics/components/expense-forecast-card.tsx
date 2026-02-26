@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { TrendUp, TrendDown, Warning } from "@phosphor-icons/react/dist/ssr"
+import { Warning } from "@phosphor-icons/react/dist/ssr"
 import { getTranslations } from "next-intl/server"
 import type { ExpenseForecast } from "../queries/get-forecasts"
 
@@ -11,12 +11,6 @@ function formatCurrency(value: number, currency = "USD") {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value)
-}
-
-function formatConfidence(confidence: number): string {
-  if (confidence >= 0.8) return "High"
-  if (confidence >= 0.5) return "Medium"
-  return "Low"
 }
 
 function getConfidenceColor(confidence: number): string {
@@ -32,7 +26,7 @@ interface ExpenseForecastCardProps {
 
 export async function ExpenseForecastCard({ forecast, currency = "USD" }: ExpenseForecastCardProps) {
   const t = await getTranslations("analytics")
-  const { nextMonth, byCategory, alerts, monthOverMonthChange } = forecast
+  const { lastMonth, currentMonth, nextMonth, byCategory, alerts } = forecast
 
   return (
     <Card>
@@ -45,21 +39,25 @@ export async function ExpenseForecastCard({ forecast, currency = "USD" }: Expens
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Main Projection */}
-        <div className="text-center pb-4 border-b">
-          <p className="text-xs text-muted-foreground mb-1">{t("expenseForecast.nextMonthProjection")}</p>
-          <p className="text-3xl font-bold text-red-500">
-            {formatCurrency(nextMonth.projected, currency)}
-          </p>
-          <div className={`flex items-center justify-center gap-1 text-sm mt-1 ${
-            monthOverMonthChange <= 0 ? "text-green-600" : "text-red-500"
-          }`}>
-            {monthOverMonthChange <= 0 ? (
-              <TrendDown className="h-4 w-4" />
-            ) : (
-              <TrendUp className="h-4 w-4" />
-            )}
-            {t("expenseForecast.vsLastMonth", { change: (monthOverMonthChange >= 0 ? "+" : "") + monthOverMonthChange.toFixed(1) })}
+        {/* 3-stat header */}
+        <div className="grid grid-cols-3 gap-4 text-center pb-4 border-b">
+          <div>
+            <p className="text-xs text-muted-foreground">{t("expenseForecast.lastMonth")}</p>
+            <p className="text-lg font-semibold text-muted-foreground">
+              {formatCurrency(lastMonth, currency)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">{t("expenseForecast.currentMonth")}</p>
+            <p className="text-lg font-semibold text-red-500">
+              {formatCurrency(currentMonth, currency)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">{t("expenseForecast.nextMonthProjection")}</p>
+            <p className="text-lg font-semibold text-red-500">
+              {formatCurrency(nextMonth.projected, currency)}
+            </p>
           </div>
         </div>
 

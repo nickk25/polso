@@ -1,5 +1,5 @@
 {
-  "title": "Income",
+  "title": "Incomes",
   "subtitle": "Track your incoming payments",
   "transactionCount": "{count} {count, plural, one {transaction} other {transactions}}",
   "thisMonth": "This Month",

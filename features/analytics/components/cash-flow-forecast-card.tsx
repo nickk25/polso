@@ -96,9 +96,10 @@ export async function CashFlowForecastCard({ forecast }: CashFlowForecastCardPro
           </div>
         </div>
 
-        {/* Projected Balance */}
-        {forecastMonths.length > 0 && (
-          <div className="pt-2 border-t">
+        {/* Projections */}
+        {forecastMonths.length > 0 && nextMonth && (
+          <div className="pt-2 border-t space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">{t("cashFlowForecast.projections")}</p>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
                 {t("cashFlowForecast.projectedBalance", { count: forecastMonths.length })}
@@ -107,6 +108,32 @@ export async function CashFlowForecastCard({ forecast }: CashFlowForecastCardPro
                 {formatCurrency(forecastMonths[forecastMonths.length - 1].projectedBalance, currency)}
               </span>
             </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                {t("cashFlowForecast.quarterIncome")}
+              </span>
+              <span className="font-medium text-green-600">
+                +{formatCurrency(nextMonth.projectedIncome * 3, currency)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                {t("cashFlowForecast.quarterExpenses")}
+              </span>
+              <span className="font-medium text-red-500">
+                -{formatCurrency(nextMonth.projectedExpenses * 3, currency)}
+              </span>
+            </div>
+            {nextMonth.projectedIncome > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {t("cashFlowForecast.savingsRate")}
+                </span>
+                <span className={`font-medium ${nextMonth.projectedNet >= 0 ? "text-green-600" : "text-red-500"}`}>
+                  {Math.round((nextMonth.projectedNet / nextMonth.projectedIncome) * 100)}%
+                </span>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

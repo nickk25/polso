@@ -13,12 +13,6 @@ function formatCurrency(value: number, currency = "USD") {
   }).format(value)
 }
 
-function formatConfidence(confidence: number): string {
-  if (confidence >= 0.8) return "High"
-  if (confidence >= 0.5) return "Medium"
-  return "Low"
-}
-
 function getConfidenceColor(confidence: number): string {
   if (confidence >= 0.8) return "bg-green-500/10 text-green-600"
   if (confidence >= 0.5) return "bg-amber-500/10 text-amber-600"
@@ -43,7 +37,7 @@ interface RevenueForecastCardProps {
 
 export async function RevenueForecastCard({ forecast, currency = "USD" }: RevenueForecastCardProps) {
   const t = await getTranslations("analytics")
-  const { nextMonth, quarterProjection, yearProjection, monthOverMonthChange, topClients } = forecast
+  const { lastMonth, currentMonth, nextMonth, quarterProjection, yearProjection, topClients, byCategory } = forecast
 
   return (
     <Card>
@@ -56,21 +50,25 @@ export async function RevenueForecastCard({ forecast, currency = "USD" }: Revenu
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Main Projection */}
-        <div className="text-center pb-4 border-b">
-          <p className="text-xs text-muted-foreground mb-1">{t("revenueForecast.nextMonthProjection")}</p>
-          <p className="text-3xl font-bold text-green-600">
-            {formatCurrency(nextMonth.projected, currency)}
-          </p>
-          <div className={`flex items-center justify-center gap-1 text-sm mt-1 ${
-            monthOverMonthChange >= 0 ? "text-green-600" : "text-red-500"
-          }`}>
-            {monthOverMonthChange >= 0 ? (
-              <TrendUp className="h-4 w-4" />
-            ) : (
-              <TrendDown className="h-4 w-4" />
-            )}
-            {t("revenueForecast.vsLastMonth", { change: (monthOverMonthChange >= 0 ? "+" : "") + monthOverMonthChange.toFixed(1) })}
+        {/* 3-stat header */}
+        <div className="grid grid-cols-3 gap-4 text-center pb-4 border-b">
+          <div>
+            <p className="text-xs text-muted-foreground">{t("revenueForecast.lastMonth")}</p>
+            <p className="text-lg font-semibold text-muted-foreground">
+              {formatCurrency(lastMonth, currency)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">{t("revenueForecast.currentMonth")}</p>
+            <p className="text-lg font-semibold text-green-600">
+              {formatCurrency(currentMonth, currency)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">{t("revenueForecast.nextMonthProjection")}</p>
+            <p className="text-lg font-semibold text-green-600">
+              {formatCurrency(nextMonth.projected, currency)}
+            </p>
           </div>
         </div>
 
@@ -89,16 +87,72 @@ export async function RevenueForecastCard({ forecast, currency = "USD" }: Revenu
           </div>
         </div>
 
-        {/* Long-term Projections */}
-        <div className="flex justify-between text-sm pt-2 border-t">
-          <div>
-            <p className="text-xs text-muted-foreground">{t("revenueForecast.quarter")}</p>
-            <p className="font-medium">{formatCurrency(quarterProjection, currency)}</p>
+        {/* Category Breakdown */}
+        {byCategory.length > 0 && (
+          <div className="pt-2 border-t">
+            <p className="text-xs font-medium text-muted-foreground mb-2">{t("revenueForecast.byCategory")}</p>
+            <div className="space-y-2">
+              {byCategory.slice(0, 5).map((category) => {
+                const maxProjected = Math.max(...byCategory.map((c) => c.projected))
+                const width = maxProjected > 0 ? (category.projected / maxProjected) * 100 : 0
+
+                return (
+                  <div key={category.categoryId || "uncategorized"} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: category.categoryColor }}
+                        />
+                        <span className="truncate max-w-[100px]">{category.categoryName}</span>
+                      </div>
+                      <span className="font-medium">
+                        {formatCurrency(category.projected, currency)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full transition-all"
+                        style={{
+                          width: `${width}%`,
+                          backgroundColor: category.categoryColor,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">{t("revenueForecast.year")}</p>
-            <p className="font-medium">{formatCurrency(yearProjection, currency)}</p>
+        )}
+
+        {/* Projections */}
+        <div className="pt-2 border-t space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">{t("revenueForecast.projections")}</p>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{t("revenueForecast.quarter")}</span>
+            <span className="font-medium">{formatCurrency(quarterProjection, currency)}</span>
           </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{t("revenueForecast.year")}</span>
+            <span className="font-medium">{formatCurrency(yearProjection, currency)}</span>
+          </div>
+          {nextMonth.projected > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{t("revenueForecast.recurringShare")}</span>
+              <span className="font-medium">
+                {Math.round((nextMonth.breakdown.recurring / nextMonth.projected) * 100)}%
+              </span>
+            </div>
+          )}
+          {topClients.length > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{t("revenueForecast.avgPerClient")}</span>
+              <span className="font-medium">
+                {formatCurrency(nextMonth.projected / topClients.length, currency)}{t("revenueForecast.perMonth")}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Top Clients */}

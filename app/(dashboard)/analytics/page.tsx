@@ -5,6 +5,7 @@ import {
   getBurnRateAndRunway,
   getMonthlySpendTrend,
   getCategoryBreakdown,
+  getIncomeCategoryBreakdown,
   getTopVendors,
   getCashFlow,
 } from "@/features/analytics/queries/get-analytics"
@@ -13,7 +14,7 @@ import {
   getRevenueForecast,
   getExpenseForecast,
 } from "@/features/analytics/queries/get-forecasts"
-import { getIncomeStats, getMonthlyIncomeTrend } from "@/features/income/queries/get-income"
+import { getIncomeStats } from "@/features/income/queries/get-income"
 import {
   CashFlowForecastCard,
   RevenueForecastCard,
@@ -21,7 +22,6 @@ import {
 } from "@/features/analytics/components"
 import { MonthlySpendChart } from "@/features/analytics/components/monthly-spend-chart"
 import { CashFlowChart } from "@/features/analytics/components/cash-flow-chart"
-import { IncomeTrendChart } from "@/features/analytics/components/income-trend-chart"
 import { AnalyticsFilters } from "@/features/analytics/components/analytics-filters"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -55,7 +55,7 @@ export default async function AnalyticsPage({
     topVendors,
     cashFlow,
     incomeStats,
-    incomeTrend,
+    incomeCategoryBreakdown,
     cashFlowForecast,
     revenueForecast,
     expenseForecast,
@@ -66,7 +66,7 @@ export default async function AnalyticsPage({
     getTopVendors(5, selectedDate),
     getCashFlow(6, selectedDate),
     getIncomeStats(selectedDate),
-    getMonthlyIncomeTrend(6, selectedDate),
+    getIncomeCategoryBreakdown(selectedDate),
     getCashFlowForecast(3),
     getRevenueForecast(),
     getExpenseForecast(),
@@ -297,18 +297,44 @@ export default async function AnalyticsPage({
 
       {/* Income Analytics Row */}
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Income Trend */}
+        {/* Income Breakdown */}
         <Card>
           <CardHeader>
-            <CardTitle>{t("incomeTrend")}</CardTitle>
+            <CardTitle>{t("incomeBreakdown")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {incomeTrend.some((m) => m.total > 0) ? (
-              <IncomeTrendChart data={incomeTrend} currency={currency} />
+            {incomeCategoryBreakdown.length > 0 ? (
+              <div className="space-y-4">
+                {incomeCategoryBreakdown.slice(0, 6).map((category) => (
+                  <div key={category.categoryId || "uncategorized"} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: category.categoryColor }}
+                        />
+                        <span>{category.categoryName}</span>
+                      </div>
+                      <span className="font-medium">
+                        {formatCurrency(category.total, currency)}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full transition-all"
+                        style={{
+                          width: `${category.percentage}%`,
+                          backgroundColor: category.categoryColor,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="flex h-[200px] items-center justify-center rounded-lg border border-dashed">
                 <p className="text-sm text-muted-foreground">
-                  {t("noIncomeDataYet")}
+                  {t("noIncomeDataThisMonth")}
                 </p>
               </div>
             )}
