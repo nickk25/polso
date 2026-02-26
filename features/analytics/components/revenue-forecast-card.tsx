@@ -77,14 +77,10 @@ export async function RevenueForecastCard({ forecast, currency = "USD" }: Revenu
         {/* Breakdown */}
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">{t("revenueForecast.breakdown")}</p>
-          <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-2 gap-2 text-center">
             <div className="p-2 rounded-lg bg-muted/50">
               <p className="text-xs text-muted-foreground">{t("revenueForecast.recurring")}</p>
               <p className="text-sm font-medium">{formatCurrency(nextMonth.breakdown.recurring, currency)}</p>
-            </div>
-            <div className="p-2 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground">{t("revenueForecast.trending")}</p>
-              <p className="text-sm font-medium">{formatCurrency(nextMonth.breakdown.trending, currency)}</p>
             </div>
             <div className="p-2 rounded-lg bg-muted/50">
               <p className="text-xs text-muted-foreground">{t("revenueForecast.oneTime")}</p>
