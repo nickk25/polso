@@ -53,6 +53,7 @@ Review code changes against this project's established patterns and conventions.
 - [ ] All user-facing strings use translation keys (no hardcoded text)
 - [ ] Keys added to both `messages/en/` and `messages/es/` files
 - [ ] Proper nesting: `table.*`, `fields.*`, `bulk.*`, `pagination.*`
+- [ ] **If a new `messages/en/<namespace>.json` was added:** verify `lib/i18n/messages.ts` has both the `import` and the key registered under `en:` and `es:`
 
 ### General
 - [ ] No `any` types
