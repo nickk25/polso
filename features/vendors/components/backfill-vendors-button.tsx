@@ -46,7 +46,7 @@ export function BackfillVendorsButton() {
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={handleClick} disabled={loading}>
+    <Button variant="outline" onClick={handleClick} disabled={loading}>
       {loading ? (
         <>
           <Spinner className="h-4 w-4 mr-2 animate-spin" />

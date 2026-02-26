@@ -53,7 +53,7 @@ export function VendorsPageContent({ vendors, categories }: VendorsPageContentPr
         </p>
         <div className="flex gap-2">
           <BackfillVendorsButton />
-          <Button size="sm" onClick={handleNewVendor}>
+          <Button onClick={handleNewVendor}>
             <Plus className="h-4 w-4 mr-2" />
             {t("addVendor")}
           </Button>
@@ -80,7 +80,7 @@ export function VendorsPageContent({ vendors, categories }: VendorsPageContentPr
         </div>
         <div className="flex gap-2">
           <BackfillVendorsButton />
-          <Button size="sm" onClick={handleNewVendor}>
+          <Button onClick={handleNewVendor}>
             <Plus className="h-4 w-4 mr-2" />
             {t("addVendor")}
           </Button>
