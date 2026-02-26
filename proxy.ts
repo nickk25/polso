@@ -84,6 +84,7 @@ export const config = {
     // Public routes for locale detection
     "/",
     "/auth/:path*",
+    "/invite/:path*",
     "/pricing/:path*",
     "/about/:path*",
   ],

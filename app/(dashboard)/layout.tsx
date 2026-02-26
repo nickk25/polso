@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Separator } from "@/components/ui/separator";
+import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
 
 async function getOrganization(userId: string, userEmail: string | null) {
   // Check if user has an organization
@@ -102,6 +103,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
+      <AuthCallbackRedirect />
       <AppSidebar organizationName={organization.name} userEmail={user.email} />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">

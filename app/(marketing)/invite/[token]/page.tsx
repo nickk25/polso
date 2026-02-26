@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card"
 import { validateInvitationToken } from "@/features/team/queries/get-invitation-by-token"
 import { AcceptInviteButton } from "./accept-invite-button"
+import { SignOutButton } from "./sign-out-button"
 
 interface InvitePageProps {
   params: Promise<{ token: string }>
@@ -93,9 +94,10 @@ export default async function InvitePage({ params }: InvitePageProps) {
             {t("emailMismatchHelp")}
           </CardContent>
           <CardFooter className="flex-col gap-2">
-            <Button asChild className="w-full">
-              <Link href="/api/auth/signout">{t("signOut")}</Link>
-            </Button>
+            <SignOutButton
+              label={t("signOut")}
+              redirectTo={`/invite/${token}`}
+            />
             <Button asChild variant="outline" className="w-full">
               <Link href="/dashboard">{t("goToDashboard")}</Link>
             </Button>
@@ -146,14 +148,14 @@ export default async function InvitePage({ params }: InvitePageProps) {
           ) : (
             <>
               <Button asChild className="w-full">
-                <Link href={`/api/auth/signin?callbackUrl=/invite/${token}`}>
+                <Link href={`/auth/sign-in?callbackUrl=/invite/${token}`}>
                   {t("signInToAccept")}
                 </Link>
               </Button>
               <p className="text-center text-xs text-muted-foreground">
                 {t("noAccount")}{" "}
                 <Link
-                  href={`/api/auth/signup?callbackUrl=/invite/${token}`}
+                  href={`/auth/sign-up?callbackUrl=/invite/${token}`}
                   className="underline underline-offset-4 hover:text-foreground"
                 >
                   {t("signUp")}
