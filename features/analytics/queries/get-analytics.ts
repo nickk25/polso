@@ -76,10 +76,10 @@ export interface MonthlySpend {
   variable: number
 }
 
-export async function getMonthlySpendTrend(months = 6): Promise<MonthlySpend[]> {
+export async function getMonthlySpendTrend(months = 6, endMonth = new Date()): Promise<MonthlySpend[]> {
   const { organizationId } = await getAuthContext()
 
-  const now = new Date()
+  const now = endMonth
   const startDate = startOfMonth(subMonths(now, months - 1))
   const endDate = endOfMonth(now)
 
@@ -102,7 +102,7 @@ export async function getMonthlySpendTrend(months = 6): Promise<MonthlySpend[]> 
   // Group by month
   const monthlyData = new Map<string, { total: number; fixed: number; variable: number }>()
 
-  // Initialize all months
+  // Initialize all months (ending at endMonth)
   for (let i = 0; i < months; i++) {
     const monthDate = subMonths(now, months - 1 - i)
     const monthKey = format(monthDate, "yyyy-MM")
@@ -141,12 +141,11 @@ export interface CategoryBreakdown {
   count: number
 }
 
-export async function getCategoryBreakdown(): Promise<CategoryBreakdown[]> {
+export async function getCategoryBreakdown(date = new Date()): Promise<CategoryBreakdown[]> {
   const { organizationId } = await getAuthContext()
 
-  const now = new Date()
-  const monthStart = startOfMonth(now)
-  const monthEnd = endOfMonth(now)
+  const monthStart = startOfMonth(date)
+  const monthEnd = endOfMonth(date)
 
   const expenses = await prisma.expense.findMany({
     where: {
@@ -211,12 +210,11 @@ export interface TopVendor {
   percentage: number
 }
 
-export async function getTopVendors(limit = 10): Promise<TopVendor[]> {
+export async function getTopVendors(limit = 10, date = new Date()): Promise<TopVendor[]> {
   const { organizationId } = await getAuthContext()
 
-  const now = new Date()
-  const monthStart = startOfMonth(now)
-  const monthEnd = endOfMonth(now)
+  const monthStart = startOfMonth(date)
+  const monthEnd = endOfMonth(date)
 
   const expenses = await prisma.expense.findMany({
     where: {
@@ -282,10 +280,10 @@ export interface CashFlowData {
   net: number
 }
 
-export async function getCashFlow(months = 6): Promise<CashFlowData[]> {
+export async function getCashFlow(months = 6, endMonth = new Date()): Promise<CashFlowData[]> {
   const { organizationId } = await getAuthContext()
 
-  const now = new Date()
+  const now = endMonth
   const startDate = startOfMonth(subMonths(now, months - 1))
   const endDate = endOfMonth(now)
 
@@ -307,7 +305,7 @@ export async function getCashFlow(months = 6): Promise<CashFlowData[]> {
   // Group by month
   const monthlyData = new Map<string, { inflow: number; outflow: number }>()
 
-  // Initialize all months
+  // Initialize all months (ending at endMonth)
   for (let i = 0; i < months; i++) {
     const monthDate = subMonths(now, months - 1 - i)
     const monthKey = format(monthDate, "yyyy-MM")

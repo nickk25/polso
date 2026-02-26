@@ -107,10 +107,10 @@ export interface IncomeStats {
   bySource: { source: string; total: number }[]
 }
 
-export async function getIncomeStats(): Promise<IncomeStats> {
+export async function getIncomeStats(date = new Date()): Promise<IncomeStats> {
   const { organizationId } = await getAuthContext()
 
-  const now = new Date()
+  const now = date
   const thisMonthStart = startOfMonth(now)
   const thisMonthEnd = endOfMonth(now)
   const lastMonthStart = startOfMonth(subMonths(now, 1))
@@ -206,10 +206,10 @@ export interface MonthlyIncomeTrend {
   bySource: { source: string; total: number }[]
 }
 
-export async function getMonthlyIncomeTrend(months = 6): Promise<MonthlyIncomeTrend[]> {
+export async function getMonthlyIncomeTrend(months = 6, endMonth = new Date()): Promise<MonthlyIncomeTrend[]> {
   const { organizationId } = await getAuthContext()
 
-  const now = new Date()
+  const now = endMonth
   const trends: MonthlyIncomeTrend[] = []
 
   for (let i = months - 1; i >= 0; i--) {
