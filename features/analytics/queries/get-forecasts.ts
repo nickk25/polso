@@ -79,13 +79,18 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
     }),
   ])
 
-  // Calculate monthly averages from historical data
-  const monthlyExpenses = new Map<string, number>()
+  // Calculate monthly totals by type (fixed vs variable) and income
+  const monthlyFixed = new Map<string, number>()
+  const monthlyVariable = new Map<string, number>()
   const monthlyIncomes = new Map<string, number>()
 
   for (const expense of expenses) {
     const monthKey = format(new Date(expense.date), "yyyy-MM")
-    monthlyExpenses.set(monthKey, (monthlyExpenses.get(monthKey) || 0) + expense.amount)
+    if (expense.expenseType === "fixed") {
+      monthlyFixed.set(monthKey, (monthlyFixed.get(monthKey) || 0) + expense.amount)
+    } else {
+      monthlyVariable.set(monthKey, (monthlyVariable.get(monthKey) || 0) + expense.amount)
+    }
   }
 
   for (const income of incomes) {
@@ -93,23 +98,30 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
     monthlyIncomes.set(monthKey, (monthlyIncomes.get(monthKey) || 0) + income.amount)
   }
 
-  const expenseValues = Array.from(monthlyExpenses.values())
+  // Calculate averages (same logic as getExpenseForecast)
+  const fixedValues = Array.from(monthlyFixed.values())
+  const variableValues = Array.from(monthlyVariable.values())
   const incomeValues = Array.from(monthlyIncomes.values())
 
-  const avgMonthlyExpenses = expenseValues.length > 0
-    ? expenseValues.reduce((a, b) => a + b, 0) / expenseValues.length
+  const avgFixed = fixedValues.length > 0
+    ? fixedValues.reduce((a, b) => a + b, 0) / fixedValues.length
+    : 0
+
+  const avgVariable = variableValues.length > 0
+    ? variableValues.reduce((a, b) => a + b, 0) / variableValues.length
     : 0
 
   const avgMonthlyIncome = incomeValues.length > 0
     ? incomeValues.reduce((a, b) => a + b, 0) / incomeValues.length
     : 0
 
-  // Calculate recurring amounts
-  const recurringExpenseAmount = recurringPatterns
+  // Use recurring patterns for fixed expense floor
+  const recurringFixed = recurringPatterns
     .filter(p => p.frequency === "monthly")
     .reduce((sum, p) => sum + ((p.expectedAmount ?? 0) * (p.confidenceScore ?? 0.5)), 0)
 
-  const recurringIncomePatterns = recurringPatterns.filter(p => p.frequency === "monthly")
+  const projectedFixed = Math.max(avgFixed, recurringFixed)
+  const avgMonthlyExpenses = projectedFixed + avgVariable
 
   // Build forecast months
   const months: CashFlowForecastMonth[] = []
@@ -120,7 +132,7 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
     const monthDate = subMonths(now, i)
     const monthKey = format(monthDate, "yyyy-MM")
     const monthIncome = monthlyIncomes.get(monthKey) || 0
-    const monthExpenses = monthlyExpenses.get(monthKey) || 0
+    const monthExpenses = (monthlyFixed.get(monthKey) || 0) + (monthlyVariable.get(monthKey) || 0)
     const monthNet = monthIncome - monthExpenses
 
     months.push({
@@ -140,11 +152,8 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
     const monthDate = addMonths(now, i)
     const monthKey = format(monthDate, "yyyy-MM")
 
-    // Use weighted average: recurring patterns (high confidence) + historical average (lower confidence)
-    const projectedExpenses = recurringExpenseAmount > 0
-      ? recurringExpenseAmount * 0.7 + avgMonthlyExpenses * 0.3
-      : avgMonthlyExpenses
-
+    // Use same projection as expense forecast: max(avgFixed, recurringFixed) + avgVariable
+    const projectedExpenses = avgMonthlyExpenses
     const projectedIncome = avgMonthlyIncome
 
     const projectedNet = projectedIncome - projectedExpenses
@@ -180,8 +189,8 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
     currency,
     months,
     assumptions: {
-      recurringIncomeCount: recurringIncomePatterns.length,
-      recurringExpenseCount: recurringPatterns.length,
+      recurringIncomeCount: 0,
+      recurringExpenseCount: recurringPatterns.filter(p => p.frequency === "monthly").length,
       avgMonthlyIncome,
       avgMonthlyExpenses,
       trendBasis: `${historicalMonths}-month average`,
@@ -222,17 +231,13 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
   const { organizationId } = await getAuthContext()
 
   const now = new Date()
-  const sixMonthsAgo = startOfMonth(subMonths(now, 6))
-  const lastMonthStart = startOfMonth(subMonths(now, 1))
-  const lastMonthEnd = endOfMonth(subMonths(now, 1))
-  const twoMonthsAgoStart = startOfMonth(subMonths(now, 2))
-  const twoMonthsAgoEnd = endOfMonth(subMonths(now, 2))
+  const threeMonthsAgo = startOfMonth(subMonths(now, 3))
 
   // Get income data with client info
   const incomes = await prisma.income.findMany({
     where: {
       organizationId,
-      date: { gte: sixMonthsAgo },
+      date: { gte: threeMonthsAgo },
       status: { not: "excluded" },
     },
     select: {
@@ -243,15 +248,17 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
     },
   })
 
-  // Calculate monthly totals
+  // Calculate monthly totals and per-client monthly totals
   const monthlyTotals = new Map<string, number>()
   const clientMonthlyTotals = new Map<string, Map<string, number>>()
+  const clientsMap = new Map<string, { name: string }>()
 
   for (const income of incomes) {
     const monthKey = format(new Date(income.date), "yyyy-MM")
     monthlyTotals.set(monthKey, (monthlyTotals.get(monthKey) || 0) + income.amount)
 
-    if (income.clientId) {
+    if (income.clientId && income.client) {
+      clientsMap.set(income.client.id, { name: income.client.name })
       if (!clientMonthlyTotals.has(income.clientId)) {
         clientMonthlyTotals.set(income.clientId, new Map())
       }
@@ -260,15 +267,36 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
     }
   }
 
-  // Calculate averages and trends
-  const sortedMonths = Array.from(monthlyTotals.keys()).sort()
-  const monthlyValues = sortedMonths.map(m => monthlyTotals.get(m) || 0)
+  // Determine recurring vs one-time from actual client data
+  // A client is "recurring" if they appear in 2+ of the last 3 months
+  const recentMonthKeys = [1, 2, 3].map(i => format(subMonths(now, i), "yyyy-MM"))
+  let recurringRevenue = 0
+  let oneTimeRevenue = 0
 
+  for (const [, monthlyData] of clientMonthlyTotals) {
+    const monthsPresent = recentMonthKeys.filter(mk => monthlyData.has(mk)).length
+    const clientValues = Array.from(monthlyData.values())
+    const clientAvg = clientValues.reduce((a, b) => a + b, 0) / clientValues.length
+
+    if (monthsPresent >= 2) {
+      recurringRevenue += clientAvg
+    } else {
+      oneTimeRevenue += clientAvg
+    }
+  }
+
+  // Income without a client — count as one-time
+  const totalAvgWithClients = recurringRevenue + oneTimeRevenue
+  const monthlyValues = Array.from(monthlyTotals.values())
   const avgMonthlyRevenue = monthlyValues.length > 0
     ? monthlyValues.reduce((a, b) => a + b, 0) / monthlyValues.length
     : 0
+  const unattributedRevenue = Math.max(0, avgMonthlyRevenue - totalAvgWithClients)
+  oneTimeRevenue += unattributedRevenue
 
-  // Calculate month-over-month trend
+  const nextMonthProjected = recurringRevenue + oneTimeRevenue
+
+  // Month-over-month: compare last two full months
   const lastMonthKey = format(subMonths(now, 1), "yyyy-MM")
   const twoMonthsAgoKey = format(subMonths(now, 2), "yyyy-MM")
   const lastMonthRevenue = monthlyTotals.get(lastMonthKey) || 0
@@ -278,15 +306,8 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
     ? ((lastMonthRevenue - twoMonthsAgoRevenue) / twoMonthsAgoRevenue) * 100
     : 0
 
-  // Calculate client-level forecasts
+  // Build client-level forecasts
   const clientForecasts: ClientRevenueForecast[] = []
-  const clientsMap = new Map<string, { name: string }>()
-
-  for (const income of incomes) {
-    if (income.client) {
-      clientsMap.set(income.client.id, { name: income.client.name })
-    }
-  }
 
   for (const [clientId, monthlyData] of clientMonthlyTotals) {
     const client = clientsMap.get(clientId)
@@ -294,14 +315,14 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
 
     const clientLastMonth = monthlyData.get(lastMonthKey) || 0
     const clientTwoMonthsAgo = monthlyData.get(twoMonthsAgoKey) || 0
-    const clientMonthlyValues = Array.from(monthlyData.values())
-    const clientAvg = clientMonthlyValues.length > 0
-      ? clientMonthlyValues.reduce((a, b) => a + b, 0) / clientMonthlyValues.length
-      : 0
+    const clientValues = Array.from(monthlyData.values())
+    const clientAvg = clientValues.reduce((a, b) => a + b, 0) / clientValues.length
 
     let trend: "growing" | "stable" | "declining" = "stable"
-    if (clientLastMonth > clientTwoMonthsAgo * 1.1) trend = "growing"
-    else if (clientLastMonth < clientTwoMonthsAgo * 0.9) trend = "declining"
+    if (clientTwoMonthsAgo > 0) {
+      if (clientLastMonth > clientTwoMonthsAgo * 1.1) trend = "growing"
+      else if (clientLastMonth < clientTwoMonthsAgo * 0.9) trend = "declining"
+    }
 
     clientForecasts.push({
       clientId,
@@ -309,35 +330,24 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
       projectedRevenue: clientAvg,
       lastMonthRevenue: clientLastMonth,
       trend,
-      confidence: Math.min(0.9, clientMonthlyValues.length * 0.15),
+      confidence: Math.min(0.9, clientValues.length * 0.25),
     })
   }
 
-  // Sort by projected revenue
   clientForecasts.sort((a, b) => b.projectedRevenue - a.projectedRevenue)
 
-  // Apply trend to projection
-  const trendMultiplier = 1 + (monthOverMonthChange / 100) * 0.5 // Dampen the trend
-  const trendedProjection = avgMonthlyRevenue * trendMultiplier
-
-  // Calculate breakdown
-  const recurringEstimate = avgMonthlyRevenue * 0.7 // Assume 70% is recurring
-  const trendingEstimate = (trendedProjection - avgMonthlyRevenue) * 0.5
-  const oneTimeEstimate = avgMonthlyRevenue * 0.3
-
-  const nextMonthProjected = Math.max(0, recurringEstimate + trendingEstimate + oneTimeEstimate)
-
   // Confidence based on data quality
-  const dataQuality = Math.min(1, sortedMonths.length / 6)
-  const confidence = dataQuality * 0.8
+  const hasMultipleMonths = monthlyValues.length >= 2
+  const hasRecurringClients = recurringRevenue > 0
+  const confidence = hasRecurringClients ? 0.8 : (hasMultipleMonths ? 0.6 : 0.4)
 
   return {
     nextMonth: {
       projected: nextMonthProjected,
       breakdown: {
-        recurring: recurringEstimate,
-        trending: Math.max(0, trendingEstimate),
-        oneTime: oneTimeEstimate,
+        recurring: recurringRevenue,
+        trending: 0,
+        oneTime: oneTimeRevenue,
       },
       confidence,
     },
