@@ -2,12 +2,16 @@
 
 Financial management and expense intelligence SaaS platform.
 
+> **Note**: The database schema below is a reference design. The current implementation uses **Neon PostgreSQL** (not Supabase), **Neon Auth** (Better Auth) for authentication, **Cloudflare R2** for storage, and **Plaid** for bank connections (not GoCardless). See `CLAUDE.md` for the current tech stack and `docs/CODE_PATTERNS.md` for code generation templates.
+
 ## Tech Stack
 
 - **Framework**: Next.js 16 + React 19 + TypeScript
-- **Database**: Supabase (PostgreSQL + Auth + RLS + Storage)
+- **Database**: Neon PostgreSQL + Prisma 7
+- **Auth**: Neon Auth (Better Auth)
+- **Storage**: Cloudflare R2
 - **UI**: shadcn/ui + Tailwind CSS v4
-- **Banking API**: GoCardless Bank Account Data (formerly Nordigen)
+- **Banking API**: Plaid (Link + Transactions API)
 
 ## Modules
 
@@ -463,19 +467,4 @@ export_enero_2024.zip
 
 ## Environment Variables
 
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# GoCardless Bank Account Data
-GOCARDLESS_SECRET_ID=
-GOCARDLESS_SECRET_KEY=
-
-# Cron
-CRON_SECRET=
-
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
+See `CLAUDE.md` for the current list of required environment variables. The project uses Neon PostgreSQL, Neon Auth, Cloudflare R2, and Plaid.
