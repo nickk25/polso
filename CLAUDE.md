@@ -231,7 +231,7 @@ NEXT_PUBLIC_APP_URL       # Application URL
 - Only touch what's necessary to avoid introducing bugs
 - Skip elegance optimization for simple/obvious fixes
 
-### Commits
+### Commits & Shipping
 - **Granular commits** — one commit per feature, fix, or refactor. Never bundle unrelated changes.
 - **Format**: `type: :emoji: description` (lowercase, imperative mood)
 - **Types**: `feat`, `fix`, `refactor`, `docs`, `style`, `chore`, `perf`
@@ -240,7 +240,13 @@ NEXT_PUBLIC_APP_URL       # Application URL
   - `fix: :bug: Fix stale /banking route references causing infinite loading`
   - `refactor: :truck: Rename /income route to /incomes to match /expenses pattern`
   - `docs: :memo: Add code generation patterns and workflow rules`
-- **Before pushing**: always run the `/review` command on the changes to catch pattern violations
+
+**⚠️ MANDATORY pre-push gate — never push without reviewing:**
+1. Run `/review` on the changes (staged, unstaged, or last commit)
+2. Fix any **Error** or **Warning** findings before proceeding
+3. Only then push to remote
+
+Use `/ship` to run the full review → commit → push flow automatically.
 
 ### Self-Correction
 - After any correction from the user, note the pattern to avoid repeating it
