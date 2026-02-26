@@ -1,5 +1,5 @@
 ---
-description: Review code changes against project patterns and conventions. Reports Errors, Warnings, and Info findings.
+description: Review code changes against project patterns and conventions.
 ---
 # Code Review
 

@@ -1,5 +1,5 @@
 ---
-description: Improve existing code structure, readability, or patterns — without changing behavior.
+description: Improve code structure and readability without changing behavior.
 ---
 # Refactor
 

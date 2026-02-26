@@ -1,5 +1,5 @@
 ---
-description: Systematically diagnose and fix a bug, build failure, or runtime error.
+description: Diagnose and fix a bug, build failure, or runtime error.
 ---
 # Debug
 
