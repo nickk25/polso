@@ -6,6 +6,7 @@ import {
   getAccounts,
   getBalances,
   getInstitution,
+  updateItemWebhook,
 } from "@/features/banking/lib/plaid-client"
 import { CountryCode } from "plaid"
 
@@ -45,6 +46,14 @@ export async function POST(request: NextRequest) {
     // Exchange public token for access token
     const exchangeResponse = await exchangePublicToken(publicToken)
     const { access_token: accessToken, item_id: itemId } = exchangeResponse
+
+    // Register webhook URL on the Item (belt-and-suspenders alongside the Link token webhook param)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    if (appUrl) {
+      await updateItemWebhook(accessToken, `${appUrl}/api/webhooks/plaid`).catch(
+        (err) => console.warn("[exchange-token] Failed to set webhook URL:", err)
+      )
+    }
 
     // Get institution details for logo (non-blocking, don't fail if it errors)
     let institutionLogo: string | null = null

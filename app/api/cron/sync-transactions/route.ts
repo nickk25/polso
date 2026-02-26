@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import {
   syncTransactions,
   getBalances,
+  updateItemWebhook,
   normalizeCounterpartyName,
   getTransactionType,
   detectIncomeSource,
@@ -122,6 +123,14 @@ async function syncAllAccounts(): Promise<SyncResult> {
 
     try {
       console.log(`[Cron] Syncing Item ${itemId} for org ${itemAccounts[0].organization.name}`)
+
+      // Ensure webhook URL is registered (migrates existing items + keeps URL current)
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL
+      if (appUrl) {
+        await updateItemWebhook(accessToken, `${appUrl}/api/webhooks/plaid`).catch(
+          (err) => console.warn(`[Cron] Failed to update webhook for item ${itemId}:`, err)
+        )
+      }
 
       // Get balances
       const balancesResponse = await getBalances(accessToken)
