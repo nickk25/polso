@@ -120,6 +120,20 @@
     "lowBalanceThresholdDescription": "Get alerted when any account balance falls below this amount",
     "highExpenseThreshold": "High Expense Threshold",
     "highExpenseThresholdPlaceholder": "e.g., 500",
-    "highExpenseThresholdDescription": "Get alerted when a single expense exceeds this amount"
+    "highExpenseThresholdDescription": "Get alerted when a single expense exceeds this amount",
+    "alertTypesTitle": "Alert Types",
+    "alertTypesDescription": "Choose which types of alerts you receive by email",
+    "emailHighSpend": "High Spend Alerts",
+    "emailHighSpendDescription": "Get emailed when monthly spend in a category exceeds your threshold",
+    "emailRunwayCritical": "Runway Critical Alerts",
+    "emailRunwayCriticalDescription": "Get emailed when your cash runway drops below your threshold",
+    "emailUnusualActivity": "Unusual Activity Alerts",
+    "emailUnusualActivityDescription": "Get emailed when a single expense is unusually high for its category",
+    "runwayThreshold": "Runway Threshold (months)",
+    "runwayThresholdPlaceholder": "e.g., 3",
+    "runwayThresholdDescription": "Alert when runway falls below this number of months",
+    "unusualMultiplier": "Unusual Spend Multiplier",
+    "unusualMultiplierPlaceholder": "e.g., 2",
+    "unusualMultiplierDescription": "Alert when an expense is this many times the category average (e.g., 2 = 2x average)"
   }
 }

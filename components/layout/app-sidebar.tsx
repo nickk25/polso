@@ -14,6 +14,7 @@ import {
   Export,
   Gear,
   House,
+  Bell,
 } from "@phosphor-icons/react";
 
 import {
@@ -54,6 +55,11 @@ const mainNavItems = [
     titleKey: "analytics",
     href: "/analytics",
     icon: ChartLine,
+  },
+  {
+    titleKey: "alerts",
+    href: "/alerts",
+    icon: Bell,
   },
 ];
 

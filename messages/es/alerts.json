@@ -1,0 +1,62 @@
+{
+  "title": "Alertas",
+  "subtitle": "Mantente al tanto de tus finanzas",
+  "empty": {
+    "title": "Sin alertas",
+    "description": "Todo en orden. Las alertas aparecerán aquí cuando algo requiera tu atención."
+  },
+  "table": {
+    "date": "Fecha",
+    "type": "Tipo",
+    "message": "Mensaje",
+    "severity": "Severidad"
+  },
+  "types": {
+    "low_balance": "Saldo Bajo",
+    "high_expense": "Gasto Alto",
+    "runway_warning": "Runway Crítico",
+    "unusual_activity": "Actividad Inusual"
+  },
+  "severity": {
+    "info": "Info",
+    "warning": "Advertencia",
+    "critical": "Crítico"
+  },
+  "status": {
+    "read": "Leído",
+    "unread": "No leído",
+    "all": "Todos"
+  },
+  "actions": {
+    "markRead": "Marcar como leído",
+    "dismiss": "Descartar",
+    "markAllRead": "Marcar todos como leídos",
+    "dismissAll": "Descartar todos"
+  },
+  "bulk": {
+    "selected": "{count} seleccionados",
+    "markRead": "Marcar como leído",
+    "dismiss": "Descartar",
+    "deselect": "Deseleccionar"
+  },
+  "filters": {
+    "allTypes": "Todos los tipos",
+    "allSeverities": "Todas las severidades",
+    "allStatus": "Todos los estados",
+    "typePlaceholder": "Tipo",
+    "severityPlaceholder": "Severidad",
+    "statusPlaceholder": "Estado",
+    "clear": "Limpiar"
+  },
+  "pagination": {
+    "showing": "Mostrando {start}-{end} de {total}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página {current} de {total}"
+  },
+  "stats": {
+    "total": "Total de alertas",
+    "unread": "Sin leer",
+    "critical": "Críticas"
+  }
+}

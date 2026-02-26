@@ -21,6 +21,11 @@ export async function getNotificationSettings() {
       inAppAlerts: true,
       lowBalanceThreshold: null,
       highExpenseThreshold: null,
+      emailHighSpend: true,
+      emailRunwayCritical: true,
+      emailUnusualActivity: true,
+      runwayThreshold: 3,
+      unusualMultiplier: 2,
     }
   )
 }

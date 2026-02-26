@@ -19,6 +19,11 @@ interface NotificationsFormProps {
     inAppAlerts: boolean
     lowBalanceThreshold: number | null
     highExpenseThreshold: number | null
+    emailHighSpend: boolean
+    emailRunwayCritical: boolean
+    emailUnusualActivity: boolean
+    runwayThreshold: number | null
+    unusualMultiplier: number | null
   }
 }
 
@@ -38,6 +43,15 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
   const [highExpenseThreshold, setHighExpenseThreshold] = useState(
     settings.highExpenseThreshold?.toString() ?? ""
   )
+  const [emailHighSpend, setEmailHighSpend] = useState(settings.emailHighSpend)
+  const [emailRunwayCritical, setEmailRunwayCritical] = useState(settings.emailRunwayCritical)
+  const [emailUnusualActivity, setEmailUnusualActivity] = useState(settings.emailUnusualActivity)
+  const [runwayThreshold, setRunwayThreshold] = useState(
+    settings.runwayThreshold?.toString() ?? "3"
+  )
+  const [unusualMultiplier, setUnusualMultiplier] = useState(
+    settings.unusualMultiplier?.toString() ?? "2"
+  )
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -51,6 +65,11 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
       inAppAlerts,
       lowBalanceThreshold: lowBalanceThreshold ? parseFloat(lowBalanceThreshold) : null,
       highExpenseThreshold: highExpenseThreshold ? parseFloat(highExpenseThreshold) : null,
+      emailHighSpend,
+      emailRunwayCritical,
+      emailUnusualActivity,
+      runwayThreshold: runwayThreshold ? parseFloat(runwayThreshold) : null,
+      unusualMultiplier: unusualMultiplier ? parseFloat(unusualMultiplier) : null,
     })
 
     setLoading(false)
@@ -185,6 +204,86 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
             />
             <p className="text-sm text-muted-foreground">
               {t("notificationsForm.highExpenseThresholdDescription")}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("notificationsForm.alertTypesTitle")}</CardTitle>
+          <CardDescription>
+            {t("notificationsForm.alertTypesDescription")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="emailHighSpend">{t("notificationsForm.emailHighSpend")}</Label>
+              <p className="text-sm text-muted-foreground">
+                {t("notificationsForm.emailHighSpendDescription")}
+              </p>
+            </div>
+            <Switch
+              id="emailHighSpend"
+              checked={emailHighSpend}
+              onCheckedChange={setEmailHighSpend}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="emailRunwayCritical">{t("notificationsForm.emailRunwayCritical")}</Label>
+              <p className="text-sm text-muted-foreground">
+                {t("notificationsForm.emailRunwayCriticalDescription")}
+              </p>
+            </div>
+            <Switch
+              id="emailRunwayCritical"
+              checked={emailRunwayCritical}
+              onCheckedChange={setEmailRunwayCritical}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="emailUnusualActivity">{t("notificationsForm.emailUnusualActivity")}</Label>
+              <p className="text-sm text-muted-foreground">
+                {t("notificationsForm.emailUnusualActivityDescription")}
+              </p>
+            </div>
+            <Switch
+              id="emailUnusualActivity"
+              checked={emailUnusualActivity}
+              onCheckedChange={setEmailUnusualActivity}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="runwayThreshold">{t("notificationsForm.runwayThreshold")}</Label>
+            <Input
+              id="runwayThreshold"
+              type="number"
+              placeholder={t("notificationsForm.runwayThresholdPlaceholder")}
+              value={runwayThreshold}
+              onChange={(e) => setRunwayThreshold(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              {t("notificationsForm.runwayThresholdDescription")}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="unusualMultiplier">{t("notificationsForm.unusualMultiplier")}</Label>
+            <Input
+              id="unusualMultiplier"
+              type="number"
+              placeholder={t("notificationsForm.unusualMultiplierPlaceholder")}
+              value={unusualMultiplier}
+              onChange={(e) => setUnusualMultiplier(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              {t("notificationsForm.unusualMultiplierDescription")}
             </p>
           </div>
         </CardContent>

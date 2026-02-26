@@ -13,6 +13,11 @@ interface UpdateNotificationsInput {
   inAppAlerts: boolean
   lowBalanceThreshold: number | null
   highExpenseThreshold: number | null
+  emailHighSpend: boolean
+  emailRunwayCritical: boolean
+  emailUnusualActivity: boolean
+  runwayThreshold: number | null
+  unusualMultiplier: number | null
 }
 
 export async function updateNotificationsAction(
@@ -21,27 +26,25 @@ export async function updateNotificationsAction(
   try {
     const { userId } = await getAuthContext()
 
+    const data = {
+      emailAlerts: input.emailAlerts,
+      emailWeeklyDigest: input.emailWeeklyDigest,
+      emailLowBalance: input.emailLowBalance,
+      emailSyncErrors: input.emailSyncErrors,
+      inAppAlerts: input.inAppAlerts,
+      lowBalanceThreshold: input.lowBalanceThreshold,
+      highExpenseThreshold: input.highExpenseThreshold,
+      emailHighSpend: input.emailHighSpend,
+      emailRunwayCritical: input.emailRunwayCritical,
+      emailUnusualActivity: input.emailUnusualActivity,
+      runwayThreshold: input.runwayThreshold,
+      unusualMultiplier: input.unusualMultiplier,
+    }
+
     await prisma.notificationSetting.upsert({
       where: { userId },
-      create: {
-        userId,
-        emailAlerts: input.emailAlerts,
-        emailWeeklyDigest: input.emailWeeklyDigest,
-        emailLowBalance: input.emailLowBalance,
-        emailSyncErrors: input.emailSyncErrors,
-        inAppAlerts: input.inAppAlerts,
-        lowBalanceThreshold: input.lowBalanceThreshold,
-        highExpenseThreshold: input.highExpenseThreshold,
-      },
-      update: {
-        emailAlerts: input.emailAlerts,
-        emailWeeklyDigest: input.emailWeeklyDigest,
-        emailLowBalance: input.emailLowBalance,
-        emailSyncErrors: input.emailSyncErrors,
-        inAppAlerts: input.inAppAlerts,
-        lowBalanceThreshold: input.lowBalanceThreshold,
-        highExpenseThreshold: input.highExpenseThreshold,
-      },
+      create: { userId, ...data },
+      update: data,
     })
 
     revalidatePath("/settings")

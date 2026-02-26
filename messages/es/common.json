@@ -11,7 +11,8 @@
     "categories": "Categorias",
     "export": "Exportar",
     "settings": "Configuracion",
-    "manage": "Gestionar"
+    "manage": "Gestionar",
+    "alerts": "Alertas"
   },
   "actions": {
     "save": "Guardar",

@@ -120,6 +120,20 @@
     "lowBalanceThresholdDescription": "Recibe alertas cuando el saldo de cualquier cuenta caiga por debajo de esta cantidad",
     "highExpenseThreshold": "Umbral de Gasto Alto",
     "highExpenseThresholdPlaceholder": "ej., 500",
-    "highExpenseThresholdDescription": "Recibe alertas cuando un gasto individual supere esta cantidad"
+    "highExpenseThresholdDescription": "Recibe alertas cuando un gasto individual supere esta cantidad",
+    "alertTypesTitle": "Tipos de Alertas",
+    "alertTypesDescription": "Elige que tipos de alertas recibes por correo",
+    "emailHighSpend": "Alertas de Gasto Alto",
+    "emailHighSpendDescription": "Recibe correo cuando el gasto mensual en una categoria supere tu umbral",
+    "emailRunwayCritical": "Alertas de Runway Critico",
+    "emailRunwayCriticalDescription": "Recibe correo cuando tu runway de efectivo caiga por debajo de tu umbral",
+    "emailUnusualActivity": "Alertas de Actividad Inusual",
+    "emailUnusualActivityDescription": "Recibe correo cuando un gasto sea inusualmente alto para su categoria",
+    "runwayThreshold": "Umbral de Runway (meses)",
+    "runwayThresholdPlaceholder": "ej., 3",
+    "runwayThresholdDescription": "Alertar cuando el runway caiga por debajo de este numero de meses",
+    "unusualMultiplier": "Multiplicador de Gasto Inusual",
+    "unusualMultiplierPlaceholder": "ej., 2",
+    "unusualMultiplierDescription": "Alertar cuando un gasto sea este numero de veces el promedio de la categoria (ej., 2 = 2x promedio)"
   }
 }

@@ -1,0 +1,62 @@
+{
+  "title": "Alerts",
+  "subtitle": "Stay on top of your finances",
+  "empty": {
+    "title": "No alerts",
+    "description": "You're all caught up. Alerts will appear here when something needs your attention."
+  },
+  "table": {
+    "date": "Date",
+    "type": "Type",
+    "message": "Message",
+    "severity": "Severity"
+  },
+  "types": {
+    "low_balance": "Low Balance",
+    "high_expense": "High Spend",
+    "runway_warning": "Runway Critical",
+    "unusual_activity": "Unusual Activity"
+  },
+  "severity": {
+    "info": "Info",
+    "warning": "Warning",
+    "critical": "Critical"
+  },
+  "status": {
+    "read": "Read",
+    "unread": "Unread",
+    "all": "All"
+  },
+  "actions": {
+    "markRead": "Mark as read",
+    "dismiss": "Dismiss",
+    "markAllRead": "Mark all read",
+    "dismissAll": "Dismiss all"
+  },
+  "bulk": {
+    "selected": "{count} selected",
+    "markRead": "Mark as read",
+    "dismiss": "Dismiss",
+    "deselect": "Deselect"
+  },
+  "filters": {
+    "allTypes": "All Types",
+    "allSeverities": "All Severities",
+    "allStatus": "All Status",
+    "typePlaceholder": "Type",
+    "severityPlaceholder": "Severity",
+    "statusPlaceholder": "Status",
+    "clear": "Clear"
+  },
+  "pagination": {
+    "showing": "Showing {start}-{end} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}"
+  },
+  "stats": {
+    "total": "Total Alerts",
+    "unread": "Unread",
+    "critical": "Critical"
+  }
+}
