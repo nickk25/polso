@@ -185,13 +185,21 @@ export async function syncTransactionsAction(
           if (updateResult.incomeCreated) totalIncomesCreated++
         }
 
-        // Process removed transactions
+        // Process removed transactions (cancelled by bank)
         for (const removed of syncResult.removed) {
-          await prisma.transaction.deleteMany({
-            where: {
-              plaidTransactionId: removed.transaction_id,
-            },
+          const tx = await prisma.transaction.findFirst({
+            where: { plaidTransactionId: removed.transaction_id },
+            select: { id: true },
           })
+
+          if (tx) {
+            // Delete linked expense/income before the transaction
+            // (schema uses onDelete: SetNull which would orphan them)
+            await prisma.expense.deleteMany({ where: { transactionId: tx.id } })
+            await prisma.income.deleteMany({ where: { transactionId: tx.id } })
+            await prisma.transaction.delete({ where: { id: tx.id } })
+          }
+
           totalTransactionsRemoved++
         }
 
@@ -319,8 +327,7 @@ async function importTransaction(
   let incomeCreated = false
 
   // Create expense for outgoing transactions (positive amounts = money out)
-  // Only create if non-pending and expense doesn't already exist
-  if (tx.amount > 0 && !tx.pending) {
+  if (tx.amount > 0) {
     const existingExpense = await prisma.expense.findUnique({
       where: { transactionId: transaction.id },
       select: { id: true },
@@ -370,8 +377,7 @@ async function importTransaction(
   }
 
   // Create income for incoming transactions (negative amounts = money in)
-  // Only create if non-pending and income doesn't already exist
-  if (tx.amount < 0 && !tx.pending) {
+  if (tx.amount < 0) {
     const existingIncome = await prisma.income.findUnique({
       where: { transactionId: transaction.id },
       select: { id: true },
@@ -488,8 +494,8 @@ async function updateTransaction(
     })
   }
 
-  // Create expense/income when transaction transitions from pending → settled
-  if (!tx.pending && transaction) {
+  // Create expense/income if record is missing (catches old orphaned transactions)
+  if (transaction) {
     // Create expense for outgoing (positive amount) if none exists
     if (tx.amount > 0 && !transaction.expense) {
       try {
