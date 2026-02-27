@@ -272,9 +272,16 @@ async function syncItem(itemId: string): Promise<void> {
     }
 
     for (const removed of syncResult.removed) {
-      await prisma.transaction.deleteMany({
+      const tx = await prisma.transaction.findFirst({
         where: { plaidTransactionId: removed.transaction_id },
+        select: { id: true },
       })
+
+      if (tx) {
+        await prisma.expense.deleteMany({ where: { transactionId: tx.id } })
+        await prisma.income.deleteMany({ where: { transactionId: tx.id } })
+        await prisma.transaction.delete({ where: { id: tx.id } })
+      }
     }
 
     // 3. Advance the cursor for all accounts in this Item
@@ -354,8 +361,8 @@ async function importTransaction(
     },
   })
 
-  // Create Expense for outgoing transactions (positive = money out, non-pending)
-  if (tx.amount > 0 && !tx.pending) {
+  // Create Expense for outgoing transactions (positive = money out)
+  if (tx.amount > 0) {
     const existing = await prisma.expense.findUnique({
       where: { transactionId: transaction.id },
       select: { id: true },
@@ -388,8 +395,8 @@ async function importTransaction(
     }
   }
 
-  // Create Income for incoming transactions (negative = money in, non-pending)
-  if (tx.amount < 0 && !tx.pending) {
+  // Create Income for incoming transactions (negative = money in)
+  if (tx.amount < 0) {
     const existing = await prisma.income.findUnique({
       where: { transactionId: transaction.id },
       select: { id: true },
@@ -483,8 +490,8 @@ async function updateTransaction(
     })
   }
 
-  // Create expense/income when transaction transitions from pending → settled
-  if (!tx.pending && transaction) {
+  // Create expense/income if record is missing (catches old orphaned transactions)
+  if (transaction) {
     if (tx.amount > 0 && !transaction.expense) {
       try {
         await prisma.expense.create({
