@@ -183,8 +183,10 @@ async function syncAllAccounts(): Promise<SyncResult> {
         )
         if (!account) continue
 
-        await updateTransaction(account.id, tx)
+        const updateResult = await updateTransaction(organizationId, account.id, tx)
         totalTransactionsModified++
+        if (updateResult.expenseCreated) totalExpensesCreated++
+        if (updateResult.incomeCreated) totalIncomesCreated++
       }
 
       // Process removed transactions
@@ -369,9 +371,10 @@ async function importTransaction(
 }
 
 async function updateTransaction(
+  organizationId: string,
   accountId: string,
   tx: PlaidTransaction
-): Promise<void> {
+): Promise<{ expenseCreated: boolean; incomeCreated: boolean }> {
   const counterpartyName = tx.merchant_name || tx.name || null
   const normalizedCounterparty = counterpartyName
     ? normalizeCounterpartyName(counterpartyName)
@@ -398,7 +401,7 @@ async function updateTransaction(
     },
   })
 
-  // Update associated expense or income if exists
+  // Fetch transaction with linked records
   const transaction = await prisma.transaction.findFirst({
     where: {
       accountId,
@@ -407,6 +410,10 @@ async function updateTransaction(
     include: { expense: true, income: true },
   })
 
+  let expenseCreated = false
+  let incomeCreated = false
+
+  // Update existing expense if linked
   if (transaction?.expense) {
     await prisma.expense.update({
       where: { id: transaction.expense.id },
@@ -419,6 +426,7 @@ async function updateTransaction(
     })
   }
 
+  // Update existing income if linked
   if (transaction?.income) {
     await prisma.income.update({
       where: { id: transaction.income.id },
@@ -431,4 +439,58 @@ async function updateTransaction(
       },
     })
   }
+
+  // Create expense/income when transaction transitions from pending → settled
+  if (!tx.pending && transaction) {
+    if (tx.amount > 0 && !transaction.expense) {
+      try {
+        await prisma.expense.create({
+          data: {
+            organizationId,
+            transactionId: transaction.id,
+            amount: Math.abs(tx.amount),
+            currency: tx.iso_currency_code || "USD",
+            date: new Date(tx.date),
+            description: tx.merchant_name || tx.name,
+            expenseType: "variable",
+            status: "pending",
+            isManual: false,
+          },
+        })
+        expenseCreated = true
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+          console.log(`[Cron] Expense already exists for transaction ${transaction.id}, skipping`)
+        } else {
+          throw error
+        }
+      }
+    }
+
+    if (tx.amount < 0 && !transaction.income) {
+      try {
+        await prisma.income.create({
+          data: {
+            organizationId,
+            transactionId: transaction.id,
+            amount: Math.abs(tx.amount),
+            currency: tx.iso_currency_code || "USD",
+            date: new Date(tx.date),
+            description: tx.merchant_name || tx.name,
+            source: detectIncomeSource(tx),
+            status: "pending",
+          },
+        })
+        incomeCreated = true
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+          console.log(`[Cron] Income already exists for transaction ${transaction.id}, skipping`)
+        } else {
+          throw error
+        }
+      }
+    }
+  }
+
+  return { expenseCreated, incomeCreated }
 }
