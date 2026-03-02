@@ -8,6 +8,7 @@ import {
   getIncomeCategoryBreakdown,
   getTopVendors,
   getCashFlow,
+  getExpenseStatsForMonth,
 } from "@/features/analytics/queries/get-analytics"
 import {
   getCashFlowForecast,
@@ -59,6 +60,7 @@ export default async function AnalyticsPage({
     cashFlowForecast,
     revenueForecast,
     expenseForecast,
+    expenseStats,
   ] = await Promise.all([
     getBurnRateAndRunway(),
     getMonthlySpendTrend(6, selectedDate),
@@ -70,6 +72,7 @@ export default async function AnalyticsPage({
     getCashFlowForecast(3),
     getRevenueForecast(),
     getExpenseForecast(),
+    getExpenseStatsForMonth(selectedDate),
   ])
 
   const hasData =
@@ -150,12 +153,12 @@ export default async function AnalyticsPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("monthlyBurnRate")}
+              {t("monthlyExpenses")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">
-              -{formatCurrency(burnRate.burnRate, currency)}
+              -{formatCurrency(expenseStats.total, currency)}
             </div>
           </CardContent>
         </Card>
@@ -166,8 +169,8 @@ export default async function AnalyticsPage({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${incomeStats.totalThisMonth - burnRate.burnRate >= 0 ? "text-green-500" : "text-red-500"}`}>
-              {incomeStats.totalThisMonth - burnRate.burnRate >= 0 ? "+" : ""}{formatCurrency(incomeStats.totalThisMonth - burnRate.burnRate, currency)}
+            <div className={`text-2xl font-bold ${incomeStats.totalThisMonth - expenseStats.total >= 0 ? "text-green-500" : "text-red-500"}`}>
+              {incomeStats.totalThisMonth - expenseStats.total >= 0 ? "+" : ""}{formatCurrency(incomeStats.totalThisMonth - expenseStats.total, currency)}
             </div>
           </CardContent>
         </Card>

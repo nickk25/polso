@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
@@ -94,6 +94,8 @@ export function IncomeTable({ incomes, categories }: IncomeTableProps) {
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+  const lastClickedIndex = useRef<number | null>(null)
+  const shiftHeld = useRef(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -113,13 +115,26 @@ export function IncomeTable({ incomes, categories }: IncomeTableProps) {
   const [saving, setSaving] = useState(false)
 
   // Selection handlers
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const toggleSelect = (id: string, index: number, shiftKey: boolean) => {
+    if (shiftKey && lastClickedIndex.current !== null) {
+      const start = Math.min(lastClickedIndex.current, index)
+      const end = Math.max(lastClickedIndex.current, index)
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        for (let i = start; i <= end; i++) {
+          next.add(incomes[i].id)
+        }
+        return next
+      })
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+    }
+    lastClickedIndex.current = index
   }
 
   const toggleSelectAll = () => {
@@ -219,7 +234,7 @@ export function IncomeTable({ incomes, categories }: IncomeTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {incomes.map((income) => (
+          {incomes.map((income, index) => (
             <TableRow
               key={income.id}
               className="cursor-pointer hover:bg-muted/50"
@@ -229,8 +244,11 @@ export function IncomeTable({ incomes, categories }: IncomeTableProps) {
               <TableCell>
                 <Checkbox
                   checked={selectedIds.has(income.id)}
-                  onCheckedChange={() => toggleSelect(income.id)}
-                  onClick={(e) => e.stopPropagation()}
+                  onCheckedChange={() => toggleSelect(income.id, index, shiftHeld.current)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    shiftHeld.current = e.shiftKey
+                  }}
                   aria-label={`Select row`}
                 />
               </TableCell>
@@ -282,6 +300,13 @@ export function IncomeTable({ incomes, categories }: IncomeTableProps) {
 
           <span className="text-sm font-medium">
             {t("bulk.selected", { count: selectedIds.size })}
+          </span>
+
+          <span className="text-sm text-muted-foreground">
+            {formatCurrency(
+              incomes.filter((i) => selectedIds.has(i.id)).reduce((sum, i) => sum + i.amount, 0),
+              incomes[0]?.currency
+            )}
           </span>
 
           <div className="h-4 w-px bg-border" />

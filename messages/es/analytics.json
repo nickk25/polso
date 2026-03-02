@@ -6,7 +6,7 @@
   "connectBankAccount": "Conectar Cuenta Bancaria",
   "totalBalance": "Saldo Total",
   "monthlyIncome": "Ingresos Mensuales",
-  "monthlyBurnRate": "Tasa de Gasto Mensual",
+  "monthlyExpenses": "Gastos Mensuales",
   "netCashFlow": "Flujo de Caja Neto",
   "runway": "Pista Financiera",
   "monthlySpendTrend": "Tendencia de Gasto",
