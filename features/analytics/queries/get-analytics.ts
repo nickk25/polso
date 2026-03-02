@@ -336,6 +336,47 @@ export interface CashFlowData {
   net: number
 }
 
+export interface ExpenseStatsForMonth {
+  total: number
+  lastMonthTotal: number
+  monthOverMonthChange: number
+}
+
+export async function getExpenseStatsForMonth(date = new Date()): Promise<ExpenseStatsForMonth> {
+  const { organizationId } = await getAuthContext()
+
+  const monthStart = startOfMonth(date)
+  const monthEnd = endOfMonth(date)
+  const prevMonthStart = startOfMonth(subMonths(date, 1))
+  const prevMonthEnd = endOfMonth(subMonths(date, 1))
+
+  const [current, previous] = await Promise.all([
+    prisma.expense.aggregate({
+      where: {
+        organizationId,
+        date: { gte: monthStart, lte: monthEnd },
+        status: { not: "excluded" },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.expense.aggregate({
+      where: {
+        organizationId,
+        date: { gte: prevMonthStart, lte: prevMonthEnd },
+        status: { not: "excluded" },
+      },
+      _sum: { amount: true },
+    }),
+  ])
+
+  const total = current._sum.amount || 0
+  const lastMonthTotal = previous._sum.amount || 0
+  const monthOverMonthChange =
+    lastMonthTotal > 0 ? ((total - lastMonthTotal) / lastMonthTotal) * 100 : 0
+
+  return { total, lastMonthTotal, monthOverMonthChange }
+}
+
 export async function getCashFlow(months = 6, endMonth = new Date()): Promise<CashFlowData[]> {
   const { organizationId } = await getAuthContext()
 
