@@ -1,0 +1,557 @@
+// Prisma schema for Polso - Financial Management Platform
+// Database: Neon PostgreSQL
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// Multi-tenant Organization
+// ============================================
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  currency        String   @default("EUR")
+  timezone        String   @default("Europe/Madrid")
+  fiscalYearStart Int      @default(1) @map("fiscal_year_start")
+  dateFormat      String   @default("MM/dd/yyyy") @map("date_format")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Subscription
+  planType        String    @default("starter") @map("plan_type")
+  planInterval    String?   @map("plan_interval") // "monthly" | "annual"
+  planStartedAt   DateTime? @map("plan_started_at")
+  planExpiresAt   DateTime? @map("plan_expires_at")
+  trialEndsAt     DateTime? @map("trial_ends_at")
+
+  // Creem billing
+  creemCustomerId     String? @map("creem_customer_id")
+  creemSubscriptionId String? @map("creem_subscription_id")
+
+  // Scheduled plan changes (for downgrades)
+  scheduledPlanType     String?   @map("scheduled_plan_type")
+  scheduledPlanInterval String?   @map("scheduled_plan_interval")
+  scheduledChangeAt     DateTime? @map("scheduled_change_at")
+
+  // Relations
+  userOrganizations UserOrganization[]
+  accounts          Account[]
+  transactions      Transaction[]
+  categories        Category[]
+  vendors           Vendor[]
+  clients           Client[]
+  expenses          Expense[]
+  incomes           Income[]
+  expenseInvoices   ExpenseInvoice[]
+  recurringPatterns RecurringPattern[]
+  dismissedPatterns DismissedPattern[]
+  alerts            Alert[]
+  exports               Export[]
+  invitations           Invitation[]
+  categoryPreferences   CategoryPreference[]
+
+  @@map("organizations")
+}
+
+model UserOrganization {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  organizationId String   @map("organization_id")
+  role           String   @default("member")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@map("user_organizations")
+}
+
+// ============================================
+// Banking - Connected Bank Accounts
+// ============================================
+
+model Account {
+  id                  String    @id @default(cuid())
+  organizationId      String    @map("organization_id")
+  tinkCredentialId    String?   @map("tink_credential_id")   // groups all accounts from one bank connection
+  tinkAccessToken     String?   @map("tink_access_token")
+  tinkRefreshToken    String?   @map("tink_refresh_token")
+  tinkTokenExpiresAt  DateTime? @map("tink_token_expires_at")
+  externalAccountId   String?   @map("external_account_id")  // provider's account ID
+  tinkProviderId      String?   @map("tink_provider_id")     // Tink provider ID (institution)
+  syncPageToken       String?   @map("sync_page_token")      // for paginated transaction fetching
+  name                String
+  mask                String?   // last 4 digits of IBAN
+  officialName        String?   @map("official_name")
+  accountType         String?   @map("account_type") // depository, credit, loan, investment
+  accountSubtype      String?   @map("account_subtype") // checking, savings, credit card, etc.
+  currency            String    @default("EUR")
+  institutionName     String?   @map("institution_name")
+  institutionLogo     String?   @map("institution_logo")
+  status              String    @default("pending") // pending, active, expired, error
+  lastSyncedAt        DateTime? @map("last_synced_at")
+  syncError           String?   @map("sync_error")
+  balanceAvailable    Float?    @map("balance_available")
+  balanceCurrent      Float?    @map("balance_current")
+  balanceLimit        Float?    @map("balance_limit") // for credit accounts
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  alerts       Alert[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("accounts")
+}
+
+// ============================================
+// Transactions - Raw bank transactions
+// ============================================
+
+model Transaction {
+  id                    String    @id @default(cuid())
+  organizationId        String    @map("organization_id")
+  accountId             String    @map("account_id")
+  externalTransactionId String?   @map("external_transaction_id") // provider's transaction ID
+  amount                Float
+  currency              String    @default("EUR")
+  date                  DateTime  // primary booked date
+  authorizedDate        DateTime? @map("authorized_date")
+  name                  String?   // raw transaction name from bank
+  merchantName          String?   @map("merchant_name") // cleaned merchant name
+  pending               Boolean   @default(false)
+  paymentChannel        String?   @map("payment_channel") // online, in store, other
+  transactionType       String?   @map("transaction_type") // debit, credit
+  category              String?   // provider's primary category
+  categoryDetailed      String?   @map("category_detailed") // provider's detailed category
+  counterpartyName      String?   @map("counterparty_name") // normalized for matching
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account      Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  expense      Expense?
+  income       Income?
+
+  @@unique([accountId, externalTransactionId])
+  @@unique([organizationId, externalTransactionId]) // Prevent duplicates when relinking bank
+  @@index([organizationId])
+  @@index([accountId])
+  @@index([date])
+  @@index([counterpartyName])
+  @@map("transactions")
+}
+
+// ============================================
+// Categories - System + Custom
+// ============================================
+
+model Category {
+  id             String   @id @default(cuid())
+  organizationId String?  @map("organization_id") // null for system categories
+  name           String
+  slug           String
+  color          String   @default("#6366f1")
+  icon           String?
+  parentId       String?  @map("parent_id")
+  isSystem       Boolean  @default(false) @map("is_system")
+  expenseType    String?  @map("expense_type") // fixed, variable, income, transfer
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization      Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent            Category?            @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children          Category[]           @relation("CategoryHierarchy")
+  vendors           Vendor[]
+  clientDefaults    Client[]             @relation("ClientDefaultCategory")
+  expenses          Expense[]
+  incomes           Income[]
+  recurringPatterns RecurringPattern[]
+  preferences       CategoryPreference[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([isSystem])
+  @@map("categories")
+}
+
+model CategoryPreference {
+  organizationId String @map("organization_id")
+  categoryId     String @map("category_id")
+  isHidden       Boolean @default(false) @map("is_hidden")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category     Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, categoryId])
+  @@map("category_preferences")
+}
+
+// ============================================
+// Vendors - Suppliers/Merchants
+// ============================================
+
+model Vendor {
+  id                 String   @id @default(cuid())
+  organizationId     String   @map("organization_id")
+  name               String
+  normalizedName     String   @map("normalized_name")
+  logoUrl            String?  @map("logo_url")
+  website            String?
+  taxId              String?  @map("tax_id")
+  defaultCategoryId  String?  @map("default_category_id")
+  defaultExpenseType String?  @map("default_expense_type") // fixed, variable
+  isAutoDetected     Boolean  @default(false) @map("is_auto_detected")
+  detectionPatterns  String[] @map("detection_patterns")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  defaultCategory   Category?          @relation(fields: [defaultCategoryId], references: [id], onDelete: SetNull)
+  expenses          Expense[]
+  recurringPatterns RecurringPattern[]
+  dismissedPatterns DismissedPattern[]
+
+  @@unique([organizationId, normalizedName])
+  @@index([organizationId])
+  @@index([normalizedName])
+  @@map("vendors")
+}
+
+// ============================================
+// Clients - Income sources / Payers
+// ============================================
+
+model Client {
+  id                String   @id @default(cuid())
+  organizationId    String   @map("organization_id")
+  name              String
+  normalizedName    String   @map("normalized_name")
+  logoUrl           String?  @map("logo_url")
+  website           String?
+  taxId             String?  @map("tax_id")
+  defaultCategoryId String?  @map("default_category_id")
+  isAutoDetected    Boolean  @default(false) @map("is_auto_detected")
+  detectionPatterns String[] @map("detection_patterns")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  defaultCategory Category?    @relation("ClientDefaultCategory", fields: [defaultCategoryId], references: [id], onDelete: SetNull)
+  incomes         Income[]
+
+  @@unique([organizationId, normalizedName])
+  @@index([organizationId])
+  @@index([normalizedName])
+  @@map("clients")
+}
+
+// ============================================
+// Expenses - Enriched transactions
+// ============================================
+
+model Expense {
+  id                 String    @id @default(cuid())
+  organizationId     String    @map("organization_id")
+  transactionId      String?   @unique @map("transaction_id")
+  amount             Float
+  currency           String    @default("EUR")
+  date               DateTime
+  description        String?
+  categoryId         String?   @map("category_id")
+  vendorId           String?   @map("vendor_id")
+  expenseType        String    @default("variable") @map("expense_type") // fixed, variable
+  recurringPatternId String?   @map("recurring_pattern_id")
+  status             String    @default("pending") // pending, documented, excluded
+  isManual           Boolean   @default(false) @map("is_manual")
+  notes              String?
+  categorySource     String?   @map("category_source") // vendor, plaid, keyword, manual
+  categoryConfidence Float?    @map("category_confidence") // 0-1 confidence score
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction      Transaction?       @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  category         Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  vendor           Vendor?            @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  recurringPattern RecurringPattern?  @relation(fields: [recurringPatternId], references: [id], onDelete: SetNull)
+  invoices         ExpenseInvoice[]
+  alerts           Alert[]
+
+  @@index([organizationId])
+  @@index([date])
+  @@index([status])
+  @@index([expenseType])
+  @@index([categoryId])
+  @@index([vendorId])
+  @@map("expenses")
+}
+
+// ============================================
+// Income - Incoming money
+// ============================================
+
+model Income {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  transactionId  String?   @unique @map("transaction_id")
+  clientId       String?   @map("client_id")
+  amount         Float     // Always positive (absolute value)
+  currency       String    @default("USD")
+  date           DateTime
+  description    String?
+  categoryId     String?   @map("category_id")
+  source         String    @default("other") // salary, freelance, investment, refund, transfer, other
+  isRecurring    Boolean   @default(false) @map("is_recurring")
+  status         String    @default("pending") // pending, confirmed, excluded
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction  Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  client       Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([date])
+  @@index([status])
+  @@index([source])
+  @@index([clientId])
+  @@map("incomes")
+}
+
+// ============================================
+// Expense Invoices - File attachments
+// ============================================
+
+model ExpenseInvoice {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  expenseId      String    @map("expense_id")
+  fileName       String    @map("file_name")
+  filePath       String    @map("file_path") // R2 object key
+  fileSize       Int?      @map("file_size")
+  mimeType       String?   @map("mime_type")
+  invoiceNumber  String?   @map("invoice_number")
+  invoiceDate    DateTime? @map("invoice_date")
+  vendorTaxId    String?   @map("vendor_tax_id")
+  totalAmount    Float?    @map("total_amount")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  expense      Expense      @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([expenseId])
+  @@map("expense_invoices")
+}
+
+// ============================================
+// Recurring Patterns - Detected subscriptions
+// ============================================
+
+model RecurringPattern {
+  id                 String    @id @default(cuid())
+  organizationId     String    @map("organization_id")
+  name               String
+  vendorId           String?   @map("vendor_id")
+  frequency          String // weekly, biweekly, monthly, quarterly, yearly
+  expectedAmount     Float?    @map("expected_amount")
+  amountVariancePct  Float     @default(15) @map("amount_variance_pct")
+  expectedDayOfMonth Int?      @map("expected_day_of_month")
+  categoryId         String?   @map("category_id")
+  expenseType        String    @default("fixed") @map("expense_type")
+  isActive           Boolean   @default(true) @map("is_active")
+  isConfirmed        Boolean   @default(false) @map("is_confirmed")
+  confidenceScore    Float?    @map("confidence_score")
+  firstOccurrence    DateTime? @map("first_occurrence")
+  lastOccurrence     DateTime? @map("last_occurrence")
+  occurrenceCount    Int       @default(0) @map("occurrence_count")
+  pauseReason        String?   @map("pause_reason") // "manual" | "missed_payment"
+  pausedAt           DateTime? @map("paused_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vendor       Vendor?      @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  category     Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  expenses     Expense[]
+  alerts       Alert[]
+
+  @@index([organizationId])
+  @@index([isActive])
+  @@index([isConfirmed])
+  @@map("recurring_patterns")
+}
+
+// ============================================
+// Alerts - Smart notifications
+// ============================================
+
+model Alert {
+  id                 String   @id @default(cuid())
+  organizationId     String   @map("organization_id")
+  type               String // low_balance, high_expense, missed_recurring, unusual_activity, runway_warning
+  title              String
+  message            String
+  severity           String   @default("info") // info, warning, critical
+  accountId          String?  @map("account_id")
+  expenseId          String?  @map("expense_id")
+  recurringPatternId String?  @map("recurring_pattern_id")
+  isRead             Boolean  @default(false) @map("is_read")
+  isDismissed        Boolean  @default(false) @map("is_dismissed")
+  metadata           Json?
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account          Account?          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  expense          Expense?          @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  recurringPattern RecurringPattern? @relation(fields: [recurringPatternId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([isRead])
+  @@index([isDismissed])
+  @@index([type])
+  @@map("alerts")
+}
+
+// ============================================
+// Exports - Download history
+// ============================================
+
+model Export {
+  id              String    @id @default(cuid())
+  organizationId  String    @map("organization_id")
+  name            String
+  filePath        String    @map("file_path") // R2 object key
+  fileSize        Int?      @map("file_size")
+  startDate       DateTime  @map("start_date")
+  endDate         DateTime  @map("end_date")
+  expenseCount    Int?      @map("expense_count")
+  invoiceCount    Int?      @map("invoice_count")
+  includesCsv     Boolean   @default(true) @map("includes_csv")
+  includesPdf     Boolean   @default(true) @map("includes_pdf")
+  includesInvoices Boolean  @default(true) @map("includes_invoices")
+  status          String    @default("pending") // pending, processing, completed, failed
+  errorMessage    String?   @map("error_message")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  completedAt     DateTime? @map("completed_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("exports")
+}
+
+// ============================================
+// User Preferences - Per-user settings
+// ============================================
+
+model UserPreference {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  theme       String   @default("system") // light, dark, system
+  locale      String   @default("en-US")
+  compactMode Boolean  @default(false) @map("compact_mode")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("user_preferences")
+}
+
+// ============================================
+// Notification Settings - Per-user notification preferences
+// ============================================
+
+model NotificationSetting {
+  id                   String   @id @default(cuid())
+  userId               String   @unique @map("user_id")
+  emailAlerts          Boolean  @default(true) @map("email_alerts")
+  emailWeeklyDigest    Boolean  @default(true) @map("email_weekly_digest")
+  emailLowBalance      Boolean  @default(true) @map("email_low_balance")
+  emailHighSpend       Boolean  @default(true) @map("email_high_spend")
+  emailRunwayCritical  Boolean  @default(true) @map("email_runway_critical")
+  emailUnusualActivity Boolean  @default(true) @map("email_unusual_activity")
+  emailSyncErrors      Boolean  @default(true) @map("email_sync_errors")
+  inAppAlerts          Boolean  @default(true) @map("in_app_alerts")
+  lowBalanceThreshold  Float?   @map("low_balance_threshold")
+  highExpenseThreshold Float?   @map("high_expense_threshold")
+  runwayThreshold      Float?   @default(3)    @map("runway_threshold")
+  unusualMultiplier    Float?   @default(2)    @map("unusual_multiplier")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_settings")
+}
+
+// ============================================
+// Dismissed Patterns - Prevent re-detection
+// ============================================
+
+model DismissedPattern {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  vendorId       String?  @map("vendor_id")
+  patternName    String   @map("pattern_name")
+  dismissedAt    DateTime @default(now()) @map("dismissed_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vendor       Vendor?      @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([vendorId])
+  @@map("dismissed_patterns")
+}
+
+// ============================================
+// Invitations - Team member invitations
+// ============================================
+
+model Invitation {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  email          String
+  role           String    @default("member")
+  token          String    @unique
+  status         String    @default("pending") // pending, accepted, revoked
+  expiresAt      DateTime  @map("expires_at")
+  invitedById    String    @map("invited_by_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  acceptedAt     DateTime? @map("accepted_at")
+
+  // Email tracking
+  emailStatus   String?   @map("email_status") // sent, delivered, bounced, failed
+  emailSentAt   DateTime? @map("email_sent_at")
+  emailError    String?   @map("email_error")
+  resendEmailId String?   @map("resend_email_id")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([token])
+  @@index([email])
+  @@index([status])
+  @@map("invitations")
+}
