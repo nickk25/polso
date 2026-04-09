@@ -3,7 +3,34 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "passThroughEnv": [
+        "DATABASE_URL",
+        "NEON_AUTH_BASE_URL",
+        "NEON_PROJECT_ID",
+        "NEXT_PUBLIC_APP_URL",
+        "R2_ENDPOINT",
+        "R2_ACCESS_KEY_ID",
+        "R2_SECRET_ACCESS_KEY",
+        "R2_BUCKET_NAME",
+        "R2_TOKEN_VALUE",
+        "TINK_CLIENT_ID",
+        "TINK_CLIENT_SECRET",
+        "TINK_REDIRECT_URI",
+        "CRON_SECRET",
+        "RESEND_API_KEY",
+        "RESEND_WAITLIST_SEGMENT_ID",
+        "EMAIL_FROM",
+        "EMAIL_FROM_FOUNDER",
+        "CREEM_API_KEY",
+        "CREEM_TEST_MODE",
+        "CREEM_STARTER_MONTHLY_PRODUCT_ID",
+        "CREEM_STARTER_ANNUAL_PRODUCT_ID",
+        "CREEM_BUSINESS_MONTHLY_PRODUCT_ID",
+        "CREEM_BUSINESS_ANNUAL_PRODUCT_ID",
+        "CREEM_WEBHOOK_SECRET",
+        "VITE_NEON_AUTH_URL"
+      ]
     },
     "dev": {
       "cache": false,
