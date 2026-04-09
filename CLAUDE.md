@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Polso is a financial management and expense intelligence SaaS platform for businesses. It connects to banks via Open Banking APIs, syncs transactions, detects recurring expenses, auto-categorizes spending, and provides analytics (burn rate, runway, cash flow).
+Polso is a financial management and expense intelligence SaaS platform for businesses. It connects to banks via Tink (Open Banking), syncs transactions, detects recurring expenses, auto-categorizes spending, and provides analytics (burn rate, runway, cash flow).
 
 **Architecture documentation**: See `docs/ARCHITECTURE.md` for full database schema, feature modules, and implementation details.
 
@@ -17,7 +17,7 @@ Polso is a financial management and expense intelligence SaaS platform for busin
 | **Neon PostgreSQL** | Serverless Postgres database |
 | **Neon Auth** | Authentication (built on Better Auth) |
 | **Cloudflare R2** | Object storage for invoices and exports |
-| **Plaid** | Bank account connections (Link + Transactions API) |
+| **Tink** | Bank account connections via Open Banking (EU/Spain) |
 | **Shadcn/ui** | UI components (Radix primitives) |
 | **Tailwind CSS v4** | Styling |
 
@@ -140,9 +140,9 @@ R2_ENDPOINT               # Cloudflare R2 endpoint
 R2_ACCESS_KEY_ID          # R2 credentials
 R2_SECRET_ACCESS_KEY      # R2 credentials
 R2_BUCKET_NAME            # R2 bucket name
-PLAID_CLIENT_ID           # Plaid API client ID
-PLAID_SECRET              # Plaid API secret
-PLAID_ENV                 # Plaid environment (sandbox|development|production)
+TINK_CLIENT_ID            # Tink API client ID
+TINK_CLIENT_SECRET        # Tink API client secret
+TINK_REDIRECT_URI         # Tink Link redirect URI (e.g. https://app.polso.com/api/tink/callback)
 CRON_SECRET               # Secret for cron job authentication
 NEXT_PUBLIC_APP_URL       # Application URL
 ```
