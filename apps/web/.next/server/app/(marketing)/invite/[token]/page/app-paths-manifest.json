@@ -1,3 +1,0 @@
-{
-  "/(marketing)/invite/[token]/page": "app/(marketing)/invite/[token]/page.js"
-}
