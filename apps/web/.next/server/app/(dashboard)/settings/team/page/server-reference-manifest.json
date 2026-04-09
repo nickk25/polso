@@ -1,0 +1,80 @@
+{
+  "node": {
+    "40aa1126071a534f9e3ad7af4e44aaef8f08fe69d0": {
+      "workers": {
+        "app/(dashboard)/settings/team/page": {
+          "moduleId": 891887,
+          "async": false,
+          "exportedName": "sendInviteAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/send-invite.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/settings/team/page": "action-browser"
+      },
+      "exportedName": "sendInviteAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/send-invite.ts"
+    },
+    "40ca098a75c9439acddcaf3dfd5209e0637ebad312": {
+      "workers": {
+        "app/(dashboard)/settings/team/page": {
+          "moduleId": 891887,
+          "async": false,
+          "exportedName": "revokeInviteAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/revoke-invite.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/settings/team/page": "action-browser"
+      },
+      "exportedName": "revokeInviteAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/revoke-invite.ts"
+    },
+    "4085b9aa8f922253f6bd0288a2bbaddc4122945f6b": {
+      "workers": {
+        "app/(dashboard)/settings/team/page": {
+          "moduleId": 891887,
+          "async": false,
+          "exportedName": "resendInviteAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/resend-invite.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/settings/team/page": "action-browser"
+      },
+      "exportedName": "resendInviteAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/resend-invite.ts"
+    },
+    "60d9e58ce161908390e47a35327c45191f9c47a3ce": {
+      "workers": {
+        "app/(dashboard)/settings/team/page": {
+          "moduleId": 891887,
+          "async": false,
+          "exportedName": "changeMemberRoleAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/manage-member.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/settings/team/page": "action-browser"
+      },
+      "exportedName": "changeMemberRoleAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/manage-member.ts"
+    },
+    "4025527d09cb47fabe7744b97b39e31d7509df2c03": {
+      "workers": {
+        "app/(dashboard)/settings/team/page": {
+          "moduleId": 891887,
+          "async": false,
+          "exportedName": "removeMemberAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/manage-member.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/settings/team/page": "action-browser"
+      },
+      "exportedName": "removeMemberAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/manage-member.ts"
+    }
+  },
+  "edge": {}
+}

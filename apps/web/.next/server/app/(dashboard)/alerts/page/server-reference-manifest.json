@@ -1,0 +1,65 @@
+{
+  "node": {
+    "40a6f8de32cf2e1069f79ff840ab0800007bd0530c": {
+      "workers": {
+        "app/(dashboard)/alerts/page": {
+          "moduleId": 83585,
+          "async": false,
+          "exportedName": "markAlertReadAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/alerts/actions/update-alert.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/alerts/page": "action-browser"
+      },
+      "exportedName": "markAlertReadAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/alerts/actions/update-alert.ts"
+    },
+    "40a148d642710f0071a75f0d373837544c3e465a6e": {
+      "workers": {
+        "app/(dashboard)/alerts/page": {
+          "moduleId": 83585,
+          "async": false,
+          "exportedName": "dismissAlertAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/alerts/actions/update-alert.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/alerts/page": "action-browser"
+      },
+      "exportedName": "dismissAlertAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/alerts/actions/update-alert.ts"
+    },
+    "0033a9388f89963a174bedd9bb1df524e9ebcc471a": {
+      "workers": {
+        "app/(dashboard)/alerts/page": {
+          "moduleId": 83585,
+          "async": false,
+          "exportedName": "markAllReadAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/alerts/actions/update-alert.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/alerts/page": "action-browser"
+      },
+      "exportedName": "markAllReadAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/alerts/actions/update-alert.ts"
+    },
+    "004e0398a630af809eb7af0b322c45e63d6e888569": {
+      "workers": {
+        "app/(dashboard)/alerts/page": {
+          "moduleId": 83585,
+          "async": false,
+          "exportedName": "dismissAllAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/alerts/actions/update-alert.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/alerts/page": "action-browser"
+      },
+      "exportedName": "dismissAllAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/alerts/actions/update-alert.ts"
+    }
+  },
+  "edge": {}
+}

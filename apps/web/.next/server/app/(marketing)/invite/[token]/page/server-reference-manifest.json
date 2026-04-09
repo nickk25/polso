@@ -1,0 +1,20 @@
+{
+  "node": {
+    "400a501fa0ca47ce87ca9c2be344ad81ad4ea8b7f3": {
+      "workers": {
+        "app/(marketing)/invite/[token]/page": {
+          "moduleId": 769519,
+          "async": false,
+          "exportedName": "acceptInviteAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/accept-invite.ts"
+        }
+      },
+      "layer": {
+        "app/(marketing)/invite/[token]/page": "action-browser"
+      },
+      "exportedName": "acceptInviteAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/team/actions/accept-invite.ts"
+    }
+  },
+  "edge": {}
+}

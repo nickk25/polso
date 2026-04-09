@@ -1,0 +1,110 @@
+{
+  "node": {
+    "608a0788a80460bbbcea3a1c4e6cf8fefc56f9b131": {
+      "workers": {
+        "app/(dashboard)/expenses/page": {
+          "moduleId": 157283,
+          "async": false,
+          "exportedName": "bulkUpdateExpenseCategoryAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/update-expense.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/expenses/page": "action-browser"
+      },
+      "exportedName": "bulkUpdateExpenseCategoryAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/update-expense.ts"
+    },
+    "6066444be1d311fd1416bcf0c88c2947c8cff824b5": {
+      "workers": {
+        "app/(dashboard)/expenses/page": {
+          "moduleId": 157283,
+          "async": false,
+          "exportedName": "bulkUpdateExpenseTypeAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/update-expense.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/expenses/page": "action-browser"
+      },
+      "exportedName": "bulkUpdateExpenseTypeAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/update-expense.ts"
+    },
+    "60b7bb96fbc0198f5f2b9585d387454c46895e5205": {
+      "workers": {
+        "app/(dashboard)/expenses/page": {
+          "moduleId": 157283,
+          "async": false,
+          "exportedName": "bulkUpdateExpenseStatusAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/update-expense.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/expenses/page": "action-browser"
+      },
+      "exportedName": "bulkUpdateExpenseStatusAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/update-expense.ts"
+    },
+    "60837e475f94285821aea6bc7f85398cb1c07bcaa9": {
+      "workers": {
+        "app/(dashboard)/expenses/page": {
+          "moduleId": 157283,
+          "async": false,
+          "exportedName": "updateExpenseAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/update-expense.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/expenses/page": "action-browser"
+      },
+      "exportedName": "updateExpenseAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/update-expense.ts"
+    },
+    "4041d9affdfd83d09ec3176f3dc08c0605b23bdef4": {
+      "workers": {
+        "app/(dashboard)/expenses/page": {
+          "moduleId": 157283,
+          "async": false,
+          "exportedName": "getExpenseInvoicesAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/invoice-actions.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/expenses/page": "action-browser"
+      },
+      "exportedName": "getExpenseInvoicesAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/invoice-actions.ts"
+    },
+    "40a0415564b42b5c897df5628ce634734c277d0b3b": {
+      "workers": {
+        "app/(dashboard)/expenses/page": {
+          "moduleId": 157283,
+          "async": false,
+          "exportedName": "deleteInvoiceAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/invoice-actions.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/expenses/page": "action-browser"
+      },
+      "exportedName": "deleteInvoiceAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/expenses/actions/invoice-actions.ts"
+    },
+    "00eaf3a7f9ca27754704e5912cf9ccaa15a1c2b27c": {
+      "workers": {
+        "app/(dashboard)/expenses/page": {
+          "moduleId": 157283,
+          "async": false,
+          "exportedName": "backfillCategoriesAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/intelligence/actions/backfill-categories.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/expenses/page": "action-browser"
+      },
+      "exportedName": "backfillCategoriesAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/intelligence/actions/backfill-categories.ts"
+    }
+  },
+  "edge": {}
+}

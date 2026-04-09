@@ -1,0 +1,20 @@
+{
+  "node": {
+    "40b5650f44935924761e6bbaa1e0a71ec017d7872e": {
+      "workers": {
+        "app/(dashboard)/settings/notifications/page": {
+          "moduleId": 281385,
+          "async": false,
+          "exportedName": "updateNotificationsAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/settings/actions/update-notifications.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/settings/notifications/page": "action-browser"
+      },
+      "exportedName": "updateNotificationsAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/settings/actions/update-notifications.ts"
+    }
+  },
+  "edge": {}
+}

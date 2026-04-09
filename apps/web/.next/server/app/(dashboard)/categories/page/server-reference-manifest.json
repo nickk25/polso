@@ -1,0 +1,65 @@
+{
+  "node": {
+    "405ea436a164fe77cfc0c43423fb9f92ba4e1d091c": {
+      "workers": {
+        "app/(dashboard)/categories/page": {
+          "moduleId": 556174,
+          "async": false,
+          "exportedName": "deleteCategoryAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/categories/actions/manage-category.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/categories/page": "action-browser"
+      },
+      "exportedName": "deleteCategoryAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/categories/actions/manage-category.ts"
+    },
+    "609a1e8180295d104f15eb634ba86758f199094b11": {
+      "workers": {
+        "app/(dashboard)/categories/page": {
+          "moduleId": 556174,
+          "async": false,
+          "exportedName": "toggleCategoryVisibilityAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/categories/actions/manage-category.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/categories/page": "action-browser"
+      },
+      "exportedName": "toggleCategoryVisibilityAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/categories/actions/manage-category.ts"
+    },
+    "400e78ebfa47a9450e7be36f77db9ff8bf87059e2a": {
+      "workers": {
+        "app/(dashboard)/categories/page": {
+          "moduleId": 556174,
+          "async": false,
+          "exportedName": "createCategoryAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/categories/actions/manage-category.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/categories/page": "action-browser"
+      },
+      "exportedName": "createCategoryAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/categories/actions/manage-category.ts"
+    },
+    "60abbc8127b47720b3326751b04702c2a301e14d02": {
+      "workers": {
+        "app/(dashboard)/categories/page": {
+          "moduleId": 556174,
+          "async": false,
+          "exportedName": "updateCategoryAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/categories/actions/manage-category.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/categories/page": "action-browser"
+      },
+      "exportedName": "updateCategoryAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/categories/actions/manage-category.ts"
+    }
+  },
+  "edge": {}
+}

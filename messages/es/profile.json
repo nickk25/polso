@@ -1,9 +1,0 @@
-{
-  "title": "Perfil",
-  "subtitle": "Ver y gestionar tu cuenta",
-  "yourProfile": "Tu Perfil",
-  "accountManagedBy": "La informacion de tu cuenta es gestionada por Neon Auth",
-  "manageProfile": "Gestionar Perfil",
-  "securitySettings": "Configuracion de Seguridad",
-  "managedByNeonAuth": "El perfil y la configuracion de seguridad son gestionados a traves de Neon Auth. Haz clic en los botones de arriba para acceder a estas configuraciones."
-}

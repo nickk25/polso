@@ -1,0 +1,20 @@
+{
+  "node": {
+    "40a345802160a2745ed6f7ad98ce0f28605f283bb7": {
+      "workers": {
+        "app/(dashboard)/settings/organization/page": {
+          "moduleId": 385271,
+          "async": false,
+          "exportedName": "updateOrganizationAction",
+          "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/settings/actions/update-organization.ts"
+        }
+      },
+      "layer": {
+        "app/(dashboard)/settings/organization/page": "action-browser"
+      },
+      "exportedName": "updateOrganizationAction",
+      "filename": ".claude/worktrees/bridge-cse_01XmF3tf498oTPE9hrWSe6Dk/apps/web/features/settings/actions/update-organization.ts"
+    }
+  },
+  "edge": {}
+}
