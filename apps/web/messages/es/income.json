@@ -1,0 +1,97 @@
+{
+  "title": "Ingresos",
+  "subtitle": "Rastrea tus pagos entrantes",
+  "transactionCount": "{count} {count, plural, one {transaccion} other {transacciones}}",
+  "thisMonth": "Este Mes",
+  "lastMonth": "Mes Anterior",
+  "monthOverMonth": "Mes a Mes",
+  "transactions": "Transacciones",
+  "noMatchingIncome": "No hay ingresos coincidentes",
+  "tryAdjustingFilters": "Intenta ajustar tu busqueda o filtros",
+  "noIncomeYet": "Aun no hay ingresos",
+  "noIncomeDescription": "Conecta una cuenta bancaria para importar y rastrear tus ingresos automaticamente",
+  "connectBank": "Conectar Banco",
+  "tableHeaders": {
+    "date": "Fecha",
+    "description": "Descripcion",
+    "category": "Categoria",
+    "source": "Fuente",
+    "amount": "Monto",
+    "status": "Estado"
+  },
+  "statuses": {
+    "confirmed": "Confirmado",
+    "excluded": "Excluido",
+    "pending": "Pendiente"
+  },
+  "sources": {
+    "salary": "Salario",
+    "freelance": "Freelance",
+    "investment": "Inversion",
+    "refund": "Reembolso",
+    "transfer": "Transferencia",
+    "other": "Otro"
+  },
+  "addIncome": "Agregar Ingreso",
+  "editIncome": "Editar Ingreso",
+  "editSheet": {
+    "title": "Editar Ingreso",
+    "source": "Fuente",
+    "saveChanges": "Guardar Cambios",
+    "cancel": "Cancelar",
+    "saving": "Guardando..."
+  },
+  "deleteIncome": "Eliminar Ingreso",
+  "deleteConfirm": "Estas seguro de que deseas eliminar este ingreso?",
+  "fields": {
+    "description": "Descripcion",
+    "amount": "Monto",
+    "date": "Fecha",
+    "category": "Categoria",
+    "client": "Cliente",
+    "status": "Estado",
+    "notes": "Notas",
+    "invoice": "Factura",
+    "recurring": "Recurrente"
+  },
+  "filters": {
+    "allCategories": "Todas las Categorias",
+    "allClients": "Todos los Clientes",
+    "dateRange": "Rango de Fechas"
+  },
+  "totals": {
+    "total": "Total",
+    "average": "Promedio",
+    "count": "{count, plural, one {# entrada} other {# entradas}}"
+  },
+  "tableFilters": {
+    "searchPlaceholder": "Buscar ingresos...",
+    "dateRange": "Rango de fechas",
+    "statusPlaceholder": "Estado",
+    "allStatus": "Todos los Estados",
+    "pending": "Pendiente",
+    "confirmed": "Confirmado",
+    "excluded": "Excluido",
+    "sourcePlaceholder": "Fuente",
+    "allSources": "Todas las Fuentes",
+    "categoryPlaceholder": "Categoría",
+    "allCategories": "Todas las Categorías",
+    "clear": "Limpiar",
+    "noCategory": "Sin categoría"
+  },
+  "bulk": {
+    "selected": "{count} seleccionados",
+    "categorize": "Categoría",
+    "setSource": "Fuente",
+    "setStatus": "Estado",
+    "deselect": "Deseleccionar todo",
+    "updated": "Se actualizaron {count} ingresos",
+    "failed": "Error al actualizar ingresos"
+  },
+  "pagination": {
+    "showing": "Mostrando {start}-{end} de {total}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Pagina {current} de {total}"
+  }
+}

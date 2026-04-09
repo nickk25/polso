@@ -1,0 +1,9 @@
+{
+  "title": "Profile",
+  "subtitle": "View and manage your account",
+  "yourProfile": "Your Profile",
+  "accountManagedBy": "Your account information managed by Neon Auth",
+  "manageProfile": "Manage Profile",
+  "securitySettings": "Security Settings",
+  "managedByNeonAuth": "Profile and security settings are managed through Neon Auth. Click the buttons above to access these settings."
+}

@@ -1,0 +1,66 @@
+{
+  "title": "Banca",
+  "connectAccount": "Conectar Cuenta",
+  "connectedAccounts": "Cuentas Conectadas",
+  "syncTransactions": "Sincronizar Transacciones",
+  "lastSynced": "Ultima sincronizacion: {date}",
+  "accounts": {
+    "checking": "Cuenta Corriente",
+    "savings": "Cuenta de Ahorros",
+    "credit": "Tarjeta de Credito",
+    "balance": "Saldo",
+    "institution": "Institucion"
+  },
+  "sync": {
+    "syncing": "Sincronizando...",
+    "success": "Transacciones sincronizadas exitosamente",
+    "error": "Error al sincronizar transacciones"
+  },
+  "empty": {
+    "title": "No hay cuentas bancarias conectadas",
+    "description": "Conecta tu cuenta bancaria para importar transacciones automaticamente."
+  },
+  "settings": {
+    "title": "Conexiones Bancarias",
+    "description": "Gestiona tus cuentas bancarias conectadas",
+    "connectNewBank": "Conectar un Nuevo Banco",
+    "connectNewBankDescription": "Conecta tus cuentas bancarias de forma segura mediante open banking para importar transacciones automaticamente",
+    "connectedAccounts": "Cuentas Conectadas",
+    "emptyTitle": "No hay cuentas bancarias conectadas aun.",
+    "emptyDescription": "Conecta tu primera cuenta bancaria para comenzar a rastrear tus finanzas automaticamente."
+  },
+  "accountCard": {
+    "bank": "Banco",
+    "available": "Disp",
+    "current": "Actual",
+    "txns": "{count} txns",
+    "lastSynced": "Ultima sincronizacion: {date}",
+    "syncTransactions": "Sincronizar transacciones",
+    "disconnectBank": "Desconectar banco",
+    "disconnectTitle": "Desconectar Cuenta Bancaria",
+    "disconnectDescription": "Estas seguro de que deseas desconectar esta cuenta bancaria? Esto eliminara la conexion a {bank}. Tus transacciones existentes se conservaran, pero no se sincronizaran nuevas transacciones.",
+    "disconnect": "Desconectar",
+    "statusActive": "Activo",
+    "statusPending": "Pendiente",
+    "statusExpired": "Expirado",
+    "statusError": "Error",
+    "statusDisconnected": "Desconectado"
+  },
+  "connection": {
+    "accountCount": "{count, plural, one {# cuenta} other {# cuentas}}",
+    "disconnectDescription": "Esto desconectara {count, plural, one {la cuenta vinculada} other {las # cuentas vinculadas}} a {bank}. Tus transacciones existentes se conservaran, pero no se sincronizaran nuevas transacciones."
+  },
+  "connectButton": {
+    "limitTitle": "Limite de conexiones bancarias alcanzado",
+    "limitDescription": "Mejora tu plan para conectar mas cuentas bancarias."
+  },
+  "plaid": {
+    "connecting": "Conectando...",
+    "connectBankAccount": "Conectar Cuenta Bancaria"
+  },
+  "tink": {
+    "connecting": "Redirigiendo al banco...",
+    "connectBankAccount": "Conectar Cuenta Bancaria",
+    "error": "Error al iniciar la conexion bancaria"
+  }
+}

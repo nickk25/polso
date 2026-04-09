@@ -1,0 +1,58 @@
+{
+  "title": "Clients",
+  "subtitle": "Manage income sources and set default categories",
+  "noClientsYet": "No clients yet",
+  "noClientsDescription": "Clients are automatically detected when you sync bank transactions. You can also create clients manually or from existing income transactions.",
+  "addClient": "Add Client",
+  "clientCount": "{count, plural, one {# client} other {# clients}}",
+  "table": {
+    "search": "Search clients...",
+    "mergeSelected": "Merge {count} clients",
+    "client": "Client",
+    "defaultCategory": "Default Category",
+    "incomes": "Incomes",
+    "totalReceived": "Total Received",
+    "lastIncome": "Last Income",
+    "noMatch": "No clients match your search",
+    "noClients": "No clients yet",
+    "autoDetected": "Auto-detected from transactions"
+  },
+  "form": {
+    "editTitle": "Edit Client",
+    "newTitle": "New Client",
+    "autoDetected": "Auto-detected",
+    "incomeCount": "{count, plural, one {# income} other {# incomes}}",
+    "newDescription": "Create a new client to organize your income.",
+    "name": "Name",
+    "namePlaceholder": "e.g., Acme Corp",
+    "website": "Website (optional)",
+    "websitePlaceholder": "https://example.com",
+    "taxId": "Tax ID (optional)",
+    "taxIdPlaceholder": "e.g., B12345678",
+    "taxIdDescription": "For invoice matching and tax purposes.",
+    "defaultCategory": "Default Category",
+    "noDefaultCategory": "No default category",
+    "defaultCategoryDescription": "New income from this client will use this category.",
+    "deleteClient": "Delete client?",
+    "deleteHasIncomes": "This client has {count, plural, one {# linked income} other {# linked incomes}}.",
+    "deleteReassign": "You must reassign them before deleting, or merge this client with another.",
+    "deleteConfirm": "This will permanently delete {name}. This action cannot be undone."
+  },
+  "merge": {
+    "title": "Merge {count} Clients",
+    "description": "Select which client to keep. All income from the other clients will be reassigned to this client, and the others will be deleted.",
+    "keepClient": "Keep this client",
+    "selectClient": "Select a client to keep",
+    "mergeDescription": "This will merge {mergeCount, plural, one {# client} other {# clients}} and reassign {incomeCount, plural, one {# income} other {# incomes}} to the selected client."
+  },
+  "backfill": {
+    "failed": "Failed to create clients",
+    "noClientsToCreate": "No clients to create",
+    "allAssigned": "All income transactions already have clients assigned.",
+    "created": "Clients created from transactions",
+    "createdCount": "Created {count, plural, one {# new client} other {# new clients}}",
+    "linked": "linked {count, plural, one {# income} other {# incomes}}",
+    "creating": "Creating...",
+    "createFromTransactions": "Create from transactions"
+  }
+}

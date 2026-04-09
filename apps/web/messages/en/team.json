@@ -1,0 +1,47 @@
+{
+  "title": "Team Members",
+  "invite": {
+    "button": "Invite Member",
+    "title": "Invite Team Member",
+    "description": "Send an invitation to join your organization. They'll receive an email with a link to accept.",
+    "limitReached": "You've reached your team member limit.",
+    "email": "Email address",
+    "emailPlaceholder": "colleague@company.com",
+    "role": "Role",
+    "selectRole": "Select a role",
+    "memberRole": "Member",
+    "memberDescription": "Can view and manage expenses",
+    "adminRole": "Admin",
+    "adminDescription": "Full access including team management",
+    "sending": "Sending...",
+    "sendInvitation": "Send Invitation"
+  },
+  "pending": {
+    "title": "Pending Invitations",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "expires": "Expires",
+    "actions": "Actions",
+    "emailStatus": "Email {status}",
+    "pending": "Pending",
+    "copyLink": "Copy invite link",
+    "copied": "Copied!",
+    "resend": "Resend invitation",
+    "revoke": "Revoke invitation",
+    "revokeTitle": "Revoke invitation?",
+    "revokeDescription": "This will cancel the invitation sent to {email}. They won't be able to join your organization with this link."
+  },
+  "members": {
+    "title": "Team Members",
+    "member": "Member",
+    "role": "Role",
+    "joined": "Joined",
+    "you": "You",
+    "makeAdmin": "Make Admin",
+    "makeMember": "Make Member",
+    "removeFromTeam": "Remove from team",
+    "removeTitle": "Remove team member?",
+    "removeDescription": "This will remove this member from your organization. They will lose access to all data and features."
+  }
+}
