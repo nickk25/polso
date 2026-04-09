@@ -1,4 +1,4 @@
-import { resend, FROM_EMAIL, FROM_FOUNDER } from "./resend"
+import { getResend, FROM_EMAIL, FROM_FOUNDER } from "./resend"
 import type { Locale } from "@/lib/i18n/config"
 import { getEmailTranslations } from "@/lib/i18n/email-translations"
 
@@ -38,7 +38,7 @@ import UserAcceptedInviteEmail from "@/emails/user-accepted-invite"
 
 export async function sendWaitlistConfirmation(email: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: t("waitlistConfirmation.preview"),
@@ -48,7 +48,7 @@ export async function sendWaitlistConfirmation(email: string, locale?: Locale) {
 
 export async function sendWelcome(to: string, name: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("welcome.preview"),
@@ -62,7 +62,7 @@ export async function sendWelcome(to: string, name: string, locale?: Locale) {
 
 export async function sendWelcomeFounder(to: string, name: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_FOUNDER,
     to,
     subject: t("welcomeFounder.preview"),
@@ -72,7 +72,7 @@ export async function sendWelcomeFounder(to: string, name: string, locale?: Loca
 
 export async function sendWaitlistFounder(to: string, name: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_FOUNDER,
     to,
     subject: t("waitlistFounder.preview"),
@@ -91,7 +91,7 @@ export async function sendTrialStarted(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("trialStarted.subject"),
@@ -112,7 +112,7 @@ export async function sendTrialEnding(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("trialEnding.subject", { daysLeft }),
@@ -128,7 +128,7 @@ export async function sendTrialEnding(
 
 export async function sendTrialEnded(to: string, name: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("trialEnded.subject"),
@@ -149,7 +149,7 @@ export async function sendSubscriptionConfirmed(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("subscriptionConfirmed.subject"),
@@ -166,7 +166,7 @@ export async function sendSubscriptionConfirmed(
 
 export async function sendPaymentFailed(to: string, name: string, amount: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("paymentFailed.subject"),
@@ -186,7 +186,7 @@ export async function sendSubscriptionCancelled(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("subscriptionCancelled.subject"),
@@ -211,7 +211,7 @@ export async function sendBankConnected(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("bankConnected.subject", { bankName }),
@@ -232,7 +232,7 @@ export async function sendBankDisconnected(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("bankDisconnected.subject", { bankName }),
@@ -253,7 +253,7 @@ export async function sendSyncError(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("syncError.subject", { bankName }),
@@ -280,7 +280,7 @@ export async function sendLowBalanceAlert(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("alertLowBalance.subject", { accountName }),
@@ -305,7 +305,7 @@ export async function sendHighSpendAlert(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("alertHighSpend.subject", { category }),
@@ -330,7 +330,7 @@ export async function sendMissingRecurringAlert(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("alertMissingRecurring.subject", { vendorName }),
@@ -355,7 +355,7 @@ export async function sendUnusualActivityAlert(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("alertUnusualActivity.subject", { category }),
@@ -381,7 +381,7 @@ export async function sendRunwayCriticalAlert(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("alertRunwayCritical.subject", { runwayMonths }),
@@ -409,7 +409,7 @@ export async function sendUserInvited(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("userInvited.subject", { inviterName, organizationName }),
@@ -431,7 +431,7 @@ export async function sendUserAcceptedInvite(
   locale?: Locale
 ) {
   const t = getEmailTranslations(locale)
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM_EMAIL,
     to,
     subject: t("userAcceptedInvite.subject", { newMemberName, organizationName }),

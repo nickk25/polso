@@ -1,6 +1,6 @@
 "use server"
 
-import { resend } from "@/lib/email/resend"
+import { getResend } from "@/lib/email/resend"
 import { sendWaitlistFounder } from "@/lib/email/send"
 import { getLocale } from "@/lib/i18n/get-locale"
 
@@ -25,7 +25,7 @@ export async function joinWaitlist(
   try {
     // Add contact to waitlist segment
     if (WAITLIST_SEGMENT_ID) {
-      const { error: contactError } = await resend.contacts.create({
+      const { error: contactError } = await getResend().contacts.create({
         email: normalizedEmail,
         unsubscribed: false,
         segments: [{ id: WAITLIST_SEGMENT_ID }],
