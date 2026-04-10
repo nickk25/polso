@@ -9,16 +9,19 @@ prisma           // PrismaClient singleton — use this everywhere
 PrismaClient     // type only
 Prisma           // namespace — Prisma.ExpenseWhereInput, Prisma.SortOrder, etc.
 
-// All 18 model types (re-exported from generated client)
+// All 22 model types (re-exported from generated client)
 Organization, UserOrganization, Account, Transaction, Category,
 CategoryPreference, Vendor, Client, Expense, Income, ExpenseInvoice,
 RecurringPattern, Alert, Export, UserPreference, NotificationSetting,
-DismissedPattern, Invitation
+DismissedPattern, Invitation,
+PartnerClient, InboxItem, MatchSuggestion, TransactionAttachment
 ```
 
 ## Schema
 
-Lives at `packages/db/prisma/schema.prisma`. 18 models across 6 domains — see `docs/ARCHITECTURE.md` for the full table.
+Lives at `packages/db/prisma/schema.prisma`. 22 models across 7 domains — see `docs/ARCHITECTURE.md` for the full table.
+
+**Partner domain**: `Organization.type` ("partner" | "client"), `PartnerClient` (many-to-many link), `InboxItem` (receipts/invoices), `MatchSuggestion` (scored receipt↔transaction candidates), `TransactionAttachment` (confirmed matches).
 
 **Multi-tenancy rule**: every query must filter by `organizationId`. This is the root of all data.
 
