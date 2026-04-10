@@ -29,12 +29,30 @@ importers:
       '@polso/banking':
         specifier: workspace:*
         version: link:../../packages/banking
-      '@prisma/adapter-neon':
-        specifier: ^7.2.0
-        version: 7.2.0
-      '@prisma/client':
-        specifier: ^7.2.0
-        version: 7.2.0(prisma@7.2.0(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3)
+      '@polso/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
+      '@polso/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@polso/email':
+        specifier: workspace:*
+        version: link:../../packages/email
+      '@polso/intelligence':
+        specifier: workspace:*
+        version: link:../../packages/intelligence
+      '@polso/plans':
+        specifier: workspace:*
+        version: link:../../packages/plans
+      '@polso/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
+      '@polso/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@polso/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@react-email/components':
         specifier: 1.0.6
         version: 1.0.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -99,6 +117,9 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
     devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@react-email/preview-server':
         specifier: 5.2.5
         version: 5.2.5(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -126,9 +147,6 @@ importers:
       eslint-config-next:
         specifier: 16.1.2
         version: 16.1.2(@typescript-eslint/parser@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-      prisma:
-        specifier: ^7.2.0
-        version: 7.2.0(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       shadcn:
         specifier: ^3.7.0
         version: 3.7.0(@types/node@20.19.30)(hono@4.10.6)(typescript@5.9.3)
@@ -144,6 +162,186 @@ importers:
 
   packages/banking:
     devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/billing:
+    dependencies:
+      '@polso/plans':
+        specifier: workspace:*
+        version: link:../plans
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: ^20
+        version: 20.19.30
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/db:
+    dependencies:
+      '@prisma/adapter-neon':
+        specifier: ^7.2.0
+        version: 7.2.0
+      '@prisma/client':
+        specifier: ^7.2.0
+        version: 7.2.0(prisma@7.2.0(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      prisma:
+        specifier: ^7.2.0
+        version: 7.2.0(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/email:
+    dependencies:
+      '@react-email/components':
+        specifier: 1.0.6
+        version: 1.0.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.3
+      resend:
+        specifier: 6.9.1
+        version: 6.9.1(@react-email/render@2.0.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: ^20
+        version: 20.19.30
+      '@types/react':
+        specifier: ^19
+        version: 19.2.8
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/intelligence:
+    dependencies:
+      '@polso/banking':
+        specifier: workspace:*
+        version: link:../banking
+      '@polso/db':
+        specifier: workspace:*
+        version: link:../db
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/plans:
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/storage:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.970.0
+        version: 3.970.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.970.0
+        version: 3.970.0
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: ^20
+        version: 20.19.30
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/tsconfig: {}
+
+  packages/ui:
+    dependencies:
+      '@phosphor-icons/react':
+        specifier: ^2.1.10
+        version: 2.1.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@polso/utils':
+        specifier: workspace:*
+        version: link:../utils
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+      next-themes:
+        specifier: ^0.4.6
+        version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      radix-ui:
+        specifier: ^1.4.3
+        version: 1.4.3(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.3
+      react-day-picker:
+        specifier: ^9.13.0
+        version: 9.13.0(react@19.2.3)
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.3(react@19.2.3)
+      recharts:
+        specifier: 2.15.4
+        version: 2.15.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/react':
+        specifier: ^19
+        version: 19.2.8
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.8)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/utils:
+    dependencies:
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      tailwind-merge:
+        specifier: ^3.4.0
+        version: 3.4.0
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       typescript:
         specifier: ^5
         version: 5.9.3
