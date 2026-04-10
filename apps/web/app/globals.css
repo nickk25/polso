@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@source "../../packages/ui/src";
+@source "../node_modules/@polso/ui/src/**/*.{ts,tsx}";
 @import "shadcn/tailwind.css";
 @import "@neondatabase/auth/ui/tailwind";
 
