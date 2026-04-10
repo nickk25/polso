@@ -1,8 +1,5 @@
 import type { PlanType, PlanLimits, PlanPricing, PlanInfo } from "./types"
 
-/**
- * Plan limits - the core feature restrictions per plan
- */
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
   starter: {
     maxBankConnections: 3,
@@ -14,23 +11,17 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
   },
 }
 
-/**
- * Plan pricing in EUR
- */
 export const PLAN_PRICES: Record<PlanType, PlanPricing> = {
   starter: {
     monthly: 23,
-    annual: 19, // per month when billed annually
+    annual: 19,
   },
   business: {
     monthly: 42,
-    annual: 35, // per month when billed annually
+    annual: 35,
   },
 }
 
-/**
- * Plan metadata for display
- */
 export const PLAN_INFO: Record<PlanType, PlanInfo> = {
   starter: {
     name: "Starter",
@@ -42,9 +33,6 @@ export const PLAN_INFO: Record<PlanType, PlanInfo> = {
   },
 }
 
-/**
- * Feature list for plan comparison
- */
 export const PLAN_FEATURES: Record<PlanType, string[]> = {
   starter: [
     "Up to 3 bank connections",
