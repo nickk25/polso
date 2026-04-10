@@ -1,0 +1,10 @@
+{
+  "extends": "@polso/tsconfig/library.json",
+  "compilerOptions": {
+    "paths": {
+      "@polso/db": ["./src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "prisma/**/*.ts"],
+  "exclude": ["node_modules"]
+}

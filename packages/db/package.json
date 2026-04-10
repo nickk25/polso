@@ -1,0 +1,30 @@
+{
+  "name": "@polso/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/adapter-neon": "^7.2.0",
+    "@prisma/client": "^7.2.0"
+  },
+  "devDependencies": {
+    "@polso/tsconfig": "workspace:*",
+    "dotenv": "^17.2.3",
+    "prisma": "^7.2.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5"
+  }
+}

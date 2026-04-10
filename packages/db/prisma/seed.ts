@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/lib/generated/prisma/client"
+import { PrismaClient } from "../src/generated/prisma/client.js"
 import { PrismaNeon } from "@prisma/adapter-neon"
 
 const adapter = new PrismaNeon({
@@ -31,7 +31,6 @@ async function main() {
   console.log("Seeding system categories...")
 
   for (const category of systemCategories) {
-    // Find existing system category by slug (organizationId is null for system categories)
     const existing = await prisma.category.findFirst({
       where: {
         slug: category.slug,
