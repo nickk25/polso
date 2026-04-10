@@ -12,6 +12,7 @@
     "lint": "tsc --noEmit"
   },
   "devDependencies": {
+    "@polso/tsconfig": "workspace:*",
     "typescript": "^5"
   }
 }
