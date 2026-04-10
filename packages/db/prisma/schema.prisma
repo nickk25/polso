@@ -17,6 +17,7 @@ datasource db {
 model Organization {
   id              String   @id @default(cuid())
   name            String
+  type            String   @default("client") // "partner" | "client"
   currency        String   @default("EUR")
   timezone        String   @default("Europe/Madrid")
   fiscalYearStart Int      @default(1) @map("fiscal_year_start")
@@ -56,6 +57,12 @@ model Organization {
   exports               Export[]
   invitations           Invitation[]
   categoryPreferences   CategoryPreference[]
+  inboxItems            InboxItem[]
+  matchSuggestions      MatchSuggestion[]
+
+  // Partner ↔ Client links
+  partnerLinks  PartnerClient[] @relation("AsClient")
+  clientLinks   PartnerClient[] @relation("AsPartner")
 
   @@map("organizations")
 }
@@ -140,10 +147,13 @@ model Transaction {
   createdAt             DateTime  @default(now()) @map("created_at")
 
   // Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  account      Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  expense      Expense?
-  income       Income?
+  organization         Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account              Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  expense              Expense?
+  income               Income?
+  inboxItems           InboxItem[]
+  matchSuggestions     MatchSuggestion[]
+  transactionAttachments TransactionAttachment[]
 
   @@unique([accountId, externalTransactionId])
   @@unique([organizationId, externalTransactionId]) // Prevent duplicates when relinking bank
@@ -554,4 +564,123 @@ model Invitation {
   @@index([email])
   @@index([status])
   @@map("invitations")
+}
+
+// ============================================
+// Partner ↔ Client - Asesoría manages autónomos
+// ============================================
+
+model PartnerClient {
+  id          String    @id @default(cuid())
+  partnerId   String    @map("partner_id")
+  clientId    String    @map("client_id")
+  status      String    @default("pending") // "pending" | "active" | "disconnected"
+  invitedAt   DateTime  @default(now()) @map("invited_at")
+  connectedAt DateTime? @map("connected_at")
+
+  partner Organization @relation("AsPartner", fields: [partnerId], references: [id], onDelete: Cascade)
+  client  Organization @relation("AsClient", fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, clientId])
+  @@index([partnerId])
+  @@index([clientId])
+  @@map("partner_clients")
+}
+
+// ============================================
+// Inbox - Received documents (receipts, invoices)
+// ============================================
+
+model InboxItem {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+
+  // File
+  fileName    String  @map("file_name")
+  filePath    String  @map("file_path") // R2 object key
+  contentType String? @map("content_type") // "application/pdf", "image/jpeg"
+  size        Int?
+
+  // OCR-extracted metadata
+  displayName String?  @map("display_name") // vendor name
+  amount      Decimal? @db.Decimal(12, 2)
+  currency    String   @default("EUR")
+  date        DateTime? // invoice date
+  cif         String?   // Spanish vendor tax ID
+
+  // Processing state
+  status String @default("new") // "new" | "processing" | "analyzing" | "suggested_match" | "no_match" | "done" | "archived"
+  source String @default("upload") // "upload" | "whatsapp" | "email"
+
+  // OCR raw output
+  meta Json?
+
+  // Confirmed match
+  transactionId String? @map("transaction_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organization     Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction      Transaction?            @relation(fields: [transactionId], references: [id])
+  matchSuggestions MatchSuggestion[]
+  attachments      TransactionAttachment[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([transactionId])
+  @@map("inbox")
+}
+
+// ============================================
+// Match Suggestions - AI-suggested receipt↔transaction links
+// ============================================
+
+model MatchSuggestion {
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
+  transactionId  String @map("transaction_id")
+  inboxItemId    String @map("inbox_item_id")
+
+  // Scores (0–1)
+  confidenceScore Float @map("confidence_score")
+  amountScore     Float @map("amount_score")    // 30% weight
+  dateScore       Float @map("date_score")      // 15% weight
+  nameScore       Float @map("name_score")      // 10% weight
+  currencyScore   Float @map("currency_score")  // 5% weight
+
+  matchType    String  @map("match_type") // "auto_matched" | "high_confidence" | "suggested"
+  matchDetails Json?   @map("match_details")
+
+  status       String    @default("pending") // "pending" | "confirmed" | "declined" | "expired" | "unmatched"
+  userActionAt DateTime? @map("user_action_at")
+  userActionBy String?   @map("user_action_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction  Transaction  @relation(fields: [transactionId], references: [id])
+  inboxItem    InboxItem    @relation(fields: [inboxItemId], references: [id])
+
+  @@unique([transactionId, inboxItemId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("match_suggestions")
+}
+
+// ============================================
+// Transaction Attachments - Confirmed receipt links
+// ============================================
+
+model TransactionAttachment {
+  id            String   @id @default(cuid())
+  transactionId String   @map("transaction_id")
+  inboxItemId   String   @map("inbox_item_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  inboxItem   InboxItem   @relation(fields: [inboxItemId], references: [id])
+
+  @@unique([transactionId, inboxItemId])
+  @@map("transaction_attachments")
 }
