@@ -32,7 +32,8 @@
         "CREEM_BUSINESS_MONTHLY_PRODUCT_ID",
         "CREEM_BUSINESS_ANNUAL_PRODUCT_ID",
         "CREEM_WEBHOOK_SECRET",
-        "VITE_NEON_AUTH_URL"
+        "VITE_NEON_AUTH_URL",
+        "NEXT_PUBLIC_PARTNER_URL"
       ]
     },
     "dev": {
