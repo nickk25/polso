@@ -1,0 +1,9 @@
+{
+  "extends": "@polso/tsconfig/next.json",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "templates/**/*.tsx"],
+  "exclude": ["node_modules"]
+}
