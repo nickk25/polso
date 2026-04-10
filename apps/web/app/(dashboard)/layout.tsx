@@ -7,9 +7,9 @@ import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
+} from "@polso/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@polso/ui/separator";
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
 
 async function getOrganization(userId: string, userEmail: string | null) {

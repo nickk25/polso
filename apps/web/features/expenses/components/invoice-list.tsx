@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { FilePdf, Image, Trash, Eye, DownloadSimple, Spinner } from "@phosphor-icons/react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@polso/ui/alert-dialog"
 import { toast } from "sonner"
 import { deleteInvoiceAction, type InvoiceWithUrl } from "../actions/invoice-actions"
 import { InvoicePreviewDialog } from "./invoice-preview-dialog"

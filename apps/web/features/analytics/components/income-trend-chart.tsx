@@ -6,7 +6,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart"
+} from "@polso/ui/chart"
 
 const chartConfig = {
   total: { label: "Income", color: "oklch(0.723 0.219 149.579)" },

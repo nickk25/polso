@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+import { Badge } from "@polso/ui/badge"
+import { Button } from "@polso/ui/button"
+import { Checkbox } from "@polso/ui/checkbox"
+import { Label } from "@polso/ui/label"
+import { Separator } from "@polso/ui/separator"
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@polso/ui/table"
 import {
   Sheet,
   SheetContent,
@@ -24,20 +24,20 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from "@/components/ui/sheet"
+} from "@polso/ui/sheet"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@polso/ui/select"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@polso/ui/dropdown-menu"
 import { Spinner, X, ListBullets, CheckCircle, Tag } from "@phosphor-icons/react"
 import { CategorySelect } from "@/features/categories/components/category-select"
 import {

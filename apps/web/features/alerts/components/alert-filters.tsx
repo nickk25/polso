@@ -3,14 +3,14 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useTransition } from "react"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@polso/ui/select"
 import { X } from "@phosphor-icons/react"
 
 interface AlertFiltersProps {

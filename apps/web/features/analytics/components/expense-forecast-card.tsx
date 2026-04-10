@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
+import { Badge } from "@polso/ui/badge"
 import { Warning } from "@phosphor-icons/react/dist/ssr"
 import { getTranslations } from "next-intl/server"
 import type { ExpenseForecast } from "../queries/get-forecasts"

@@ -2,13 +2,13 @@
 
 import { useTranslations } from "next-intl"
 import { DownloadSimple } from "@phosphor-icons/react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@polso/ui/dialog"
 import type { InvoiceWithUrl } from "../actions/invoice-actions"
 
 interface InvoicePreviewDialogProps {

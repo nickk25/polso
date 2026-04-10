@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTransition } from "react"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { CaretLeft, CaretRight } from "@phosphor-icons/react"
 
 interface AlertPaginationProps {

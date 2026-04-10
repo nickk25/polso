@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr"
 import { getTranslations } from "next-intl/server"
 

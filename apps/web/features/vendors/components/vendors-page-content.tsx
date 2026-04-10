@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { Plus, Storefront } from "@phosphor-icons/react"
 import { VendorTable } from "./vendor-table"
 import { VendorForm } from "./vendor-form"

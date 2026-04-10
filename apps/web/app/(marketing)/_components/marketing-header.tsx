@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 
 export async function MarketingHeader() {
   const t = await getTranslations("marketing")

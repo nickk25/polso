@@ -10,7 +10,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@polso/ui/select"
 import type { CategoryWithCount } from "../queries/get-categories"
 
 const NONE_VALUE = "__none__"

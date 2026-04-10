@@ -18,14 +18,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+} from "@polso/ui/table"
+import { Badge } from "@polso/ui/badge"
+import { Button } from "@polso/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@polso/ui/tooltip"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@polso/ui/alert-dialog"
 import { revokeInviteAction } from "../actions/revoke-invite"
 import { resendInviteAction } from "../actions/resend-invite"
 import type { PendingInvite } from "../queries/get-pending-invites"

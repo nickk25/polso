@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useTransition } from "react"
 import { Spinner } from "@phosphor-icons/react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { authClient } from "@/lib/auth/client"
 
 interface SignOutButtonProps {

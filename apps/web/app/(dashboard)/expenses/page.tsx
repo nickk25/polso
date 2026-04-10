@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
+import { Button } from "@polso/ui/button"
 import { Receipt, ArrowRight } from "@phosphor-icons/react/dist/ssr"
 import { getExpenses, getExpenseStats } from "@/features/expenses/queries/get-expenses"
 import { getActiveCategories } from "@/features/categories/queries/get-categories"

@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@polso/ui/button"
+import { Input } from "@polso/ui/input"
+import { Label } from "@polso/ui/label"
 import {
   Sheet,
   SheetContent,
@@ -13,14 +13,14 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from "@/components/ui/sheet"
+} from "@polso/ui/sheet"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@polso/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@polso/ui/alert-dialog"
 import { Spinner, Trash, Sparkle } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { CategorySelect } from "@/features/categories/components/category-select"

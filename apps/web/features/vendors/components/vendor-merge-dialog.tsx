@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+import { Button } from "@polso/ui/button"
+import { Label } from "@polso/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -12,14 +12,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@polso/ui/dialog"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@polso/ui/select"
 import { Spinner, GitMerge, ArrowRight } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { mergeVendorsAction } from "../actions/manage-vendor"

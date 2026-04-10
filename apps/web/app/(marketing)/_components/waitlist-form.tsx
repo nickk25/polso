@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { joinWaitlist } from "@/features/waitlist/actions/join-waitlist"
 import { useTranslations } from "next-intl"
 

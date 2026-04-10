@@ -3,13 +3,13 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@polso/ui/dropdown-menu"
 import { Spinner, X, Tag, ListBullets, CheckCircle } from "@phosphor-icons/react"
 import { CategorySelect } from "@/features/categories/components/category-select"
 import {

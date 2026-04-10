@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
+import { Button } from "@polso/ui/button"
+import { Checkbox } from "@polso/ui/checkbox"
+import { Input } from "@polso/ui/input"
 import {
   Table,
   TableBody,
@@ -13,12 +13,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@polso/ui/table"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@polso/ui/tooltip"
 import { MagnifyingGlass, Sparkle, GitMerge } from "@phosphor-icons/react"
 import type { ClientWithStats } from "../queries/get-clients"
 

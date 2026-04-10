@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@polso/ui/button"
+import { Input } from "@polso/ui/input"
+import { Label } from "@polso/ui/label"
 import {
   Sheet,
   SheetContent,
@@ -13,14 +13,14 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from "@/components/ui/sheet"
+} from "@polso/ui/sheet"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@polso/ui/select"
 import { Spinner } from "@phosphor-icons/react"
 import { createCategoryAction, updateCategoryAction } from "../actions/manage-category"
 import type { CategoryWithCount } from "../queries/get-categories"

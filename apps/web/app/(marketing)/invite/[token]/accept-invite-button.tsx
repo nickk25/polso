@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { CheckCircle, Spinner } from "@phosphor-icons/react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { acceptInviteAction } from "@/features/team/actions/accept-invite"
 
 interface AcceptInviteButtonProps {

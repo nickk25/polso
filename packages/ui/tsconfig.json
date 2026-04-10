@@ -1,0 +1,5 @@
+{
+  "extends": "@polso/tsconfig/next.json",
+  "include": ["src/**/*.tsx", "src/**/*.ts"],
+  "exclude": ["node_modules"]
+}

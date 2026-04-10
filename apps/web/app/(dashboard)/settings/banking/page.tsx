@@ -4,7 +4,7 @@ import { ConnectBankButton } from "@/features/settings/components/connect-bank-b
 import { getAccounts } from "@/features/banking/queries/get-accounts"
 import { getSubscription } from "@/features/billing/queries/get-subscription"
 import { getBankConnectionCount } from "@/features/billing/queries/get-usage"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@polso/ui/card"
 import { UsageIndicator } from "@/components/shared/upgrade-prompt"
 import { getLimit } from "@/lib/plans"
 import { getTranslations } from "next-intl/server"

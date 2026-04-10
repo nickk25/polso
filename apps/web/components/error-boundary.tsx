@@ -2,8 +2,8 @@
 
 import { useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@polso/ui/button"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@polso/ui/card"
 import { WarningCircle, ArrowClockwise } from "@phosphor-icons/react"
 
 interface ErrorBoundaryProps {

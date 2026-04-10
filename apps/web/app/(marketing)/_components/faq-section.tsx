@@ -5,7 +5,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@polso/ui/accordion"
 import { useTranslations } from "next-intl"
 
 export function FaqSection() {

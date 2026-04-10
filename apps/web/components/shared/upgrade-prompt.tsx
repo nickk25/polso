@@ -3,15 +3,15 @@
 import { useTranslations } from "next-intl"
 import { ArrowRight, Lock } from "@phosphor-icons/react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+} from "@polso/ui/card"
+import { Progress } from "@polso/ui/progress"
 import type { PlanType, LimitKey } from "@/lib/plans"
 import { getPlanDisplayName, getUpgradePlan } from "@/lib/plans"
 

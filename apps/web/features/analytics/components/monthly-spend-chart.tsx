@@ -8,7 +8,7 @@ import {
   ChartLegend,
   ChartLegendContent,
   type ChartConfig,
-} from "@/components/ui/chart"
+} from "@polso/ui/chart"
 import type { MonthlySpend } from "../queries/get-analytics"
 
 const chartConfig = {

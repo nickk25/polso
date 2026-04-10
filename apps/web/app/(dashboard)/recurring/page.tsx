@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Repeat, Lightbulb, CurrencyDollar, Pause } from "@phosphor-icons/react/dist/ssr"
 import { RecurringPatternCard } from "@/features/intelligence/components/recurring-pattern-card"
 import { DetectPatternsButton } from "@/features/intelligence/components/detect-patterns-button"

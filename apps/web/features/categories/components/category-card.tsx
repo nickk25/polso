@@ -3,10 +3,10 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
+import { Card, CardContent } from "@polso/ui/card"
+import { Button } from "@polso/ui/button"
+import { Badge } from "@polso/ui/badge"
+import { Switch } from "@polso/ui/switch"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@polso/ui/alert-dialog"
 import { Pencil, Trash } from "@phosphor-icons/react"
 import { deleteCategoryAction, toggleCategoryVisibilityAction } from "../actions/manage-category"
 import type { CategoryWithCount } from "../queries/get-categories"

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { Plus, Users } from "@phosphor-icons/react"
 import { ClientTable } from "./client-table"
 import { ClientForm } from "./client-form"

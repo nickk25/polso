@@ -5,14 +5,14 @@ import { useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { format, subMonths, startOfMonth } from "date-fns"
 import { CaretLeft, CaretRight } from "@phosphor-icons/react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@polso/ui/select"
 
 interface AnalyticsFiltersProps {
   selectedMonth: string // yyyy-MM

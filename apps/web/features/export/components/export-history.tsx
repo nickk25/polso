@@ -2,7 +2,7 @@
 
 import { format } from "date-fns"
 import { FileZip, DownloadSimple, Trash, Spinner, Warning, CheckCircle, Clock } from "@phosphor-icons/react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { deleteExportAction } from "../actions/create-export"
 import { useState } from "react"
 import { useTranslations } from "next-intl"

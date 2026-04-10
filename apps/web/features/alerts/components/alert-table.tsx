@@ -4,9 +4,9 @@ import { useState, useTransition, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@polso/ui/badge"
+import { Button } from "@polso/ui/button"
+import { Checkbox } from "@polso/ui/checkbox"
 import {
   Table,
   TableBody,
@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@polso/ui/table"
 import { Check, X, Spinner } from "@phosphor-icons/react"
 import {
   markAlertReadAction,

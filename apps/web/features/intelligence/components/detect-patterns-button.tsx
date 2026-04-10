@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { MagnifyingGlass, Spinner } from "@phosphor-icons/react"
 import { detectPatternsAction } from "../actions/detect-patterns"
 import { useTranslations } from "next-intl"

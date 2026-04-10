@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import {
   Wallet,
   TrendDown,
@@ -18,7 +18,7 @@ import { getBurnRateAndRunway, getCashFlow, getCategoryBreakdown } from "@/featu
 import { MiniCashFlowChart } from "@/features/analytics/components/mini-cash-flow-chart"
 import { format } from "date-fns"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { getTranslations } from "next-intl/server"
 
 function formatCurrency(value: number, currency = "USD") {

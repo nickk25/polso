@@ -3,7 +3,7 @@ import { neonAuth } from "@neondatabase/auth/next/server"
 import { Buildings, WarningCircle, Clock } from "@phosphor-icons/react/dist/ssr"
 import { getTranslations } from "next-intl/server"
 import { getLocale } from "@/lib/i18n/get-locale"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@polso/ui/card"
 import { validateInvitationToken } from "@/features/team/queries/get-invitation-by-token"
 import { AcceptInviteButton } from "./accept-invite-button"
 import { SignOutButton } from "./sign-out-button"

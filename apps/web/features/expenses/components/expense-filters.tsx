@@ -4,16 +4,16 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect, useCallback, useTransition } from "react"
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Input } from "@polso/ui/input"
+import { Button } from "@polso/ui/button"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { DateRangePicker } from "@/components/ui/date-range-picker"
+} from "@polso/ui/select"
+import { DateRangePicker } from "@polso/ui/date-range-picker"
 import { MagnifyingGlass, X } from "@phosphor-icons/react"
 import { type DateRange } from "react-day-picker"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"

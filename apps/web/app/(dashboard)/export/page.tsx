@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { getExports } from "@/features/export/queries/get-exports"
 import { ExportHistory } from "@/features/export/components/export-history"
 import { NewExportButton } from "@/features/export/components/new-export-button"

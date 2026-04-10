@@ -3,19 +3,19 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect, useCallback, useTransition } from "react"
 import { useTranslations } from "next-intl"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Input } from "@polso/ui/input"
+import { Button } from "@polso/ui/button"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@polso/ui/select"
 import { MagnifyingGlass, X } from "@phosphor-icons/react"
 import { format } from "date-fns"
 import { type DateRange } from "react-day-picker"
-import { DateRangePicker } from "@/components/ui/date-range-picker"
+import { DateRangePicker } from "@polso/ui/date-range-picker"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 
 interface IncomeFiltersProps {

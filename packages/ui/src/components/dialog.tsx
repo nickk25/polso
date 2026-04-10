@@ -3,8 +3,8 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@polso/utils/cn"
+import { Button } from "./button"
 import { XIcon } from "@phosphor-icons/react"
 
 function Dialog({

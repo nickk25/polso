@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { ChartLine, ArrowRight, TrendUp, Binoculars } from "@phosphor-icons/react/dist/ssr"
 import {
   getBurnRateAndRunway,
@@ -25,7 +25,7 @@ import { MonthlySpendChart } from "@/features/analytics/components/monthly-spend
 import { CashFlowChart } from "@/features/analytics/components/cash-flow-chart"
 import { AnalyticsFilters } from "@/features/analytics/components/analytics-filters"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { format, startOfMonth, parse } from "date-fns"
 
 function formatCurrency(value: number, currency = "USD") {

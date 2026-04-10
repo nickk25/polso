@@ -6,7 +6,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart"
+} from "@polso/ui/chart"
 import type { CashFlowData } from "../queries/get-analytics"
 
 const chartConfig = {

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { Sparkle, Spinner } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { backfillCategoriesAction } from "@/features/intelligence/actions/backfill-categories"

@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
+import { Button } from "@polso/ui/button"
 import { Plus, Tag, Lock } from "@phosphor-icons/react"
 import { CategoryCard } from "./category-card"
 import { CategoryForm } from "./category-form"

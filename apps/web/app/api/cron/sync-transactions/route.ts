@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Prisma } from "@/lib/generated/prisma/client"
+import { Prisma } from "@polso/db"
 import { prisma } from "@/lib/db"
 import {
   createTinkClient,

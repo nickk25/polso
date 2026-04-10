@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@polso/ui/button"
 import { Export } from "@phosphor-icons/react"
 import { ExportDialog } from "./export-dialog"
 import { useTranslations } from "next-intl"

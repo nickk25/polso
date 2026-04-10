@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@polso/ui/card"
+import { Button } from "@polso/ui/button"
+import { Badge } from "@polso/ui/badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@polso/ui/alert-dialog"
 import { ArrowsClockwise, Trash, Warning, CheckCircle, Clock } from "@phosphor-icons/react"
 import { syncTransactionsAction } from "@/features/banking/actions/sync-transactions"
 import { disconnectBankAction } from "@/features/banking/actions/connect-bank"

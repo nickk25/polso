@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@polso/ui/card"
+import { Button } from "@polso/ui/button"
 import { Gear, Bank, User, Bell, Buildings, UsersThree } from "@phosphor-icons/react/dist/ssr"
 
 export default async function SettingsPage() {

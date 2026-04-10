@@ -3,11 +3,11 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@polso/ui/button"
+import { Input } from "@polso/ui/input"
+import { Label } from "@polso/ui/label"
+import { Switch } from "@polso/ui/switch"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@polso/ui/card"
 import { updateNotificationsAction } from "../actions/update-notifications"
 
 interface NotificationsFormProps {

@@ -3,17 +3,17 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@polso/ui/button"
+import { Input } from "@polso/ui/input"
+import { Label } from "@polso/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+} from "@polso/ui/select"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@polso/ui/card"
 import { updateOrganizationAction } from "../actions/update-organization"
 
 const CURRENCIES = [

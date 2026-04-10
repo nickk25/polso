@@ -4,7 +4,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { NextIntlClientProvider } from "next-intl"
 import "./globals.css"
 import { AuthProvider } from "@/components/providers/auth-provider"
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@polso/ui/sonner"
 import { getLocale } from "@/lib/i18n/get-locale"
 import { getMessages } from "@/lib/i18n/messages"
 
