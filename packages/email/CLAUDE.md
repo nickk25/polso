@@ -42,8 +42,10 @@ React Email components at `src/templates/*.tsx`. Shared layout at `src/templates
 
 `Locale` is defined locally as `"en" | "es"` in `src/locale.ts`. It is **not** imported from `next-intl` — this package has no Next.js dep.
 
-## Environment variable
+## Environment variables
 
 ```env
-RESEND_API_KEY   # required at runtime, checked inside getResend()
+RESEND_API_KEY        # required at runtime, checked inside getResend()
+EMAIL_FROM            # from address for bulk emails — e.g. "Polso <hello@polso.com>"
+EMAIL_FROM_FOUNDER    # from address for personal emails — e.g. "Nick from Polso <nick@polso.com>"
 ```
