@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Polso is a financial management and expense intelligence SaaS platform for businesses. It connects to banks via Tink (Open Banking), syncs transactions, detects recurring expenses, auto-categorizes spending, and provides analytics (burn rate, runway, cash flow).
 
-**Architecture documentation**: See `docs/ARCHITECTURE.md` for full database schema, feature modules, and implementation details.
+This is a **pnpm + Turborepo monorepo** with one app (`apps/web`) and ten shared packages (`packages/*`).
+
+**Architecture documentation**: See `docs/ARCHITECTURE.md` for full database schema, feature modules, and data flows.
 
 ## Tech Stack
 
@@ -20,6 +22,9 @@ Polso is a financial management and expense intelligence SaaS platform for busin
 | **Tink** | Bank account connections via Open Banking (EU/Spain) |
 | **Shadcn/ui** | UI components (Radix primitives) |
 | **Tailwind CSS v4** | Styling |
+| **Resend** | Transactional email |
+| **Creem** | Billing and subscriptions |
+| **pnpm + Turborepo** | Monorepo tooling |
 
 ## Core Modules
 
@@ -53,85 +58,104 @@ Polso is a financial management and expense intelligence SaaS platform for busin
 ## Commands
 
 ```bash
-pnpm dev              # Start development server (localhost:3000)
-pnpm build            # Build for production
-pnpm start            # Start production server
-pnpm lint             # Run ESLint
-pnpm prisma generate  # Generate Prisma client
-pnpm prisma db push   # Push schema changes to database
-pnpm prisma migrate dev  # Create and apply migrations
+# Development
+pnpm dev                              # Start all (turbo)
+pnpm --filter @polso/web dev          # Start web app only
+
+# Build & lint
+pnpm build                            # Build all packages + app
+pnpm lint                             # Lint all packages
+
+# Database (Prisma lives in packages/db)
+pnpm --filter @polso/db db:generate   # Generate Prisma client
+pnpm --filter @polso/db db:push       # Push schema to database
+pnpm --filter @polso/db db:migrate    # Create and apply migration
+pnpm --filter @polso/db db:seed       # Seed database
 ```
 
 ## Project Structure
 
 ```
-/app                    # Next.js App Router pages
-/components             # React components
-/components/ui          # Shadcn UI components
-/features               # Feature modules (banking, expenses, etc.)
-  /banking
-    /actions            # Server actions
-    /queries            # Database queries
-    /lib                # Feature-specific utilities
-/lib
-  /auth                 # Neon Auth configuration
-  /db                   # Prisma client
-  /generated/prisma     # Generated Prisma types
-  /storage              # Cloudflare R2 client
-  /types                # TypeScript types
-/prisma
-  /schema.prisma        # Database schema
+polso-monorepo/
+  apps/
+    web/                        @polso/web — Next.js 16 dashboard app
+      app/(dashboard)/          Dashboard routes
+      app/(marketing)/          Marketing pages
+      features/                 Feature modules (actions, queries, components)
+      components/               Shared app components (layout, providers)
+      lib/                      Auth, i18n config, shims
+      messages/                 i18n JSON (en/, es/)
+  packages/
+    banking/     @polso/banking       Tink Open Banking client
+    billing/     @polso/billing       Creem payment integration
+    db/          @polso/db            Prisma schema, client, generated types
+    email/       @polso/email         Resend + 20 email templates
+    intelligence/ @polso/intelligence Auto-categorization, recurring detection
+    plans/       @polso/plans         Plan limits, pricing, features
+    storage/     @polso/storage       Cloudflare R2 client
+    tsconfig/    @polso/tsconfig      Shared TS configs (base, next, library)
+    ui/          @polso/ui            26 Shadcn/ui components + hooks
+    utils/       @polso/utils         cn(), ActionResponse, shared enums
 ```
+
+## Monorepo
+
+- Packages are linked with `workspace:*` in `package.json`
+- All `@polso/*` packages must be listed in `transpilePackages` in `apps/web/next.config.ts` — they export raw `.tsx`/`.ts` source (no build step)
+- Tailwind v4 needs `@source "../node_modules/@polso/ui/src/**/*.{ts,tsx}"` in `globals.css` to scan UI component classes
+- To add a new package: create `packages/<name>/`, add `package.json` with `@polso/<name>` scope, add to `transpilePackages` in `next.config.ts`
 
 ## Architecture
 
-- **App Router**: All routes in `/app` directory, uses React Server Components by default
+- **App Router**: All routes in `apps/web/app/`, uses React Server Components by default
 - **Server Actions**: All mutations use server actions with `"use server"` directive
-- **Path Aliases**: Use `@/` for imports (maps to project root)
-  - `@/components` - React components
-  - `@/components/ui` - Shadcn UI components
-  - `@/lib/db` - Prisma client
-  - `@/lib/auth` - Neon Auth utilities
-  - `@/lib/types` - TypeScript types (re-exports Prisma types)
-  - `@/lib/utils` - Utility functions (cn helper for class merging)
-  - `@/features` - Feature modules
-- **Styling**: Tailwind CSS with CSS custom properties for theming (oklch color space, light/dark mode)
+- **Path Aliases**: Use `@/` for app-local imports within `apps/web/`
+  - `@/lib/db` → Prisma client (shim to `@polso/db`)
+  - `@/lib/auth` → Neon Auth utilities (app-local, not extracted)
+  - `@/lib/types` → ActionResponse + Prisma types (shim to `@polso/utils` + `@polso/db`)
+  - `@/lib/utils` → `cn()` helper (shim to `@polso/utils/cn`)
+  - `@/features` → Feature modules
+  - `@polso/ui/<component>` → UI components (direct package import, not `@/components/ui`)
+- **Styling**: Tailwind CSS v4 with CSS custom properties for theming (oklch color space, light/dark mode)
 - **Fonts**: JetBrains Mono (primary), Geist Sans and Geist Mono via next/font
 
 ## Authentication
 
 Neon Auth (Better Auth) handles authentication. Key files:
-- `lib/auth/client.ts` - Client-side auth hook
-- `lib/auth/server.ts` - Server-side auth utilities
-- `lib/auth/get-session.ts` - Get user and organization context
-- `app/api/auth/[...path]/route.ts` - Auth API handler
-- `proxy.ts` - Auth middleware for protected routes
+- `apps/web/lib/auth/client.ts` - Client-side auth hook
+- `apps/web/lib/auth/server.ts` - Server-side auth utilities
+- `apps/web/lib/auth/get-session.ts` - `getAuthContext()` — returns `{ userId, organizationId, user }`
+- `apps/web/app/api/auth/[...path]/route.ts` - Auth API handler
+- `apps/web/proxy.ts` - Auth middleware for protected routes
 
 ## Database Access
 
-Use Prisma via `@/lib/db`:
+Use Prisma via `@/lib/db` (within `apps/web`) or `@polso/db` (from packages):
 
 ```typescript
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@/lib/auth/get-session"
 
-// In server actions or queries
+// In server actions or queries — always scope by organizationId
 const { organizationId } = await getAuthContext()
 const accounts = await prisma.account.findMany({
   where: { organizationId }
 })
 ```
 
+Schema lives at `packages/db/prisma/schema.prisma`. Run `pnpm --filter @polso/db db:generate` after schema changes.
+
 ## Configuration
 
-- **components.json**: Shadcn/ui config with `radix-lyra` style, zinc base color
-- **prisma.config.ts**: Prisma configuration
+- **`apps/web/components.json`**: Shadcn/ui config with `radix-lyra` style, zinc base color
+- **`packages/db/prisma.config.ts`**: Prisma configuration
+- **`turbo.json`**: Task pipeline — `build` depends on `^build` and `^db:generate`
 - **ESLint**: Flat config format (v9) with Next.js core-web-vitals rules
-- **TypeScript**: Strict mode enabled, bundler module resolution
+- **TypeScript**: Strict mode, bundler module resolution, shared via `@polso/tsconfig`
 
 ## Environment Variables
 
-Required environment variables (see `.env.example`):
+Required environment variables (see `apps/web/.env.example`):
 
 ```env
 DATABASE_URL              # Neon PostgreSQL connection string
@@ -145,6 +169,8 @@ TINK_CLIENT_SECRET        # Tink API client secret
 TINK_REDIRECT_URI         # Tink Link redirect URI (e.g. https://app.polso.com/api/tink/callback)
 CRON_SECRET               # Secret for cron job authentication
 NEXT_PUBLIC_APP_URL       # Application URL
+RESEND_API_KEY            # Resend email API key
+CREEM_API_KEY             # Creem billing API key
 ```
 
 ## Code Generation Rules
@@ -152,7 +178,7 @@ NEXT_PUBLIC_APP_URL       # Application URL
 **Code patterns reference**: See `docs/CODE_PATTERNS.md` for full annotated templates of every pattern below.
 
 ### Server Actions
-- File: `features/<module>/actions/<verb>-<entity>.ts`
+- File: `apps/web/features/<module>/actions/<verb>-<entity>.ts`
 - Always start with `"use server"` directive
 - First line in try block: `const { organizationId } = await getAuthContext()`
 - Return type: `Promise<ActionResponse<T>>` using `successResponse()` / `errorResponse()`
@@ -163,7 +189,7 @@ NEXT_PUBLIC_APP_URL       # Application URL
 - Define input/result interfaces locally in the file, not in shared types
 
 ### Queries
-- File: `features/<module>/queries/get-<entity>.ts`
+- File: `apps/web/features/<module>/queries/get-<entity>.ts`
 - Export typed interfaces: `EntityWithRelations`, `EntityFilters`, `EntityStats`
 - Always filter by `organizationId` first
 - Use `Promise.all()` for parallel queries (data + count)
@@ -172,7 +198,7 @@ NEXT_PUBLIC_APP_URL       # Application URL
 - Named exports only (no default exports)
 
 ### Components
-- File: `features/<module>/components/<entity>-<type>.tsx`
+- File: `apps/web/features/<module>/components/<entity>-<type>.tsx`
 - `"use client"` for interactive components
 - Use `useTranslations("namespace")` for i18n (client) or `getTranslations` (server)
 - Icons: `@phosphor-icons/react` (client) or `@phosphor-icons/react/dist/ssr` (server)
@@ -183,7 +209,7 @@ NEXT_PUBLIC_APP_URL       # Application URL
 - Named exports for components, no default exports
 
 ### Pages
-- File: `app/(dashboard)/<route>/page.tsx`
+- File: `apps/web/app/(dashboard)/<route>/page.tsx`
 - Server components (no "use client")
 - Props: `{ searchParams: Promise<{ page?: string; ... }> }`
 - Use `await getTranslations("namespace")` for translations
@@ -191,11 +217,12 @@ NEXT_PUBLIC_APP_URL       # Application URL
 - Layout: `<div className="flex flex-col gap-6 p-6">` → title → stats grid → filters → Card with table
 
 ### i18n
-- Files: `messages/{en,es}/<namespace>.json`
+- Files: `apps/web/messages/{en,es}/<namespace>.json`
 - One file per feature namespace matching the feature directory name
 - Nested keys: `table.*`, `fields.*`, `bulk.*`, `pagination.*`, `editSheet.*`
 - Interpolation: `{count}`, `{start}`, `{end}`, `{total}`
 - Common keys in `messages/{en,es}/common.json`
+- Register new namespaces in `apps/web/lib/i18n/messages.ts`
 
 ### Naming Conventions
 - Files: kebab-case always (`expense-table.tsx`, `get-expenses.ts`)
@@ -206,7 +233,7 @@ NEXT_PUBLIC_APP_URL       # Application URL
 
 ### UI Rules
 - Always use Shadcn/ui components — query shadcn MCP before creating custom ones
-- Import from `@/components/ui/<kebab-case>`
+- Import from `@polso/ui/<kebab-case>` (e.g. `@polso/ui/button`, `@polso/ui/sheet`)
 - Badge variants: `default` (positive), `outline` (neutral), `secondary` (muted), `destructive` (error)
 - Buttons: `variant="ghost" size="sm"` for toolbar actions
 - Loading state: `<Spinner className="h-4 w-4 animate-spin" />` from Phosphor icons
@@ -245,12 +272,12 @@ NEXT_PUBLIC_APP_URL       # Application URL
 
 | Layer | What belongs here |
 |-------|-------------------|
-| `schema` | `prisma/schema.prisma` only |
-| `backend` | `features/*/lib/`, `features/*/queries/`, `features/*/actions/` |
-| `frontend` | `features/*/components/`, `app/(dashboard)/*/page.tsx`, `messages/*/[feature].json`, `lib/i18n/messages.ts` |
-| `navigation` | `components/layout/app-sidebar.tsx`, `messages/*/common.json` |
-| `settings` | `features/settings/**`, `messages/*/settings.json` |
-| `infra` | `app/api/cron/`, `vercel.json`, config files |
+| `schema` | `packages/db/prisma/schema.prisma` only |
+| `backend` | `apps/web/features/*/lib/`, `features/*/queries/`, `features/*/actions/` |
+| `frontend` | `apps/web/features/*/components/`, `app/(dashboard)/*/page.tsx`, `messages/*/[feature].json`, `lib/i18n/messages.ts` |
+| `navigation` | `apps/web/components/layout/app-sidebar.tsx`, `messages/*/common.json` |
+| `settings` | `apps/web/features/settings/**`, `messages/*/settings.json` |
+| `infra` | `apps/web/app/api/cron/`, `vercel.json`, config files |
 
 Example for a full feature like Alerts:
 1. `chore: :card_file_box: Add NotificationSetting alert fields to schema` — schema only
