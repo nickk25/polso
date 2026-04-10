@@ -134,6 +134,32 @@ export async function syncTransactionsAction(
       clients.map((c) => [c.normalizedName, { id: c.id, defaultCategoryId: c.defaultCategoryId }])
     )
 
+    // Build merchant history lookup for historical categorization
+    const historicalExpenses = await prisma.expense.findMany({
+      where: { organizationId, categoryId: { not: null } },
+      select: {
+        categoryId: true,
+        expenseType: true,
+        transaction: { select: { merchantName: true } },
+      },
+    })
+
+    const merchantHistory = new Map<string, {
+      categories: Map<string, number>
+      expenseTypes: Map<string, number>
+    }>()
+
+    for (const e of historicalExpenses) {
+      const key = e.transaction?.merchantName?.toLowerCase().trim()
+      if (!key || !e.categoryId) continue
+      if (!merchantHistory.has(key)) {
+        merchantHistory.set(key, { categories: new Map(), expenseTypes: new Map() })
+      }
+      const h = merchantHistory.get(key)!
+      h.categories.set(e.categoryId, (h.categories.get(e.categoryId) ?? 0) + 1)
+      h.expenseTypes.set(e.expenseType, (h.expenseTypes.get(e.expenseType) ?? 0) + 1)
+    }
+
     let totalTransactionsImported = 0
     let totalTransactionsModified = 0
     let totalExpensesCreated = 0
@@ -185,7 +211,8 @@ export async function syncTransactionsAction(
                 tx,
                 categoryLookup,
                 vendorLookup,
-                clientLookup
+                clientLookup,
+                merchantHistory
               )
 
             if (imported) totalTransactionsImported++
@@ -238,13 +265,25 @@ export async function syncTransactionsAction(
   }
 }
 
+type MerchantHistory = Map<string, { categories: Map<string, number>; expenseTypes: Map<string, number> }>
+
+function mostFrequentInMap(map: Map<string, number>): string | null {
+  let best: string | null = null
+  let bestCount = 0
+  for (const [key, count] of map) {
+    if (count > bestCount) { best = key; bestCount = count }
+  }
+  return best
+}
+
 async function upsertTransaction(
   organizationId: string,
   accountId: string,
   tx: BankTransaction,
   categoryLookup: Map<string, string>,
   vendorLookup: Map<string, { id: string; defaultCategoryId: string | null }>,
-  clientLookup: Map<string, { id: string; defaultCategoryId: string | null }>
+  clientLookup: Map<string, { id: string; defaultCategoryId: string | null }>,
+  merchantHistory: MerchantHistory = new Map()
 ): Promise<{ imported: boolean; modified: boolean; expenseCreated: boolean; incomeCreated: boolean }> {
   const counterpartyName = tx.merchantName ?? tx.name ?? null
   const normalizedCounterparty = counterpartyName
@@ -318,9 +357,18 @@ async function upsertTransaction(
     })
 
     if (!existingExpense) {
+      const merchantKey = tx.merchantName?.toLowerCase().trim() ?? null
+      const history = merchantKey ? merchantHistory.get(merchantKey) : null
+      const historicalCategoryId = history ? mostFrequentInMap(history.categories) : null
+      const historicalTxCount = history ? [...history.expenseTypes.values()].reduce((a, b) => a + b, 0) : 0
+      const historicalExpenseType = history && historicalTxCount >= 2
+        ? mostFrequentInMap(history.expenseTypes)
+        : null
+
       const suggestion = suggestCategory(
         {
           vendorDefaultCategoryId: matchedVendor?.defaultCategoryId,
+          historicalCategoryId,
           providerPrimaryCategory: tx.category,
           providerDetailedCategory: tx.categoryDetailed,
           merchantName: tx.merchantName,
@@ -338,7 +386,7 @@ async function upsertTransaction(
             currency: tx.currency,
             date: tx.date,
             description: tx.merchantName ?? tx.name,
-            expenseType: "variable",
+            expenseType: historicalExpenseType ?? "variable",
             status: "pending",
             isManual: false,
             vendorId: matchedVendor?.id ?? null,

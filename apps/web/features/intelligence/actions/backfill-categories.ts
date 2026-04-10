@@ -32,18 +32,46 @@ export async function backfillCategoriesAction(): Promise<ActionResponse<Backfil
     // Get all vendors with default categories
     const vendors = await prisma.vendor.findMany({
       where: { organizationId },
-      select: {
-        id: true,
-        normalizedName: true,
-        defaultCategoryId: true,
-      },
+      select: { id: true, normalizedName: true, defaultCategoryId: true },
     })
     const vendorLookup = new Map(
-      vendors.map((v) => [
-        v.normalizedName,
-        { id: v.id, defaultCategoryId: v.defaultCategoryId },
-      ])
+      vendors.map((v) => [v.normalizedName, { id: v.id, defaultCategoryId: v.defaultCategoryId }])
     )
+
+    // Build merchant history: most frequent (categoryId, expenseType) per merchantName
+    const historicalExpenses = await prisma.expense.findMany({
+      where: { organizationId, categoryId: { not: null } },
+      select: {
+        categoryId: true,
+        expenseType: true,
+        transaction: { select: { merchantName: true } },
+      },
+    })
+
+    const merchantHistory = new Map<string, {
+      categories: Map<string, number>
+      expenseTypes: Map<string, number>
+    }>()
+
+    for (const e of historicalExpenses) {
+      const key = e.transaction?.merchantName?.toLowerCase().trim()
+      if (!key || !e.categoryId) continue
+      if (!merchantHistory.has(key)) {
+        merchantHistory.set(key, { categories: new Map(), expenseTypes: new Map() })
+      }
+      const h = merchantHistory.get(key)!
+      h.categories.set(e.categoryId, (h.categories.get(e.categoryId) ?? 0) + 1)
+      h.expenseTypes.set(e.expenseType, (h.expenseTypes.get(e.expenseType) ?? 0) + 1)
+    }
+
+    function mostFrequent(map: Map<string, number>): string | null {
+      let best: string | null = null
+      let bestCount = 0
+      for (const [key, count] of map) {
+        if (count > bestCount) { best = key; bestCount = count }
+      }
+      return best
+    }
 
     // Get uncategorized expenses with their transaction data
     const expenses = await prisma.expense.findMany({
@@ -82,10 +110,21 @@ export async function backfillCategoriesAction(): Promise<ActionResponse<Backfil
           ? vendorLookup.get(counterpartyName)
           : null
 
+      // Look up merchant history for this transaction
+      const merchantKey = expense.transaction?.merchantName?.toLowerCase().trim() ?? null
+      const history = merchantKey ? merchantHistory.get(merchantKey) : null
+      const historicalCategoryId = history ? mostFrequent(history.categories) : null
+      // Only use historical expenseType if there are at least 2 past transactions
+      const historicalExpenseType =
+        history && history.expenseTypes.size > 0 && [...history.expenseTypes.values()].reduce((a, b) => a + b, 0) >= 2
+          ? mostFrequent(history.expenseTypes)
+          : null
+
       // Get category suggestion
       const suggestion = suggestCategory(
         {
           vendorDefaultCategoryId: matchedVendor?.defaultCategoryId,
+          historicalCategoryId,
           providerPrimaryCategory: expense.transaction?.category,
           providerDetailedCategory: expense.transaction?.categoryDetailed,
           merchantName: expense.transaction?.merchantName,
@@ -101,7 +140,7 @@ export async function backfillCategoriesAction(): Promise<ActionResponse<Backfil
             categoryId: suggestion.categoryId,
             categorySource: suggestion.source,
             categoryConfidence: suggestion.confidence,
-            // Also link vendor if matched and not already set
+            ...(historicalExpenseType && { expenseType: historicalExpenseType }),
             ...(matchedVendor && !expense.vendor && { vendorId: matchedVendor.id }),
           },
         })
