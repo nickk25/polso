@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Polso
+
+Financial management and expense intelligence SaaS for businesses. Connects to bank accounts via Tink (Open Banking), syncs transactions automatically, detects recurring expenses, auto-categorizes spending with AI, and provides analytics including burn rate, runway, and cash flow.
+
+## Tech Stack
+
+- **Next.js 16** — App Router, React Server Components
+- **Prisma 7 + Neon PostgreSQL** — Serverless database
+- **Neon Auth** — Authentication (Better Auth)
+- **Tink** — Open Banking (EU/Spain)
+- **Cloudflare R2** — Invoice and export storage
+- **Resend** — Transactional email
+- **Creem** — Billing and subscriptions
+- **Shadcn/ui + Tailwind CSS v4** — UI
+- **pnpm + Turborepo** — Monorepo
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp apps/web/.env.example apps/web/.env.local
+# Fill in DATABASE_URL, NEON_AUTH_BASE_URL, R2_*, TINK_*, etc.
+
+# Generate Prisma client
+pnpm --filter @polso/db db:generate
+
+# Start development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Packages
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Package | Description |
+|---------|-------------|
+| `@polso/banking` | Tink Open Banking client and token management |
+| `@polso/billing` | Creem payment API integration |
+| `@polso/db` | Prisma schema, client singleton, generated types |
+| `@polso/email` | Resend email client and 20 transactional templates |
+| `@polso/intelligence` | Auto-categorization and recurring pattern detection |
+| `@polso/plans` | Plan definitions, limits, pricing, and feature flags |
+| `@polso/storage` | Cloudflare R2 client (upload, download, presigned URLs) |
+| `@polso/tsconfig` | Shared TypeScript configs (base, next, library) |
+| `@polso/ui` | 26 Shadcn/ui components and hooks |
+| `@polso/utils` | `cn()`, `ActionResponse`, shared enums |
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+polso-monorepo/
+  apps/
+    web/          Next.js dashboard app
+  packages/
+    banking/      @polso/banking
+    billing/      @polso/billing
+    db/           @polso/db
+    email/        @polso/email
+    intelligence/ @polso/intelligence
+    plans/        @polso/plans
+    storage/      @polso/storage
+    tsconfig/     @polso/tsconfig
+    ui/           @polso/ui
+    utils/        @polso/utils
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [`CLAUDE.md`](./CLAUDE.md) — AI coding assistant instructions and conventions
+- [`docs/CODE_PATTERNS.md`](./docs/CODE_PATTERNS.md) — Annotated code templates for every pattern
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — Database schema, feature modules, data flows
