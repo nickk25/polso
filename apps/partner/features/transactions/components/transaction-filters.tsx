@@ -87,8 +87,8 @@ export function TransactionFilters({
   const toDate = dateTo ? new Date(dateTo) : undefined
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <div className="relative flex-1 max-w-sm">
+    <div className="flex flex-col gap-2">
+      <div className="relative">
         <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar transacción..."
@@ -98,19 +98,20 @@ export function TransactionFilters({
         />
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2">
         <DateRangePicker
           from={fromDate}
           to={toDate}
           onSelect={handleDateSelect}
           placeholder="Rango de fechas"
+          className="w-full sm:w-auto"
         />
 
         <Select
           value={receiptStatus || "all"}
           onValueChange={(value) => updateParams({ receiptStatus: value })}
         >
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue placeholder="Recibos" />
           </SelectTrigger>
           <SelectContent>
@@ -121,7 +122,7 @@ export function TransactionFilters({
         </Select>
 
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={isPending}>
+          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={isPending} className="w-full sm:w-auto">
             <X className="h-4 w-4 mr-1" />
             Limpiar
           </Button>

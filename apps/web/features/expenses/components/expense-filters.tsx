@@ -93,8 +93,8 @@ export function ExpenseFilters({ search, status, expenseType, category, dateFrom
   const toDate = dateTo ? new Date(dateTo) : undefined
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="relative flex-1 max-w-sm">
+    <div className="flex flex-col gap-2">
+      <div className="relative">
         <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder={t("tableFilters.searchPlaceholder")}
@@ -104,19 +104,20 @@ export function ExpenseFilters({ search, status, expenseType, category, dateFrom
         />
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2">
         <DateRangePicker
           from={fromDate}
           to={toDate}
           onSelect={handleDateSelect}
           placeholder={t("tableFilters.dateRange")}
+          className="w-full sm:w-auto"
         />
 
         <Select
           value={category || "all"}
           onValueChange={(value) => updateParams({ category: value })}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder={t("tableFilters.categoryPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
@@ -140,7 +141,7 @@ export function ExpenseFilters({ search, status, expenseType, category, dateFrom
           value={status || "all"}
           onValueChange={(value) => updateParams({ status: value })}
         >
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-full sm:w-[130px]">
             <SelectValue placeholder={t("tableFilters.statusPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
@@ -155,7 +156,7 @@ export function ExpenseFilters({ search, status, expenseType, category, dateFrom
           value={expenseType || "all"}
           onValueChange={(value) => updateParams({ expenseType: value })}
         >
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-full sm:w-[130px]">
             <SelectValue placeholder={t("tableFilters.typePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
@@ -166,7 +167,7 @@ export function ExpenseFilters({ search, status, expenseType, category, dateFrom
         </Select>
 
         {hasFilters && (
-          <Button variant="ghost" onClick={clearFilters} disabled={isPending}>
+          <Button variant="ghost" size="sm" onClick={clearFilters} disabled={isPending} className="w-full sm:w-auto">
             <X className="h-4 w-4 mr-1" />
             {t("tableFilters.clear")}
           </Button>
