@@ -190,6 +190,10 @@ async function persistMatch(
         where: { id: inboxItem.id },
         data: { status: "done", transactionId: tx.id },
       }),
+      prisma.expense.updateMany({
+        where: { transactionId: tx.id, organizationId },
+        data: { status: "documented" },
+      }),
     ])
 
     const autoText = `✅ *Recibo conciliado*\n\nTu recibo "${inboxItem.displayName ?? "sin nombre"}" ha sido vinculado a la transacción "${tx.merchantName ?? tx.name}" de ${Math.abs(tx.amount).toFixed(2)} ${tx.currency} del ${tx.date.toLocaleDateString("es-ES")}.`

@@ -115,6 +115,10 @@ export async function runMatchingForInboxItem(
         where: { id: inboxItemId },
         data: { status: "done", transactionId: best.transactionId },
       }),
+      prisma.expense.updateMany({
+        where: { transactionId: best.transactionId, organizationId },
+        data: { status: "documented" },
+      }),
     ])
 
     await notifyAutoMatched(inboxItem, tx)
