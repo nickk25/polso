@@ -37,7 +37,7 @@ function formatCurrency(amount: number, currency: string) {
 }
 
 function ReceiptStatusBadge({ tx }: { tx: ClientTransaction }) {
-  const hasReceipt = tx.expenseStatus === "documented"
+  const hasReceipt = tx.expenseStatus === "documented" || tx.inboxItems.length > 0
   if (hasReceipt) {
     return (
       <Badge variant="default" className="text-xs">
@@ -46,15 +46,11 @@ function ReceiptStatusBadge({ tx }: { tx: ClientTransaction }) {
       </Badge>
     )
   }
-  // positive = expense (money out) in Tink convention
-  if (tx.amount > 0) {
-    return (
-      <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
-        Sin comprobante
-      </Badge>
-    )
-  }
-  return <span className="text-xs text-muted-foreground">—</span>
+  return (
+    <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
+      Sin comprobante
+    </Badge>
+  )
 }
 
 function ExpenseTypeBadge({ type }: { type: string | null }) {

@@ -60,9 +60,9 @@ function buildWhere(clientId: string, filters: TransactionFilters) {
         }
       : {}),
     ...(receiptStatus === "con_recibo"
-      ? { expense: { status: "documented" } }
+      ? { OR: [{ expense: { status: "documented" } }, { inboxItems: { some: {} } }] }
       : receiptStatus === "sin_recibo"
-        ? { NOT: { expense: { status: "documented" } } }
+        ? { NOT: { OR: [{ expense: { status: "documented" } }, { inboxItems: { some: {} } }] } }
         : {}),
   }
 }
@@ -141,15 +141,14 @@ export async function getClientTransactionStats(
       where: {
         organizationId: clientId,
         date: { gte: thisMonthStart, lte: thisMonthEnd },
-        expense: { status: "documented" },
+        OR: [{ expense: { status: "documented" } }, { inboxItems: { some: {} } }],
       },
     }),
     prisma.transaction.count({
       where: {
         organizationId: clientId,
         date: { gte: thisMonthStart, lte: thisMonthEnd },
-        amount: { gt: 0 },
-        NOT: { expense: { status: "documented" } },
+        NOT: { OR: [{ expense: { status: "documented" } }, { inboxItems: { some: {} } }] },
       },
     }),
   ])
