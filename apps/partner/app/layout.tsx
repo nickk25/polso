@@ -10,8 +10,12 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Polso Partner",
+  title: {
+    default: "Polso Partner",
+    template: "%s — Polso Partner",
+  },
   description: "Panel de asesoría — Polso",
+  metadataBase: new URL("https://partner.polso.app"),
 }
 
 export default function RootLayout({
