@@ -19,6 +19,9 @@
   "teamTitle": "Team",
   "teamDescription": "Invite and manage team members",
   "manageTeam": "Manage Team",
+  "agentTitle": "Receipt Agent",
+  "agentDescription": "Connect WhatsApp or Telegram to send receipts from your phone",
+  "manageAgent": "Manage Agent",
   "tabs": {
     "general": "General",
     "preferences": "Preferences",

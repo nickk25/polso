@@ -69,14 +69,39 @@ export async function POST(req: NextRequest) {
   })
 
   if (!org) {
-    await sendTelegramText(
-      chatId,
-      "Hola 👋 Tu cuenta no está registrada en Polso. Contacta con tu asesor para activar el agente."
-    )
+    // Check if this is a link code attempt (6-digit number)
+    if (message.text) {
+      const text = message.text.trim()
+      if (/^\d{6}$/.test(text)) {
+        after(handleLinkCode(chatId, text))
+      } else if (text === "/start") {
+        await sendTelegramText(
+          chatId,
+          "Para conectarte a Polso, genera un código en Ajustes › Agente y envíamelo aquí."
+        )
+      } else {
+        await sendTelegramText(
+          chatId,
+          "Para conectarte a Polso, genera un código en Ajustes › Agente y envíamelo aquí."
+        )
+      }
+    }
     return NextResponse.json({ ok: true })
   }
 
   const organizationId = org.id
+
+  // ── Text: /start or unrecognized ────────────────────────────────────────
+  if (message.text) {
+    const text = message.text.trim()
+    if (text === "/start") {
+      await sendTelegramText(
+        chatId,
+        "👋 Ya estás conectado a Polso. Envíame una foto o PDF de un recibo para procesarlo."
+      )
+    }
+    return NextResponse.json({ ok: true })
+  }
 
   // ── Photo ─────────────────────────────────────────────────────────────────
   if (message.photo) {
@@ -222,6 +247,56 @@ async function processReceipt({
   }
 }
 
+// ─── Link code verification ───────────────────────────────────────────────────
+
+async function handleLinkCode(chatId: string, code: string): Promise<void> {
+  try {
+    const linkCode = await prisma.agentLinkCode.findFirst({
+      where: {
+        code,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      select: { id: true, organizationId: true },
+    })
+
+    if (!linkCode) {
+      // Generic message — don't reveal whether code exists or which org it belongs to
+      await sendTelegramText(
+        chatId,
+        "Código inválido o expirado. Genera uno nuevo en Ajustes › Agente."
+      )
+      return
+    }
+
+    await prisma.agentLinkCode.update({
+      where: { id: linkCode.id },
+      data: { usedAt: new Date() },
+    })
+
+    // Unlink from any other org that already uses this chat ID (reconect scenario)
+    await prisma.organization.updateMany({
+      where: {
+        telegramChatId: chatId,
+        NOT: { id: linkCode.organizationId },
+      },
+      data: { telegramChatId: null },
+    })
+
+    await prisma.organization.update({
+      where: { id: linkCode.organizationId },
+      data: { telegramChatId: chatId },
+    })
+
+    await sendTelegramText(
+      chatId,
+      "✅ ¡Conectado! Ya puedes enviarme fotos o PDFs de recibos y facturas para procesarlos."
+    )
+  } catch (err) {
+    console.error(`[telegram/webhook] handleLinkCode error:`, err)
+  }
+}
+
 // ─── Confirm match ────────────────────────────────────────────────────────────
 
 async function confirmMatch(
@@ -304,6 +379,7 @@ interface TelegramMessage {
   message_id: number
   from: TelegramUser
   chat: TelegramChat
+  text?: string
   photo?: TelegramPhotoSize[]
   document?: TelegramDocument
   caption?: string

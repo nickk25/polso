@@ -19,6 +19,9 @@
   "teamTitle": "Equipo",
   "teamDescription": "Invita y gestiona miembros del equipo",
   "manageTeam": "Gestionar Equipo",
+  "agentTitle": "Agente de Recibos",
+  "agentDescription": "Conecta WhatsApp o Telegram para enviar recibos desde el movil",
+  "manageAgent": "Gestionar Agente",
   "tabs": {
     "general": "General",
     "preferences": "Preferencias",

@@ -2,7 +2,7 @@ import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
-import { Gear, Bank, User, Bell, Buildings, UsersThree } from "@phosphor-icons/react/dist/ssr"
+import { Gear, Bank, User, Bell, Buildings, UsersThree, Robot } from "@phosphor-icons/react/dist/ssr"
 
 export default async function SettingsPage() {
   const t = await getTranslations("settings")
@@ -115,6 +115,23 @@ export default async function SettingsPage() {
           <CardContent>
             <Button variant="outline" asChild>
               <Link href="/settings/team">{t("manageTeam")}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Robot className="h-5 w-5" />
+              <CardTitle>{t("agentTitle")}</CardTitle>
+            </div>
+            <CardDescription>
+              {t("agentDescription")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" asChild>
+              <Link href="/settings/agent">{t("manageAgent")}</Link>
             </Button>
           </CardContent>
         </Card>

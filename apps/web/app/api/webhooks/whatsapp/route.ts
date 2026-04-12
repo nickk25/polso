@@ -52,14 +52,34 @@ export async function POST(req: NextRequest) {
   })
 
   if (!org) {
-    await sendWhatsAppText(
-      from,
-      "Hola 👋 Tu número no está registrado en Polso. Contacta con tu asesor para activar el agente."
-    )
+    // Check if this is a link code attempt (6-digit number)
+    if (type === "text") {
+      const text = ((message.raw.text as { body?: string } | undefined)?.body ?? "").trim()
+      if (/^\d{6}$/.test(text)) {
+        after(handleLinkCode(from, text, "whatsapp"))
+      } else {
+        await sendWhatsAppText(
+          from,
+          "Para conectarte a Polso, genera un código en Ajustes › Agente y envíamelo aquí."
+        )
+      }
+    }
     return NextResponse.json({ received: true })
   }
 
   const organizationId = org.id
+
+  // ── Text: /start or unrecognized ────────────────────────────────────────
+  if (type === "text") {
+    const text = ((message.raw.text as { body?: string } | undefined)?.body ?? "").trim()
+    if (text === "/start") {
+      await sendWhatsAppText(
+        from,
+        "👋 Ya estás conectado a Polso. Envíame una foto o PDF de un recibo para procesarlo."
+      )
+    }
+    return NextResponse.json({ received: true })
+  }
 
   // ── Image or document attachment ────────────────────────────────────────
   if (type === "image" || type === "document") {
@@ -260,6 +280,56 @@ async function declineMatch(
     )
   } catch (err) {
     console.error("[whatsapp/webhook] declineMatch error:", err)
+  }
+}
+
+// ─── Link code verification ───────────────────────────────────────────────────
+
+async function handleLinkCode(from: string, code: string, channel: "whatsapp"): Promise<void> {
+  try {
+    const linkCode = await prisma.agentLinkCode.findFirst({
+      where: {
+        code,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      select: { id: true, organizationId: true },
+    })
+
+    if (!linkCode) {
+      // Generic message — don't reveal whether code exists or which org it belongs to
+      await sendWhatsAppText(
+        from,
+        "Código inválido o expirado. Genera uno nuevo en Ajustes › Agente."
+      )
+      return
+    }
+
+    await prisma.agentLinkCode.update({
+      where: { id: linkCode.id },
+      data: { usedAt: new Date() },
+    })
+
+    // Unlink from any other org that already uses this phone (reconect scenario)
+    await prisma.organization.updateMany({
+      where: {
+        whatsappPhone: normalizePhone(from),
+        NOT: { id: linkCode.organizationId },
+      },
+      data: { whatsappPhone: null },
+    })
+
+    await prisma.organization.update({
+      where: { id: linkCode.organizationId },
+      data: { whatsappPhone: normalizePhone(from) },
+    })
+
+    await sendWhatsAppText(
+      from,
+      "✅ ¡Conectado! Ya puedes enviarme fotos o PDFs de recibos y facturas para procesarlos."
+    )
+  } catch (err) {
+    console.error(`[whatsapp/webhook] handleLinkCode error:`, err)
   }
 }
 
