@@ -58,8 +58,6 @@ export default async function DashboardLayout({
 
   if (org.type !== "partner") redirect("/not-partner")
 
-  await getPartnerAuthContext()
-
   return (
     <SidebarProvider>
       <AppSidebar organizationName={org.name} userEmail={user.email} />

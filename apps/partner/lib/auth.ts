@@ -9,9 +9,11 @@ export interface PartnerAuthContext {
 }
 
 /**
- * Cached per-request auth context.
- * The layout calls this first (creating the org if needed),
- * pages call it again — React cache() returns the same value within one request.
+ * Resolves the current user's org context.
+ * Cached per-request via React.cache() — safe to call from multiple pages/components.
+ *
+ * The layout calls neonAuth() + getOrCreatePartnerOrg() before rendering children,
+ * so by the time any page calls this, the UserOrganization record is guaranteed to exist.
  */
 export const getPartnerAuthContext = cache(async (): Promise<PartnerAuthContext> => {
   const { user } = await neonAuth()
