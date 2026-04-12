@@ -1,14 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Buildings,
   ChartBar,
   Gear,
   UserPlus,
   House,
+  SignOut,
 } from "@phosphor-icons/react"
+import { authClient } from "@polso/auth/client"
 import {
   Sidebar,
   SidebarContent,
@@ -45,7 +47,13 @@ interface AppSidebarProps {
 
 export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const initials = getInitials(organizationName)
+
+  async function handleSignOut() {
+    await authClient.signOut()
+    router.push("/auth/sign-in")
+  }
 
   return (
     <Sidebar>
@@ -113,12 +121,19 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
             <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0">
               {initials}
             </div>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <span className="text-xs font-medium truncate">{organizationName}</span>
               {userEmail && (
                 <span className="text-[10px] text-muted-foreground truncate">{userEmail}</span>
               )}
             </div>
+            <button
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              title="Cerrar sesión"
+            >
+              <SignOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </SidebarFooter>
