@@ -129,16 +129,18 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
 
       {/* Filters */}
       {hasAnyExpenses && (
-        <div className="flex items-center justify-between gap-4">
-          <ExpenseFilters
-            search={search}
-            status={status}
-            expenseType={expenseType}
-            category={category}
-            dateFrom={dateFrom}
-            dateTo={dateTo}
-            categories={categories}
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex-1 min-w-0">
+            <ExpenseFilters
+              search={search}
+              status={status}
+              expenseType={expenseType}
+              category={category}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              categories={categories}
+            />
+          </div>
           <AutoCategorizeButton />
         </div>
       )}
