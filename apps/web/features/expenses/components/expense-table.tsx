@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@polso/ui/select"
-import { Spinner, Sparkle, Receipt } from "@phosphor-icons/react"
+import { Spinner, Sparkle, Receipt, TelegramLogo, WhatsappLogo, DownloadSimple, Eye } from "@phosphor-icons/react"
 import {
   Tooltip,
   TooltipContent,
@@ -41,7 +41,7 @@ import {
 import { CategorySelect } from "@/features/categories/components/category-select"
 import { ExpenseBulkActionBar } from "./expense-bulk-action-bar"
 import { updateExpenseAction } from "../actions/update-expense"
-import { getExpenseInvoicesAction, type InvoiceWithUrl } from "../actions/invoice-actions"
+import { getExpenseInvoicesAction, type InvoiceWithUrl, type InboxItemWithUrl } from "../actions/invoice-actions"
 import { InvoiceUpload } from "./invoice-upload"
 import { InvoiceList } from "./invoice-list"
 import type { ExpenseWithRelations } from "../queries/get-expenses"
@@ -69,6 +69,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
   const [editedExpenseType, setEditedExpenseType] = useState<string>("")
   const [editedStatus, setEditedStatus] = useState<string>("")
   const [invoices, setInvoices] = useState<InvoiceWithUrl[]>([])
+  const [inboxItems, setInboxItems] = useState<InboxItemWithUrl[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const lastClickedIndex = useRef<number | null>(null)
@@ -117,19 +118,21 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
   const allSelected = expenses.length > 0 && selectedIds.size === expenses.length
   const someSelected = selectedIds.size > 0 && selectedIds.size < expenses.length
 
-  // Load invoices when expense is selected
+  // Load invoices and inbox items when expense is selected
   useEffect(() => {
     if (selectedExpense) {
       setInvoicesLoading(true)
       getExpenseInvoicesAction(selectedExpense.id)
         .then((result) => {
           if (result.success) {
-            setInvoices(result.data)
+            setInvoices(result.data.invoices)
+            setInboxItems(result.data.inboxItems)
           }
         })
         .finally(() => setInvoicesLoading(false))
     } else {
       setInvoices([])
+      setInboxItems([])
     }
   }, [selectedExpense?.id])
 
@@ -150,8 +153,8 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
   const handleInvoiceDelete = (invoiceId: string) => {
     const newInvoices = invoices.filter((inv) => inv.id !== invoiceId)
     setInvoices(newInvoices)
-    // If no invoices remain, status is set to "pending" on the server
-    if (newInvoices.length === 0) {
+    // If no invoices remain and no inbox items, status is set to "pending" on the server
+    if (newInvoices.length === 0 && inboxItems.length === 0) {
       setEditedStatus("pending")
     }
     router.refresh()
@@ -182,16 +185,18 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
       editedExpenseType !== selectedExpense.expenseType ||
       editedStatus !== selectedExpense.status)
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "documented":
-        return <Badge variant="default">{t("table.statusDocumented")}</Badge>
-      case "excluded":
-        return <Badge variant="secondary">{t("table.statusExcluded")}</Badge>
-      case "pending":
-      default:
-        return <Badge variant="outline">{t("table.statusPending")}</Badge>
+  const getStatusBadge = (expense: ExpenseWithRelations) => {
+    if (expense.status === "excluded") {
+      return <Badge variant="secondary">{t("table.statusExcluded")}</Badge>
     }
+    const hasReceipt =
+      (expense.transaction?.inboxItems?.length ?? 0) > 0 ||
+      expense._count.invoices > 0 ||
+      expense.status === "documented"
+    if (hasReceipt) {
+      return <Badge variant="default">{t("table.statusDocumented")}</Badge>
+    }
+    return <Badge variant="outline">{t("table.statusPending")}</Badge>
   }
 
   const getExpenseTypeBadge = (type: string) => {
@@ -327,7 +332,7 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
               <TableCell className="text-right font-medium">
                 {formatCurrency(expense.amount, expense.currency)}
               </TableCell>
-              <TableCell>{getStatusBadge(expense.status)}</TableCell>
+              <TableCell>{getStatusBadge(expense)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -443,9 +448,9 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                     <Receipt className="h-4 w-4 text-muted-foreground" />
                     <Label>{t("table.invoicesAndReceipts")}</Label>
                   </div>
-                  {invoices.length > 0 && (
+                  {(invoices.length + inboxItems.length) > 0 && (
                     <Badge variant="secondary" className="text-xs">
-                      {invoices.length}
+                      {invoices.length + inboxItems.length}
                     </Badge>
                   )}
                 </div>
@@ -455,6 +460,51 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
                   onDelete={handleInvoiceDelete}
                   loading={invoicesLoading}
                 />
+
+                {/* Inbox items from Telegram/WhatsApp */}
+                {inboxItems.length > 0 && (
+                  <div className="space-y-2">
+                    {inboxItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {item.source === "telegram" ? (
+                            <TelegramLogo className="h-4 w-4 text-sky-500 shrink-0" />
+                          ) : (
+                            <WhatsappLogo className="h-4 w-4 text-green-500 shrink-0" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{item.fileName}</p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {item.source}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <a
+                            href={item.downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            title={t("invoices.preview")}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </a>
+                          <a
+                            href={item.downloadUrl}
+                            download={item.fileName}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            title={t("invoices.download")}
+                          >
+                            <DownloadSimple className="h-4 w-4" />
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <InvoiceUpload
                   expenseId={selectedExpense.id}

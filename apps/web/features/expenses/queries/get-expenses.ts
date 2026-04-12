@@ -28,6 +28,7 @@ export interface ExpenseWithRelations {
     merchantName: string | null
     name: string | null
     category: string | null
+    inboxItems: Array<{ id: string }>
   } | null
   category: {
     id: string
@@ -87,6 +88,7 @@ export async function getExpenses(
             merchantName: true,
             name: true,
             category: true,
+            inboxItems: { select: { id: true } },
           },
         },
         category: {
@@ -215,6 +217,7 @@ export async function getRecentExpenses(limit = 10): Promise<ExpenseWithRelation
           merchantName: true,
           name: true,
           category: true,
+          inboxItems: { select: { id: true } },
         },
       },
       category: {

@@ -24,6 +24,17 @@ export interface InvoiceWithUrl {
   downloadUrl: string
 }
 
+export interface InboxItemWithUrl {
+  id: string
+  fileName: string
+  filePath: string
+  fileSize: number | null
+  mimeType: string | null
+  createdAt: Date
+  downloadUrl: string
+  source: string
+}
+
 /**
  * Create an invoice record after successful R2 upload
  */
@@ -142,12 +153,17 @@ export async function deleteInvoiceAction(
   }
 }
 
+export interface ExpenseAttachments {
+  invoices: InvoiceWithUrl[]
+  inboxItems: InboxItemWithUrl[]
+}
+
 /**
- * Get all invoices for an expense with signed download URLs
+ * Get all invoices and matched inbox items for an expense
  */
 export async function getExpenseInvoicesAction(
   expenseId: string
-): Promise<ActionResponse<InvoiceWithUrl[]>> {
+): Promise<ActionResponse<ExpenseAttachments>> {
   try {
     const { organizationId } = await getAuthContext()
 
@@ -157,37 +173,46 @@ export async function getExpenseInvoicesAction(
         id: expenseId,
         organizationId,
       },
-      select: { id: true },
+      select: { id: true, transactionId: true },
     })
 
     if (!expense) {
       return errorResponse("Expense not found", "NOT_FOUND")
     }
 
-    // Get all invoices for this expense
-    const invoices = await prisma.expenseInvoice.findMany({
-      where: {
-        expenseId,
-        organizationId,
-      },
-      select: {
-        id: true,
-        fileName: true,
-        filePath: true,
-        fileSize: true,
-        mimeType: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: "desc" },
-    })
+    // Fetch manually uploaded invoices and inbox items in parallel
+    const [invoices, inboxItemRecords] = await Promise.all([
+      prisma.expenseInvoice.findMany({
+        where: { expenseId, organizationId },
+        select: { id: true, fileName: true, filePath: true, fileSize: true, mimeType: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      expense.transactionId
+        ? prisma.inboxItem.findMany({
+            where: { transactionId: expense.transactionId, organizationId },
+            select: { id: true, fileName: true, filePath: true, size: true, contentType: true, source: true, createdAt: true },
+            orderBy: { createdAt: "desc" },
+          })
+        : Promise.resolve([]),
+    ])
 
-    // Generate server-proxied download URLs (avoids CORS issues with R2)
     const invoicesWithUrls: InvoiceWithUrl[] = invoices.map((invoice) => ({
       ...invoice,
       downloadUrl: `/api/invoices/${invoice.id}`,
     }))
 
-    return successResponse(invoicesWithUrls)
+    const inboxItemsWithUrls: InboxItemWithUrl[] = inboxItemRecords.map((item) => ({
+      id: item.id,
+      fileName: item.fileName,
+      filePath: item.filePath,
+      fileSize: item.size,
+      mimeType: item.contentType,
+      createdAt: item.createdAt,
+      downloadUrl: `/api/inbox/${item.id}`,
+      source: item.source,
+    }))
+
+    return successResponse({ invoices: invoicesWithUrls, inboxItems: inboxItemsWithUrls })
   } catch (error) {
     console.error("Error fetching invoices:", error)
     return errorResponse(
