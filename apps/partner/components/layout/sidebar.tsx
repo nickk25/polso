@@ -2,15 +2,15 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useTransition } from "react"
 import {
   Buildings,
-  ChartBar,
   Gear,
   UserPlus,
   House,
   SignOut,
+  DotsThree,
 } from "@phosphor-icons/react"
-import { authClient } from "@polso/auth/client"
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +23,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@polso/ui/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@polso/ui/dropdown-menu"
+import { authClient } from "@polso/auth/client"
 
 const mainNavItems = [
   { label: "Resumen", href: "/", icon: House },
@@ -48,11 +56,14 @@ interface AppSidebarProps {
 export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const initials = getInitials(organizationName)
 
-  async function handleSignOut() {
-    await authClient.signOut()
-    router.push("/auth/sign-in")
+  function handleSignOut() {
+    startTransition(async () => {
+      await authClient.signOut()
+      router.replace("/auth/sign-in")
+    })
   }
 
   return (
@@ -117,24 +128,33 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
 
       <SidebarFooter className="border-t">
         <div className="px-2 py-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0">
-              {initials}
-            </div>
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-xs font-medium truncate">{organizationName}</span>
-              {userEmail && (
-                <span className="text-[10px] text-muted-foreground truncate">{userEmail}</span>
-              )}
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-              title="Cerrar sesión"
-            >
-              <SignOut className="h-4 w-4" />
-            </button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex w-full items-center gap-2 rounded-md p-1 hover:bg-sidebar-accent transition-colors">
+                <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0">
+                  {initials}
+                </div>
+                <div className="flex flex-col min-w-0 flex-1 text-left">
+                  <span className="text-xs font-medium truncate">{organizationName}</span>
+                  {userEmail && (
+                    <span className="text-[10px] text-muted-foreground truncate">{userEmail}</span>
+                  )}
+                </div>
+                <DotsThree className="h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="start" className="w-56">
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                disabled={isPending}
+                className="text-destructive focus:text-destructive"
+              >
+                <SignOut className="mr-2 h-4 w-4" />
+                Cerrar sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </SidebarFooter>
     </Sidebar>
