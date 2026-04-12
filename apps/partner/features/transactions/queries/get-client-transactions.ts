@@ -140,12 +140,14 @@ export async function getClientTransactionStats(
     prisma.transaction.count({
       where: {
         organizationId: clientId,
+        date: { gte: thisMonthStart, lte: thisMonthEnd },
         expense: { status: "documented" },
       },
     }),
     prisma.transaction.count({
       where: {
         organizationId: clientId,
+        date: { gte: thisMonthStart, lte: thisMonthEnd },
         amount: { gt: 0 },
         NOT: { expense: { status: "documented" } },
       },
