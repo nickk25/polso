@@ -13,7 +13,7 @@ export interface ClientTransaction {
   accountName: string
   expenseStatus: string | null
   expenseType: string | null
-  inboxItems: Array<{ id: string; fileName: string; status: string }>
+  inboxItems: Array<{ id: string; fileName: string; status: string; source: string }>
 }
 
 export interface TransactionFilters {
@@ -60,9 +60,9 @@ function buildWhere(clientId: string, filters: TransactionFilters) {
         }
       : {}),
     ...(receiptStatus === "con_recibo"
-      ? { OR: [{ inboxItems: { some: {} } }, { expense: { status: "documented" } }] }
+      ? { expense: { status: "documented" } }
       : receiptStatus === "sin_recibo"
-        ? { inboxItems: { none: {} }, NOT: { expense: { status: "documented" } } }
+        ? { NOT: { expense: { status: "documented" } } }
         : {}),
   }
 }
@@ -94,7 +94,7 @@ export async function getClientTransactions(
         account: { select: { name: true } },
         expense: { select: { status: true, expenseType: true } },
         inboxItems: {
-          select: { id: true, fileName: true, status: true },
+          select: { id: true, fileName: true, status: true, source: true },
         },
       },
     }),
@@ -140,14 +140,13 @@ export async function getClientTransactionStats(
     prisma.transaction.count({
       where: {
         organizationId: clientId,
-        OR: [{ inboxItems: { some: {} } }, { expense: { status: "documented" } }],
+        expense: { status: "documented" },
       },
     }),
     prisma.transaction.count({
       where: {
         organizationId: clientId,
         amount: { gt: 0 },
-        inboxItems: { none: {} },
         NOT: { expense: { status: "documented" } },
       },
     }),

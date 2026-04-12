@@ -21,7 +21,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@polso/ui/sheet"
-import { Paperclip, Receipt, ArrowSquareOut } from "@phosphor-icons/react"
+import { Paperclip, Receipt, ArrowSquareOut, TelegramLogo, WhatsappLogo, DownloadSimple, Eye } from "@phosphor-icons/react"
 import {
   getTransactionInvoicesAction,
   type PartnerInvoice,
@@ -263,11 +263,32 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         key={item.id}
                         className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
                       >
-                        <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate flex-1">{item.fileName}</span>
-                        <Badge variant="default" className="text-xs shrink-0">
-                          Conciliado
-                        </Badge>
+                        {item.source === "telegram" ? (
+                          <TelegramLogo className="h-4 w-4 text-sky-500 shrink-0" />
+                        ) : item.source === "whatsapp" ? (
+                          <WhatsappLogo className="h-4 w-4 text-green-500 shrink-0" />
+                        ) : (
+                          <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate">{item.fileName}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{item.source}</p>
+                        </div>
+                        <a
+                          href={`/api/inbox/${item.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </a>
+                        <a
+                          href={`/api/inbox/${item.id}`}
+                          download={item.fileName}
+                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+                        >
+                          <DownloadSimple className="h-4 w-4" />
+                        </a>
                       </div>
                     ))}
                   </div>
