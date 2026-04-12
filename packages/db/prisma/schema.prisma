@@ -64,6 +64,9 @@ model Organization {
   inboxItems            InboxItem[]
   matchSuggestions      MatchSuggestion[]
 
+  // Agent channel link codes
+  agentLinkCodes AgentLinkCode[]
+
   // Partner ↔ Client links
   partnerLinks  PartnerClient[] @relation("AsClient")
   clientLinks   PartnerClient[] @relation("AsPartner")
@@ -678,6 +681,25 @@ model MatchSuggestion {
   @@index([organizationId])
   @@index([status])
   @@map("match_suggestions")
+}
+
+// ============================================
+// Agent Link Codes - Temporary codes for connecting WhatsApp/Telegram
+// ============================================
+
+model AgentLinkCode {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  organizationId String    @map("organization_id")
+  expiresAt      DateTime  @map("expires_at")
+  usedAt         DateTime? @map("used_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([expiresAt])
+  @@map("agent_link_codes")
 }
 
 // ============================================
