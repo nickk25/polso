@@ -37,7 +37,7 @@ function formatCurrency(amount: number, currency: string) {
 }
 
 function ReceiptStatusBadge({ tx }: { tx: ClientTransaction }) {
-  const hasReceipt = tx.inboxItems.length > 0 || tx.expenseStatus === "documented"
+  const hasReceipt = tx.expenseStatus === "documented"
   if (hasReceipt) {
     return (
       <Badge variant="default" className="text-xs">
@@ -222,8 +222,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <div className="flex items-center gap-2">
                   <Receipt className="h-4 w-4 text-muted-foreground" />
                   <p className="text-sm font-medium">Facturas y recibos</p>
-                  {invoices.length > 0 && (
-                    <Badge variant="secondary" className="text-xs">{invoices.length}</Badge>
+                  {(invoices.length + selected.inboxItems.length) > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {invoices.length + selected.inboxItems.length}
+                    </Badge>
                   )}
                 </div>
 
@@ -232,7 +234,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                     <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
                   </div>
-                ) : invoices.length === 0 ? (
+                ) : invoices.length === 0 && selected.inboxItems.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No hay facturas adjuntas a esta transacción.
                   </p>
@@ -256,42 +258,21 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         <ArrowSquareOut className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       </a>
                     ))}
+                    {selected.inboxItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                      >
+                        <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate flex-1">{item.fileName}</span>
+                        <Badge variant="default" className="text-xs shrink-0">
+                          Conciliado
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
-
-              {/* InboxItems (partner-side matched receipts) */}
-              {selected.inboxItems.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Paperclip className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm font-medium">Recibos conciliados</p>
-                      <Badge variant="secondary" className="text-xs">
-                        {selected.inboxItems.length}
-                      </Badge>
-                    </div>
-                    <div className="space-y-2">
-                      {selected.inboxItems.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-                        >
-                          <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate flex-1">{item.fileName}</span>
-                          <Badge
-                            variant={item.status === "done" ? "default" : "outline"}
-                            className="text-xs shrink-0"
-                          >
-                            {item.status === "done" ? "Conciliado" : "Pendiente"}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           )}
         </SheetContent>

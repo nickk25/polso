@@ -186,17 +186,14 @@ export function ExpenseTable({ expenses, categories }: ExpenseTableProps) {
       editedStatus !== selectedExpense.status)
 
   const getStatusBadge = (expense: ExpenseWithRelations) => {
-    if (expense.status === "excluded") {
-      return <Badge variant="secondary">{t("table.statusExcluded")}</Badge>
+    switch (expense.status) {
+      case "documented":
+        return <Badge variant="default">{t("table.statusDocumented")}</Badge>
+      case "excluded":
+        return <Badge variant="secondary">{t("table.statusExcluded")}</Badge>
+      default:
+        return <Badge variant="outline">{t("table.statusPending")}</Badge>
     }
-    const hasReceipt =
-      (expense.transaction?.inboxItems?.length ?? 0) > 0 ||
-      expense._count.invoices > 0 ||
-      expense.status === "documented"
-    if (hasReceipt) {
-      return <Badge variant="default">{t("table.statusDocumented")}</Badge>
-    }
-    return <Badge variant="outline">{t("table.statusPending")}</Badge>
   }
 
   const getExpenseTypeBadge = (type: string) => {
