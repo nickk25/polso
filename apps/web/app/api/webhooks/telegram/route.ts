@@ -19,6 +19,13 @@ const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET_TOKEN
 export async function POST(req: NextRequest) {
   // Verify that the request comes from Telegram
   const incomingToken = req.headers.get("x-telegram-bot-api-secret-token")
+
+  // DEBUG — remove after resolving 401
+  console.log("[telegram/debug] env var name:", "TELEGRAM_WEBHOOK_SECRET_TOKEN")
+  console.log("[telegram/debug] SECRET_TOKEN value:", SECRET_TOKEN === undefined ? "undefined" : `set (len=${SECRET_TOKEN.length})`)
+  console.log("[telegram/debug] incoming header:", incomingToken === null ? "null (not sent)" : `present (len=${incomingToken.length})`)
+  console.log("[telegram/debug] tokens match:", incomingToken === SECRET_TOKEN)
+
   if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
