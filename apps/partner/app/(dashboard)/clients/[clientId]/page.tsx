@@ -83,7 +83,7 @@ export default async function ClientDetailPage({
       </div>
 
       {/* Quick nav tabs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {tabs.map((tab) => (
           <Button key={tab.href} asChild variant="outline" size="sm">
             <Link href={tab.href}>{tab.label}</Link>
@@ -116,7 +116,7 @@ export default async function ClientDetailPage({
                   variant={account.status === "active" ? "default" : "secondary"}
                   className="mt-1 text-xs"
                 >
-                  {account.status}
+                  {account.status === "active" ? "Activa" : account.status === "disconnected" ? "Desconectada" : "Error"}
                 </Badge>
               </div>
             </div>
