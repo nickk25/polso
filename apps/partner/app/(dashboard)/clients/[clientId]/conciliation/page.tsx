@@ -91,7 +91,7 @@ export default async function ConciliationPage({
                 {/* Inbox side */}
                 <div className="flex-1 text-right sm:text-left">
                   <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">
-                    Recibo
+                    Comprobante
                   </p>
                   <p className="text-sm font-medium">
                     {s.inboxItem.displayName ?? s.inboxItem.fileName}

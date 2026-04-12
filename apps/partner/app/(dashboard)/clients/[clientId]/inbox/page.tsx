@@ -53,7 +53,7 @@ export default async function ClientInboxPage({
           <FileText className="mb-2 h-8 w-8 text-muted-foreground" />
           <p className="text-sm font-medium">Sin documentos todavía</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            El cliente puede subir recibos desde su app o enviarlos por WhatsApp.
+            El cliente puede subir comprobantes desde su app o enviarlos por WhatsApp.
           </p>
         </div>
       ) : (

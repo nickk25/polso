@@ -357,7 +357,7 @@ export default async function DashboardPage() {
             <div className={`text-2xl font-bold ${kpis.toProcess > 0 ? "text-orange-500" : "text-green-500"}`}>
               {kpis.toProcess}
             </div>
-            <p className="text-xs text-muted-foreground">recibos sin conciliar</p>
+            <p className="text-xs text-muted-foreground">comprobantes sin conciliar</p>
           </CardContent>
         </Card>
 
@@ -384,7 +384,7 @@ export default async function DashboardPage() {
               {kpis.activeThisWeek}
               <span className="text-base font-normal text-muted-foreground"> / {kpis.totalClients}</span>
             </div>
-            <p className="text-xs text-muted-foreground">clientes enviaron recibos</p>
+            <p className="text-xs text-muted-foreground">clientes enviaron comprobantes</p>
           </CardContent>
         </Card>
 
@@ -500,7 +500,7 @@ export default async function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Cola de trabajo</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Recibos sin conciliar</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Comprobantes sin conciliar</p>
             </div>
             {kpis.toProcess > 10 && (
               <Badge variant="secondary">{kpis.toProcess} total</Badge>
@@ -511,7 +511,7 @@ export default async function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-12 text-center px-6">
                 <CheckCircle className="h-10 w-10 text-green-500 mb-3" />
                 <p className="text-sm font-medium">Todo al día</p>
-                <p className="text-xs text-muted-foreground mt-1">No hay recibos pendientes.</p>
+                <p className="text-xs text-muted-foreground mt-1">No hay comprobantes pendientes.</p>
               </div>
             ) : (
               <div className="divide-y max-h-[360px] overflow-y-auto">
@@ -596,7 +596,7 @@ export default async function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Actividad de clientes</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Recibos enviados esta semana</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Comprobantes enviados esta semana</p>
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/clients">
@@ -637,7 +637,7 @@ export default async function DashboardPage() {
                         {formatDistanceToNow(client.lastAt, { locale: es, addSuffix: true })}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Sin recibos</span>
+                      <span className="text-xs text-muted-foreground">Sin comprobantes</span>
                     )}
                   </div>
                 </Link>
@@ -651,7 +651,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <div>
               <CardTitle>Conciliaciones recientes</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Últimos recibos procesados</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Últimos comprobantes procesados</p>
             </div>
           </CardHeader>
           <CardContent className="p-0">

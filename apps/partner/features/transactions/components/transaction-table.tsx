@@ -50,7 +50,7 @@ function ReceiptStatusBadge({ tx }: { tx: ClientTransaction }) {
   if (tx.amount > 0) {
     return (
       <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
-        Sin recibo
+        Sin comprobante
       </Badge>
     )
   }
@@ -113,7 +113,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <TableHead>Cuenta</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead className="text-right">Importe</TableHead>
-            <TableHead>Recibo</TableHead>
+            <TableHead>Comprobante</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -221,7 +221,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Receipt className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">Facturas y recibos</p>
+                  <p className="text-sm font-medium">Facturas y comprobantes</p>
                   {(invoices.length + selected.inboxItems.length) > 0 && (
                     <Badge variant="secondary" className="text-xs">
                       {invoices.length + selected.inboxItems.length}

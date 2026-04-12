@@ -17,7 +17,7 @@ export default async function ClientDetailPage({
 
   const tabs = [
     { label: "Transacciones", href: `/clients/${clientId}/transactions` },
-    { label: "Recibos", href: `/clients/${clientId}/inbox` },
+    { label: "Comprobantes", href: `/clients/${clientId}/inbox` },
     { label: "Conciliación", href: `/clients/${clientId}/conciliation` },
     { label: "Exportar", href: `/clients/${clientId}/export` },
   ]
@@ -72,7 +72,7 @@ export default async function ClientDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs text-muted-foreground">Recibos sin match</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Comprobantes sin match</CardTitle>
           </CardHeader>
           <CardContent>
             <p className={`text-2xl font-bold ${client.unmatchedInbox > 0 ? "text-orange-600" : ""}`}>

@@ -68,7 +68,7 @@ export function UploadInboxButton({ clientId }: UploadInboxButtonProps) {
       })
 
       if (result.success) {
-        toast.success("Recibo subido")
+        toast.success("Comprobante subido")
         setOpen(false)
         reset()
         router.refresh()
@@ -86,13 +86,13 @@ export function UploadInboxButton({ clientId }: UploadInboxButtonProps) {
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
         <UploadSimple className="mr-2 h-4 w-4" />
-        Subir recibo
+        Subir comprobante
       </Button>
 
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset() }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Subir recibo</DialogTitle>
+            <DialogTitle>Subir comprobante</DialogTitle>
           </DialogHeader>
 
           <div className="flex flex-col gap-4 py-2">

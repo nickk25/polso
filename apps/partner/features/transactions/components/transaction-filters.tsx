@@ -112,12 +112,12 @@ export function TransactionFilters({
           onValueChange={(value) => updateParams({ receiptStatus: value })}
         >
           <SelectTrigger className="w-full sm:w-[150px]">
-            <SelectValue placeholder="Recibos" />
+            <SelectValue placeholder="Comprobantes" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="con_recibo">Con recibo</SelectItem>
-            <SelectItem value="sin_recibo">Sin recibo</SelectItem>
+            <SelectItem value="con_recibo">Con comprobante</SelectItem>
+            <SelectItem value="sin_recibo">Sin comprobante</SelectItem>
           </SelectContent>
         </Select>
 

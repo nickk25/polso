@@ -10,7 +10,7 @@ export default function InvitePage() {
       <div>
         <p className="text-sm text-muted-foreground mb-6">
           El cliente recibirá un email con un enlace para registrarse y conectar su banco.
-          Una vez conectado, podrás ver sus transacciones y recibos desde aquí.
+          Una vez conectado, podrás ver sus transacciones y comprobantes desde aquí.
         </p>
         <InviteClientForm />
       </div>

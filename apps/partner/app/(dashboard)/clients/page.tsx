@@ -55,7 +55,7 @@ export default async function ClientsPage() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead>Recibos sin match</TableHead>
+                <TableHead>Comprobantes sin match</TableHead>
                 <TableHead>Último sync</TableHead>
                 <TableHead />
               </TableRow>

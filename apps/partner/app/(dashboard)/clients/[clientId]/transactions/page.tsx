@@ -100,7 +100,7 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
         </Card>
         <Card>
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs text-muted-foreground">Sin recibo este mes</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Sin comprobante este mes</CardTitle>
           </CardHeader>
           <CardContent>
             <p className={`text-2xl font-bold ${stats.countPending > 0 ? "text-orange-600" : ""}`}>
