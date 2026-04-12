@@ -10,11 +10,13 @@
     "email:dev": "email dev --dir emails"
   },
   "dependencies": {
+    "@polso/agent": "workspace:*",
     "@polso/banking": "workspace:*",
     "@polso/billing": "workspace:*",
     "@polso/db": "workspace:*",
     "@polso/email": "workspace:*",
     "@polso/intelligence": "workspace:*",
+    "@polso/matching": "workspace:*",
     "@polso/plans": "workspace:*",
     "@polso/storage": "workspace:*",
     "@polso/ui": "workspace:*",

@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin("./lib/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   transpilePackages: [
+    "@polso/agent",
     "@polso/banking",
     "@polso/ui",
     "@polso/utils",
@@ -14,6 +15,7 @@ const nextConfig: NextConfig = {
     "@polso/email",
     "@polso/billing",
     "@polso/intelligence",
+    "@polso/matching",
   ],
 };
 

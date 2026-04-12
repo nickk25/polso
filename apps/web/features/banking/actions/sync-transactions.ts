@@ -15,6 +15,7 @@ import { successResponse, errorResponse, type ActionResponse } from "@/lib/types
 import { suggestCategory } from "@/features/intelligence/lib/category-suggester"
 import { findOrCreateVendor, type MatchedVendor } from "@/features/vendors/lib/vendor-matcher"
 import { findOrCreateClient, type MatchedClient } from "@/features/clients/lib/client-matcher"
+import { matchAfterSync } from "@/features/inbox/lib/match-after-sync"
 
 interface SyncResult {
   accountsUpdated: number
@@ -165,6 +166,7 @@ export async function syncTransactionsAction(
     let totalExpensesCreated = 0
     let totalIncomesCreated = 0
     let accountsUpdated = 0
+    const newTransactionIds: string[] = []
 
     const tink = getTinkClient()
 
@@ -204,7 +206,7 @@ export async function syncTransactionsAction(
             )
             if (!account) continue
 
-            const { imported, modified, expenseCreated, incomeCreated } =
+            const { imported, modified, expenseCreated, incomeCreated, transactionId } =
               await upsertTransaction(
                 organizationId,
                 account.id,
@@ -215,7 +217,7 @@ export async function syncTransactionsAction(
                 merchantHistory
               )
 
-            if (imported) totalTransactionsImported++
+            if (imported) { totalTransactionsImported++; newTransactionIds.push(transactionId) }
             if (modified) totalTransactionsModified++
             if (expenseCreated) totalExpensesCreated++
             if (incomeCreated) totalIncomesCreated++
@@ -239,6 +241,13 @@ export async function syncTransactionsAction(
           },
         })
       }
+    }
+
+    // Bidirectional matching: find pending InboxItems for newly imported transactions
+    if (newTransactionIds.length > 0) {
+      await matchAfterSync(organizationId, newTransactionIds).catch((err) =>
+        console.error("matchAfterSync error:", err)
+      )
     }
 
     revalidatePath("/settings/banking")
@@ -284,7 +293,7 @@ async function upsertTransaction(
   vendorLookup: Map<string, { id: string; defaultCategoryId: string | null }>,
   clientLookup: Map<string, { id: string; defaultCategoryId: string | null }>,
   merchantHistory: MerchantHistory = new Map()
-): Promise<{ imported: boolean; modified: boolean; expenseCreated: boolean; incomeCreated: boolean }> {
+): Promise<{ imported: boolean; modified: boolean; expenseCreated: boolean; incomeCreated: boolean; transactionId: string }> {
   const counterpartyName = tx.merchantName ?? tx.name ?? null
   const normalizedCounterparty = counterpartyName
     ? normalizeCounterpartyName(counterpartyName)
@@ -478,5 +487,5 @@ async function upsertTransaction(
     }
   }
 
-  return { imported, modified, expenseCreated, incomeCreated }
+  return { imported, modified, expenseCreated, incomeCreated, transactionId: transaction.id }
 }
