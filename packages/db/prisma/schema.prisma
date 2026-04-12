@@ -36,6 +36,10 @@ model Organization {
   creemCustomerId     String? @map("creem_customer_id")
   creemSubscriptionId String? @map("creem_subscription_id")
 
+  // Agent channels
+  whatsappPhone  String? @unique @map("whatsapp_phone")
+  telegramChatId String? @unique @map("telegram_chat_id")
+
   // Scheduled plan changes (for downgrades)
   scheduledPlanType     String?   @map("scheduled_plan_type")
   scheduledPlanInterval String?   @map("scheduled_plan_interval")
@@ -610,7 +614,15 @@ model InboxItem {
 
   // Processing state
   status String @default("new") // "new" | "processing" | "analyzing" | "suggested_match" | "no_match" | "done" | "archived"
-  source String @default("upload") // "upload" | "whatsapp" | "email"
+  source String @default("upload") // "upload" | "whatsapp" | "telegram" | "email"
+
+  // WhatsApp metadata (only set when source = "whatsapp")
+  waMessageId String? @unique @map("wa_message_id") // deduplicate incoming messages
+  waSenderId  String? @map("wa_sender_id")          // phone number to reply to
+
+  // Telegram metadata (only set when source = "telegram")
+  tgMessageId String? @unique @map("tg_message_id") // "{chatId}_{messageId}" for dedup
+  tgChatId    String? @map("tg_chat_id")             // chat ID to reply to
 
   // OCR raw output
   meta Json?
