@@ -2,6 +2,7 @@ import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   transpilePackages: [
+    "@polso/agent",
     "@polso/auth",
     "@polso/billing",
     "@polso/db",

@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@polso/agent": "workspace:*",
     "@polso/auth": "workspace:*",
     "@polso/billing": "workspace:*",
     "@polso/db": "workspace:*",
