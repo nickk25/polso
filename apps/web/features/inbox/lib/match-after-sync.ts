@@ -1,7 +1,6 @@
 import { prisma } from "@polso/db"
 import { findBestMatches } from "@polso/matching"
-import { sendWhatsAppText, sendMatchNotification } from "@polso/agent/whatsapp"
-import { sendTelegramText, sendTelegramMatchNotification } from "@polso/agent/telegram"
+import { persistMatch } from "./match-notifications"
 
 /**
  * After a Tink sync imports new transactions, run bidirectional matching
@@ -126,100 +125,5 @@ export async function matchAfterSync(
     claimedTransactionIds.add(best.transactionId)
 
     await persistMatch(organizationId, tx, inboxItem, best.scores, best.matchType)
-  }
-}
-
-type TxRecord = {
-  id: string
-  amount: number
-  date: Date
-  merchantName: string | null
-  name: string | null
-  currency: string
-}
-
-type InboxRecord = {
-  id: string
-  waSenderId: string | null
-  tgChatId: string | null
-  displayName: string | null
-}
-
-type Scores = {
-  confidenceScore: number
-  amountScore: number
-  dateScore: number
-  nameScore: number
-  currencyScore: number
-}
-
-async function persistMatch(
-  organizationId: string,
-  tx: TxRecord,
-  inboxItem: InboxRecord,
-  scores: Scores,
-  matchType: "auto_matched" | "high_confidence" | "suggested"
-): Promise<void> {
-  const isAuto = matchType === "auto_matched"
-
-  await prisma.matchSuggestion.upsert({
-    where: { transactionId_inboxItemId: { transactionId: tx.id, inboxItemId: inboxItem.id } },
-    update: {},
-    create: {
-      organizationId,
-      transactionId: tx.id,
-      inboxItemId: inboxItem.id,
-      confidenceScore: scores.confidenceScore,
-      amountScore: scores.amountScore,
-      dateScore: scores.dateScore,
-      nameScore: scores.nameScore,
-      currencyScore: scores.currencyScore,
-      matchType,
-      status: isAuto ? "confirmed" : "pending",
-    },
-  })
-
-  if (isAuto) {
-    await Promise.all([
-      prisma.transactionAttachment.upsert({
-        where: { transactionId_inboxItemId: { transactionId: tx.id, inboxItemId: inboxItem.id } },
-        update: {},
-        create: { transactionId: tx.id, inboxItemId: inboxItem.id },
-      }),
-      prisma.inboxItem.update({
-        where: { id: inboxItem.id },
-        data: { status: "done", transactionId: tx.id },
-      }),
-      prisma.expense.updateMany({
-        where: { transactionId: tx.id, organizationId },
-        data: { status: "documented" },
-      }),
-    ])
-
-    const autoText = `✅ *Recibo conciliado*\n\nTu recibo "${inboxItem.displayName ?? "sin nombre"}" ha sido vinculado a la transacción "${tx.merchantName ?? tx.name}" de ${Math.abs(tx.amount).toFixed(2)} ${tx.currency} del ${tx.date.toLocaleDateString("es-ES")}.`
-    if (inboxItem.waSenderId) await sendWhatsAppText(inboxItem.waSenderId, autoText)
-    if (inboxItem.tgChatId) await sendTelegramText(inboxItem.tgChatId, autoText)
-  } else {
-    await prisma.inboxItem.update({
-      where: { id: inboxItem.id },
-      data: { status: "suggested_match" },
-    })
-
-    const notifParams = {
-      inboxItemId: inboxItem.id,
-      transactionId: tx.id,
-      receiptName: inboxItem.displayName,
-      transactionName: tx.merchantName ?? tx.name,
-      amount: tx.amount,
-      currency: tx.currency,
-      date: tx.date,
-      confidence: scores.confidenceScore,
-    }
-    if (inboxItem.waSenderId) {
-      await sendMatchNotification({ to: inboxItem.waSenderId, ...notifParams })
-    }
-    if (inboxItem.tgChatId) {
-      await sendTelegramMatchNotification({ chatId: inboxItem.tgChatId, ...notifParams })
-    }
   }
 }
