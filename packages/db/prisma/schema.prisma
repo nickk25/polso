@@ -39,6 +39,7 @@ model Organization {
   // Agent channels
   whatsappPhone  String? @unique @map("whatsapp_phone")
   telegramChatId String? @unique @map("telegram_chat_id")
+  agentOptOut    Boolean @default(false) @map("agent_opt_out")
 
   // Scheduled plan changes (for downgrades)
   scheduledPlanType     String?   @map("scheduled_plan_type")
@@ -66,6 +67,9 @@ model Organization {
 
   // Agent channel link codes
   agentLinkCodes AgentLinkCode[]
+
+  // Proactive messages sent by the agent
+  proactiveMessages ProactiveMessage[]
 
   // Partner ↔ Client links
   partnerLinks  PartnerClient[] @relation("AsClient")
@@ -717,4 +721,23 @@ model TransactionAttachment {
 
   @@unique([transactionId, inboxItemId])
   @@map("transaction_attachments")
+}
+
+// ============================================
+// Proactive Messages - Agent-initiated outbound messages
+// ============================================
+
+model ProactiveMessage {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  channel        String   // "whatsapp" | "telegram"
+  messageType    String   @map("message_type") // "receipt_reminder" | "weekly_summary" | "monthly_summary" | "anomaly_alert"
+  content        String   // AI-generated message text that was sent
+  context        Json?    // Financial context passed to AI (audit trail)
+  sentAt         DateTime @default(now()) @map("sent_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, messageType, sentAt])
+  @@map("proactive_messages")
 }
