@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./ocr": "./src/ocr.ts",
     "./whatsapp": "./src/whatsapp.ts",
-    "./telegram": "./src/telegram.ts"
+    "./telegram": "./src/telegram.ts",
+    "./proactive": "./src/proactive.ts"
   },
   "dependencies": {
     "ai": "^4.3.0",

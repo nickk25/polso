@@ -92,7 +92,7 @@ if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
 
   const organizationId = org.id
 
-  // ── Text: /start or unrecognized ────────────────────────────────────────
+  // ── Text: /start, opt-out commands, or unrecognized ────────────────────
   if (message.text) {
     const text = message.text.trim()
     if (text === "/start") {
@@ -100,6 +100,26 @@ if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
         chatId,
         "👋 Ya estás conectado a Polso. Envíame una foto o PDF de un recibo para procesarlo."
       )
+      return NextResponse.json({ ok: true })
+    }
+    if (text.toLowerCase() === "parar") {
+      await prisma.organization.update({
+        where: { id: organizationId },
+        data: { agentOptOut: true },
+      })
+      await sendTelegramText(
+        chatId,
+        "Notificaciones proactivas desactivadas. Puedes seguir enviando recibos. Escribe \"activar\" para reactivarlas."
+      )
+      return NextResponse.json({ ok: true })
+    }
+    if (text.toLowerCase() === "activar") {
+      await prisma.organization.update({
+        where: { id: organizationId },
+        data: { agentOptOut: false },
+      })
+      await sendTelegramText(chatId, "Notificaciones proactivas reactivadas. ✓")
+      return NextResponse.json({ ok: true })
     }
     return NextResponse.json({ ok: true })
   }

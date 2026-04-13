@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 
   const organizationId = org.id
 
-  // ── Text: /start or unrecognized ────────────────────────────────────────
+  // ── Text: /start, opt-out commands, or unrecognized ────────────────────
   if (type === "text") {
     const text = ((message.raw.text as { body?: string } | undefined)?.body ?? "").trim()
     if (text === "/start") {
@@ -77,6 +77,26 @@ export async function POST(req: NextRequest) {
         from,
         "👋 Ya estás conectado a Polso. Envíame una foto o PDF de un recibo para procesarlo."
       )
+      return NextResponse.json({ received: true })
+    }
+    if (text.toLowerCase() === "parar") {
+      await prisma.organization.update({
+        where: { id: organizationId },
+        data: { agentOptOut: true },
+      })
+      await sendWhatsAppText(
+        from,
+        "Notificaciones proactivas desactivadas. Puedes seguir enviando recibos. Escribe \"activar\" para reactivarlas."
+      )
+      return NextResponse.json({ received: true })
+    }
+    if (text.toLowerCase() === "activar") {
+      await prisma.organization.update({
+        where: { id: organizationId },
+        data: { agentOptOut: false },
+      })
+      await sendWhatsAppText(from, "Notificaciones proactivas reactivadas. ✓")
+      return NextResponse.json({ received: true })
     }
     return NextResponse.json({ received: true })
   }
