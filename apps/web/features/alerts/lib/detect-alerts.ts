@@ -7,6 +7,7 @@ import {
   sendUnusualActivityAlert,
 } from "@/lib/email/send"
 import type { Locale } from "@/lib/i18n/config"
+import { detectAnomalies } from "@polso/intelligence"
 
 // ============================================================================
 // Low Balance Detection
@@ -458,61 +459,76 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
   })
   const alertedIds = new Set(alertedExpenseIds.map((a) => a.expenseId).filter(Boolean))
 
-  // Get category averages based on last 90 days
+  // Batch-fetch category averages for last 90 days
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+  const candidateExpenses = recentExpenses.filter((e) => e.categoryId && !alertedIds.has(e.id))
+  const categoryIds = [...new Set(candidateExpenses.map((e) => e.categoryId!))]
 
-  for (const expense of recentExpenses) {
-    if (!expense.categoryId || alertedIds.has(expense.id)) continue
+  const categoryAverages = await prisma.expense.groupBy({
+    by: ["categoryId"],
+    where: {
+      organizationId,
+      categoryId: { in: categoryIds },
+      status: { not: "excluded" },
+      date: { gte: ninetyDaysAgo },
+    },
+    _avg: { amount: true },
+    _count: { id: true },
+  })
 
-    const avgResult = await prisma.expense.aggregate({
-      where: {
-        organizationId,
-        categoryId: expense.categoryId,
-        status: { not: "excluded" },
-        date: { gte: ninetyDaysAgo },
-        id: { not: expense.id }, // exclude this expense from average
-      },
-      _avg: { amount: true },
-      _count: true,
+  const avgMap = new Map(
+    categoryAverages.map((r) => [r.categoryId!, { avg: r._avg.amount ?? 0, count: r._count.id }])
+  )
+
+  const inputs = candidateExpenses
+    .filter((e) => avgMap.has(e.categoryId!))
+    .map((e) => {
+      const stats = avgMap.get(e.categoryId!)!
+      return {
+        id: e.id,
+        amount: e.amount,
+        description: e.description,
+        categoryId: e.categoryId!,
+        categoryName: e.category?.name ?? null,
+        categoryAvg: stats.avg,
+        categoryCount: stats.count,
+      }
     })
 
-    // Need at least 3 data points for a meaningful average
-    if (!avgResult._avg.amount || avgResult._count < 3) continue
+  const anomalies = detectAnomalies(inputs, { multiplier })
 
-    const avgAmount = avgResult._avg.amount
-    if (expense.amount < avgAmount * multiplier) continue
-
-    const actualMultiplier = Math.round((expense.amount / avgAmount) * 10) / 10
+  for (const anomaly of anomalies) {
+    const expense = candidateExpenses.find((e) => e.id === anomaly.expenseId)!
+    const actualMultiplier = Math.round((anomaly.amount / anomaly.categoryAvg) * 10) / 10
     const currency = "USD"
 
     await prisma.alert.create({
       data: {
         organizationId,
         type: "unusual_activity",
-        title: `Unusual expense: ${expense.category?.name ?? "Unknown"}`,
-        message: `An expense of ${formatAmount(expense.amount, currency)} in ${expense.category?.name ?? "Unknown"} is ${actualMultiplier}x your typical average of ${formatAmount(avgAmount, currency)}.`,
+        title: `Unusual expense: ${anomaly.categoryName}`,
+        message: `An expense of ${formatAmount(anomaly.amount, currency)} in ${anomaly.categoryName} is ${actualMultiplier}x your typical average of ${formatAmount(anomaly.categoryAvg, currency)}.`,
         severity: "warning",
-        expenseId: expense.id,
+        expenseId: anomaly.expenseId,
         metadata: {
           expenseDescription: expense.description,
-          amount: expense.amount,
-          averageAmount: avgAmount,
+          amount: anomaly.amount,
+          averageAmount: anomaly.categoryAvg,
           multiplier: actualMultiplier,
-          categoryName: expense.category?.name,
+          categoryName: anomaly.categoryName,
           currency,
         },
       },
     })
 
     created++
-    alertedIds.add(expense.id)
 
     // Send emails
     for (const { userId, settings } of alertableUsers) {
       if (!settings?.emailAlerts || !settings?.emailUnusualActivity) continue
 
       const userMultiplier = settings.unusualMultiplier ?? 2
-      if (expense.amount < avgAmount * userMultiplier) continue
+      if (anomaly.amount < anomaly.categoryAvg * userMultiplier) continue
 
       const authUser = await getUserEmailAndLocale(userId)
       if (!authUser) continue
@@ -520,9 +536,9 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
       await sendUnusualActivityAlert(
         authUser.email,
         authUser.name,
-        expense.category?.name ?? "Unknown",
-        formatAmount(expense.amount, currency),
-        formatAmount(avgAmount, currency),
+        anomaly.categoryName,
+        formatAmount(anomaly.amount, currency),
+        formatAmount(anomaly.categoryAvg, currency),
         String(actualMultiplier),
         authUser.locale
       ).catch(console.error)

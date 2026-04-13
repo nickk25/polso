@@ -1,4 +1,5 @@
 import { prisma, transactionNotDocumentedWhere } from "@polso/db"
+import { detectAnomalies } from "@polso/intelligence"
 import {
   startOfWeek,
   endOfWeek,
@@ -161,36 +162,51 @@ export async function getAnomalies(organizationId: string): Promise<{
     },
   })
 
-  const anomalies: NonNullable<ProactiveContext["anomalies"]> = []
+  // Batch-fetch category averages for last 90 days
+  const categoryIds = [...new Set(recentExpenses.map((e) => e.categoryId).filter(Boolean) as string[])]
 
-  for (const expense of recentExpenses) {
-    if (!expense.categoryId) continue
+  const categoryAverages = await prisma.expense.groupBy({
+    by: ["categoryId"],
+    where: {
+      organizationId,
+      categoryId: { in: categoryIds },
+      status: { not: "excluded" },
+      date: { gte: ninetyDaysAgo },
+    },
+    _avg: { amount: true },
+    _count: { id: true },
+  })
 
-    const avg = await prisma.expense.aggregate({
-      where: {
-        organizationId,
-        categoryId: expense.categoryId,
-        status: { not: "excluded" },
-        date: { gte: ninetyDaysAgo },
-        id: { not: expense.id },
-      },
-      _avg: { amount: true },
-      _count: true,
+  const avgMap = new Map(
+    categoryAverages.map((r) => [r.categoryId!, { avg: r._avg.amount ?? 0, count: r._count.id }])
+  )
+
+  const inputs = recentExpenses
+    .filter((e) => e.categoryId && avgMap.has(e.categoryId))
+    .map((e) => {
+      const stats = avgMap.get(e.categoryId!)!
+      return {
+        id: e.id,
+        amount: e.amount,
+        description: e.description,
+        categoryId: e.categoryId!,
+        categoryName: e.category?.name ?? null,
+        categoryAvg: stats.avg,
+        categoryCount: stats.count,
+      }
     })
 
-    if (!avg._avg.amount || avg._count < 3) continue
-    if (expense.amount < avg._avg.amount * 2) continue
+  const detected = detectAnomalies(inputs, { multiplier: 2, limit: 3 })
 
-    anomalies.push({
-      description: expense.description ?? expense.category?.name ?? "Gasto",
-      amount: expense.amount,
-      currency: expense.transaction?.currency ?? "EUR",
-      categoryName: expense.category?.name ?? "Sin categoría",
-      categoryAvg: avg._avg.amount,
-    })
+  const currencyMap = new Map(recentExpenses.map((e) => [e.id, e.transaction?.currency ?? "EUR"]))
 
-    if (anomalies.length >= 3) break
-  }
+  const anomalies: NonNullable<ProactiveContext["anomalies"]> = detected.map((a) => ({
+    description: a.description,
+    amount: a.amount,
+    currency: currencyMap.get(a.expenseId) ?? "EUR",
+    categoryName: a.categoryName,
+    categoryAvg: a.categoryAvg,
+  }))
 
   // Missing recurring charges
   const now = new Date()

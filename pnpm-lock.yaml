@@ -35,6 +35,9 @@ importers:
       '@polso/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@polso/intelligence':
+        specifier: workspace:*
+        version: link:../../packages/intelligence
       '@polso/matching':
         specifier: workspace:*
         version: link:../../packages/matching

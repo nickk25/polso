@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     "@polso/agent",
     "@polso/auth",
+    "@polso/intelligence",
     "@polso/billing",
     "@polso/db",
     "@polso/email",
