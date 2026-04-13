@@ -1,4 +1,5 @@
 export { prisma } from "./client"
+export { transactionDocumentedWhere, transactionNotDocumentedWhere } from "./helpers"
 export type { PrismaClient } from "./generated/prisma/client"
 export { Prisma } from "./generated/prisma/client"
 

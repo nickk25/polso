@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db"
+import { prisma, transactionNotDocumentedWhere } from "@polso/db"
 import {
   startOfWeek,
   endOfWeek,
@@ -16,18 +16,11 @@ export async function getUnmatchedTransactions(
 ): Promise<NonNullable<ProactiveContext["unmatchedTransactions"]>> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
-  // Same "documented" definition as getClientTransactions:
-  // has expense.status = "documented" OR has any inboxItem linked
   const transactions = await prisma.transaction.findMany({
     where: {
       organizationId,
       date: { gte: since },
-      NOT: {
-        OR: [
-          { expense: { status: "documented" } },
-          { inboxItems: { some: {} } },
-        ],
-      },
+      ...transactionNotDocumentedWhere,
     },
     select: {
       name: true,

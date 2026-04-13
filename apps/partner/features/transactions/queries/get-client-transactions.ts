@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db"
+import { prisma, transactionDocumentedWhere, transactionNotDocumentedWhere } from "@polso/db"
 import { notFound } from "next/navigation"
 import { startOfMonth, endOfMonth, subMonths } from "date-fns"
 
@@ -60,9 +60,9 @@ function buildWhere(clientId: string, filters: TransactionFilters) {
         }
       : {}),
     ...(receiptStatus === "con_recibo"
-      ? { OR: [{ expense: { status: "documented" } }, { inboxItems: { some: {} } }] }
+      ? transactionDocumentedWhere
       : receiptStatus === "sin_recibo"
-        ? { NOT: { OR: [{ expense: { status: "documented" } }, { inboxItems: { some: {} } }] } }
+        ? transactionNotDocumentedWhere
         : {}),
   }
 }
@@ -141,14 +141,14 @@ export async function getClientTransactionStats(
       where: {
         organizationId: clientId,
         date: { gte: thisMonthStart, lte: thisMonthEnd },
-        OR: [{ expense: { status: "documented" } }, { inboxItems: { some: {} } }],
+        ...transactionDocumentedWhere,
       },
     }),
     prisma.transaction.count({
       where: {
         organizationId: clientId,
         date: { gte: thisMonthStart, lte: thisMonthEnd },
-        NOT: { OR: [{ expense: { status: "documented" } }, { inboxItems: { some: {} } }] },
+        ...transactionNotDocumentedWhere,
       },
     }),
   ])
