@@ -8,6 +8,12 @@ import {
   detectIncomeSource,
   type BankTransaction,
 } from "@polso/banking"
+import {
+  detectLowBalanceAlerts,
+  detectHighSpendAlerts,
+  detectRunwayCriticalAlerts,
+  detectUnusualActivityAlerts,
+} from "@/features/alerts/lib/detect-alerts"
 
 const CRON_SECRET = process.env.CRON_SECRET
 const STALE_THRESHOLD_HOURS = 1
@@ -57,6 +63,8 @@ interface SyncResult {
   transactionsModified: number
   expensesCreated: number
   incomesCreated: number
+  alertsCreated: number
+  alertErrors: number
   duration: number
 }
 
@@ -81,6 +89,8 @@ async function syncAllAccounts(): Promise<SyncResult> {
       transactionsModified: 0,
       expensesCreated: 0,
       incomesCreated: 0,
+      alertsCreated: 0,
+      alertErrors: 0,
       duration: Date.now() - startTime,
     }
   }
@@ -193,9 +203,29 @@ async function syncAllAccounts(): Promise<SyncResult> {
     }
   }
 
+  // Run alert detection for all synced orgs
+  const syncedOrgIds = [...new Set(accounts.map((a) => a.organizationId))]
+  let alertsCreated = 0
+  let alertErrors = 0
+
+  for (const organizationId of syncedOrgIds) {
+    try {
+      const [low, high, runway, unusual] = await Promise.all([
+        detectLowBalanceAlerts(organizationId),
+        detectHighSpendAlerts(organizationId),
+        detectRunwayCriticalAlerts(organizationId),
+        detectUnusualActivityAlerts(organizationId),
+      ])
+      alertsCreated += low + high + runway + unusual
+    } catch (error) {
+      console.error(`[Cron] detect-alerts error for org ${organizationId}:`, error)
+      alertErrors++
+    }
+  }
+
   const duration = Date.now() - startTime
   console.log(
-    `[Cron] Done in ${duration}ms: ${accountsSynced} accounts synced, ${totalImported} new transactions`
+    `[Cron] Done in ${duration}ms: ${accountsSynced} accounts synced, ${totalImported} new transactions, ${alertsCreated} alerts created`
   )
 
   return {
@@ -205,6 +235,8 @@ async function syncAllAccounts(): Promise<SyncResult> {
     transactionsModified: totalModified,
     expensesCreated: totalExpenses,
     incomesCreated: totalIncomes,
+    alertsCreated,
+    alertErrors,
     duration,
   }
 }
