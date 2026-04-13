@@ -17,7 +17,6 @@ features/           Feature modules — canonical reference: features/expenses/
     lib/            Feature-specific utilities (optional)
 components/         Shared app components (layout, sidebar, providers)
 lib/
-  auth/             Neon Auth — app-local, never extracted to a package
   i18n/             next-intl config + messages registration
   db/               Shim → @polso/db
   types/            Shim → @polso/utils + @polso/db
@@ -34,7 +33,7 @@ All `@/` paths resolve from `apps/web/`:
 | Import | Resolves to |
 |--------|-------------|
 | `@/lib/db` | Shim → `@polso/db` (prisma singleton) |
-| `@/lib/auth/get-session` | Neon Auth context — stays app-local |
+| `@polso/auth/get-session` | `getAuthContext()` — from shared auth package |
 | `@/lib/types` | Shim → `@polso/utils` + `@polso/db` types |
 | `@/lib/utils` | Shim → `@polso/utils/cn` |
 | `@polso/ui/<name>` | UI components — direct package import |
@@ -44,10 +43,10 @@ Shims exist for backward compatibility. Both `@/lib/db` and `@polso/db` work; pr
 
 ## Authentication
 
-Neon Auth (Better Auth). Key files:
-- `lib/auth/get-session.ts` — `getAuthContext()` → `{ userId, organizationId, user }`
-- `lib/auth/server.ts` — `neonAuth()` server helper
-- `lib/auth/client.ts` — `useSession()` client hook
+Neon Auth (Better Auth). Auth logic lives in `@polso/auth`. Key files:
+- `@polso/auth/get-session` — `getAuthContext()` → `{ userId, organizationId, user }`
+- `@polso/auth/server` — `authServer` helper
+- `@polso/auth/client` — `authClient` for client-side hooks
 - `app/api/auth/[...path]/route.ts` — auth API handler
 - `proxy.ts` — middleware, protects all routes except `/auth` and `/api/auth`
 
@@ -55,7 +54,7 @@ Neon Auth (Better Auth). Key files:
 
 ```typescript
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 
 const { organizationId } = await getAuthContext()  // always first
 const expenses = await prisma.expense.findMany({

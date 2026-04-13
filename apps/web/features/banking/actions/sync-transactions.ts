@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@polso/db"
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 import {
   createTinkClient,
   normalizeCounterpartyName,

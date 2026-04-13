@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { sendUserInvited } from "@/lib/email/send"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"

@@ -1,7 +1,7 @@
 "use client"
 
 import { NeonAuthUIProvider } from "@neondatabase/auth/react"
-import { authClient } from "@/lib/auth/client"
+import { authClient } from "@polso/auth/client"
 
 interface AuthProviderProps {
   children: React.ReactNode

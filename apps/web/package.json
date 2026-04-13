@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@polso/agent": "workspace:*",
+    "@polso/auth": "workspace:*",
     "@polso/banking": "workspace:*",
     "@polso/billing": "workspace:*",
     "@polso/db": "workspace:*",

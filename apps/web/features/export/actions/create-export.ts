@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 import { uploadExport, getFile } from "@/lib/storage/r2"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 import { generateCSV, generateExportFileName, generateInvoiceFileName } from "../lib/csv-generator"

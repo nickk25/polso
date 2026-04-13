@@ -135,6 +135,9 @@ importers:
       '@polso/agent':
         specifier: workspace:*
         version: link:../../packages/agent
+      '@polso/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@polso/banking':
         specifier: workspace:*
         version: link:../../packages/banking

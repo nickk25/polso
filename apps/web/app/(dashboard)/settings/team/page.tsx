@@ -6,7 +6,7 @@ import { UsageIndicator } from "@/components/shared/upgrade-prompt"
 import { getTeamMembers, getTeamMemberRole } from "@/features/team/queries/get-team-members"
 import { getPendingInvites } from "@/features/team/queries/get-pending-invites"
 import { getSubscription } from "@/features/billing/queries/get-subscription"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 import { getLimit } from "@/lib/plans"
 import { getTranslations } from "next-intl/server"
 

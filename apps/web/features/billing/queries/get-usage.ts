@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 
 export interface OrganizationUsage {
   bankConnections: number

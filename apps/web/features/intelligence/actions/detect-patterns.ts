@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 import { detectRecurringPatterns } from "@polso/intelligence"
 
