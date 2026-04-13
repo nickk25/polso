@@ -1,4 +1,4 @@
-import { prisma, transactionDocumentedWhere, transactionNotDocumentedWhere } from "@polso/db"
+import { prisma, transactionDocumentedWhere, transactionNotDocumentedWhere, Prisma } from "@polso/db"
 import { notFound } from "next/navigation"
 import { startOfMonth, endOfMonth, subMonths } from "date-fns"
 
@@ -41,6 +41,24 @@ async function verifyPartnerLink(partnerId: string, clientId: string) {
 
 function buildWhere(clientId: string, filters: TransactionFilters) {
   const { from, to, search, receiptStatus } = filters
+
+  const conditions: Prisma.TransactionWhereInput[] = []
+
+  if (search) {
+    conditions.push({
+      OR: [
+        { name: { contains: search, mode: "insensitive" as const } },
+        { merchantName: { contains: search, mode: "insensitive" as const } },
+      ],
+    })
+  }
+
+  if (receiptStatus === "con_recibo") {
+    conditions.push(transactionDocumentedWhere)
+  } else if (receiptStatus === "sin_recibo") {
+    conditions.push(transactionNotDocumentedWhere)
+  }
+
   return {
     organizationId: clientId,
     ...(from || to
@@ -51,19 +69,7 @@ function buildWhere(clientId: string, filters: TransactionFilters) {
           },
         }
       : {}),
-    ...(search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" as const } },
-            { merchantName: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
-    ...(receiptStatus === "con_recibo"
-      ? transactionDocumentedWhere
-      : receiptStatus === "sin_recibo"
-        ? transactionNotDocumentedWhere
-        : {}),
+    ...(conditions.length > 0 ? { AND: conditions } : {}),
   }
 }
 
