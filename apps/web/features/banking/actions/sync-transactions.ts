@@ -12,7 +12,7 @@ import {
   type BankTransaction,
 } from "@polso/banking"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
-import { suggestCategory } from "@/features/intelligence/lib/category-suggester"
+import { suggestCategory } from "@polso/intelligence"
 import { findOrCreateVendor, type MatchedVendor } from "@/features/vendors/lib/vendor-matcher"
 import { findOrCreateClient, type MatchedClient } from "@/features/clients/lib/client-matcher"
 import { matchAfterSync } from "@/features/inbox/lib/match-after-sync"

@@ -3,14 +3,15 @@
  *
  * Automatically suggests categories for expenses using a layered approach:
  * 1. Vendor default category (highest priority, 95% confidence)
- * 2. Provider category mapping (70-80% confidence)
- * 3. Keyword/merchant name matching (70-85% confidence)
+ * 2. Historical merchant data (88% confidence)
+ * 3. Provider category mapping (70-80% confidence)
+ * 4. Keyword/merchant name matching (70-85% confidence)
  */
 
 import { mapTinkToPolsoCategory } from "@polso/banking"
 import { matchKeywordRules } from "./keyword-rules"
 
-export type CategorySource = "vendor" | "provider" | "keyword" | "manual"
+export type CategorySource = "vendor" | "history" | "provider" | "keyword" | "manual"
 
 export interface CategorySuggestion {
   categoryId: string
@@ -21,6 +22,7 @@ export interface CategorySuggestion {
 
 export interface SuggestionContext {
   vendorDefaultCategoryId?: string | null
+  historicalCategoryId?: string | null // most frequent category for this merchant
   providerPrimaryCategory?: string | null
   providerDetailedCategory?: string | null
   merchantName?: string | null
@@ -58,7 +60,18 @@ export function suggestCategory(
     }
   }
 
-  // Priority 2: Provider category mapping (70-80% confidence)
+  // Priority 2: Historical merchant data (88% confidence)
+  if (context.historicalCategoryId) {
+    const slug = [...categoryLookup.entries()].find(([, id]) => id === context.historicalCategoryId)?.[0] ?? "unknown"
+    return {
+      categoryId: context.historicalCategoryId,
+      categorySlug: slug,
+      confidence: 0.88,
+      source: "history",
+    }
+  }
+
+  // Priority 3: Provider category mapping (70-80% confidence)
   const providerMatch = mapTinkToPolsoCategory(
     context.providerPrimaryCategory,
     context.providerDetailedCategory
@@ -76,7 +89,7 @@ export function suggestCategory(
     }
   }
 
-  // Priority 3: Keyword matching (70-85% confidence)
+  // Priority 4: Keyword matching (70-85% confidence)
   const keywordMatch = matchKeywordRules(
     context.merchantName,
     context.transactionName
@@ -94,7 +107,7 @@ export function suggestCategory(
     }
   }
 
-  // Priority 4: Fallback to "Miscellaneous" (50% confidence)
+  // Priority 5: Fallback to "Miscellaneous" (50% confidence)
   const miscellaneousId = categoryLookup.get("miscellaneous")
   if (miscellaneousId) {
     return {

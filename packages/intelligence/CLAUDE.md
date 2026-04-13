@@ -13,9 +13,9 @@ KeywordRule                // type — { pattern, categorySlug, expenseType, con
 // Category suggester
 suggestCategory(context)          // → CategorySuggestion | null — single transaction
 suggestCategoriesBatch(contexts)  // → CategorySuggestion[] — batch processing
-CategorySource     // type — "vendor_default" | "keyword_match" | "manual"
-CategorySuggestion // type — { categoryId, source, confidence }
-SuggestionContext  // type — { merchantName, description, amount, existingVendor? }
+CategorySource     // type — "vendor" | "history" | "provider" | "keyword" | "manual"
+CategorySuggestion // type — { categoryId, categorySlug, source, confidence }
+SuggestionContext  // type — { vendorDefaultCategoryId, historicalCategoryId, providerPrimaryCategory, providerDetailedCategory, merchantName, transactionName }
 
 // Recurring detector
 detectRecurringPatterns(expenses)  // → DetectedPattern[]
@@ -25,9 +25,11 @@ DetectedPattern    // type — { vendorId, frequency, expectedAmount, confidence
 ## How it works
 
 **Category suggestion** (priority order):
-1. Vendor default — if expense has a `Vendor` with `defaultCategoryId`, use it
-2. Keyword match — run `merchantName` + `description` through `KEYWORD_RULES`
-3. Falls back to `null` (user must categorize manually)
+1. Vendor default — if `vendorDefaultCategoryId` provided (95% confidence)
+2. Historical — if `historicalCategoryId` provided, most frequent for this merchant (88% confidence)
+3. Provider mapping — Tink category → Polso category via `mapTinkToPolsoCategory` (70-80% confidence)
+4. Keyword match — run `merchantName` + `transactionName` through `KEYWORD_RULES` (70-85% confidence)
+5. Falls back to `null` (user must categorize manually)
 
 **Recurring detection**:
 - Groups expenses by vendor + approximate amount

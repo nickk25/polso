@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@/lib/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
-import { suggestCategory } from "../lib/category-suggester"
+import { suggestCategory } from "@polso/intelligence"
 
 interface BackfillResult {
   total: number
