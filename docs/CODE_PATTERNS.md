@@ -11,7 +11,7 @@ The canonical reference implementation is **`apps/web/features/expenses/`** — 
 | What | Import from | Notes |
 |------|-------------|-------|
 | Prisma client | `@/lib/db` | Shim → `@polso/db` |
-| Auth context | `@/lib/auth/get-session` | App-local, never move to package |
+| Auth context | `@polso/auth/get-session` | Shared via @polso/auth |
 | ActionResponse, successResponse, errorResponse | `@/lib/types` | Shim → `@polso/utils` |
 | `cn()` | `@/lib/utils` | Shim → `@polso/utils/cn` |
 | UI components | `@polso/ui/<component>` | Direct package import |
@@ -35,7 +35,7 @@ The canonical reference implementation is **`apps/web/features/expenses/`** — 
 
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 
 // Define input/result interfaces locally — never in shared types
@@ -103,7 +103,7 @@ export async function updateWidgetAction(
 
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 
 // Naming: bulkUpdateEntityFieldAction
@@ -146,7 +146,7 @@ export async function bulkUpdateWidgetStatusAction(
 ```typescript
 // No "use server" — queries are plain async functions, not server actions
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 
 // Export typed interfaces — consumers import these for prop types
 export interface WidgetFilters {
@@ -233,7 +233,7 @@ export async function getWidgets(
 
 ```typescript
 import { prisma } from "@/lib/db"
-import { getAuthContext } from "@/lib/auth/get-session"
+import { getAuthContext } from "@polso/auth/get-session"
 import { startOfMonth, endOfMonth, subMonths } from "date-fns"
 
 export interface WidgetStats {
