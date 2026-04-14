@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { getExportableData } from "@/features/export/queries/get-exportable-data"
 import { generateCsv } from "@/features/export/lib/csv-generator"
+import { prisma } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,6 +30,22 @@ export async function GET(request: NextRequest) {
 
     const csv = generateCsv(rows, sep)
     const fileName = `polso-export-${clientId}-${from}-${to}.csv`
+
+    // Log export history (fire-and-forget, don't block the response)
+    prisma.export.create({
+      data: {
+        organizationId: clientId,
+        name: `${from} — ${to}`,
+        filePath: `csv:clientId=${clientId}&from=${from}&to=${to}&sep=${encodeURIComponent(sep)}`,
+        startDate: new Date(from),
+        endDate: new Date(to),
+        expenseCount: rows.length,
+        status: "completed",
+        completedAt: new Date(),
+        includesPdf: false,
+        includesInvoices: false,
+      },
+    }).catch(() => {})
 
     return new NextResponse(csv, {
       status: 200,
