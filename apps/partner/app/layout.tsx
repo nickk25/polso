@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { JetBrains_Mono } from "next/font/google"
 import { Toaster } from "@polso/ui/sonner"
 import { AuthProvider } from "@/components/providers/auth-provider"
@@ -8,6 +8,11 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-sans",
 })
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  colorScheme: "light",
+}
 
 export const metadata: Metadata = {
   title: {
