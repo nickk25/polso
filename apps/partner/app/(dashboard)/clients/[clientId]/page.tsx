@@ -407,11 +407,14 @@ export default async function ClientDetailPage({
               <p className="text-sm font-medium mb-3">Exportaciones anteriores</p>
               <div className="divide-y border rounded-md">
                 {recentExports.map((e) => {
-                  const downloadParams = e.filePath.replace("csv:", "")
+                  // Old csv: records → re-trigger CSV; new R2 ZIPs → download via /api/exports/[id]
+                  const href = e.filePath.startsWith("csv:")
+                    ? `/api/export?${e.filePath.replace("csv:", "")}`
+                    : `/api/exports/${e.id}`
                   return (
                     <a
                       key={e.id}
-                      href={`/api/export?${downloadParams}`}
+                      href={href}
                       download
                       className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
                     >

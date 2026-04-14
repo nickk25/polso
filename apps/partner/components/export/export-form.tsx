@@ -35,7 +35,7 @@ export function ExportForm({
 
     const a = document.createElement("a")
     a.href = url
-    a.download = `polso-export-${from}-${to}.csv`
+    a.download = `polso-export-${from}-${to}.zip`
     a.click()
 
     // Wait for the server to write the export record, then refresh history
