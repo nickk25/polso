@@ -5,6 +5,9 @@ export interface ClientDetail {
   id: string
   name: string
   type: string
+  telegramChatId: string | null
+  whatsappPhone: string | null
+  lastContactedAt: string | null
   accounts: Array<{
     id: string
     name: string
@@ -32,13 +35,15 @@ export async function getClientDetail(
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const [client, expenseAgg, unmatchedInbox] = await Promise.all([
+  const [client, expenseAgg, unmatchedInbox, lastMessage] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: clientId },
       select: {
         id: true,
         name: true,
         type: true,
+        telegramChatId: true,
+        whatsappPhone: true,
         accounts: {
           select: {
             id: true,
@@ -65,12 +70,18 @@ export async function getClientDetail(
         status: { in: ["new", "no_match"] },
       },
     }),
+    prisma.proactiveMessage.findFirst({
+      where: { organizationId: clientId },
+      orderBy: { sentAt: "desc" },
+      select: { sentAt: true },
+    }),
   ])
 
   if (!client) notFound()
 
   return {
     ...client,
+    lastContactedAt: lastMessage?.sentAt.toISOString() ?? null,
     unmatchedInbox,
     totalExpenses30d: expenseAgg._sum.amount ?? 0,
   }
