@@ -2,6 +2,8 @@ import Link from "next/link"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { getClientDetail } from "@/features/clients/queries/get-client-detail"
 import { getClientOverview } from "@/features/clients/queries/get-client-overview"
+import { getClientExports } from "@/features/export/queries/get-client-exports"
+import { ExportForm } from "@/components/export/export-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
@@ -17,6 +19,7 @@ import {
   Stack,
   TrendUp,
   TrendDown,
+  DownloadSimple,
 } from "@phosphor-icons/react/dist/ssr"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
@@ -61,9 +64,10 @@ export default async function ClientDetailPage({
   const { clientId } = await params
   const ctx = await getPartnerAuthContext()
 
-  const [client, overview] = await Promise.all([
+  const [client, overview, recentExports] = await Promise.all([
     getClientDetail(ctx.organizationId, clientId),
     getClientOverview(ctx.organizationId, clientId),
+    getClientExports(ctx.organizationId, clientId),
   ])
 
   const monthLabel = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
@@ -381,6 +385,49 @@ export default async function ClientDetailPage({
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Export ────────────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Exportar</CardTitle>
+          <p className="text-sm text-muted-foreground">Descarga las transacciones en CSV</p>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-8 lg:flex-row lg:gap-12">
+          <ExportForm clientId={clientId} />
+
+          {recentExports.length > 0 && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium mb-3">Exportaciones anteriores</p>
+              <div className="divide-y border rounded-md">
+                {recentExports.map((e) => {
+                  const downloadParams = e.filePath.replace("csv:", "")
+                  return (
+                    <a
+                      key={e.id}
+                      href={`/api/export?${downloadParams}`}
+                      download
+                      className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{e.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(e.createdAt, { locale: es, addSuffix: true })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-4">
+                        {e.expenseCount !== null && (
+                          <span className="text-xs text-muted-foreground">{e.expenseCount} filas</span>
+                        )}
+                        <DownloadSimple className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
