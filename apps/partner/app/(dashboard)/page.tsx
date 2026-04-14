@@ -1,5 +1,5 @@
 import { getPartnerAuthContext } from "@/lib/auth"
-import { prisma } from "@/lib/db"
+import { prisma, transactionDocumentedWhere } from "@polso/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Badge } from "@polso/ui/badge"
 import { Button } from "@polso/ui/button"
@@ -146,16 +146,16 @@ async function getDashboardData(organizationId: string) {
         transaction: { select: { merchantName: true, name: true } },
       },
     }),
-    // Expenses this month per client
-    prisma.expense.groupBy({
+    // All transactions this month per client
+    prisma.transaction.groupBy({
       by: ["organizationId"],
       where: { organizationId: { in: clientIds }, date: { gte: monthStart } },
       _count: { id: true },
     }),
-    // Documented expenses this month per client
-    prisma.expense.groupBy({
+    // Documented transactions this month per client
+    prisma.transaction.groupBy({
       by: ["organizationId"],
-      where: { organizationId: { in: clientIds }, date: { gte: monthStart }, status: "documented" },
+      where: { organizationId: { in: clientIds }, date: { gte: monthStart }, ...transactionDocumentedWhere },
       _count: { id: true },
     }),
     // Unmatched inbox per client
@@ -233,9 +233,9 @@ async function getDashboardData(organizationId: string) {
   })
 
   // Global coverage
-  const totalExpenses = clients.reduce((s, c) => s + c.total, 0)
+  const totalTransactions = clients.reduce((s, c) => s + c.total, 0)
   const totalDocumented = clients.reduce((s, c) => s + c.documented, 0)
-  const coveragePct = totalExpenses > 0 ? Math.round((totalDocumented / totalExpenses) * 100) : null
+  const coveragePct = totalTransactions > 0 ? Math.round((totalDocumented / totalTransactions) * 100) : null
   const upToDate = clients.filter((c) => c.coverage === 100).length
 
   return {
@@ -249,7 +249,7 @@ async function getDashboardData(organizationId: string) {
     },
     progress: {
       coveragePct,
-      totalExpenses,
+      totalTransactions,
       totalDocumented,
       conciliatedThisMonth,
       conciliatedLastMonth,
@@ -429,7 +429,7 @@ export default async function DashboardPage() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {progress.totalDocumented}/{progress.totalExpenses} gastos documentados
+              {progress.totalDocumented}/{progress.totalTransactions} transacciones documentadas
             </p>
           </CardContent>
         </Card>

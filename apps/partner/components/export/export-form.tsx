@@ -4,10 +4,15 @@ import { useState } from "react"
 import { Button } from "@polso/ui/button"
 import { Label } from "@polso/ui/label"
 import { Input } from "@polso/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@polso/ui/select"
 import { DownloadSimple } from "@phosphor-icons/react"
 
-export function ExportForm({ clientId }: { clientId: string }) {
+export function ExportForm({
+  clientId,
+  separator = ";",
+}: {
+  clientId: string
+  separator?: string
+}) {
   const today = new Date().toISOString().split("T")[0]
   const firstOfMonth = new Date(
     new Date().getFullYear(),
@@ -19,15 +24,13 @@ export function ExportForm({ clientId }: { clientId: string }) {
 
   const [from, setFrom] = useState(firstOfMonth)
   const [to, setTo] = useState(today)
-  const [sep, setSep] = useState(";")
   const [loading, setLoading] = useState(false)
 
   function handleExport() {
     setLoading(true)
-    const params = new URLSearchParams({ clientId, from, to, sep })
+    const params = new URLSearchParams({ clientId, from, to })
     const url = `/api/export?${params}`
 
-    // Trigger download via anchor
     const a = document.createElement("a")
     a.href = url
     a.download = `polso-export-${from}-${to}.csv`
@@ -36,38 +39,27 @@ export function ExportForm({ clientId }: { clientId: string }) {
   }
 
   return (
-    <div className="max-w-md space-y-6">
-      <div className="space-y-2">
-        <Label>Desde</Label>
-        <Input
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          max={to}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Hasta</Label>
-        <Input
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          min={from}
-          max={today}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Separador CSV</Label>
-        <Select value={sep} onValueChange={setSep}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value=";">Punto y coma (;)</SelectItem>
-            <SelectItem value=",">Coma (,)</SelectItem>
-            <SelectItem value={"\t"}>Tabulador</SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="max-w-sm space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Desde</Label>
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            max={to}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Hasta</Label>
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            min={from}
+            max={today}
+          />
+        </div>
       </div>
       <Button onClick={handleExport} disabled={loading}>
         <DownloadSimple className="mr-2 h-4 w-4" />

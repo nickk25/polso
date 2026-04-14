@@ -1,12 +1,13 @@
 import { getPartnerAuthContext } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
+import { CsvSeparatorSelect } from "@/features/settings/components/csv-separator-select"
 
 export default async function SettingsPage() {
   const ctx = await getPartnerAuthContext()
   const org = await prisma.organization.findUnique({
     where: { id: ctx.organizationId },
-    select: { id: true, name: true, type: true, createdAt: true },
+    select: { id: true, name: true, type: true, createdAt: true, csvSeparator: true },
   })
 
   return (
@@ -33,6 +34,18 @@ export default async function SettingsPage() {
             <p className="text-xs text-muted-foreground">Tipo</p>
             <p className="text-sm font-medium capitalize">{org?.type ?? "—"}</p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-md">
+        <CardHeader>
+          <CardTitle className="text-sm">Exportación</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Separador CSV para las descargas de transacciones
+          </p>
+          <CsvSeparatorSelect value={org?.csvSeparator ?? ";"} />
         </CardContent>
       </Card>
     </div>

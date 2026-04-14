@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { getPartnerAuthContext } from "@/lib/auth"
+import { prisma } from "@/lib/db"
 import { getClientDetail } from "@/features/clients/queries/get-client-detail"
 import { getClientOverview } from "@/features/clients/queries/get-client-overview"
 import { getClientExports } from "@/features/export/queries/get-client-exports"
@@ -64,10 +65,14 @@ export default async function ClientDetailPage({
   const { clientId } = await params
   const ctx = await getPartnerAuthContext()
 
-  const [client, overview, recentExports] = await Promise.all([
+  const [client, overview, recentExports, partnerOrg] = await Promise.all([
     getClientDetail(ctx.organizationId, clientId),
     getClientOverview(ctx.organizationId, clientId),
     getClientExports(ctx.organizationId, clientId),
+    prisma.organization.findUnique({
+      where: { id: ctx.organizationId },
+      select: { csvSeparator: true },
+    }),
   ])
 
   const monthLabel = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
@@ -395,7 +400,7 @@ export default async function ClientDetailPage({
           <p className="text-sm text-muted-foreground">Descarga las transacciones en CSV</p>
         </CardHeader>
         <CardContent className="flex flex-col gap-8 lg:flex-row lg:gap-12">
-          <ExportForm clientId={clientId} />
+          <ExportForm clientId={clientId} separator={partnerOrg?.csvSeparator ?? ";"} />
 
           {recentExports.length > 0 && (
             <div className="flex-1 min-w-0">
@@ -413,7 +418,7 @@ export default async function ClientDetailPage({
                       <div className="min-w-0">
                         <p className="text-sm font-medium">{e.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(e.createdAt, { locale: es, addSuffix: true })}
+                          {e.generatedByName} · {formatDistanceToNow(e.createdAt, { locale: es, addSuffix: true })}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-4">
