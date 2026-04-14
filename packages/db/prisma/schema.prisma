@@ -41,6 +41,9 @@ model Organization {
   telegramChatId String? @unique @map("telegram_chat_id")
   agentOptOut    Boolean @default(false) @map("agent_opt_out")
 
+  // Export preferences
+  csvSeparator   String? @default(";") @map("csv_separator")
+
   // Scheduled plan changes (for downgrades)
   scheduledPlanType     String?   @map("scheduled_plan_type")
   scheduledPlanInterval String?   @map("scheduled_plan_interval")
@@ -473,6 +476,7 @@ model Export {
   includesInvoices Boolean  @default(true) @map("includes_invoices")
   status          String    @default("pending") // pending, processing, completed, failed
   errorMessage    String?   @map("error_message")
+  generatedByOrgId String?  @map("generated_by_org_id") // org that triggered the export (partner or client)
   createdAt       DateTime  @default(now()) @map("created_at")
   completedAt     DateTime? @map("completed_at")
 
