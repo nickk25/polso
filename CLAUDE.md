@@ -8,7 +8,7 @@ Each app and package also has its own `CLAUDE.md` with scoped instructions — C
 
 Polso is a financial management and expense intelligence SaaS for businesses. Connects to banks via Tink (Open Banking), syncs transactions, auto-categorizes spending, detects recurring expenses, and provides analytics.
 
-**pnpm + Turborepo monorepo.** One app (`apps/web`), ten shared packages (`packages/*`).
+**pnpm + Turborepo monorepo.** Two apps, thirteen shared packages.
 
 - Architecture & schema: `docs/ARCHITECTURE.md`
 - Code templates: `docs/CODE_PATTERNS.md`
@@ -17,17 +17,20 @@ Polso is a financial management and expense intelligence SaaS for businesses. Co
 
 ```
 apps/
-  web/           @polso/web      Next.js 16 dashboard (see apps/web/CLAUDE.md)
+  web/           @polso/web      Next.js 16 client dashboard (see apps/web/CLAUDE.md)
+  partner/       @polso/partner  Next.js 16 advisor dashboard (see apps/partner/CLAUDE.md)
 packages/
+  agent/         @polso/agent    WhatsApp + Telegram bot + OCR extraction
   banking/       @polso/banking  Tink Open Banking client
   billing/       @polso/billing  Creem payment integration
   db/            @polso/db       Prisma schema, client, generated types
-  email/         @polso/email    Resend + 20 email templates
+  email/         @polso/email    Resend + email templates
   intelligence/  @polso/intelligence  Auto-categorization, recurring detection
-  plans/         @polso/plans    Plan limits, pricing, features
+  matching/      @polso/matching Receipt↔transaction matching algorithm
+  plans/         @polso/plans    Plan limits, pricing, feature flags
   storage/       @polso/storage  Cloudflare R2 client
   tsconfig/      @polso/tsconfig Shared TypeScript configs
-  ui/            @polso/ui       26 Shadcn/ui components
+  ui/            @polso/ui       Shadcn/ui component library
   utils/         @polso/utils    cn(), ActionResponse, shared enums
 ```
 
@@ -35,10 +38,11 @@ packages/
 
 ```bash
 pnpm dev                              # Start everything (turbo)
-pnpm build                            # Build all packages + app
+pnpm build                            # Build all packages + apps
 pnpm lint                             # Lint all
 
-pnpm --filter @polso/web dev          # Web app only
+pnpm --filter @polso/web dev          # Web app only (port 3000)
+pnpm --filter @polso/partner dev      # Partner app only (port 3001)
 pnpm --filter @polso/db db:generate   # Generate Prisma client
 pnpm --filter @polso/db db:push       # Push schema to database
 pnpm --filter @polso/db db:migrate    # Create + apply migration
@@ -48,9 +52,9 @@ pnpm --filter @polso/db db:seed       # Seed database
 ## Monorepo Rules
 
 - Packages link via `workspace:*` in `package.json`
-- All `@polso/*` packages are raw TypeScript (no build step) — must be listed in `transpilePackages` in `apps/web/next.config.ts`
-- Tailwind v4 requires `@source "../node_modules/@polso/ui/src/**/*.{ts,tsx}"` in `apps/web/app/globals.css` to scan UI component classes
-- Adding a package: create `packages/<name>/`, add `package.json` with `@polso/<name>`, add to `transpilePackages`
+- All `@polso/*` packages are raw TypeScript (no build step) — must be listed in `transpilePackages` in **both** `apps/web/next.config.ts` and `apps/partner/next.config.ts`
+- Tailwind v4 requires `@source "../node_modules/@polso/ui/src/**/*.{ts,tsx}"` in each app's `globals.css` to scan UI component classes
+- Adding a package: create `packages/<name>/`, add `package.json` with `@polso/<name>`, add to `transpilePackages` in both apps
 - `turbo.json` pipeline: `build` depends on `^build` + `^db:generate`
 
 ## UI Components
@@ -88,11 +92,11 @@ pnpm --filter @polso/db db:seed       # Seed database
 | Layer | What belongs here |
 |-------|-------------------|
 | `schema` | `packages/db/prisma/schema.prisma` only |
-| `backend` | `apps/web/features/*/lib/`, `*/queries/`, `*/actions/` |
-| `frontend` | `apps/web/features/*/components/`, `app/(dashboard)/*/page.tsx`, `messages/`, `lib/i18n/messages.ts` |
-| `navigation` | `apps/web/components/layout/app-sidebar.tsx`, `messages/*/common.json` |
-| `settings` | `apps/web/features/settings/**`, `messages/*/settings.json` |
-| `infra` | `apps/web/app/api/cron/`, `vercel.json`, config files |
+| `backend` | `features/*/lib/`, `*/queries/`, `*/actions/` (either app) |
+| `frontend` | `features/*/components/`, `app/(dashboard)/*/page.tsx`, `messages/` (web only) |
+| `navigation` | `components/layout/app-sidebar.tsx`, `messages/*/common.json` |
+| `settings` | `features/settings/**` |
+| `infra` | `app/api/cron/`, `vercel.json`, config files |
 
 **⚠️ Pre-push gate:** Run `/review` on all changes. Fix every Error and Warning before pushing.
 

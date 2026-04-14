@@ -10,6 +10,21 @@ Next.js 16 dashboard app. App Router, React Server Components by default.
 app/(dashboard)/    Dashboard routes — one dir per feature
 app/(marketing)/    Marketing + auth pages
 features/           Feature modules — canonical reference: features/expenses/
+  alerts/           Smart financial alerts (detect anomalies, notify user)
+  analytics/        Cash flow, burn rate, runway, category breakdown
+  banking/          Bank account connections via Tink (sync, reconnect, stale detection)
+  billing/          Subscription management via Creem
+  categories/       Transaction category CRUD
+  clients/          Client contact management
+  expenses/         Expense tracking, categorization, invoice upload
+  export/           ZIP export (CSV + PDF summary + facturas/ folder)
+  inbox/            Receipt upload and processing (OCR, match suggestions)
+  income/           Income tracking
+  intelligence/     AI suggestions surfaced from @polso/intelligence
+  settings/         Profile, org, team, banking, preferences, notifications
+  team/             Team member invitations and roles
+  vendors/          Vendor management
+  waitlist/         Pre-launch waitlist
   <module>/
     actions/        Server actions ("use server")
     queries/        Read-only data fetching (plain async functions)
