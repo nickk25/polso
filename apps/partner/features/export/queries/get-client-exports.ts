@@ -25,7 +25,11 @@ export async function getClientExports(
     where: {
       organizationId: clientId,
       status: "completed",
-      filePath: { startsWith: "csv:" },
+      // Include both old csv: records and new R2 ZIP exports (exclude apps/web R2 ZIPs via generatedByOrgId)
+      OR: [
+        { filePath: { startsWith: "csv:" } },
+        { filePath: { startsWith: "exports/" }, generatedByOrgId: { not: null } },
+      ],
     },
     orderBy: { createdAt: "desc" },
     take: 5,

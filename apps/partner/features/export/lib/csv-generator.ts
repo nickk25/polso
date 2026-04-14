@@ -1,4 +1,21 @@
+import { format } from "date-fns"
 import type { ExportableTransaction } from "../queries/get-exportable-data"
+
+export function generateInvoiceFileName(
+  date: Date,
+  vendorName: string | null,
+  amount: number,
+  ext: string
+): string {
+  const dateStr = format(date, "yyyy-MM-dd")
+  const vendor = (vendorName ?? "unknown")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .substring(0, 30)
+  const amountStr = amount.toFixed(2).replace(".", "_")
+  return `${dateStr}_${vendor}_${amountStr}.${ext}`
+}
 
 const HEADERS = [
   "Fecha",
@@ -45,6 +62,16 @@ export function generateCsv(
   lines.push(HEADERS.map((h) => escapeCsv(h, separator)).join(separator))
 
   for (const row of rows) {
+    // Use the renamed filename so accountants can cross-reference with facturas/ folder
+    const attachmentDisplay = row.attachmentFilePath
+      ? generateInvoiceFileName(
+          row.date,
+          row.vendorName,
+          row.amount,
+          row.attachmentFileName?.split(".").pop() ?? "pdf"
+        )
+      : ""
+
     const cells = [
       formatDate(row.date),
       row.description ?? "",
@@ -56,7 +83,7 @@ export function generateCsv(
       row.vendorName ?? "",
       row.accountName,
       row.conciliationStatus === "matched" ? "Conciliado" : "Sin conciliar",
-      row.attachmentFileName ?? "",
+      attachmentDisplay,
       row.notes ?? "",
     ]
     lines.push(cells.map((c) => escapeCsv(c, separator)).join(separator))

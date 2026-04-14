@@ -12,6 +12,8 @@ export interface ExportableTransaction {
   vendorName: string | null
   accountName: string
   attachmentFileName: string | null
+  attachmentFilePath: string | null
+  attachmentContentType: string | null
   conciliationStatus: "matched" | "unmatched"
   notes: string | null
 }
@@ -49,7 +51,7 @@ export async function getExportableData(
           category: { select: { name: true } },
           vendor: { select: { name: true } },
           invoices: {
-            select: { fileName: true },
+            select: { fileName: true, filePath: true, mimeType: true },
             take: 1,
             orderBy: { createdAt: "desc" },
           },
@@ -57,7 +59,7 @@ export async function getExportableData(
       },
       transactionAttachments: {
         select: {
-          inboxItem: { select: { fileName: true } },
+          inboxItem: { select: { fileName: true, filePath: true, contentType: true } },
         },
         take: 1,
       },
@@ -77,6 +79,14 @@ export async function getExportableData(
     attachmentFileName:
       t.transactionAttachments[0]?.inboxItem?.fileName ??
       t.expense?.invoices[0]?.fileName ??
+      null,
+    attachmentFilePath:
+      t.transactionAttachments[0]?.inboxItem?.filePath ??
+      t.expense?.invoices[0]?.filePath ??
+      null,
+    attachmentContentType:
+      t.transactionAttachments[0]?.inboxItem?.contentType ??
+      t.expense?.invoices[0]?.mimeType ??
       null,
     conciliationStatus:
       t.transactionAttachments.length > 0 || t.expense?.status === "documented"
