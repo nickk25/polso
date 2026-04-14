@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { neonAuth } from "@neondatabase/auth/next/server";
 import { prisma } from "@/lib/db";
-import { localeMap } from "@/lib/i18n/config";
 import {
   SidebarProvider,
   SidebarInset,
@@ -82,24 +80,6 @@ export default async function DashboardLayout({
 
   // Get or create user's organization
   const organization = await getOrganization(user.id, user.email);
-
-  // Sync user's locale preference to cookie
-  const cookieStore = await cookies();
-  const currentLocaleCookie = cookieStore.get("NEXT_LOCALE")?.value;
-  const userPreference = await prisma.userPreference.findUnique({
-    where: { userId: user.id },
-    select: { locale: true },
-  });
-  if (userPreference?.locale) {
-    const baseLocale = localeMap[userPreference.locale] ?? "en";
-    if (baseLocale !== currentLocaleCookie) {
-      cookieStore.set("NEXT_LOCALE", baseLocale, {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-        sameSite: "lax",
-      });
-    }
-  }
 
   return (
     <SidebarProvider>
