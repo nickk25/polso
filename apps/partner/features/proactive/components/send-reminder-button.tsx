@@ -16,6 +16,10 @@ export function SendReminderButton({
   const [loading, setLoading] = useState(false)
   const [lastSent, setLastSent] = useState(lastContactedAt)
 
+  const isWithin24h = lastSent
+    ? Date.now() - new Date(lastSent).getTime() < 24 * 60 * 60 * 1000
+    : false
+
   async function handleSend() {
     setLoading(true)
     try {
@@ -46,7 +50,7 @@ export function SendReminderButton({
           })}
         </span>
       )}
-      <Button variant="outline" size="sm" onClick={handleSend} disabled={loading}>
+      <Button variant="outline" size="sm" onClick={handleSend} disabled={loading || isWithin24h} title={isWithin24h ? "Ya se envió un recordatorio en las últimas 24h" : undefined}>
         <PaperPlaneTilt className="mr-1 h-4 w-4" />
         {loading ? "Enviando..." : "Enviar recordatorio"}
       </Button>
