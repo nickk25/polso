@@ -87,8 +87,8 @@ export function TransactionFilters({
   const toDate = dateTo ? new Date(dateTo) : undefined
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="relative">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="relative flex-1">
         <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar transacción..."
@@ -98,7 +98,7 @@ export function TransactionFilters({
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 sm:flex-nowrap">
         <DateRangePicker
           from={fromDate}
           to={toDate}
