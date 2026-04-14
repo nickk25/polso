@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   },
   description: "Panel de asesoría — Polso",
   metadataBase: new URL("https://partner.polso.app"),
+  icons: {
+    icon: [{ url: "/icon", type: "image/png", sizes: "32x32" }],
+    apple: [{ url: "/apple-icon", type: "image/png", sizes: "180x180" }],
+  },
 }
 
 export default function RootLayout({
