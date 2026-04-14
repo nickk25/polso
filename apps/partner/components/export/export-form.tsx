@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@polso/ui/button"
 import { Label } from "@polso/ui/label"
 import { Input } from "@polso/ui/input"
-import { DownloadSimple } from "@phosphor-icons/react"
+import { DownloadSimple, Spinner } from "@phosphor-icons/react"
 
 export function ExportForm({
   clientId,
@@ -22,11 +23,12 @@ export function ExportForm({
     .toISOString()
     .split("T")[0]
 
+  const router = useRouter()
   const [from, setFrom] = useState(firstOfMonth)
   const [to, setTo] = useState(today)
   const [loading, setLoading] = useState(false)
 
-  function handleExport() {
+  async function handleExport() {
     setLoading(true)
     const params = new URLSearchParams({ clientId, from, to })
     const url = `/api/export?${params}`
@@ -35,7 +37,11 @@ export function ExportForm({
     a.href = url
     a.download = `polso-export-${from}-${to}.csv`
     a.click()
-    setTimeout(() => setLoading(false), 1500)
+
+    // Wait for the server to write the export record, then refresh history
+    await new Promise((r) => setTimeout(r, 1500))
+    router.refresh()
+    setLoading(false)
   }
 
   return (
@@ -62,7 +68,11 @@ export function ExportForm({
         </div>
       </div>
       <Button onClick={handleExport} disabled={loading}>
-        <DownloadSimple className="mr-2 h-4 w-4" />
+        {loading ? (
+          <Spinner className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <DownloadSimple className="mr-2 h-4 w-4" />
+        )}
         {loading ? "Generando..." : "Descargar CSV"}
       </Button>
     </div>
