@@ -15,10 +15,19 @@ export async function GET(request: NextRequest) {
     const clientId = searchParams.get("clientId")
     const from = searchParams.get("from")
     const to = searchParams.get("to")
-    const sep = searchParams.get("sep") ?? ";"
 
     if (!clientId || !from || !to) {
       return new NextResponse("Missing required params", { status: 400 })
+    }
+
+    // Use separator from URL param, fall back to org preference
+    let sep = searchParams.get("sep")
+    if (!sep) {
+      const org = await prisma.organization.findUnique({
+        where: { id: ctx.organizationId },
+        select: { csvSeparator: true },
+      })
+      sep = org?.csvSeparator ?? ";"
     }
 
     const rows = await getExportableData(
@@ -36,12 +45,13 @@ export async function GET(request: NextRequest) {
       data: {
         organizationId: clientId,
         name: `${from} — ${to}`,
-        filePath: `csv:clientId=${clientId}&from=${from}&to=${to}&sep=${encodeURIComponent(sep)}`,
+        filePath: `csv:clientId=${clientId}&from=${from}&to=${to}`,
         startDate: new Date(from),
         endDate: new Date(to),
         expenseCount: rows.length,
         status: "completed",
         completedAt: new Date(),
+        generatedByOrgId: ctx.organizationId,
         includesPdf: false,
         includesInvoices: false,
       },
