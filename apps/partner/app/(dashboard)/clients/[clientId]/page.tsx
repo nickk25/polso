@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
 import { ArrowLeft, FileText, CreditCard, ArrowsClockwise, Export } from "@phosphor-icons/react/dist/ssr"
+import { SendReminderButton } from "@/features/proactive/components/send-reminder-button"
 
 export default async function ClientDetailPage({
   params,
@@ -24,15 +25,20 @@ export default async function ClientDetailPage({
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/clients">
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Clientes
-          </Link>
-        </Button>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-sm font-medium">{client.name}</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/clients">
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              Clientes
+            </Link>
+          </Button>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-sm font-medium">{client.name}</span>
+        </div>
+        {(client.telegramChatId || client.whatsappPhone) && (
+          <SendReminderButton clientId={clientId} lastContactedAt={client.lastContactedAt} />
+        )}
       </div>
 
       {/* Stats */}
