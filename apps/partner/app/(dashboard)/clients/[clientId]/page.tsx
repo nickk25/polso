@@ -1,11 +1,57 @@
 import Link from "next/link"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { getClientDetail } from "@/features/clients/queries/get-client-detail"
+import { getClientOverview } from "@/features/clients/queries/get-client-overview"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
-import { ArrowLeft, FileText, CreditCard, ArrowsClockwise, Export } from "@phosphor-icons/react/dist/ssr"
+import {
+  ArrowLeft,
+  ArrowRight,
+  TelegramLogo,
+  WhatsappLogo,
+  Paperclip,
+  CheckCircle,
+  Warning,
+  Sparkle,
+  Stack,
+  TrendUp,
+  TrendDown,
+} from "@phosphor-icons/react/dist/ssr"
+import { formatDistanceToNow } from "date-fns"
+import { es } from "date-fns/locale"
 import { SendReminderButton } from "@/features/proactive/components/send-reminder-button"
+
+function SourceIcon({ source }: { source: string }) {
+  if (source === "telegram") return <TelegramLogo className="h-4 w-4 text-sky-500 shrink-0" />
+  if (source === "whatsapp") return <WhatsappLogo className="h-4 w-4 text-green-500 shrink-0" />
+  return <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
+}
+
+function ConfidenceBadge({ score }: { score: number }) {
+  const pct = Math.round(score * 100)
+  const cls =
+    pct >= 80
+      ? "bg-green-500/10 text-green-600 border-green-200"
+      : pct >= 60
+        ? "bg-amber-500/10 text-amber-600 border-amber-200"
+        : ""
+  return (
+    <Badge variant="outline" className={`text-xs tabular-nums shrink-0 ${cls}`}>
+      {pct}%
+    </Badge>
+  )
+}
+
+function formatAmount(amount: unknown, currency: string) {
+  if (!amount) return null
+  return Number(amount).toLocaleString("es-ES", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+}
 
 export default async function ClientDetailPage({
   params,
@@ -14,17 +60,33 @@ export default async function ClientDetailPage({
 }) {
   const { clientId } = await params
   const ctx = await getPartnerAuthContext()
-  const client = await getClientDetail(ctx.organizationId, clientId)
 
-  const tabs = [
-    { label: "Transacciones", href: `/clients/${clientId}/transactions` },
-    { label: "Comprobantes", href: `/clients/${clientId}/inbox` },
-    { label: "Conciliación", href: `/clients/${clientId}/conciliation` },
-    { label: "Exportar", href: `/clients/${clientId}/export` },
-  ]
+  const [client, overview] = await Promise.all([
+    getClientDetail(ctx.organizationId, clientId),
+    getClientOverview(ctx.organizationId, clientId),
+  ])
+
+  const monthLabel = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
+  const totalBalance = client.accounts.reduce((sum, a) => sum + (a.balanceCurrent ?? 0), 0)
+  const currency = client.accounts[0]?.currency ?? "EUR"
+
+  const spendTrend =
+    overview.totalLastMonth > 0
+      ? ((overview.totalThisMonth - overview.totalLastMonth) / overview.totalLastMonth) * 100
+      : null
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const lastSyncedAt = client.accounts.reduce<Date | null>((latest, a) => {
+    if (!a.lastSyncedAt) return latest
+    if (!latest || a.lastSyncedAt > latest) return a.lastSyncedAt
+    return latest
+  }, null)
+  const isStaleSince = lastSyncedAt && lastSyncedAt < sevenDaysAgo
 
   return (
     <div className="flex flex-col gap-6 p-6">
+
+      {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
@@ -34,101 +96,293 @@ export default async function ClientDetailPage({
             </Link>
           </Button>
           <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-medium">{client.name}</span>
+          <div>
+            <span className="text-sm font-medium">{client.name}</span>
+            <span className="ml-2 text-xs text-muted-foreground capitalize">{monthLabel}</span>
+          </div>
         </div>
         {(client.telegramChatId || client.whatsappPhone) && (
           <SendReminderButton clientId={clientId} lastContactedAt={client.lastContactedAt} />
         )}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* ── KPI cards ─────────────────────────────────────────────────── */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+        {/* Balance */}
         <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs text-muted-foreground">Cuentas</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Balance total</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{client.accounts.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs text-muted-foreground">Balance total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {client.accounts
-                .reduce((sum, a) => sum + (a.balanceCurrent ?? 0), 0)
-                .toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs text-muted-foreground">Gastos 30d</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {client.totalExpenses30d.toLocaleString("es-ES", {
-                style: "currency",
-                currency: "EUR",
-              })}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs text-muted-foreground">Comprobantes sin match</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={`text-2xl font-bold ${client.unmatchedInbox > 0 ? "text-orange-600" : ""}`}>
-              {client.unmatchedInbox}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick nav tabs */}
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((tab) => (
-          <Button key={tab.href} asChild variant="outline" size="sm">
-            <Link href={tab.href}>{tab.label}</Link>
-          </Button>
-        ))}
-      </div>
-
-      {/* Bank accounts list */}
-      <div>
-        <h2 className="mb-3 text-sm font-semibold">Cuentas bancarias</h2>
-        <div className="space-y-2">
-          {client.accounts.map((account) => (
-            <div key={account.id} className="flex items-center justify-between rounded-md border px-4 py-3">
-              <div>
-                <p className="text-sm font-medium">{account.name}</p>
-                {account.institutionName && (
-                  <p className="text-xs text-muted-foreground">{account.institutionName}</p>
-                )}
-              </div>
-              <div className="text-right">
-                {account.balanceCurrent !== null && (
-                  <p className="text-sm font-semibold">
-                    {account.balanceCurrent.toLocaleString("es-ES", {
-                      style: "currency",
-                      currency: account.currency,
-                    })}
-                  </p>
-                )}
-                <Badge
-                  variant={account.status === "active" ? "default" : "secondary"}
-                  className="mt-1 text-xs"
-                >
-                  {account.status === "active" ? "Activa" : account.status === "disconnected" ? "Desconectada" : "Error"}
-                </Badge>
-              </div>
+            <div className="text-2xl font-bold">
+              {totalBalance.toLocaleString("es-ES", { style: "currency", currency, maximumFractionDigits: 0 })}
             </div>
-          ))}
-        </div>
+            <p className="text-xs text-muted-foreground">
+              {client.accounts.length} {client.accounts.length === 1 ? "cuenta" : "cuentas"}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Gastos del mes */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Gastos del mes</CardTitle>
+            {spendTrend !== null && (
+              spendTrend >= 0
+                ? <TrendUp className="h-4 w-4 text-red-500" />
+                : <TrendDown className="h-4 w-4 text-green-500" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {overview.totalThisMonth.toLocaleString("es-ES", { style: "currency", currency, maximumFractionDigits: 0 })}
+            </div>
+            {spendTrend !== null ? (
+              <p className={`text-xs ${spendTrend >= 0 ? "text-red-500" : "text-green-500"}`}>
+                {spendTrend >= 0 ? "+" : ""}{Math.round(spendTrend)}% vs mes anterior
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {overview.totalLastMonth.toLocaleString("es-ES", { style: "currency", currency, maximumFractionDigits: 0 })} el mes pasado
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Cobertura */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Cobertura del mes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${
+              overview.coveragePct === null ? "" :
+              overview.coveragePct === 100 ? "text-green-600" :
+              overview.coveragePct >= 70 ? "text-amber-600" : "text-red-600"
+            }`}>
+              {overview.coveragePct !== null ? `${overview.coveragePct}%` : "—"}
+            </div>
+            <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  (overview.coveragePct ?? 0) === 100 ? "bg-green-500" :
+                  (overview.coveragePct ?? 0) >= 70 ? "bg-amber-500" : "bg-red-500"
+                }`}
+                style={{ width: `${overview.coveragePct ?? 0}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {overview.countWithReceipt}/{overview.countWithReceipt + overview.countPending} documentados
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Sin comprobante */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sin comprobante</CardTitle>
+            <Stack className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${overview.countPending > 0 ? "text-orange-500" : "text-green-500"}`}>
+              {overview.countPending}
+            </div>
+            <p className="text-xs text-muted-foreground">transacciones este mes</p>
+          </CardContent>
+        </Card>
+
+        {/* Sugerencias */}
+        <Card className={overview.pendingSuggestionsCount > 0 ? "cursor-pointer hover:bg-muted/40 transition-colors" : ""}>
+          <Link href={`/clients/${clientId}/conciliation`} className="block">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Sugerencias</CardTitle>
+              <Sparkle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${overview.pendingSuggestionsCount > 0 ? "text-blue-500" : ""}`}>
+                {overview.pendingSuggestionsCount}
+              </div>
+              <p className="text-xs text-muted-foreground">matches por confirmar</p>
+            </CardContent>
+          </Link>
+        </Card>
       </div>
+
+      {/* ── Work area: inbox + suggestions ────────────────────────────── */}
+      <div className="grid gap-4 lg:grid-cols-2">
+
+        {/* Bandeja pendiente */}
+        <Card className="flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Bandeja pendiente</CardTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {overview.pendingInboxCount === 0
+                  ? "Sin documentos pendientes"
+                  : `${overview.pendingInboxCount} sin conciliar`}
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/clients/${clientId}/inbox`}>
+                Ver todos <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="flex-1 p-0">
+            {overview.recentPendingInbox.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                <CheckCircle className="h-10 w-10 text-green-500 mb-3" />
+                <p className="text-sm font-medium">Bandeja al día</p>
+                <p className="text-xs text-muted-foreground mt-1">No hay comprobantes pendientes.</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {overview.recentPendingInbox.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/clients/${clientId}/inbox`}
+                    className="flex items-center gap-3 px-6 py-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <SourceIcon source={item.source} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">
+                        {item.displayName ?? item.fileName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(item.createdAt, { locale: es, addSuffix: true })}
+                      </p>
+                    </div>
+                    {item.amount != null && (
+                      <span className="text-sm font-medium tabular-nums shrink-0">
+                        {formatAmount(item.amount, item.currency)}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Sugerencias de conciliación */}
+        <Card className="flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Sugerencias de conciliación</CardTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {overview.pendingSuggestionsCount === 0
+                  ? "Sin matches pendientes"
+                  : `${overview.pendingSuggestionsCount} por confirmar`}
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/clients/${clientId}/conciliation`}>
+                Ver todas <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="flex-1 p-0">
+            {overview.topSuggestions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                <CheckCircle className="h-10 w-10 text-green-500 mb-3" />
+                <p className="text-sm font-medium">Todo conciliado</p>
+                <p className="text-xs text-muted-foreground mt-1">No hay matches pendientes de revisión.</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {overview.topSuggestions.map((s) => (
+                  <Link
+                    key={s.id}
+                    href={`/clients/${clientId}/conciliation`}
+                    className="flex items-center gap-3 px-6 py-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">
+                        {s.inboxItem.displayName ?? s.inboxItem.fileName}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {s.transaction.merchantName ?? s.transaction.name ?? "—"} ·{" "}
+                        {s.transaction.date.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                      </p>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2">
+                      {s.inboxItem.amount != null && (
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {formatAmount(s.inboxItem.amount, s.inboxItem.currency)}
+                        </span>
+                      )}
+                      <ConfidenceBadge score={s.confidenceScore} />
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── Bank accounts ─────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Cuentas bancarias</CardTitle>
+            {isStaleSince && lastSyncedAt && (
+              <p className="text-xs text-orange-500 mt-0.5 flex items-center gap-1">
+                <Warning className="h-3.5 w-3.5" />
+                Último sync {formatDistanceToNow(lastSyncedAt, { locale: es, addSuffix: true })}
+              </p>
+            )}
+          </div>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/clients/${clientId}/transactions`}>
+              Ver transacciones <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y">
+            {client.accounts.map((account) => (
+              <div key={account.id} className="flex items-center justify-between px-6 py-3">
+                <div>
+                  <p className="text-sm font-medium">{account.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {account.institutionName && (
+                      <p className="text-xs text-muted-foreground">{account.institutionName}</p>
+                    )}
+                    {account.lastSyncedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        · Sync {formatDistanceToNow(account.lastSyncedAt, { locale: es, addSuffix: true })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {account.balanceCurrent !== null && (
+                    <p className="text-sm font-semibold tabular-nums">
+                      {account.balanceCurrent.toLocaleString("es-ES", {
+                        style: "currency",
+                        currency: account.currency,
+                        maximumFractionDigits: 0,
+                      })}
+                    </p>
+                  )}
+                  <Badge
+                    variant={account.status === "active" ? "default" : "secondary"}
+                    className="text-xs"
+                  >
+                    {account.status === "active"
+                      ? "Activa"
+                      : account.status === "disconnected"
+                        ? "Desconectada"
+                        : "Error"}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
