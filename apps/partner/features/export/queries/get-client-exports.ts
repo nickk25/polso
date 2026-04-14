@@ -9,6 +9,7 @@ export interface ClientExport {
   endDate: Date
   expenseCount: number | null
   createdAt: Date
+  generatedByName: string
 }
 
 export async function getClientExports(
@@ -20,8 +21,12 @@ export async function getClientExports(
   })
   if (!link) notFound()
 
-  return prisma.export.findMany({
-    where: { organizationId: clientId, status: "completed" },
+  const exports = await prisma.export.findMany({
+    where: {
+      organizationId: clientId,
+      status: "completed",
+      filePath: { startsWith: "csv:" },
+    },
     orderBy: { createdAt: "desc" },
     take: 5,
     select: {
@@ -32,6 +37,26 @@ export async function getClientExports(
       endDate: true,
       expenseCount: true,
       createdAt: true,
+      generatedByOrgId: true,
     },
   })
+
+  if (exports.length === 0) return []
+
+  // Resolve generator org names
+  const orgIds = [...new Set(exports.map((e) => e.generatedByOrgId).filter(Boolean) as string[])]
+  const orgs = orgIds.length > 0
+    ? await prisma.organization.findMany({
+        where: { id: { in: orgIds } },
+        select: { id: true, name: true },
+      })
+    : []
+  const orgNameMap = new Map(orgs.map((o) => [o.id, o.name]))
+
+  return exports.map((e) => ({
+    ...e,
+    generatedByName: e.generatedByOrgId
+      ? (orgNameMap.get(e.generatedByOrgId) ?? "Desconocido")
+      : "Desconocido",
+  }))
 }

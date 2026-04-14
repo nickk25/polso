@@ -76,7 +76,6 @@ export async function getClientOverview(
     prisma.transaction.count({
       where: {
         organizationId: clientId,
-        amount: { gt: 0 },
         date: { gte: thisMonthStart, lte: thisMonthEnd },
         ...transactionDocumentedWhere,
       },
@@ -84,7 +83,6 @@ export async function getClientOverview(
     prisma.transaction.count({
       where: {
         organizationId: clientId,
-        amount: { gt: 0 },
         date: { gte: thisMonthStart, lte: thisMonthEnd },
         ...transactionNotDocumentedWhere,
       },
