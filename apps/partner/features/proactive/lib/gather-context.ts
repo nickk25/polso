@@ -15,7 +15,7 @@ import type { ProactiveContext } from "@polso/agent/proactive"
 export async function getUnmatchedTransactions(
   organizationId: string
 ): Promise<NonNullable<ProactiveContext["unmatchedTransactions"]>> {
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const since = startOfMonth(new Date())
 
   const transactions = await prisma.transaction.findMany({
     where: {
