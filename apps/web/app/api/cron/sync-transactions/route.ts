@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@polso/db"
 import { prisma } from "@/lib/db"
 import {
-  createTinkClient,
+  createGoCardlessClient,
   normalizeCounterpartyName,
   getTransactionType,
   detectIncomeSource,
@@ -16,21 +16,18 @@ import {
 } from "@/features/alerts/lib/detect-alerts"
 
 const CRON_SECRET = process.env.CRON_SECRET
-const STALE_THRESHOLD_HOURS = 1
+// GoCardless rate limits: as low as 4 calls/day per account endpoint.
+// Daily sync uses latest=true (7-day window) to stay well within limits.
+const STALE_THRESHOLD_HOURS = 20
 
-function getTinkClient() {
-  return createTinkClient({
-    clientId: process.env.TINK_CLIENT_ID!,
-    clientSecret: process.env.TINK_CLIENT_SECRET!,
-    redirectUri: process.env.TINK_REDIRECT_URI!,
+function getGoCardlessClient() {
+  return createGoCardlessClient({
+    secretId: process.env.GOCARDLESS_SECRET_ID!,
+    secretKey: process.env.GOCARDLESS_SECRET_KEY!,
+    redirectUri: process.env.GOCARDLESS_REDIRECT_URI!,
   })
 }
 
-/**
- * Background sync job for all stale accounts.
- * Called by Vercel Cron (configured in vercel.json).
- * Security: requires CRON_SECRET header or query param.
- */
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
   const secretParam = request.nextUrl.searchParams.get("secret")
@@ -75,7 +72,8 @@ async function syncAllAccounts(): Promise<SyncResult> {
   const accounts = await prisma.account.findMany({
     where: {
       status: "active",
-      tinkAccessToken: { not: null },
+      requisitionId: { not: null },
+      externalAccountId: { not: null },
       OR: [{ lastSyncedAt: null }, { lastSyncedAt: { lt: staleDate } }],
     },
     include: { organization: { select: { id: true, name: true } } },
@@ -97,16 +95,16 @@ async function syncAllAccounts(): Promise<SyncResult> {
 
   console.log(`[Cron] Syncing ${accounts.length} stale accounts`)
 
-  // Group by tinkCredentialId (one API call covers all accounts per bank connection)
-  const credentialGroups = new Map<string, typeof accounts>()
+  // Group by requisitionId — check connection status once per bank connection
+  const requisitionGroups = new Map<string, typeof accounts>()
   for (const account of accounts) {
-    if (!account.tinkCredentialId) continue
-    const group = credentialGroups.get(account.tinkCredentialId) ?? []
+    if (!account.requisitionId) continue
+    const group = requisitionGroups.get(account.requisitionId) ?? []
     group.push(account)
-    credentialGroups.set(account.tinkCredentialId, group)
+    requisitionGroups.set(account.requisitionId, group)
   }
 
-  const tink = getTinkClient()
+  const gc = getGoCardlessClient()
   let accountsSynced = 0
   let accountsFailed = 0
   let totalImported = 0
@@ -114,66 +112,55 @@ async function syncAllAccounts(): Promise<SyncResult> {
   let totalExpenses = 0
   let totalIncomes = 0
 
-  for (const [credentialId, credAccounts] of credentialGroups) {
-    const organizationId = credAccounts[0].organizationId
-    try {
+  for (const [requisitionId, reqAccounts] of requisitionGroups) {
+    const organizationId = reqAccounts[0].organizationId
+    const orgName = reqAccounts[0].organization.name
+
+    // Check if the GoCardless connection is still active
+    const requisition = await gc.getRequisition(requisitionId)
+    if (requisition && gc.isRequisitionExpired(requisition.status)) {
       console.log(
-        `[Cron] Syncing credential ${credentialId} for org ${credAccounts[0].organization.name}`
+        `[Cron] Requisition ${requisitionId} expired for org ${orgName} — marking accounts`
       )
+      await prisma.account.updateMany({
+        where: { requisitionId, organizationId },
+        data: { status: "expired", syncError: "Bank connection has expired — please reconnect" },
+      })
+      accountsFailed += reqAccounts.length
+      continue
+    }
 
-      // Refresh token if needed
-      const lead = credAccounts[0]
-      const isExpired =
-        !lead.tinkTokenExpiresAt ||
-        lead.tinkTokenExpiresAt.getTime() < Date.now() + 60_000
+    console.log(
+      `[Cron] Syncing ${reqAccounts.length} account(s) for requisition ${requisitionId} (org: ${orgName})`
+    )
 
-      let accessToken = lead.tinkAccessToken!
-      if (isExpired && lead.tinkRefreshToken) {
-        const refreshed = await tink.refreshAccessToken(lead.tinkRefreshToken)
-        accessToken = refreshed.accessToken
-        await prisma.account.updateMany({
-          where: { tinkCredentialId: credentialId },
+    for (const account of reqAccounts) {
+      if (!account.externalAccountId) continue
+
+      try {
+        // Refresh balance
+        const balances = await gc.getAccountBalances(account.externalAccountId)
+        const primaryBalance =
+          balances.find((b) => b.balanceType === "interimBooked") ?? balances[0]
+        const balanceCurrent = primaryBalance
+          ? parseFloat(primaryBalance.balanceAmount.amount)
+          : null
+
+        await prisma.account.update({
+          where: { id: account.id },
           data: {
-            tinkAccessToken: refreshed.accessToken,
-            tinkRefreshToken: refreshed.refreshToken,
-            tinkTokenExpiresAt: refreshed.expiresAt,
+            balanceCurrent,
+            lastSyncedAt: new Date(),
+            syncError: null,
+            syncErrorRetries: 0,
           },
         })
-      }
+        accountsSynced++
 
-      // Refresh balances
-      const freshAccounts = await tink.getBalances(accessToken)
-      for (const credAccount of credAccounts) {
-        const fresh = freshAccounts.find(
-          (a) => a.externalAccountId === credAccount.externalAccountId
-        )
-        if (fresh) {
-          await prisma.account.update({
-            where: { id: credAccount.id },
-            data: {
-              balanceAvailable: fresh.balanceAvailable,
-              balanceCurrent: fresh.balanceCurrent,
-              balanceLimit: fresh.balanceLimit,
-              lastSyncedAt: new Date(),
-              syncError: null,
-            },
-          })
-          accountsSynced++
-        }
-      }
+        // Fetch last 7 days of transactions (latest=true respects rate limits)
+        const transactions = await gc.getTransactions(account.externalAccountId, true)
 
-      // Fetch all transaction pages
-      let pageToken: string | null = null
-      let pageCount = 0
-      do {
-        const result = await tink.getTransactions(accessToken, pageToken)
-
-        for (const tx of result.transactions) {
-          const account = credAccounts.find(
-            (a) => a.externalAccountId === tx.externalAccountId
-          )
-          if (!account) continue
-
+        for (const tx of transactions) {
           const { imported, modified, expenseCreated, incomeCreated } =
             await upsertTransaction(organizationId, account.id, tx)
 
@@ -183,27 +170,27 @@ async function syncAllAccounts(): Promise<SyncResult> {
           if (incomeCreated) totalIncomes++
         }
 
-        pageToken = result.nextPageToken
-        pageCount++
-      } while (pageToken)
-
-      console.log(
-        `[Cron] Credential ${credentialId}: ${pageCount} pages fetched, +${totalImported} new transactions`
-      )
-    } catch (error) {
-      console.error(`[Cron] Error syncing credential ${credentialId}:`, error)
-      accountsFailed += credAccounts.length
-      await prisma.account.updateMany({
-        where: { tinkCredentialId: credentialId },
-        data: {
-          syncError: error instanceof Error ? error.message : "Sync failed",
-          lastSyncedAt: new Date(),
-        },
-      })
+        console.log(
+          `[Cron] Account ${account.id}: +${transactions.length} transactions fetched`
+        )
+      } catch (error) {
+        console.error(`[Cron] Error syncing account ${account.id}:`, error)
+        accountsFailed++
+        const retries = (account.syncErrorRetries ?? 0) + 1
+        await prisma.account.update({
+          where: { id: account.id },
+          data: {
+            syncError: error instanceof Error ? error.message : "Sync failed",
+            syncErrorRetries: retries,
+            lastSyncedAt: new Date(),
+            ...(retries >= 3 ? { status: "disconnected" } : {}),
+          },
+        })
+      }
     }
   }
 
-  // Run alert detection for all synced orgs
+  // Alert detection for all synced orgs
   const syncedOrgIds = [...new Set(accounts.map((a) => a.organizationId))]
   let alertsCreated = 0
   let alertErrors = 0
@@ -225,7 +212,7 @@ async function syncAllAccounts(): Promise<SyncResult> {
 
   const duration = Date.now() - startTime
   console.log(
-    `[Cron] Done in ${duration}ms: ${accountsSynced} accounts synced, ${totalImported} new transactions, ${alertsCreated} alerts created`
+    `[Cron] Done in ${duration}ms: ${accountsSynced} synced, ${totalImported} new, ${alertsCreated} alerts`
   )
 
   return {

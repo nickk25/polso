@@ -9,20 +9,18 @@ export function getTransactionType(amount: number): "debit" | "credit" {
 }
 
 /**
- * Detect income source from a Tink transaction.
- *
- * Tink doesn't provide the same detailed personal_finance_category as Plaid,
- * so we infer from available signals: category type and display name patterns.
+ * Detect income source from a GoCardless transaction.
+ * Infers from category (proprietaryBankTransactionCode) and name patterns.
  */
 export function detectIncomeSource(tx: BankTransaction): string {
-  const category = (tx.category ?? "").toUpperCase()
+  const category = (tx.category ?? "").toLowerCase()
   const name = (tx.name ?? "").toLowerCase()
   const merchantName = (tx.merchantName ?? "").toLowerCase()
 
-  // Salary / payroll patterns
+  // Salary / payroll
   if (
-    category.includes("SALARY") ||
-    category.includes("PAYROLL") ||
+    category.includes("payroll") ||
+    category.includes("salary") ||
     name.includes("nomina") ||
     name.includes("salario") ||
     name.includes("salary") ||
@@ -33,9 +31,8 @@ export function detectIncomeSource(tx: BankTransaction): string {
 
   // Investment returns
   if (
-    category.includes("DIVIDEND") ||
-    category.includes("INTEREST") ||
-    category.includes("INVESTMENT") ||
+    name.includes("dividend") ||
+    name.includes("interest") ||
     name.includes("dividendo") ||
     name.includes("interes") ||
     name.includes("rendimiento")
@@ -45,18 +42,17 @@ export function detectIncomeSource(tx: BankTransaction): string {
 
   // Refunds
   if (
-    category.includes("REFUND") ||
+    name.includes("refund") ||
     name.includes("devolucion") ||
     name.includes("reembolso") ||
-    name.includes("refund") ||
     name.includes("devol")
   ) {
     return "refund"
   }
 
-  // Transfers
+  // Transfers / Bizum
   if (
-    category.includes("TRANSFER") ||
+    category.includes("transfer") ||
     name.includes("transferencia") ||
     name.includes("bizum") ||
     name.includes("transfer")

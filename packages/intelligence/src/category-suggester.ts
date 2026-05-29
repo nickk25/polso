@@ -8,7 +8,7 @@
  * 4. Keyword/merchant name matching (70-85% confidence)
  */
 
-import { mapTinkToPolsoCategory } from "@polso/banking"
+import { mapGoCardlessToPolsoCategory } from "@polso/banking"
 import { matchKeywordRules } from "./keyword-rules"
 
 export type CategorySource = "vendor" | "history" | "provider" | "keyword" | "manual"
@@ -72,9 +72,9 @@ export function suggestCategory(
   }
 
   // Priority 3: Provider category mapping (70-80% confidence)
-  const providerMatch = mapTinkToPolsoCategory(
-    context.providerPrimaryCategory,
-    context.providerDetailedCategory
+  const providerMatch = mapGoCardlessToPolsoCategory(
+    context.providerDetailedCategory, // MCC code
+    context.providerPrimaryCategory   // proprietaryBankTransactionCode
   )
 
   if (providerMatch) {

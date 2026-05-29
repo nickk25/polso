@@ -3,20 +3,20 @@
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
-import { createTinkClient } from "@polso/banking"
+import { createGoCardlessClient } from "@polso/banking"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 
-function getTinkClient() {
-  return createTinkClient({
-    clientId: process.env.TINK_CLIENT_ID!,
-    clientSecret: process.env.TINK_CLIENT_SECRET!,
-    redirectUri: process.env.TINK_REDIRECT_URI!,
+function getGoCardlessClient() {
+  return createGoCardlessClient({
+    secretId: process.env.GOCARDLESS_SECRET_ID!,
+    secretKey: process.env.GOCARDLESS_SECRET_KEY!,
+    redirectUri: process.env.GOCARDLESS_REDIRECT_URI!,
   })
 }
 
 /**
- * Disconnect a bank account by deleting the Tink credential.
- * Keeps transactions and expenses for historical records.
+ * Disconnect a bank account by deleting the GoCardless requisition.
+ * Keeps all historical transactions and expenses.
  */
 export async function disconnectBankAction(
   accountId: string
@@ -26,53 +26,39 @@ export async function disconnectBankAction(
 
     const account = await prisma.account.findFirst({
       where: { id: accountId, organizationId },
-      select: { tinkAccessToken: true, tinkCredentialId: true },
+      select: { requisitionId: true },
     })
 
     if (!account) {
       return errorResponse("Account not found", "NOT_FOUND")
     }
 
-    // Revoke the Tink credential if token exists
-    if (account.tinkAccessToken && account.tinkCredentialId) {
+    // Revoke the GoCardless requisition (covers all accounts from this bank connection)
+    if (account.requisitionId) {
       try {
-        const tink = getTinkClient()
-        await tink.deleteCredential(account.tinkAccessToken, account.tinkCredentialId)
+        const gc = getGoCardlessClient()
+        await gc.deleteRequisition(account.requisitionId)
       } catch (error) {
-        console.warn("Failed to delete Tink credential:", error)
+        console.warn("[disconnect] Failed to delete GoCardless requisition:", error)
       }
-    }
 
-    // Mark all accounts sharing the same credential as disconnected
-    // preserving all historical transactions and expenses
-    if (account.tinkCredentialId) {
+      // Mark all accounts sharing the same requisition as disconnected
       await prisma.account.updateMany({
-        where: { tinkCredentialId: account.tinkCredentialId, organizationId },
+        where: { requisitionId: account.requisitionId, organizationId },
         data: {
           status: "disconnected",
-          tinkAccessToken: null,
-          tinkRefreshToken: null,
-          tinkTokenExpiresAt: null,
-          syncPageToken: null,
           syncError: null,
+          syncErrorRetries: 0,
         },
       })
     } else {
       await prisma.account.update({
         where: { id: accountId },
-        data: {
-          status: "disconnected",
-          tinkAccessToken: null,
-          tinkRefreshToken: null,
-          tinkTokenExpiresAt: null,
-          syncPageToken: null,
-          syncError: null,
-        },
+        data: { status: "disconnected", syncError: null, syncErrorRetries: 0 },
       })
     }
 
     revalidatePath("/settings/banking")
-
     return successResponse(undefined)
   } catch (error) {
     console.error("Error disconnecting bank:", error)
@@ -84,7 +70,7 @@ export async function disconnectBankAction(
 }
 
 /**
- * Update account status to active (called after re-authentication via Tink Link)
+ * Mark accounts as active after the user completes re-authentication.
  */
 export async function refreshBankConnectionAction(
   accountId: string
@@ -94,19 +80,27 @@ export async function refreshBankConnectionAction(
 
     const account = await prisma.account.findFirst({
       where: { id: accountId, organizationId },
+      select: { id: true, requisitionId: true },
     })
 
     if (!account) {
       return errorResponse("Account not found", "NOT_FOUND")
     }
 
-    await prisma.account.update({
-      where: { id: accountId },
-      data: { status: "active", syncError: null },
-    })
+    // Reset all accounts under the same requisition
+    if (account.requisitionId) {
+      await prisma.account.updateMany({
+        where: { requisitionId: account.requisitionId, organizationId },
+        data: { status: "active", syncError: null, syncErrorRetries: 0 },
+      })
+    } else {
+      await prisma.account.update({
+        where: { id: accountId },
+        data: { status: "active", syncError: null, syncErrorRetries: 0 },
+      })
+    }
 
     revalidatePath("/settings/banking")
-
     return successResponse(undefined)
   } catch (error) {
     console.error("Error refreshing bank connection:", error)

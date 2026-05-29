@@ -1,0 +1,109 @@
+import { NextResponse } from "next/server"
+import { neonAuth } from "@neondatabase/auth/next/server"
+import { createGoCardlessClient } from "@polso/banking"
+import { prisma } from "@/lib/db"
+import { getLimit, isValidPlan } from "@/lib/plans"
+
+function getGoCardlessClient() {
+  return createGoCardlessClient({
+    secretId: process.env.GOCARDLESS_SECRET_ID!,
+    secretKey: process.env.GOCARDLESS_SECRET_KEY!,
+    redirectUri: process.env.GOCARDLESS_REDIRECT_URI!,
+  })
+}
+
+/**
+ * POST /api/gocardless/create-link
+ * Body: { institutionId: string }
+ *
+ * 1. Checks plan limits
+ * 2. Creates end-user agreement (180d access, falls back to 90d)
+ * 3. Creates GoCardless requisition → returns link URL
+ * 4. Saves pending requisition to DB for the callback to look up
+ */
+export async function POST(request: Request) {
+  try {
+    const { user } = await neonAuth()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { institutionId } = await request.json() as { institutionId?: string }
+    if (!institutionId) {
+      return NextResponse.json({ error: "institutionId is required" }, { status: 400 })
+    }
+
+    const userOrg = await prisma.userOrganization.findFirst({
+      where: { userId: user.id },
+      select: {
+        organizationId: true,
+        organization: { select: { planType: true } },
+      },
+    })
+
+    if (!userOrg) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 })
+    }
+
+    // Check bank connection limit
+    const accountCount = await prisma.account.count({
+      where: {
+        organizationId: userOrg.organizationId,
+        status: { not: "disconnected" },
+      },
+    })
+
+    const plan = isValidPlan(userOrg.organization.planType)
+      ? userOrg.organization.planType
+      : "starter"
+
+    const maxConnections = getLimit(plan, "maxBankConnections")
+    if (accountCount >= maxConnections) {
+      return NextResponse.json(
+        {
+          error: "Bank connection limit reached",
+          code: "LIMIT_EXCEEDED",
+          limit: maxConnections,
+          current: accountCount,
+          plan,
+        },
+        { status: 403 }
+      )
+    }
+
+    const gc = getGoCardlessClient()
+
+    // Create end-user agreement (controls how long we can access the account)
+    const institution = await gc.getInstitution(institutionId)
+    const maxHistoricalDays = institution?.transaction_total_days
+      ? parseInt(institution.transaction_total_days, 10)
+      : 90
+    const agreement = await gc.createEndUserAgreement(institutionId, maxHistoricalDays)
+
+    // Create requisition — the link the user follows to authenticate with their bank
+    // reference = organizationId so the callback can look up the pending requisition
+    const { requisitionId, link } = await gc.buildLink({
+      institutionId,
+      agreement: agreement.id,
+      redirect: process.env.GOCARDLESS_REDIRECT_URI!,
+      reference: userOrg.organizationId,
+    })
+
+    // Save pending requisition so the callback can find it
+    await prisma.pendingRequisition.create({
+      data: {
+        organizationId: userOrg.organizationId,
+        requisitionId,
+        institutionId,
+      },
+    })
+
+    return NextResponse.json({ link })
+  } catch (error) {
+    console.error("[GoCardless] Error creating link:", error)
+    return NextResponse.json(
+      { error: "Failed to create bank connection link" },
+      { status: 500 }
+    )
+  }
+}

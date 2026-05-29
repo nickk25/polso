@@ -32,7 +32,7 @@ DetectedAnomaly  // type — { expenseId, description, amount, categoryName, cat
 **Category suggestion** (priority order):
 1. Vendor default — if `vendorDefaultCategoryId` provided (95% confidence)
 2. Historical — if `historicalCategoryId` provided, most frequent for this merchant (88% confidence)
-3. Provider mapping — Tink category → Polso category via `mapTinkToPolsoCategory` (70-80% confidence)
+3. Provider mapping — GoCardless MCC/proprietary code → Polso category via `mapGoCardlessToPolsoCategory` (70-85% confidence)
 4. Keyword match — run `merchantName` + `transactionName` through `KEYWORD_RULES` (70-85% confidence)
 5. Falls back to `null` (user must categorize manually)
 
@@ -49,5 +49,5 @@ DetectedAnomaly  // type — { expenseId, description, amount, categoryName, cat
 
 ## Dependencies
 
-- `@polso/banking` — for Tink category mapping (used in keyword rules)
+- `@polso/banking` — for GoCardless category mapping (used in keyword rules)
 - `@polso/db` — for Prisma model types (`Expense`, `Vendor`, etc.)

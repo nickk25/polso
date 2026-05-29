@@ -5,10 +5,11 @@ import { Prisma } from "@polso/db"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import {
-  createTinkClient,
+  createGoCardlessClient,
   normalizeCounterpartyName,
   getTransactionType,
   detectIncomeSource,
+  mapGoCardlessToPolsoCategory,
   type BankTransaction,
 } from "@polso/banking"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
@@ -25,58 +26,14 @@ interface SyncResult {
   incomesCreated: number
 }
 
-function getTinkClient() {
-  return createTinkClient({
-    clientId: process.env.TINK_CLIENT_ID!,
-    clientSecret: process.env.TINK_CLIENT_SECRET!,
-    redirectUri: process.env.TINK_REDIRECT_URI!,
+function getGoCardlessClient() {
+  return createGoCardlessClient({
+    secretId: process.env.GOCARDLESS_SECRET_ID!,
+    secretKey: process.env.GOCARDLESS_SECRET_KEY!,
+    redirectUri: process.env.GOCARDLESS_REDIRECT_URI!,
   })
 }
 
-/**
- * Ensure the account's access token is fresh, refreshing if needed.
- * Returns the valid access token.
- */
-async function getValidToken(account: {
-  id: string
-  tinkAccessToken: string | null
-  tinkRefreshToken: string | null
-  tinkTokenExpiresAt: Date | null
-}): Promise<string> {
-  const tink = getTinkClient()
-
-  // Check if token is still valid (with 60s buffer)
-  const isExpired =
-    !account.tinkTokenExpiresAt ||
-    account.tinkTokenExpiresAt.getTime() < Date.now() + 60_000
-
-  if (!account.tinkAccessToken || (isExpired && account.tinkRefreshToken)) {
-    if (!account.tinkRefreshToken) {
-      throw new Error("No refresh token available — user must reconnect bank")
-    }
-
-    const refreshed = await tink.refreshAccessToken(account.tinkRefreshToken)
-
-    await prisma.account.update({
-      where: { id: account.id },
-      data: {
-        tinkAccessToken: refreshed.accessToken,
-        tinkRefreshToken: refreshed.refreshToken,
-        tinkTokenExpiresAt: refreshed.expiresAt,
-      },
-    })
-
-    return refreshed.accessToken
-  }
-
-  return account.tinkAccessToken
-}
-
-/**
- * Sync transactions for all active accounts or a specific account.
- * Fetches all pages from Tink and upserts — deduplication handled by
- * the @@unique([organizationId, externalTransactionId]) constraint.
- */
 export async function syncTransactionsAction(
   accountId?: string
 ): Promise<ActionResponse<SyncResult>> {
@@ -87,7 +44,8 @@ export async function syncTransactionsAction(
       where: {
         organizationId,
         status: "active",
-        tinkAccessToken: { not: null },
+        requisitionId: { not: null },
+        externalAccountId: { not: null },
         ...(accountId ? { id: accountId } : {}),
       },
     })
@@ -102,16 +60,16 @@ export async function syncTransactionsAction(
       })
     }
 
-    // Group by tinkCredentialId (same token covers all accounts from one bank)
-    const credentialGroups = new Map<string, typeof accounts>()
+    // Group by requisitionId to check connection status once per bank connection
+    const requisitionGroups = new Map<string, typeof accounts>()
     for (const account of accounts) {
-      if (!account.tinkCredentialId) continue
-      const group = credentialGroups.get(account.tinkCredentialId) ?? []
+      if (!account.requisitionId) continue
+      const group = requisitionGroups.get(account.requisitionId) ?? []
       group.push(account)
-      credentialGroups.set(account.tinkCredentialId, group)
+      requisitionGroups.set(account.requisitionId, group)
     }
 
-    // Pre-fetch categories, vendors, and clients for auto-categorization
+    // Pre-fetch categories, vendors, and clients
     const [categories, vendors, clients] = await Promise.all([
       prisma.category.findMany({
         where: { OR: [{ isSystem: true }, { organizationId }] },
@@ -135,7 +93,6 @@ export async function syncTransactionsAction(
       clients.map((c) => [c.normalizedName, { id: c.id, defaultCategoryId: c.defaultCategoryId }])
     )
 
-    // Build merchant history lookup for historical categorization
     const historicalExpenses = await prisma.expense.findMany({
       where: { organizationId, categoryId: { not: null } },
       select: {
@@ -161,6 +118,8 @@ export async function syncTransactionsAction(
       h.expenseTypes.set(e.expenseType, (h.expenseTypes.get(e.expenseType) ?? 0) + 1)
     }
 
+    const gc = getGoCardlessClient()
+
     let totalTransactionsImported = 0
     let totalTransactionsModified = 0
     let totalExpensesCreated = 0
@@ -168,44 +127,44 @@ export async function syncTransactionsAction(
     let accountsUpdated = 0
     const newTransactionIds: string[] = []
 
-    const tink = getTinkClient()
+    for (const [requisitionId, reqAccounts] of requisitionGroups) {
+      // Check requisition status — mark disconnected if expired/rejected
+      const requisition = await gc.getRequisition(requisitionId)
+      if (requisition && gc.isRequisitionExpired(requisition.status)) {
+        await prisma.account.updateMany({
+          where: { requisitionId, organizationId },
+          data: { status: "expired", syncError: "Bank connection has expired — please reconnect" },
+        })
+        continue
+      }
 
-    for (const [credentialId, credAccounts] of credentialGroups) {
-      try {
-        const accessToken = await getValidToken(credAccounts[0])
+      for (const account of reqAccounts) {
+        if (!account.externalAccountId) continue
 
-        // Refresh balances for all accounts in this credential
-        const freshAccounts = await tink.getBalances(accessToken)
-        for (const credAccount of credAccounts) {
-          const fresh = freshAccounts.find(
-            (a) => a.externalAccountId === credAccount.externalAccountId
-          )
-          if (fresh) {
-            await prisma.account.update({
-              where: { id: credAccount.id },
-              data: {
-                balanceAvailable: fresh.balanceAvailable,
-                balanceCurrent: fresh.balanceCurrent,
-                balanceLimit: fresh.balanceLimit,
-                lastSyncedAt: new Date(),
-                syncError: null,
-              },
-            })
-            accountsUpdated++
-          }
-        }
+        try {
+          // Fetch updated balance
+          const balances = await gc.getAccountBalances(account.externalAccountId)
+          const primaryBalance =
+            balances.find((b) => b.balanceType === "interimBooked") ?? balances[0]
+          const balanceCurrent = primaryBalance
+            ? parseFloat(primaryBalance.balanceAmount.amount)
+            : null
 
-        // Fetch all transaction pages
-        let pageToken: string | null = null
-        do {
-          const result = await tink.getTransactions(accessToken, pageToken)
+          await prisma.account.update({
+            where: { id: account.id },
+            data: {
+              balanceCurrent,
+              lastSyncedAt: new Date(),
+              syncError: null,
+              syncErrorRetries: 0,
+            },
+          })
+          accountsUpdated++
 
-          for (const tx of result.transactions) {
-            const account = credAccounts.find(
-              (a) => a.externalAccountId === tx.externalAccountId
-            )
-            if (!account) continue
+          // Fetch transactions — latest=true fetches last 7 days only
+          const transactions = await gc.getTransactions(account.externalAccountId, true)
 
+          for (const tx of transactions) {
             const { imported, modified, expenseCreated, incomeCreated, transactionId } =
               await upsertTransaction(
                 organizationId,
@@ -222,28 +181,23 @@ export async function syncTransactionsAction(
             if (expenseCreated) totalExpensesCreated++
             if (incomeCreated) totalIncomesCreated++
           }
-
-          pageToken = result.nextPageToken
-        } while (pageToken)
-
-        // Advance page token (null = fully synced)
-        await prisma.account.updateMany({
-          where: { tinkCredentialId: credentialId },
-          data: { syncPageToken: null },
-        })
-      } catch (error) {
-        console.error(`Error syncing credential ${credentialId}:`, error)
-        await prisma.account.updateMany({
-          where: { tinkCredentialId: credentialId },
-          data: {
-            syncError: error instanceof Error ? error.message : "Sync failed",
-            lastSyncedAt: new Date(),
-          },
-        })
+        } catch (error) {
+          console.error(`Error syncing account ${account.id}:`, error)
+          const retries = (account.syncErrorRetries ?? 0) + 1
+          await prisma.account.update({
+            where: { id: account.id },
+            data: {
+              syncError: error instanceof Error ? error.message : "Sync failed",
+              syncErrorRetries: retries,
+              lastSyncedAt: new Date(),
+              // Auto-disconnect after 3 consecutive failures (Midday pattern)
+              ...(retries >= 3 ? { status: "disconnected" } : {}),
+            },
+          })
+        }
       }
     }
 
-    // Bidirectional matching: find pending InboxItems for newly imported transactions
     if (newTransactionIds.length > 0) {
       await matchAfterSync(organizationId, newTransactionIds).catch((err) =>
         console.error("matchAfterSync error:", err)
@@ -299,7 +253,6 @@ async function upsertTransaction(
     ? normalizeCounterpartyName(counterpartyName)
     : null
 
-  // Look up or create vendor for expenses
   let matchedVendor: MatchedVendor | null = normalizedCounterparty
     ? (vendorLookup.get(normalizedCounterparty) ?? null)
     : null
@@ -310,12 +263,8 @@ async function upsertTransaction(
     vendorLookup.set(normalizedCounterparty, vendor)
   }
 
-  // Upsert transaction using organizationId + externalTransactionId for deduplication
   const existing = await prisma.transaction.findFirst({
-    where: {
-      organizationId,
-      externalTransactionId: tx.externalTransactionId,
-    },
+    where: { organizationId, externalTransactionId: tx.externalTransactionId },
     select: { id: true },
   })
 
@@ -345,11 +294,7 @@ async function upsertTransaction(
     modified = true
   } else {
     transaction = await prisma.transaction.create({
-      data: {
-        organizationId,
-        externalTransactionId: tx.externalTransactionId,
-        ...txData,
-      },
+      data: { organizationId, externalTransactionId: tx.externalTransactionId, ...txData },
       select: { id: true },
     })
     imported = true
@@ -358,7 +303,6 @@ async function upsertTransaction(
   let expenseCreated = false
   let incomeCreated = false
 
-  // Create expense for outgoing transactions (positive amount = money out)
   if (tx.amount > 0) {
     const existingExpense = await prisma.expense.findUnique({
       where: { transactionId: transaction.id },
@@ -369,16 +313,20 @@ async function upsertTransaction(
       const merchantKey = tx.merchantName?.toLowerCase().trim() ?? null
       const history = merchantKey ? merchantHistory.get(merchantKey) : null
       const historicalCategoryId = history ? mostFrequentInMap(history.categories) : null
-      const historicalTxCount = history ? [...history.expenseTypes.values()].reduce((a, b) => a + b, 0) : 0
-      const historicalExpenseType = history && historicalTxCount >= 2
-        ? mostFrequentInMap(history.expenseTypes)
-        : null
+      const historicalTxCount = history
+        ? [...history.expenseTypes.values()].reduce((a, b) => a + b, 0)
+        : 0
+      const historicalExpenseType =
+        history && historicalTxCount >= 2 ? mostFrequentInMap(history.expenseTypes) : null
+
+      // Map GoCardless MCC / proprietary code to Polso category
+      const gcCategory = mapGoCardlessToPolsoCategory(tx.categoryDetailed, tx.category)
 
       const suggestion = suggestCategory(
         {
           vendorDefaultCategoryId: matchedVendor?.defaultCategoryId,
           historicalCategoryId,
-          providerPrimaryCategory: tx.category,
+          providerPrimaryCategory: gcCategory?.slug ?? tx.category,
           providerDetailedCategory: tx.categoryDetailed,
           merchantName: tx.merchantName,
           transactionName: tx.name,
@@ -406,16 +354,13 @@ async function upsertTransaction(
         })
         expenseCreated = true
       } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-          // Race condition — already created by concurrent sync
-        } else {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
           throw error
         }
       }
     }
   }
 
-  // Create income for incoming transactions (negative amount = money in)
   if (tx.amount < 0) {
     const existingIncome = await prisma.income.findUnique({
       where: { transactionId: transaction.id },
@@ -449,14 +394,11 @@ async function upsertTransaction(
         })
         incomeCreated = true
       } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-          // Race condition
-        } else {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
           throw error
         }
       }
     } else if (modified) {
-      // Update existing income amount when transaction was modified
       await prisma.income.update({
         where: { transactionId: transaction.id },
         data: {
@@ -469,7 +411,6 @@ async function upsertTransaction(
       })
     }
   } else if (tx.amount > 0 && modified) {
-    // Update existing expense amount when transaction was modified
     const existingExpense = await prisma.expense.findUnique({
       where: { transactionId: transaction.id },
       select: { id: true },
