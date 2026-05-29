@@ -94,8 +94,16 @@ export function transformTransaction({
   const date = new Date(transaction.bookingDate)
   const authorizedDate = transaction.valueDate ? new Date(transaction.valueDate) : null
 
+  // Prefer bank's own transactionId (stable across fetches) over GoCardless's
+  // internalTransactionId which the API docs warn may vary between date ranges.
+  // Fall back to a synthetic composite key so we never store a null ID.
+  const externalTransactionId =
+    transaction.transactionId?.trim() ||
+    transaction.internalTransactionId?.trim() ||
+    `${accountId}|${transaction.bookingDate}|${transaction.transactionAmount.amount}|${transaction.transactionAmount.currency}`
+
   return {
-    externalTransactionId: transaction.internalTransactionId,
+    externalTransactionId,
     externalAccountId: accountId,
     amount,
     currency: transaction.transactionAmount.currency,

@@ -222,7 +222,7 @@ async function upsertTransaction(
   }
 
   const existing = await prisma.transaction.findFirst({
-    where: { organizationId, externalTransactionId: tx.externalTransactionId },
+    where: { accountId, externalTransactionId: tx.externalTransactionId },
     select: { id: true },
   })
 

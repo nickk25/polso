@@ -336,14 +336,11 @@ export function createGoCardlessClient(config: BankingConfig) {
       transactions: { booked: GCRawTransaction[]; pending?: GCRawTransaction[] }
     }>(path, { token })
 
-    const booked = (data.transactions?.booked ?? []).map((tx) =>
+    // Skip pending transactions — their IDs are temporary and change when settled,
+    // causing duplicates on the next sync once the transaction books.
+    return (data.transactions?.booked ?? []).map((tx) =>
       transformTransaction({ transaction: tx, accountId, pending: false })
     )
-    const pending = (data.transactions?.pending ?? []).map((tx) =>
-      transformTransaction({ transaction: tx, accountId, pending: true })
-    )
-
-    return [...booked, ...pending]
   }
 
   return {
