@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { neonAuth } from "@neondatabase/auth/next/server"
-import { createGoCardlessClient } from "@polso/banking"
+import { createGoCardlessClient, selectPrimaryBalance, getAvailableBalance, mapCashAccountType } from "@polso/banking"
 import { prisma } from "@/lib/db"
 import { addDays } from "date-fns"
 
@@ -105,9 +105,10 @@ export async function GET(request: NextRequest) {
         const rawName = account?.name ?? account?.product ?? account?.ownerName ?? details?.owner_name ?? institution?.name ?? "Bank Account"
         const name = rawName.toLowerCase().replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase())
 
-        // Pick balance — prefer interimBooked
-        const balance = balances.find((b) => b.balanceType === "interimBooked") ?? balances[0]
-        const balanceCurrent = balance ? parseFloat(balance.balanceAmount.amount) : null
+        const primaryBalance = selectPrimaryBalance(balances, currency)
+        const balanceCurrent = primaryBalance ? parseFloat(primaryBalance.balanceAmount.amount) : null
+        const balanceAvailable = getAvailableBalance(balances, currency)
+        const { accountType, accountSubtype } = mapCashAccountType(account?.cashAccountType)
 
         const existing = await prisma.account.findFirst({
           where: { organizationId, externalAccountId: accountId },
@@ -123,12 +124,14 @@ export async function GET(request: NextRequest) {
           bic: institution?.bic ?? null,
           name,
           mask,
-          accountType: account?.cashAccountType === "CARD" ? "credit" : "depository",
+          accountType,
+          accountSubtype,
           currency,
           institutionName: institution?.name ?? null,
           institutionLogo: institution?.logo ?? null,
           status: "active",
           balanceCurrent,
+          balanceAvailable,
           lastSyncedAt: new Date(),
           syncError: null,
           syncErrorRetries: 0,

@@ -37,6 +37,65 @@ export function selectPrimaryBalance(
   return balances[0]
 }
 
+/**
+ * Select the available (spendable) balance — separate from the booked/current balance.
+ * Priority: interimAvailable > expected
+ */
+export function getAvailableBalance(
+  balances: GCAccountBalance[] | undefined,
+  preferredCurrency?: string
+): number | null {
+  if (!balances?.length) return null
+
+  const matchesCurrency = (b: GCAccountBalance) =>
+    !preferredCurrency ||
+    b.balanceAmount.currency.toUpperCase() === preferredCurrency.toUpperCase()
+
+  const interimAvailable =
+    balances.find((b) => b.balanceType === "interimAvailable" && matchesCurrency(b)) ??
+    balances.find((b) => b.balanceType === "interimAvailable")
+
+  if (interimAvailable) return parseFloat(interimAvailable.balanceAmount.amount)
+
+  const expected =
+    balances.find((b) => b.balanceType === "expected" && matchesCurrency(b)) ??
+    balances.find((b) => b.balanceType === "expected")
+
+  if (expected) return parseFloat(expected.balanceAmount.amount)
+
+  return null
+}
+
+/**
+ * Map ISO 20022 cashAccountType code to Polso account type + subtype.
+ */
+export function mapCashAccountType(cashAccountType?: string): {
+  accountType: string
+  accountSubtype: string | null
+} {
+  switch (cashAccountType) {
+    case "CACC":
+    case "CASH":
+    case "SACC":
+    case "TRAN":
+    case "SLRY":
+    case "TRAS":
+      return { accountType: "depository", accountSubtype: "checking" }
+    case "SVGS":
+    case "MOMA":
+    case "LLSV":
+      return { accountType: "depository", accountSubtype: "savings" }
+    case "CARD":
+      return { accountType: "credit", accountSubtype: null }
+    case "LOAN":
+    case "ODFT":
+    case "MORT":
+      return { accountType: "loan", accountSubtype: null }
+    default:
+      return { accountType: "depository", accountSubtype: null }
+  }
+}
+
 // Restricted institutions where max_historical_days must be capped at 90
 // https://bankaccountdata.zendesk.com/hc/en-gb/articles/11529718632476
 const RESTRICTED_INSTITUTIONS = new Set([

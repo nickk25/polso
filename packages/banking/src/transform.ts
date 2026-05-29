@@ -13,7 +13,8 @@ import type {
   GCAccountBalance,
   GCInstitution,
 } from "./types"
-import { selectPrimaryBalance } from "./utils"
+
+import { selectPrimaryBalance, getAvailableBalance, mapCashAccountType } from "./utils"
 
 // ============================================
 // Transaction name — priority chain from Midday
@@ -136,12 +137,12 @@ export function transformAccount({
     ? parseFloat(primaryBalance.balanceAmount.amount)
     : null
 
-  const availableBalance = getAvailableBalance(balances, currency)
+  const balanceAvailable = getAvailableBalance(balances, currency)
 
   const iban = details?.iban ?? account?.iban ?? null
   const mask = iban && iban.length >= 4 ? iban.slice(-4) : null
 
-  const accountType = getAccountType(account?.cashAccountType)
+  const { accountType, accountSubtype } = mapCashAccountType(account?.cashAccountType)
 
   const name =
     account?.name ??
@@ -154,9 +155,9 @@ export function transformAccount({
     name: toTitleCase(name),
     mask,
     type: accountType,
-    subtype: null,
+    subtype: accountSubtype,
     currency,
-    balanceAvailable: availableBalance,
+    balanceAvailable,
     balanceCurrent,
     balanceLimit: null,
     iban,
@@ -165,47 +166,7 @@ export function transformAccount({
   }
 }
 
-// ============================================
-// Balance helpers — from Midday's utils.ts
-// ============================================
-
-function getAccountType(cashAccountType?: string): string {
-  switch (cashAccountType) {
-    case "CARD":
-      return "credit"
-    case "LOAN":
-      return "loan"
-    default:
-      return "depository"
-  }
-}
-
 function resolveCurrency(...candidates: (string | undefined)[]): string {
   const valid = candidates.find((c) => c && /^[A-Z]{3}$/.test(c))
   return valid?.toUpperCase() ?? "EUR"
-}
-
-function getAvailableBalance(
-  balances: GCAccountBalance[],
-  preferredCurrency?: string
-): number | null {
-  if (!balances.length) return null
-
-  const matchesCurrency = (b: GCAccountBalance) =>
-    !preferredCurrency ||
-    b.balanceAmount.currency.toUpperCase() === preferredCurrency.toUpperCase()
-
-  const interimAvailable =
-    balances.find((b) => b.balanceType === "interimAvailable" && matchesCurrency(b)) ??
-    balances.find((b) => b.balanceType === "interimAvailable")
-
-  if (interimAvailable) return parseFloat(interimAvailable.balanceAmount.amount)
-
-  const expected =
-    balances.find((b) => b.balanceType === "expected" && matchesCurrency(b)) ??
-    balances.find((b) => b.balanceType === "expected")
-
-  if (expected) return parseFloat(expected.balanceAmount.amount)
-
-  return null
 }
