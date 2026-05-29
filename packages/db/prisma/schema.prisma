@@ -51,8 +51,9 @@ model Organization {
 
   // Relations
   userOrganizations UserOrganization[]
-  accounts          Account[]
-  transactions      Transaction[]
+  accounts              Account[]
+  pendingRequisitions   PendingRequisition[]
+  transactions          Transaction[]
   categories        Category[]
   vendors           Vendor[]
   clients           Client[]
@@ -101,31 +102,31 @@ model UserOrganization {
 // ============================================
 
 model Account {
-  id                  String    @id @default(cuid())
-  organizationId      String    @map("organization_id")
-  tinkCredentialId    String?   @map("tink_credential_id")   // groups all accounts from one bank connection
-  tinkAccessToken     String?   @map("tink_access_token")
-  tinkRefreshToken    String?   @map("tink_refresh_token")
-  tinkTokenExpiresAt  DateTime? @map("tink_token_expires_at")
-  externalAccountId   String?   @map("external_account_id")  // provider's account ID
-  tinkProviderId      String?   @map("tink_provider_id")     // Tink provider ID (institution)
-  syncPageToken       String?   @map("sync_page_token")      // for paginated transaction fetching
-  name                String
-  mask                String?   // last 4 digits of IBAN
-  officialName        String?   @map("official_name")
-  accountType         String?   @map("account_type") // depository, credit, loan, investment
-  accountSubtype      String?   @map("account_subtype") // checking, savings, credit card, etc.
-  currency            String    @default("EUR")
-  institutionName     String?   @map("institution_name")
-  institutionLogo     String?   @map("institution_logo")
-  status              String    @default("pending") // pending, active, expired, error
-  lastSyncedAt        DateTime? @map("last_synced_at")
-  syncError           String?   @map("sync_error")
-  balanceAvailable    Float?    @map("balance_available")
-  balanceCurrent      Float?    @map("balance_current")
-  balanceLimit        Float?    @map("balance_limit") // for credit accounts
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
+  id                   String    @id @default(cuid())
+  organizationId       String    @map("organization_id")
+  requisitionId        String?   @map("requisition_id")        // GoCardless requisition ID — groups all accounts from one bank connection
+  institutionId        String?   @map("institution_id")        // GoCardless institution ID
+  requisitionExpiresAt DateTime? @map("requisition_expires_at") // When the end-user agreement expires
+  externalAccountId    String?   @map("external_account_id")   // GoCardless account UUID
+  iban                 String?                                  // Account IBAN
+  bic                  String?                                  // Bank BIC/SWIFT
+  name                 String
+  mask                 String?   // last 4 digits of IBAN
+  officialName         String?   @map("official_name")
+  accountType          String?   @map("account_type")          // depository, credit, loan
+  accountSubtype       String?   @map("account_subtype")
+  currency             String    @default("EUR")
+  institutionName      String?   @map("institution_name")
+  institutionLogo      String?   @map("institution_logo")
+  status               String    @default("pending")           // pending, active, expired, disconnected
+  lastSyncedAt         DateTime? @map("last_synced_at")
+  syncError            String?   @map("sync_error")
+  syncErrorRetries     Int       @default(0) @map("sync_error_retries")
+  balanceAvailable     Float?    @map("balance_available")
+  balanceCurrent       Float?    @map("balance_current")
+  balanceLimit         Float?    @map("balance_limit")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
   // Relations
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -134,7 +135,23 @@ model Account {
 
   @@index([organizationId])
   @@index([status])
+  @@index([requisitionId])
   @@map("accounts")
+}
+
+// Temporary storage for a GoCardless requisition before the user completes OAuth.
+// Cleaned up after the callback creates Account records.
+model PendingRequisition {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  requisitionId  String   @map("requisition_id")
+  institutionId  String   @map("institution_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("pending_requisitions")
 }
 
 // ============================================
