@@ -112,12 +112,14 @@ export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps
               autoFocus
             />
             {search && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -135,11 +137,12 @@ export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps
           ) : (
             <div className="space-y-0.5">
               {filtered.map((institution) => (
-                <button
+                <Button
                   key={institution.id}
+                  variant="ghost"
                   onClick={() => handleSelectBank(institution)}
                   disabled={connecting}
-                  className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full justify-start gap-3 h-auto px-3 py-2.5"
                 >
                   {institution.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -157,7 +160,7 @@ export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps
                   {connecting && (
                     <Spinner className="h-4 w-4 animate-spin ml-auto flex-shrink-0 text-muted-foreground" />
                   )}
-                </button>
+                </Button>
               ))}
             </div>
           )}

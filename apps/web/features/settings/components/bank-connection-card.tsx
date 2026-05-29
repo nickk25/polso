@@ -39,9 +39,9 @@ interface BankConnectionCardProps {
   connection: BankConnection
 }
 
-function formatCurrency(amount: number | null, currency: string = "USD") {
+function formatCurrency(amount: number | null, currency: string = "EUR") {
   if (amount === null) return "—"
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("es-ES", {
     style: "currency",
     currency,
     minimumFractionDigits: 0,
