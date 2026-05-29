@@ -90,7 +90,7 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
         {/* Connection header: institution info + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden">
               {institutionLogo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -102,12 +102,14 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
                         : `data:image/png;base64,${institutionLogo}`
                   }
                   alt={institutionName || t("accountCard.bank")}
-                  className="h-7 w-7 rounded object-contain"
+                  className="h-10 w-10 rounded-lg object-contain"
                 />
               ) : (
-                <span className="text-base font-semibold">
-                  {(institutionName || "B").charAt(0)}
-                </span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                  <span className="text-base font-semibold">
+                    {(institutionName || "B").charAt(0)}
+                  </span>
+                </div>
               )}
             </div>
             <div>
