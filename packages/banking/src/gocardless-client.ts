@@ -35,6 +35,17 @@ const GC_BASE = "https://bankaccountdata.gocardless.com"
 let _cachedAccessToken: { value: string; expiresAt: number } | null = null
 
 // ============================================
+// Typed API error
+// ============================================
+
+class GCApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message)
+    this.name = "GCApiError"
+  }
+}
+
+// ============================================
 // Internal request helper
 // ============================================
 
@@ -58,7 +69,7 @@ async function gcRequest<T>(
 
   if (!res.ok) {
     const text = await res.text().catch(() => "")
-    throw new Error(`GoCardless API error ${res.status} for ${path}: ${text}`)
+    throw new GCApiError(res.status, `GoCardless API error ${res.status} for ${path}: ${text}`)
   }
 
   return res.json() as Promise<T>
@@ -159,8 +170,7 @@ export function createGoCardlessClient(config: BankingConfig) {
     try {
       return await createAgreement(180)
     } catch (err) {
-      const status = (err as { status?: number })?.status
-      if (status != null && status >= 400 && status < 500) {
+      if (err instanceof GCApiError && err.status >= 400 && err.status < 500) {
         return await createAgreement(90)
       }
       throw err
