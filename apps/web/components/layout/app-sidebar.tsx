@@ -4,17 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
-  ChartLine,
-  Receipt,
-  TrendUp,
+  House,
+  ArrowsLeftRight,
   Repeat,
+  ChartLine,
+  Vault,
   Buildings,
   Users,
   Tag,
   Export,
   Gear,
-  House,
-  Bell,
 } from "@phosphor-icons/react";
 
 import {
@@ -27,72 +26,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarFooter,
 } from "@polso/ui/sidebar";
-
-const mainNavItems = [
-  {
-    titleKey: "overview",
-    href: "/dashboard",
-    icon: House,
-  },
-  {
-    titleKey: "income",
-    href: "/incomes",
-    icon: TrendUp,
-  },
-  {
-    titleKey: "expenses",
-    href: "/expenses",
-    icon: Receipt,
-  },
-  {
-    titleKey: "recurring",
-    href: "/recurring",
-    icon: Repeat,
-  },
-  {
-    titleKey: "analytics",
-    href: "/analytics",
-    icon: ChartLine,
-  },
-  {
-    titleKey: "alerts",
-    href: "/alerts",
-    icon: Bell,
-  },
-];
-
-const manageNavItems = [
-  {
-    titleKey: "vendors",
-    href: "/vendors",
-    icon: Buildings,
-  },
-  {
-    titleKey: "clients",
-    href: "/clients",
-    icon: Users,
-  },
-  {
-    titleKey: "categories",
-    href: "/categories",
-    icon: Tag,
-  },
-  {
-    titleKey: "export",
-    href: "/export",
-    icon: Export,
-  },
-];
-
-const settingsNavItems = [
-  {
-    titleKey: "settings",
-    href: "/settings",
-    icon: Gear,
-  },
-];
 
 interface AppSidebarProps {
   organizationName: string;
@@ -112,6 +50,11 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
   const t = useTranslations("common");
   const initials = getInitials(organizationName);
 
+  const isTransactionsActive =
+    pathname === "/transactions" ||
+    pathname.startsWith("/transactions/") ||
+    pathname === "/categories";
+
   return (
     <Sidebar>
       <SidebarHeader className="h-12 border-b px-4 justify-center">
@@ -127,23 +70,89 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      pathname === item.href ||
-                      pathname.startsWith(item.href + "/")
-                    }
-                    className="h-8 text-xs"
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="h-3.5 w-3.5" />
-                      <span>{t(`navigation.${item.titleKey}`)}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {/* Overview */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/dashboard"}
+                  className="h-8 text-xs"
+                >
+                  <Link href="/dashboard">
+                    <House className="h-3.5 w-3.5" />
+                    <span>{t("navigation.overview")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Transactions + Categories sub-item */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isTransactionsActive}
+                  className="h-8 text-xs"
+                >
+                  <Link href="/transactions">
+                    <ArrowsLeftRight className="h-3.5 w-3.5" />
+                    <span>{t("navigation.transactions")}</span>
+                  </Link>
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      asChild
+                      isActive={pathname === "/categories"}
+                      className="text-xs"
+                    >
+                      <Link href="/categories">
+                        <Tag className="h-3 w-3" />
+                        <span>{t("navigation.categories")}</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+
+              {/* Recurring */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/recurring" || pathname.startsWith("/recurring/")}
+                  className="h-8 text-xs"
+                >
+                  <Link href="/recurring">
+                    <Repeat className="h-3.5 w-3.5" />
+                    <span>{t("navigation.recurring")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Reports */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/reports" || pathname.startsWith("/reports/")}
+                  className="h-8 text-xs"
+                >
+                  <Link href="/reports">
+                    <ChartLine className="h-3.5 w-3.5" />
+                    <span>{t("navigation.reports")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Vault */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/vault" || pathname.startsWith("/vault/")}
+                  className="h-8 text-xs"
+                >
+                  <Link href="/vault">
+                    <Vault className="h-3.5 w-3.5" />
+                    <span>{t("navigation.vault")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -152,20 +161,44 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
           <SidebarGroupLabel className="text-[10px]">{t("navigation.manage")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {manageNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    className="h-8 text-xs"
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="h-3.5 w-3.5" />
-                      <span>{t(`navigation.${item.titleKey}`)}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/vendors" || pathname.startsWith("/vendors/")}
+                  className="h-8 text-xs"
+                >
+                  <Link href="/vendors">
+                    <Buildings className="h-3.5 w-3.5" />
+                    <span>{t("navigation.vendors")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/customers" || pathname.startsWith("/customers/")}
+                  className="h-8 text-xs"
+                >
+                  <Link href="/customers">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>{t("navigation.customers")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/export"}
+                  className="h-8 text-xs"
+                >
+                  <Link href="/export">
+                    <Export className="h-3.5 w-3.5" />
+                    <span>{t("navigation.export")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -173,20 +206,18 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
 
       <SidebarFooter className="border-t">
         <SidebarMenu>
-          {settingsNavItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                className="h-8 text-xs"
-              >
-                <Link href={item.href}>
-                  <item.icon className="h-3.5 w-3.5" />
-                  <span>{t(`navigation.${item.titleKey}`)}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === "/settings" || pathname.startsWith("/settings/")}
+              className="h-8 text-xs"
+            >
+              <Link href="/settings">
+                <Gear className="h-3.5 w-3.5" />
+                <span>{t("navigation.settings")}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
         <div className="px-2 py-3 border-t mt-2">
           <div className="flex items-center gap-2">
