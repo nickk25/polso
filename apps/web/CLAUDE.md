@@ -12,7 +12,7 @@ app/(marketing)/    Marketing + auth pages
 features/           Feature modules — canonical reference: features/expenses/
   alerts/           Smart financial alerts (detect anomalies, notify user)
   analytics/        Cash flow, burn rate, runway, category breakdown
-  banking/          Bank account connections via Tink (sync, reconnect, stale detection)
+  banking/          Bank account connections via GoCardless (sync, reconnect, stale detection)
   billing/          Subscription management via Creem
   categories/       Transaction category CRUD
   clients/          Client contact management
@@ -151,9 +151,9 @@ R2_ENDPOINT               # Cloudflare R2 endpoint
 R2_ACCESS_KEY_ID          # R2 credentials
 R2_SECRET_ACCESS_KEY      # R2 credentials
 R2_BUCKET_NAME            # R2 bucket
-TINK_CLIENT_ID            # Tink API client ID
-TINK_CLIENT_SECRET        # Tink API client secret
-TINK_REDIRECT_URI         # Tink redirect URI
+GOCARDLESS_SECRET_ID      # GoCardless Bank Account Data secret ID
+GOCARDLESS_SECRET_KEY     # GoCardless Bank Account Data secret key
+GOCARDLESS_REDIRECT_URI   # GoCardless OAuth callback URI
 CRON_SECRET               # Cron job authentication
 RESEND_API_KEY            # Resend email
 CREEM_API_KEY             # Creem billing

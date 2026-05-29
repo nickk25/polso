@@ -29,7 +29,7 @@ interface AccountWithCount extends Account {
 }
 
 export interface BankConnection {
-  tinkCredentialId: string | null
+  requisitionId: string | null
   institutionName: string | null
   institutionLogo: string | null
   accounts: AccountWithCount[]
@@ -72,7 +72,6 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
 
   async function handleSync() {
     setSyncing(true)
-    // Sync just the first account — the action syncs by Tink credential, so all accounts in the group get synced
     await syncTransactionsAction(firstAccount.id)
     setSyncing(false)
     router.refresh()
@@ -80,7 +79,6 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
 
   async function handleDisconnect() {
     setDisconnecting(true)
-    // Disconnecting any account disconnects the entire Tink credential (all accounts in group)
     await disconnectBankAction(firstAccount.id)
     setDisconnecting(false)
     router.refresh()

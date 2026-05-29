@@ -54,13 +54,15 @@
     "limitTitle": "Limite de conexiones bancarias alcanzado",
     "limitDescription": "Mejora tu plan para conectar mas cuentas bancarias."
   },
-  "plaid": {
-    "connecting": "Conectando...",
-    "connectBankAccount": "Conectar Cuenta Bancaria"
-  },
-  "tink": {
-    "connecting": "Redirigiendo al banco...",
-    "connectBankAccount": "Conectar Cuenta Bancaria",
-    "error": "Error al iniciar la conexion bancaria"
+  "connect": {
+    "title": "Conectar un Banco",
+    "description": "Selecciona tu banco para conectarlo de forma segura mediante open banking.",
+    "searchPlaceholder": "Buscar bancos...",
+    "buttonLabel": "Conectar Banco",
+    "noResults": "Ningun banco coincide con tu busqueda.",
+    "noBanks": "No hay bancos disponibles.",
+    "errorLoadingBanks": "Error al cargar los bancos. Por favor, intentalo de nuevo.",
+    "limitExceeded": "Limite de conexiones bancarias alcanzado. Mejora tu plan para conectar mas cuentas.",
+    "errorCreatingLink": "Error al iniciar la conexion bancaria. Por favor, intentalo de nuevo."
   }
 }

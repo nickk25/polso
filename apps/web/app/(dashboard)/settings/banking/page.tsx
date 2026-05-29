@@ -20,16 +20,16 @@ export default async function BankingSettingsPage() {
   const plan = subscription?.plan ?? "starter"
   const maxConnections = getLimit(plan, "maxBankConnections")
 
-  // Group accounts by Tink credential (one credential = one bank connection, multiple accounts)
+  // Group accounts by requisitionId (one requisition = one bank connection, may have multiple accounts)
   const connectionMap = new Map<string, BankConnection>()
   for (const account of accounts) {
-    const key = account.tinkCredentialId ?? account.id // fallback for manual accounts
+    const key = account.requisitionId ?? account.id
     const existing = connectionMap.get(key)
     if (existing) {
       existing.accounts.push(account)
     } else {
       connectionMap.set(key, {
-        tinkCredentialId: account.tinkCredentialId,
+        requisitionId: account.requisitionId ?? null,
         institutionName: account.institutionName,
         institutionLogo: account.institutionLogo,
         accounts: [account],
@@ -74,7 +74,7 @@ export default async function BankingSettingsPage() {
             <div className="space-y-3">
               {connections.map((connection) => (
                 <BankConnectionCard
-                  key={connection.tinkCredentialId ?? connection.accounts[0].id}
+                  key={connection.requisitionId ?? connection.accounts[0].id}
                   connection={connection}
                 />
               ))}

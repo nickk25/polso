@@ -54,13 +54,15 @@
     "limitTitle": "Bank connection limit reached",
     "limitDescription": "Upgrade your plan to connect more bank accounts."
   },
-  "plaid": {
-    "connecting": "Connecting...",
-    "connectBankAccount": "Connect Bank Account"
-  },
-  "tink": {
-    "connecting": "Redirecting to bank...",
-    "connectBankAccount": "Connect Bank Account",
-    "error": "Failed to start bank connection"
+  "connect": {
+    "title": "Connect a Bank",
+    "description": "Select your bank to securely connect via open banking.",
+    "searchPlaceholder": "Search banks...",
+    "buttonLabel": "Connect Bank",
+    "noResults": "No banks match your search.",
+    "noBanks": "No banks available.",
+    "errorLoadingBanks": "Failed to load banks. Please try again.",
+    "limitExceeded": "Bank connection limit reached. Upgrade your plan to connect more accounts.",
+    "errorCreatingLink": "Failed to start bank connection. Please try again."
   }
 }
