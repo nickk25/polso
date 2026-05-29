@@ -34,6 +34,8 @@
     "available": "Avail",
     "current": "Curr",
     "txns": "{count} txns",
+    "transactions": "{count, plural, one {# transaction} other {# transactions}}",
+    "balance": "Balance",
     "lastSynced": "Last synced: {date}",
     "syncTransactions": "Sync transactions",
     "disconnectBank": "Disconnect bank",

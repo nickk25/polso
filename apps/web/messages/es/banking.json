@@ -34,6 +34,8 @@
     "available": "Disp",
     "current": "Actual",
     "txns": "{count} txns",
+    "transactions": "{count, plural, one {# transaccion} other {# transacciones}}",
+    "balance": "Saldo",
     "lastSynced": "Ultima sincronizacion: {date}",
     "syncTransactions": "Sincronizar transacciones",
     "disconnectBank": "Desconectar banco",

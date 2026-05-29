@@ -113,7 +113,7 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
             <div>
               <span className="font-medium">{institutionName || t("accountCard.bank")}</span>
               <p className="text-xs text-muted-foreground">
-                {t("connection.accountCount", { count: accounts.length })} · {t("accountCard.txns", { count: totalTransactions })}
+                {t("connection.accountCount", { count: accounts.length })} · {t("accountCard.transactions", { count: totalTransactions })}
               </p>
             </div>
           </div>
@@ -183,7 +183,7 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium truncate">{account.name}</span>
-                    {account.mask && (
+                    {account.mask && !account.name?.includes(account.mask) && (
                       <span className="text-xs text-muted-foreground">••••{account.mask}</span>
                     )}
                     <span className="text-xs text-muted-foreground capitalize">
@@ -192,10 +192,7 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                     <span>
-                      {t("accountCard.available")}: <span className="text-foreground font-medium">{formatCurrency(account.balanceAvailable, account.currency)}</span>
-                    </span>
-                    <span>
-                      {t("accountCard.current")}: <span className="text-foreground font-medium">{formatCurrency(account.balanceCurrent, account.currency)}</span>
+                      {t("accountCard.balance")}: <span className="text-foreground font-medium">{formatCurrency(account.balanceAvailable ?? account.balanceCurrent, account.currency)}</span>
                     </span>
                   </div>
                 </div>
