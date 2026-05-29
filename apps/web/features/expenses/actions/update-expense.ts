@@ -70,6 +70,14 @@ export async function updateExpenseAction(
       },
     })
 
+    // Propagate manual category choice back to vendor so future syncs auto-categorize
+    if (categoryChanged && input.categoryId && expense.vendorId) {
+      await prisma.vendor.update({
+        where: { id: expense.vendorId },
+        data: { defaultCategoryId: input.categoryId },
+      })
+    }
+
     revalidatePath("/expenses")
     revalidatePath("/dashboard")
 
@@ -122,6 +130,24 @@ export async function bulkUpdateExpenseCategoryAction(
         categoryConfidence: 1,
       },
     })
+
+    // Propagate manual category back to each distinct vendor
+    if (categoryId) {
+      const affectedVendors = await prisma.expense.findMany({
+        where: { id: { in: expenseIds }, organizationId, vendorId: { not: null } },
+        select: { vendorId: true },
+        distinct: ["vendorId"],
+      })
+      if (affectedVendors.length > 0) {
+        await prisma.vendor.updateMany({
+          where: {
+            id: { in: affectedVendors.map((e) => e.vendorId!) },
+            organizationId,
+          },
+          data: { defaultCategoryId: categoryId },
+        })
+      }
+    }
 
     revalidatePath("/expenses")
     revalidatePath("/dashboard")

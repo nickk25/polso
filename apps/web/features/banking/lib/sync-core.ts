@@ -12,6 +12,7 @@ import { suggestCategory } from "@polso/intelligence"
 import { findOrCreateVendor, type MatchedVendor } from "@/features/vendors/lib/vendor-matcher"
 import { findOrCreateClient, type MatchedClient } from "@/features/clients/lib/client-matcher"
 import { matchAfterSync } from "@/features/inbox/lib/match-after-sync"
+import { backfillCategoriesCore } from "@/features/expenses/lib/backfill-core"
 import { getGoCardlessClient } from "./gocardless-client"
 
 export interface SyncResult {
@@ -187,6 +188,10 @@ export async function syncTransactionsCore(
       console.error("matchAfterSync error:", err)
     )
   }
+
+  await backfillCategoriesCore(organizationId).catch((err) =>
+    console.error("backfillCategories error:", err)
+  )
 
   return {
     accountsUpdated,
