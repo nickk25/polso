@@ -146,6 +146,7 @@ export function transformAccount({
   const name =
     account?.name ??
     account?.product ??
+    account?.ownerName ??
     (institution ? `${institution.name} (${currency})` : "Bank Account")
 
   return {

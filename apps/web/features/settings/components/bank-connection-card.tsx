@@ -94,9 +94,15 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
               {institutionLogo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={institutionLogo.startsWith("data:") ? institutionLogo : `data:image/png;base64,${institutionLogo}`}
+                  src={
+                    institutionLogo.startsWith("http")
+                      ? institutionLogo
+                      : institutionLogo.startsWith("data:")
+                        ? institutionLogo
+                        : `data:image/png;base64,${institutionLogo}`
+                  }
                   alt={institutionName || t("accountCard.bank")}
-                  className="h-7 w-7 rounded"
+                  className="h-7 w-7 rounded object-contain"
                 />
               ) : (
                 <span className="text-base font-semibold">

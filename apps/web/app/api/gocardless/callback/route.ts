@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
         const mask = iban && iban.length >= 4 ? iban.slice(-4) : null
 
         const currency = account?.currency ?? "EUR"
-        const rawName = account?.name ?? account?.product ?? institution?.name ?? "Bank Account"
+        const rawName = account?.name ?? account?.product ?? account?.ownerName ?? details?.owner_name ?? institution?.name ?? "Bank Account"
         const name = rawName.toLowerCase().replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase())
 
         // Pick balance — prefer interimBooked
