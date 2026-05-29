@@ -3,7 +3,7 @@ import { findBestMatches } from "@polso/matching"
 import { persistMatch } from "./match-notifications"
 
 /**
- * After a Tink sync imports new transactions, run bidirectional matching
+ * After a GoCardless sync imports new transactions, run bidirectional matching
  * against all pending InboxItems for the organization.
  *
  * Two phases (mirrors Midday's match-transactions-bidirectional pattern):
@@ -18,7 +18,7 @@ export async function matchAfterSync(
 ): Promise<void> {
   if (newTransactionIds.length === 0) return
 
-  // Fetch new transactions (expenses only — amount > 0 means money out in Tink)
+  // Fetch new transactions (expenses only — amount > 0 means money out)
   const newTransactions = await prisma.transaction.findMany({
     where: {
       id: { in: newTransactionIds },

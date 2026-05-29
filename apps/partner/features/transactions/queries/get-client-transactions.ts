@@ -131,7 +131,7 @@ export async function getClientTransactionStats(
   const lastMonthStart = startOfMonth(subMonths(now, 1))
   const lastMonthEnd = endOfMonth(subMonths(now, 1))
 
-  // Tink convention: positive amount = money out (debit/expense), negative = money in (credit)
+  // Polso convention: positive amount = money out (debit/expense), negative = money in (credit)
   const baseWhere = { organizationId: clientId, amount: { gt: 0 } }
 
   const [thisMonth, lastMonth, withReceipt, pending] = await Promise.all([

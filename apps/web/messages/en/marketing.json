@@ -91,7 +91,7 @@
     "label": "FAQ",
     "title": "Frequently asked questions",
     "q1": "Is my bank data secure?",
-    "a1": "Yes. We use Tink for bank connections. We never see or store your bank credentials. All data is encrypted.",
+    "a1": "Yes. We use GoCardless Bank Account Data (PSD2-regulated) for bank connections. We never see or store your bank credentials. All data is encrypted.",
     "q2": "Which banks are supported?",
     "a2": "Over 12,000 institutions via Open Banking. Most major banks in Europe and US are supported.",
     "q3": "How does categorization work?",

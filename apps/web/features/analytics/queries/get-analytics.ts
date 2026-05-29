@@ -409,7 +409,7 @@ export async function getCashFlow(months = 6, endMonth = new Date()): Promise<Ca
     monthlyData.set(monthKey, { inflow: 0, outflow: 0 })
   }
 
-  // Aggregate transactions (Tink/Polso: positive = outflow, negative = inflow)
+  // Polso convention: positive = outflow (expense), negative = inflow (income)
   for (const tx of transactions) {
     const monthKey = format(new Date(tx.date), "yyyy-MM")
     const data = monthlyData.get(monthKey)

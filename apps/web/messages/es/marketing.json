@@ -91,7 +91,7 @@
     "label": "Preguntas frecuentes",
     "title": "Preguntas frecuentes",
     "q1": "Estan seguros mis datos bancarios?",
-    "a1": "Si. Usamos Tink para las conexiones bancarias. Nunca vemos ni almacenamos tus credenciales bancarias. Todos los datos estan encriptados.",
+    "a1": "Si. Usamos GoCardless Bank Account Data (regulado por PSD2) para las conexiones bancarias. Nunca vemos ni almacenamos tus credenciales bancarias. Todos los datos estan encriptados.",
     "q2": "Que bancos son compatibles?",
     "a2": "Mas de 12,000 instituciones via Open Banking. La mayoria de los bancos principales en Europa y EE.UU. son compatibles.",
     "q3": "Como funciona la categorizacion?",

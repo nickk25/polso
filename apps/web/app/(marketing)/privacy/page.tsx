@@ -118,8 +118,8 @@ export default async function PrivacyPolicyPage() {
             </p>
             <ul className="mt-4 space-y-3 text-muted-foreground">
               <li>
-                <strong className="text-foreground">Plaid</strong> —{" "}
-                {t("privacy.thirdPartyPlaid")}
+                <strong className="text-foreground">GoCardless</strong> —{" "}
+                {t("privacy.thirdPartyGoCardless")}
               </li>
               <li>
                 <strong className="text-foreground">Neon</strong> —{" "}
