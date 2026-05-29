@@ -1,14 +1,6 @@
 import { NextResponse } from "next/server"
 import { neonAuth } from "@neondatabase/auth/next/server"
-import { createGoCardlessClient } from "@polso/banking"
-
-function getGoCardlessClient() {
-  return createGoCardlessClient({
-    secretId: process.env.GOCARDLESS_SECRET_ID!,
-    secretKey: process.env.GOCARDLESS_SECRET_KEY!,
-    redirectUri: process.env.GOCARDLESS_REDIRECT_URI!,
-  })
-}
+import { getGoCardlessClient } from "@/features/banking/lib/gocardless-client"
 
 /**
  * GET /api/gocardless/institutions?country=ES
