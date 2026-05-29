@@ -35,9 +35,15 @@ export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps
       setLoading(true)
       try {
         const res = await fetch("/api/gocardless/institutions?country=ES")
-        const data = await res.json() as { institutions: BankProvider[] }
+        const data = await res.json() as { institutions?: BankProvider[]; error?: string }
+        if (!res.ok) {
+          console.error("[ConnectBankDialog] API error:", data.error)
+          toast.error(t("connect.errorLoadingBanks"))
+          return
+        }
         setInstitutions(data.institutions ?? [])
-      } catch {
+      } catch (err) {
+        console.error("[ConnectBankDialog] Fetch error:", err)
         toast.error(t("connect.errorLoadingBanks"))
       } finally {
         setLoading(false)
