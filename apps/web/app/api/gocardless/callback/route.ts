@@ -3,6 +3,7 @@ import { neonAuth } from "@neondatabase/auth/next/server"
 import { createGoCardlessClient, selectPrimaryBalance, getAvailableBalance, mapCashAccountType } from "@polso/banking"
 import { prisma } from "@/lib/db"
 import { addDays } from "date-fns"
+import { syncTransactionsForOrg } from "@/features/banking/actions/sync-transactions"
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? ""
 
@@ -147,6 +148,11 @@ export async function GET(request: NextRequest) {
 
     // Clean up pending requisition
     await prisma.pendingRequisition.delete({ where: { id: pending.id } })
+
+    // Sync transactions immediately so the user lands on a populated banking page
+    await syncTransactionsForOrg(organizationId).catch((err) =>
+      console.error("[GoCardless callback] Initial sync error:", err)
+    )
 
     return redirect("/settings/banking?connected=true")
   } catch (err) {

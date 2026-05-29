@@ -34,175 +34,186 @@ function getGoCardlessClient() {
   })
 }
 
+async function syncTransactionsCore(
+  organizationId: string,
+  accountId?: string,
+  initial = false
+): Promise<SyncResult> {
+  const accounts = await prisma.account.findMany({
+    where: {
+      organizationId,
+      status: "active",
+      requisitionId: { not: null },
+      externalAccountId: { not: null },
+      ...(accountId ? { id: accountId } : {}),
+    },
+  })
+
+  if (accounts.length === 0) {
+    return { accountsUpdated: 0, transactionsImported: 0, transactionsModified: 0, expensesCreated: 0, incomesCreated: 0 }
+  }
+
+  // Group by requisitionId to check connection status once per bank connection
+  const requisitionGroups = new Map<string, typeof accounts>()
+  for (const account of accounts) {
+    if (!account.requisitionId) continue
+    const group = requisitionGroups.get(account.requisitionId) ?? []
+    group.push(account)
+    requisitionGroups.set(account.requisitionId, group)
+  }
+
+  // Pre-fetch categories, vendors, and clients
+  const [categories, vendors, clients] = await Promise.all([
+    prisma.category.findMany({
+      where: { OR: [{ isSystem: true }, { organizationId }] },
+      select: { id: true, slug: true },
+    }),
+    prisma.vendor.findMany({
+      where: { organizationId },
+      select: { id: true, normalizedName: true, defaultCategoryId: true },
+    }),
+    prisma.client.findMany({
+      where: { organizationId },
+      select: { id: true, normalizedName: true, defaultCategoryId: true },
+    }),
+  ])
+
+  const categoryLookup = new Map(categories.map((c) => [c.slug, c.id]))
+  const vendorLookup = new Map(
+    vendors.map((v) => [v.normalizedName, { id: v.id, defaultCategoryId: v.defaultCategoryId }])
+  )
+  const clientLookup = new Map(
+    clients.map((c) => [c.normalizedName, { id: c.id, defaultCategoryId: c.defaultCategoryId }])
+  )
+
+  const historicalExpenses = await prisma.expense.findMany({
+    where: { organizationId, categoryId: { not: null } },
+    select: {
+      categoryId: true,
+      expenseType: true,
+      transaction: { select: { merchantName: true } },
+    },
+  })
+
+  const merchantHistory = new Map<string, {
+    categories: Map<string, number>
+    expenseTypes: Map<string, number>
+  }>()
+
+  for (const e of historicalExpenses) {
+    const key = e.transaction?.merchantName?.toLowerCase().trim()
+    if (!key || !e.categoryId) continue
+    if (!merchantHistory.has(key)) {
+      merchantHistory.set(key, { categories: new Map(), expenseTypes: new Map() })
+    }
+    const h = merchantHistory.get(key)!
+    h.categories.set(e.categoryId, (h.categories.get(e.categoryId) ?? 0) + 1)
+    h.expenseTypes.set(e.expenseType, (h.expenseTypes.get(e.expenseType) ?? 0) + 1)
+  }
+
+  const gc = getGoCardlessClient()
+
+  let totalTransactionsImported = 0
+  let totalTransactionsModified = 0
+  let totalExpensesCreated = 0
+  let totalIncomesCreated = 0
+  let accountsUpdated = 0
+  const newTransactionIds: string[] = []
+
+  for (const [requisitionId, reqAccounts] of requisitionGroups) {
+    // Check requisition status — mark disconnected if expired/rejected
+    const requisition = await gc.getRequisition(requisitionId)
+    if (requisition && gc.isRequisitionExpired(requisition.status)) {
+      await prisma.account.updateMany({
+        where: { requisitionId, organizationId },
+        data: { status: "expired", syncError: "Bank connection has expired — please reconnect" },
+      })
+      continue
+    }
+
+    for (const account of reqAccounts) {
+      if (!account.externalAccountId) continue
+
+      try {
+        // Fetch updated balance
+        const balances = await gc.getAccountBalances(account.externalAccountId)
+        const primaryBalance =
+          balances.find((b) => b.balanceType === "interimBooked") ?? balances[0]
+        const balanceCurrent = primaryBalance
+          ? parseFloat(primaryBalance.balanceAmount.amount)
+          : null
+
+        await prisma.account.update({
+          where: { id: account.id },
+          data: {
+            balanceCurrent,
+            lastSyncedAt: new Date(),
+            syncError: null,
+            syncErrorRetries: 0,
+          },
+        })
+        accountsUpdated++
+
+        // initial=true → latest=false → fetch full history; initial=false → latest=true → last 7 days
+        const transactions = await gc.getTransactions(account.externalAccountId, !initial)
+
+        for (const tx of transactions) {
+          const { imported, modified, expenseCreated, incomeCreated, transactionId } =
+            await upsertTransaction(
+              organizationId,
+              account.id,
+              tx,
+              categoryLookup,
+              vendorLookup,
+              clientLookup,
+              merchantHistory
+            )
+
+          if (imported) { totalTransactionsImported++; newTransactionIds.push(transactionId) }
+          if (modified) totalTransactionsModified++
+          if (expenseCreated) totalExpensesCreated++
+          if (incomeCreated) totalIncomesCreated++
+        }
+      } catch (error) {
+        console.error(`Error syncing account ${account.id}:`, error)
+        const retries = (account.syncErrorRetries ?? 0) + 1
+        await prisma.account.update({
+          where: { id: account.id },
+          data: {
+            syncError: error instanceof Error ? error.message : "Sync failed",
+            syncErrorRetries: retries,
+            lastSyncedAt: new Date(),
+            // Auto-disconnect after 3 consecutive failures (Midday pattern)
+            ...(retries >= 3 ? { status: "disconnected" } : {}),
+          },
+        })
+      }
+    }
+  }
+
+  if (newTransactionIds.length > 0) {
+    await matchAfterSync(organizationId, newTransactionIds).catch((err) =>
+      console.error("matchAfterSync error:", err)
+    )
+  }
+
+  return {
+    accountsUpdated,
+    transactionsImported: totalTransactionsImported,
+    transactionsModified: totalTransactionsModified,
+    expensesCreated: totalExpensesCreated,
+    incomesCreated: totalIncomesCreated,
+  }
+}
+
 export async function syncTransactionsAction(
-  accountId?: string
+  accountId?: string,
+  initial = false
 ): Promise<ActionResponse<SyncResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    const accounts = await prisma.account.findMany({
-      where: {
-        organizationId,
-        status: "active",
-        requisitionId: { not: null },
-        externalAccountId: { not: null },
-        ...(accountId ? { id: accountId } : {}),
-      },
-    })
-
-    if (accounts.length === 0) {
-      return successResponse({
-        accountsUpdated: 0,
-        transactionsImported: 0,
-        transactionsModified: 0,
-        expensesCreated: 0,
-        incomesCreated: 0,
-      })
-    }
-
-    // Group by requisitionId to check connection status once per bank connection
-    const requisitionGroups = new Map<string, typeof accounts>()
-    for (const account of accounts) {
-      if (!account.requisitionId) continue
-      const group = requisitionGroups.get(account.requisitionId) ?? []
-      group.push(account)
-      requisitionGroups.set(account.requisitionId, group)
-    }
-
-    // Pre-fetch categories, vendors, and clients
-    const [categories, vendors, clients] = await Promise.all([
-      prisma.category.findMany({
-        where: { OR: [{ isSystem: true }, { organizationId }] },
-        select: { id: true, slug: true },
-      }),
-      prisma.vendor.findMany({
-        where: { organizationId },
-        select: { id: true, normalizedName: true, defaultCategoryId: true },
-      }),
-      prisma.client.findMany({
-        where: { organizationId },
-        select: { id: true, normalizedName: true, defaultCategoryId: true },
-      }),
-    ])
-
-    const categoryLookup = new Map(categories.map((c) => [c.slug, c.id]))
-    const vendorLookup = new Map(
-      vendors.map((v) => [v.normalizedName, { id: v.id, defaultCategoryId: v.defaultCategoryId }])
-    )
-    const clientLookup = new Map(
-      clients.map((c) => [c.normalizedName, { id: c.id, defaultCategoryId: c.defaultCategoryId }])
-    )
-
-    const historicalExpenses = await prisma.expense.findMany({
-      where: { organizationId, categoryId: { not: null } },
-      select: {
-        categoryId: true,
-        expenseType: true,
-        transaction: { select: { merchantName: true } },
-      },
-    })
-
-    const merchantHistory = new Map<string, {
-      categories: Map<string, number>
-      expenseTypes: Map<string, number>
-    }>()
-
-    for (const e of historicalExpenses) {
-      const key = e.transaction?.merchantName?.toLowerCase().trim()
-      if (!key || !e.categoryId) continue
-      if (!merchantHistory.has(key)) {
-        merchantHistory.set(key, { categories: new Map(), expenseTypes: new Map() })
-      }
-      const h = merchantHistory.get(key)!
-      h.categories.set(e.categoryId, (h.categories.get(e.categoryId) ?? 0) + 1)
-      h.expenseTypes.set(e.expenseType, (h.expenseTypes.get(e.expenseType) ?? 0) + 1)
-    }
-
-    const gc = getGoCardlessClient()
-
-    let totalTransactionsImported = 0
-    let totalTransactionsModified = 0
-    let totalExpensesCreated = 0
-    let totalIncomesCreated = 0
-    let accountsUpdated = 0
-    const newTransactionIds: string[] = []
-
-    for (const [requisitionId, reqAccounts] of requisitionGroups) {
-      // Check requisition status — mark disconnected if expired/rejected
-      const requisition = await gc.getRequisition(requisitionId)
-      if (requisition && gc.isRequisitionExpired(requisition.status)) {
-        await prisma.account.updateMany({
-          where: { requisitionId, organizationId },
-          data: { status: "expired", syncError: "Bank connection has expired — please reconnect" },
-        })
-        continue
-      }
-
-      for (const account of reqAccounts) {
-        if (!account.externalAccountId) continue
-
-        try {
-          // Fetch updated balance
-          const balances = await gc.getAccountBalances(account.externalAccountId)
-          const primaryBalance =
-            balances.find((b) => b.balanceType === "interimBooked") ?? balances[0]
-          const balanceCurrent = primaryBalance
-            ? parseFloat(primaryBalance.balanceAmount.amount)
-            : null
-
-          await prisma.account.update({
-            where: { id: account.id },
-            data: {
-              balanceCurrent,
-              lastSyncedAt: new Date(),
-              syncError: null,
-              syncErrorRetries: 0,
-            },
-          })
-          accountsUpdated++
-
-          // Fetch transactions — latest=true fetches last 7 days only
-          const transactions = await gc.getTransactions(account.externalAccountId, true)
-
-          for (const tx of transactions) {
-            const { imported, modified, expenseCreated, incomeCreated, transactionId } =
-              await upsertTransaction(
-                organizationId,
-                account.id,
-                tx,
-                categoryLookup,
-                vendorLookup,
-                clientLookup,
-                merchantHistory
-              )
-
-            if (imported) { totalTransactionsImported++; newTransactionIds.push(transactionId) }
-            if (modified) totalTransactionsModified++
-            if (expenseCreated) totalExpensesCreated++
-            if (incomeCreated) totalIncomesCreated++
-          }
-        } catch (error) {
-          console.error(`Error syncing account ${account.id}:`, error)
-          const retries = (account.syncErrorRetries ?? 0) + 1
-          await prisma.account.update({
-            where: { id: account.id },
-            data: {
-              syncError: error instanceof Error ? error.message : "Sync failed",
-              syncErrorRetries: retries,
-              lastSyncedAt: new Date(),
-              // Auto-disconnect after 3 consecutive failures (Midday pattern)
-              ...(retries >= 3 ? { status: "disconnected" } : {}),
-            },
-          })
-        }
-      }
-    }
-
-    if (newTransactionIds.length > 0) {
-      await matchAfterSync(organizationId, newTransactionIds).catch((err) =>
-        console.error("matchAfterSync error:", err)
-      )
-    }
+    const result = await syncTransactionsCore(organizationId, accountId, initial)
 
     revalidatePath("/settings/banking")
     revalidatePath("/expenses")
@@ -212,13 +223,7 @@ export async function syncTransactionsAction(
     revalidatePath("/vendors")
     revalidatePath("/clients")
 
-    return successResponse({
-      accountsUpdated,
-      transactionsImported: totalTransactionsImported,
-      transactionsModified: totalTransactionsModified,
-      expensesCreated: totalExpensesCreated,
-      incomesCreated: totalIncomesCreated,
-    })
+    return successResponse(result)
   } catch (error) {
     console.error("Error syncing transactions:", error)
     return errorResponse(
@@ -226,6 +231,17 @@ export async function syncTransactionsAction(
       "SYNC_ERROR"
     )
   }
+}
+
+/**
+ * For use from API route handlers that already have organizationId.
+ * Syncs all active accounts for the org. initial=true fetches full history.
+ */
+export async function syncTransactionsForOrg(
+  organizationId: string,
+  initial = false
+): Promise<void> {
+  await syncTransactionsCore(organizationId, undefined, initial)
 }
 
 type MerchantHistory = Map<string, { categories: Map<string, number>; expenseTypes: Map<string, number> }>
