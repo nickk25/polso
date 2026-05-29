@@ -81,10 +81,11 @@ export async function matchAfterSync(
     }))
 
     const results = findBestMatches(candidates)
-    if (results.length === 0) continue
+    const best = results[0]
+    if (!best) continue
 
-    const best = results[0]!
-    const inboxItem = inboxItems.find((i) => i.id === best.inboxItemId)!
+    const inboxItem = inboxItems.find((i) => i.id === best.inboxItemId)
+    if (!inboxItem) continue
 
     claimedInboxIds.add(best.inboxItemId)
     claimedTransactionIds.add(tx.id)
@@ -117,10 +118,11 @@ export async function matchAfterSync(
     }))
 
     const results = findBestMatches(candidates)
-    if (results.length === 0) continue
+    const best = results[0]
+    if (!best) continue
 
-    const best = results[0]!
-    const tx = availableTxs.find((t) => t.id === best.transactionId)!
+    const tx = availableTxs.find((t) => t.id === best.transactionId)
+    if (!tx) continue
 
     claimedTransactionIds.add(best.transactionId)
 

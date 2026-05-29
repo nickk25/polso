@@ -3,16 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
-import { createGoCardlessClient } from "@polso/banking"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
-
-function getGoCardlessClient() {
-  return createGoCardlessClient({
-    secretId: process.env.GOCARDLESS_SECRET_ID!,
-    secretKey: process.env.GOCARDLESS_SECRET_KEY!,
-    redirectUri: process.env.GOCARDLESS_REDIRECT_URI!,
-  })
-}
+import { getGoCardlessClient } from "@/features/banking/lib/gocardless-client"
 
 /**
  * Disconnect a bank account by deleting the GoCardless requisition.
