@@ -113,7 +113,7 @@ export async function backfillVendorsAction(): Promise<ActionResponse<BackfillRe
     }
     await Promise.all(updateOps)
 
-    revalidatePath("/vendors")
+    revalidatePath("/counterparties")
     revalidatePath("/transactions")
 
     return successResponse({ counterpartiesCreated, entriesLinked, alreadyLinked })

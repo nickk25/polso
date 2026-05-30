@@ -92,7 +92,7 @@ export async function createVendorAction(
       },
     })
 
-    revalidatePath("/vendors")
+    revalidatePath("/counterparties")
     revalidatePath("/transactions")
 
     return successResponse({ id: cp.id, name: cp.name, normalizedName: cp.normalizedName })
@@ -161,7 +161,7 @@ export async function updateVendorAction(
       },
     })
 
-    revalidatePath("/vendors")
+    revalidatePath("/counterparties")
     revalidatePath("/transactions")
 
     return successResponse({ id: updated.id, name: updated.name, normalizedName: updated.normalizedName })
@@ -197,7 +197,7 @@ export async function deleteVendorAction(
 
     await prisma.counterparty.delete({ where: { id: vendorId } })
 
-    revalidatePath("/vendors")
+    revalidatePath("/counterparties")
     revalidatePath("/transactions")
 
     return successResponse({ deleted: true })
@@ -274,7 +274,7 @@ export async function mergeVendorsAction(
       }
     })
 
-    revalidatePath("/vendors")
+    revalidatePath("/counterparties")
     revalidatePath("/transactions")
     revalidatePath("/recurring")
 

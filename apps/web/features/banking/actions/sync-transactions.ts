@@ -18,7 +18,7 @@ export async function syncTransactionsAction(
     revalidatePath("/transactions")
     revalidatePath("/dashboard")
     revalidatePath("/analytics")
-    revalidatePath("/vendors")
+    revalidatePath("/counterparties")
     revalidatePath("/clients")
 
     return successResponse(result)

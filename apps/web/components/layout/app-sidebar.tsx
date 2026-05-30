@@ -53,7 +53,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   { path: "/reports", labelKey: "reports", icon: ChartLine },
   { path: "/vault", labelKey: "vault", icon: Vault },
-  { path: "/vendors", labelKey: "vendors", icon: Buildings },
+  { path: "/counterparties", labelKey: "vendors", icon: Buildings },
   { path: "/export", labelKey: "export", icon: Export },
   { path: "/settings", labelKey: "settings", icon: Gear },
 ];
