@@ -6,10 +6,8 @@ export interface CategoryWithCount {
   name: string
   slug: string
   color: string
-  icon: string | null
   entryType: string | null
   isSystem: boolean
-  parentId: string | null
   createdAt: Date
   isHidden: boolean
   _count: {

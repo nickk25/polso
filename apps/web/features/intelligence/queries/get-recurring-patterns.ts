@@ -28,7 +28,6 @@ export interface RecurringPatternWithRelations {
     id: string
     name: string
     color: string
-    icon: string | null
   } | null
   _count: {
     entries: number
@@ -66,7 +65,6 @@ export async function getRecurringPatterns(options?: {
           id: true,
           name: true,
           color: true,
-          icon: true,
         },
       },
       _count: {

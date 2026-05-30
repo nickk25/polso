@@ -12,7 +12,6 @@
   "systemCategoriesDescription": "Categorias predeterminadas disponibles para todas las organizaciones.",
   "noCategory": "Sin categoria",
   "expenseCount": "{count, plural, one {# gasto} other {# gastos}}",
-  "incomeCount": "{count, plural, one {# ingreso} other {# ingresos}}",
   "editCategory": "Editar categoria",
   "deleteCategory": "Eliminar categoria",
   "hideCategory": "Ocultar en filtros",

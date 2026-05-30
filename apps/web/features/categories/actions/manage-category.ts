@@ -8,33 +8,25 @@ import { successResponse, errorResponse, type ActionResponse } from "@/lib/types
 interface CreateCategoryInput {
   name: string
   color: string
-  icon?: string | null
-  parentId?: string | null
   entryType?: string | null
 }
 
 interface UpdateCategoryInput {
   name?: string
   color?: string
-  icon?: string | null
   entryType?: string | null
 }
 
 interface CategoryResult {
   id: string
   name: string
-  slug: string
   color: string
 }
 
 interface DeleteCategoryResult {
   deleted: boolean
-  expenseCount?: number
 }
 
-/**
- * Generate a URL-safe slug from a name
- */
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -42,9 +34,6 @@ function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, "")
 }
 
-/**
- * Ensure slug is unique within the organization
- */
 async function ensureUniqueSlug(
   organizationId: string,
   baseSlug: string,
@@ -62,68 +51,37 @@ async function ensureUniqueSlug(
       },
     })
 
-    if (!existing) {
-      return slug
-    }
+    if (!existing) return slug
 
     slug = `${baseSlug}-${counter}`
     counter++
   }
 }
 
-/**
- * Create a new custom category
- */
 export async function createCategoryAction(
   input: CreateCategoryInput
 ): Promise<ActionResponse<CategoryResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    // Validate name
     if (!input.name || input.name.trim().length === 0) {
       return errorResponse("Category name is required", "VALIDATION_ERROR")
     }
-
     if (input.name.length > 50) {
       return errorResponse("Category name must be 50 characters or less", "VALIDATION_ERROR")
     }
-
-    // Validate color (hex format)
     if (!input.color || !/^#[0-9A-Fa-f]{6}$/.test(input.color)) {
       return errorResponse("Invalid color format. Use hex format (e.g., #6366f1)", "VALIDATION_ERROR")
     }
 
-    // Generate unique slug
-    const baseSlug = generateSlug(input.name.trim())
-    const slug = await ensureUniqueSlug(organizationId, baseSlug)
+    const slug = await ensureUniqueSlug(organizationId, generateSlug(input.name.trim()))
 
-    // Validate parent category if provided
-    if (input.parentId) {
-      const parentCategory = await prisma.category.findFirst({
-        where: {
-          id: input.parentId,
-          OR: [
-            { isSystem: true },
-            { organizationId },
-          ],
-        },
-      })
-
-      if (!parentCategory) {
-        return errorResponse("Parent category not found", "NOT_FOUND")
-      }
-    }
-
-    // Create category
     const category = await prisma.category.create({
       data: {
         organizationId,
         name: input.name.trim(),
         slug,
         color: input.color,
-        icon: input.icon || null,
-        parentId: input.parentId || null,
         entryType: input.entryType || null,
         isSystem: false,
       },
@@ -132,12 +90,7 @@ export async function createCategoryAction(
     revalidatePath("/categories")
     revalidatePath("/transactions")
 
-    return successResponse({
-      id: category.id,
-      name: category.name,
-      slug: category.slug,
-      color: category.color,
-    })
+    return successResponse({ id: category.id, name: category.name, color: category.color })
   } catch (error) {
     console.error("Error creating category:", error)
     return errorResponse(
@@ -147,9 +100,6 @@ export async function createCategoryAction(
   }
 }
 
-/**
- * Update an existing custom category
- */
 export async function updateCategoryAction(
   categoryId: string,
   input: UpdateCategoryInput
@@ -157,52 +107,38 @@ export async function updateCategoryAction(
   try {
     const { organizationId } = await getAuthContext()
 
-    // Find the category
     const category = await prisma.category.findFirst({
-      where: {
-        id: categoryId,
-        organizationId,
-        isSystem: false, // Cannot edit system categories
-      },
+      where: { id: categoryId, organizationId, isSystem: false },
     })
 
     if (!category) {
       return errorResponse("Category not found or cannot be edited", "NOT_FOUND")
     }
 
-    // Validate name if provided
     if (input.name !== undefined) {
       if (!input.name || input.name.trim().length === 0) {
         return errorResponse("Category name is required", "VALIDATION_ERROR")
       }
-
       if (input.name.length > 50) {
         return errorResponse("Category name must be 50 characters or less", "VALIDATION_ERROR")
       }
     }
 
-    // Validate color if provided
-    if (input.color !== undefined) {
-      if (!input.color || !/^#[0-9A-Fa-f]{6}$/.test(input.color)) {
-        return errorResponse("Invalid color format. Use hex format (e.g., #6366f1)", "VALIDATION_ERROR")
-      }
+    if (input.color !== undefined && !/^#[0-9A-Fa-f]{6}$/.test(input.color)) {
+      return errorResponse("Invalid color format. Use hex format (e.g., #6366f1)", "VALIDATION_ERROR")
     }
 
-    // Generate new slug if name changed
     let newSlug = category.slug
     if (input.name && input.name.trim() !== category.name) {
-      const baseSlug = generateSlug(input.name.trim())
-      newSlug = await ensureUniqueSlug(organizationId, baseSlug, categoryId)
+      newSlug = await ensureUniqueSlug(organizationId, generateSlug(input.name.trim()), categoryId)
     }
 
-    // Update category
     const updated = await prisma.category.update({
       where: { id: categoryId },
       data: {
         name: input.name?.trim() ?? category.name,
         slug: newSlug,
         color: input.color ?? category.color,
-        icon: input.icon !== undefined ? input.icon : category.icon,
         entryType: input.entryType !== undefined ? input.entryType : category.entryType,
       },
     })
@@ -210,12 +146,7 @@ export async function updateCategoryAction(
     revalidatePath("/categories")
     revalidatePath("/transactions")
 
-    return successResponse({
-      id: updated.id,
-      name: updated.name,
-      slug: updated.slug,
-      color: updated.color,
-    })
+    return successResponse({ id: updated.id, name: updated.name, color: updated.color })
   } catch (error) {
     console.error("Error updating category:", error)
     return errorResponse(
@@ -225,48 +156,29 @@ export async function updateCategoryAction(
   }
 }
 
-/**
- * Delete a custom category
- * Cannot delete if there are linked expenses (must reassign first)
- */
 export async function deleteCategoryAction(
   categoryId: string
 ): Promise<ActionResponse<DeleteCategoryResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    // Find the category
     const category = await prisma.category.findFirst({
-      where: {
-        id: categoryId,
-        organizationId,
-        isSystem: false, // Cannot delete system categories
-      },
-      include: {
-        _count: {
-          select: {
-            entries: true,
-          },
-        },
-      },
+      where: { id: categoryId, organizationId, isSystem: false },
+      include: { _count: { select: { entries: true } } },
     })
 
     if (!category) {
       return errorResponse("Category not found or cannot be deleted", "NOT_FOUND")
     }
 
-    const totalLinked = category._count.entries
-    if (totalLinked > 0) {
+    if (category._count.entries > 0) {
       return errorResponse(
-        `Cannot delete category with ${totalLinked} linked transaction${totalLinked > 1 ? "s" : ""}. Reassign them first.`,
+        `Cannot delete category with ${category._count.entries} linked transaction${category._count.entries > 1 ? "s" : ""}. Reassign them first.`,
         "HAS_LINKED_ITEMS"
       )
     }
 
-    // Delete the category
-    await prisma.category.delete({
-      where: { id: categoryId },
-    })
+    await prisma.category.delete({ where: { id: categoryId } })
 
     revalidatePath("/categories")
     revalidatePath("/transactions")
@@ -281,52 +193,6 @@ export async function deleteCategoryAction(
   }
 }
 
-/**
- * Get the count of expenses/incomes linked to a category
- * Useful for showing warning before delete
- */
-export async function getCategoryUsageAction(
-  categoryId: string
-): Promise<ActionResponse<{ entryCount: number }>> {
-  try {
-    const { organizationId } = await getAuthContext()
-
-    const category = await prisma.category.findFirst({
-      where: {
-        id: categoryId,
-        OR: [
-          { isSystem: true },
-          { organizationId },
-        ],
-      },
-      include: {
-        _count: {
-          select: {
-            entries: true,
-          },
-        },
-      },
-    })
-
-    if (!category) {
-      return errorResponse("Category not found", "NOT_FOUND")
-    }
-
-    return successResponse({
-      entryCount: category._count.entries,
-    })
-  } catch (error) {
-    console.error("Error getting category usage:", error)
-    return errorResponse(
-      error instanceof Error ? error.message : "Failed to get category usage",
-      "ERROR"
-    )
-  }
-}
-
-/**
- * Toggle the hidden state of a category for the current organization
- */
 export async function toggleCategoryVisibilityAction(
   categoryId: string,
   isHidden: boolean
@@ -334,12 +200,8 @@ export async function toggleCategoryVisibilityAction(
   try {
     const { organizationId } = await getAuthContext()
 
-    // Verify the category exists and is accessible
     const category = await prisma.category.findFirst({
-      where: {
-        id: categoryId,
-        OR: [{ isSystem: true }, { organizationId }],
-      },
+      where: { id: categoryId, OR: [{ isSystem: true }, { organizationId }] },
     })
 
     if (!category) {

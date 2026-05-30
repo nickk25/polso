@@ -297,15 +297,11 @@ model Category {
   name           String
   slug           String
   color          String  @default("#6366f1")
-  icon           String?
-  parentId       String? @map("parent_id")
   isSystem       Boolean @default(false) @map("is_system")
   entryType      String? @map("entry_type") // fixed, variable, income, transfer
   createdAt      DateTime @default(now()) @map("created_at")
 
   organization      Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parent            Category?            @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children          Category[]           @relation("CategoryHierarchy")
   counterparties    Counterparty[]
   entries           Entry[]
   recurringPatterns RecurringPattern[]
