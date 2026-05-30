@@ -23,6 +23,7 @@ import {
 } from "@polso/ui/select"
 import { Spinner } from "@phosphor-icons/react"
 import { createCategoryAction, updateCategoryAction } from "../actions/manage-category"
+import { NONE_VALUE } from "../lib/constants"
 import type { CategoryWithCount } from "../queries/get-categories"
 
 interface CategoryFormProps {
@@ -30,8 +31,6 @@ interface CategoryFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
-
-const NONE_VALUE = "__none__"
 
 const PRESET_COLORS = [
   "#ef4444", // red
@@ -207,7 +206,7 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
               {loading ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                  {isEditing ? tc("actions.saving") : tc("actions.loading")}
+                  {isEditing ? tc("actions.saving") : tc("actions.creating")}
                 </>
               ) : (
                 isEditing ? tc("actions.saveChanges") : t("createCategory")

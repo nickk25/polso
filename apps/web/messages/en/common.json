@@ -41,6 +41,7 @@
     "pause": "Pause",
     "loading": "Loading...",
     "saving": "Saving...",
+    "creating": "Creating...",
     "deleting": "Deleting...",
     "download": "Download"
   },

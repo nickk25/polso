@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
+import { HEX_COLOR_RE } from "../lib/constants"
 
 interface CreateCategoryInput {
   name: string
@@ -52,6 +53,7 @@ async function ensureUniqueSlug(
     })
 
     if (!existing) return slug
+    if (counter > 100) throw new Error("Could not generate unique slug")
 
     slug = `${baseSlug}-${counter}`
     counter++
@@ -70,7 +72,7 @@ export async function createCategoryAction(
     if (input.name.length > 50) {
       return errorResponse("Category name must be 50 characters or less", "VALIDATION_ERROR")
     }
-    if (!input.color || !/^#[0-9A-Fa-f]{6}$/.test(input.color)) {
+    if (!input.color || !HEX_COLOR_RE.test(input.color)) {
       return errorResponse("Invalid color format. Use hex format (e.g., #6366f1)", "VALIDATION_ERROR")
     }
 
@@ -124,7 +126,7 @@ export async function updateCategoryAction(
       }
     }
 
-    if (input.color !== undefined && !/^#[0-9A-Fa-f]{6}$/.test(input.color)) {
+    if (input.color !== undefined && !HEX_COLOR_RE.test(input.color)) {
       return errorResponse("Invalid color format. Use hex format (e.g., #6366f1)", "VALIDATION_ERROR")
     }
 

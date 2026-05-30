@@ -20,6 +20,7 @@ import {
 } from "@polso/ui/alert-dialog"
 import { Pencil, Trash } from "@phosphor-icons/react"
 import { deleteCategoryAction, toggleCategoryVisibilityAction } from "../actions/manage-category"
+import { ENTRY_TYPE_BADGE_VARIANT } from "../lib/constants"
 import type { CategoryWithCount } from "../queries/get-categories"
 
 interface CategoryCardProps {
@@ -55,6 +56,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
   }
 
   const entryCount = category._count.entries
+  const badgeVariant = category.entryType ? ENTRY_TYPE_BADGE_VARIANT[category.entryType as keyof typeof ENTRY_TYPE_BADGE_VARIANT] : undefined
 
   return (
     <TableRow className={isHidden ? "opacity-60" : undefined}>
@@ -72,10 +74,8 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
         </div>
       </TableCell>
       <TableCell>
-        {category.entryType === "fixed" ? (
-          <Badge variant="secondary">{t("form.fixed")}</Badge>
-        ) : category.entryType === "variable" ? (
-          <Badge variant="outline">{t("form.variable")}</Badge>
+        {badgeVariant ? (
+          <Badge variant={badgeVariant}>{t(`form.${category.entryType}` as "form.fixed" | "form.variable")}</Badge>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
@@ -97,7 +97,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
               onClick={() => onEdit?.(category)}
               disabled={loading}
               title={t("editCategory")}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -109,7 +109,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                   size="icon"
                   disabled={loading}
                   title={t("deleteCategory")}
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground hover:text-destructive"
                 >
                   <Trash className="h-4 w-4" />
                 </Button>

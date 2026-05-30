@@ -72,8 +72,18 @@ export async function getAllCategories(): Promise<CategoryWithCount[]> {
 }
 
 export async function getActiveCategories(): Promise<CategoryWithCount[]> {
-  const all = await getAllCategories()
-  return all.filter((c) => !c.isHidden)
+  const { organizationId } = await getAuthContext()
+
+  const categories = await prisma.category.findMany({
+    where: {
+      OR: [{ isSystem: true }, { organizationId }],
+      NOT: { preferences: { some: { organizationId, isHidden: true } } },
+    },
+    include: { _count: { select: { entries: true } } },
+    orderBy: [{ isSystem: "desc" }, { name: "asc" }],
+  })
+
+  return categories.map((c) => ({ ...c, isHidden: false }))
 }
 
 export async function getCategoryById(id: string) {

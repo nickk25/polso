@@ -11,9 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@polso/ui/select"
+import { NONE_VALUE } from "../lib/constants"
 import type { CategoryWithCount } from "../queries/get-categories"
-
-const NONE_VALUE = "__none__"
 
 interface CategorySelectProps {
   value?: string | null
@@ -35,6 +34,7 @@ export function CategorySelect({
   const t = useTranslations("categories")
   const systemCategories = categories.filter((c) => c.isSystem)
   const customCategories = categories.filter((c) => !c.isSystem)
+  const selected = categories.find((c) => c.id === value)
 
   return (
     <Select
@@ -44,15 +44,10 @@ export function CategorySelect({
     >
       <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder}>
-          {value && (
+          {selected && (
             <span className="flex items-center gap-2">
-              <span
-                className="h-2.5 w-2.5 rounded-full shrink-0"
-                style={{
-                  backgroundColor: categories.find((c) => c.id === value)?.color,
-                }}
-              />
-              {categories.find((c) => c.id === value)?.name}
+              <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: selected.color }} />
+              {selected.name}
             </span>
           )}
         </SelectValue>
@@ -70,10 +65,7 @@ export function CategorySelect({
               {customCategories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   <span className="flex items-center gap-2">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: category.color }}
-                    />
+                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
                     {category.name}
                   </span>
                 </SelectItem>
@@ -90,10 +82,7 @@ export function CategorySelect({
               {systemCategories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   <span className="flex items-center gap-2">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: category.color }}
-                    />
+                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
                     {category.name}
                   </span>
                 </SelectItem>
