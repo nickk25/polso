@@ -53,6 +53,16 @@
     "selectTargetError": "Please select a target vendor",
     "noVendorsToMerge": "No vendors to merge"
   },
+  "toasts": {
+    "created": "Vendor created",
+    "createdDescription": "{name} has been created.",
+    "updated": "Vendor updated",
+    "updatedDescription": "{name} has been updated.",
+    "deleted": "Vendor deleted",
+    "deletedDescription": "{name} has been deleted.",
+    "merged": "Vendors merged",
+    "mergedDescription": "{deletedCount, plural, one {# vendor} other {# vendors}} merged into {targetName}. {entriesReassigned, plural, one {# transaction} other {# transactions}} reassigned."
+  },
   "backfill": {
     "noNewVendors": "No new vendors to create",
     "allAssigned": "All transactions already have vendors assigned.",

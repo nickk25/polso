@@ -77,25 +77,35 @@ export async function getCounterparties(): Promise<CounterpartyWithStats[]> {
 export async function getCounterpartyById(id: string): Promise<CounterpartyWithStats | null> {
   const { organizationId } = await getAuthContext()
 
-  const cp = await prisma.counterparty.findFirst({
-    where: { id, organizationId },
-    include: {
-      defaultCategory: {
-        select: { id: true, name: true, color: true },
+  const [cp, stats] = await Promise.all([
+    prisma.counterparty.findFirst({
+      where: { id, organizationId },
+      include: {
+        defaultCategory: {
+          select: { id: true, name: true, color: true },
+        },
+        _count: {
+          select: { entries: true },
+        },
       },
-      _count: {
-        select: { entries: true },
-      },
-    },
-  })
+    }),
+    prisma.entry.aggregate({
+      where: { counterpartyId: id, direction: "expense" },
+      _sum: { amount: true },
+      _max: { date: true },
+    }),
+  ])
 
   if (!cp) return null
 
-  const stats = await prisma.entry.aggregate({
-    where: { counterpartyId: cp.id, direction: "expense" },
-    _sum: { amount: true },
-    _max: { date: true },
-  })
-
   return toCounterpartyWithStats(cp, stats._sum.amount || 0, stats._max.date || null)
+}
+
+export async function getOrgCurrency(): Promise<string> {
+  const { organizationId } = await getAuthContext()
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { currency: true },
+  })
+  return org?.currency ?? "EUR"
 }

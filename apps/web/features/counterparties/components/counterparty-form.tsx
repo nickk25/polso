@@ -92,59 +92,62 @@ export function CounterpartyForm({ counterparty, currency, categories, open, onO
     e.preventDefault()
     setLoading(true)
     setError(null)
+    try {
+      const entryTypeValue = defaultEntryType === NONE_VALUE ? null : defaultEntryType
+      const result = isEditing
+        ? await updateCounterpartyAction(counterparty!.id, {
+            name,
+            website: website || null,
+            taxId: taxId || null,
+            defaultCategoryId,
+            defaultEntryType: entryTypeValue as "fixed" | "variable" | null,
+          })
+        : await createCounterpartyAction({
+            name,
+            website: website || null,
+            taxId: taxId || null,
+            defaultCategoryId,
+            defaultEntryType: entryTypeValue as "fixed" | "variable" | null,
+          })
 
-    const entryTypeValue = defaultEntryType === NONE_VALUE ? null : defaultEntryType
+      if (!result.success) {
+        setError(result.error)
+        return
+      }
 
-    const result = isEditing
-      ? await updateCounterpartyAction(counterparty!.id, {
-          name,
-          website: website || null,
-          taxId: taxId || null,
-          defaultCategoryId,
-          defaultEntryType: entryTypeValue as "fixed" | "variable" | null,
-        })
-      : await createCounterpartyAction({
-          name,
-          website: website || null,
-          taxId: taxId || null,
-          defaultCategoryId,
-          defaultEntryType: entryTypeValue as "fixed" | "variable" | null,
-        })
-
-    if (!result.success) {
-      setError(result.error)
+      toast.success(isEditing ? t("toasts.updated") : t("toasts.created"), {
+        description: isEditing
+          ? t("toasts.updatedDescription", { name })
+          : t("toasts.createdDescription", { name }),
+      })
+      onOpenChange(false)
+      router.refresh()
+    } finally {
       setLoading(false)
-      return
     }
-
-    toast.success(isEditing ? "Vendor updated" : "Vendor created", {
-      description: `${name} has been ${isEditing ? "updated" : "created"}.`,
-    })
-
-    setLoading(false)
-    onOpenChange(false)
-    router.refresh()
   }
 
   const handleDelete = async () => {
     if (!counterparty) return
     setLoading(true)
+    try {
+      const result = await deleteCounterpartyAction(counterparty.id)
 
-    const result = await deleteCounterpartyAction(counterparty.id)
+      if (!result.success) {
+        setError(result.error)
+        setDeleteDialogOpen(false)
+        return
+      }
 
-    if (!result.success) {
-      setError(result.error)
-      setLoading(false)
+      toast.success(t("toasts.deleted"), {
+        description: t("toasts.deletedDescription", { name: counterparty.name }),
+      })
       setDeleteDialogOpen(false)
-      return
+      onOpenChange(false)
+      router.refresh()
+    } finally {
+      setLoading(false)
     }
-
-    toast.success("Vendor deleted", { description: `${counterparty.name} has been deleted.` })
-
-    setLoading(false)
-    setDeleteDialogOpen(false)
-    onOpenChange(false)
-    router.refresh()
   }
 
   return (

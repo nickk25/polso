@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@polso/ui/button"
@@ -54,13 +54,17 @@ export function CounterpartyMergeDialog({
   const totalExpenses = selected.reduce((sum, cp) => sum + cp._count.entries, 0)
   const totalSpent = selected.reduce((sum, cp) => sum + cp.totalSpent, 0)
 
+  const defaultTargetId = useMemo(() => {
+    const sorted = [...selected].sort((a, b) => b._count.entries - a._count.entries)
+    return sorted[0]?.id ?? ""
+  }, [selected])
+
   useEffect(() => {
-    if (open && selected.length > 0) {
-      const sorted = [...selected].sort((a, b) => b._count.entries - a._count.entries)
-      setTargetId(sorted[0]?.id || "")
+    if (open) {
+      setTargetId(defaultTargetId)
       setError(null)
     }
-  }, [open, selectedIds]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, defaultTargetId])
 
   const handleMerge = async () => {
     if (!targetId) {
@@ -76,29 +80,32 @@ export function CounterpartyMergeDialog({
 
     setLoading(true)
     setError(null)
+    try {
+      const result = await mergeCounterpartiesAction({ sourceIds, targetId })
 
-    const result = await mergeCounterpartiesAction({ sourceIds, targetId })
+      if (!result.success) {
+        setError(result.error)
+        return
+      }
 
-    if (!result.success) {
-      setError(result.error)
+      const mergedTarget = counterparties.find((cp) => cp.id === targetId)
+      toast.success(t("toasts.merged"), {
+        description: t("toasts.mergedDescription", {
+          deletedCount: result.data.deletedCount,
+          targetName: mergedTarget?.name ?? "",
+          entriesReassigned: result.data.entriesReassigned,
+        }),
+      })
+      onOpenChange(false)
+      onMergeComplete()
+      router.refresh()
+    } finally {
       setLoading(false)
-      return
     }
-
-    const target = counterparties.find((cp) => cp.id === targetId)
-    toast.success("Vendors merged", {
-      description: `${result.data.deletedCount} vendor${result.data.deletedCount > 1 ? "s" : ""} merged into ${target?.name}. ${result.data.entriesReassigned} transaction${result.data.entriesReassigned > 1 ? "s" : ""} reassigned.`,
-    })
-
-    setLoading(false)
-    onOpenChange(false)
-    onMergeComplete()
-    router.refresh()
   }
 
   const target = counterparties.find((cp) => cp.id === targetId)
   const sources = selected.filter((cp) => cp.id !== targetId)
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>

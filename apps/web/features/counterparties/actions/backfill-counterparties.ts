@@ -9,7 +9,6 @@ import { normalizeCounterpartyName } from "@polso/banking"
 interface BackfillResult {
   counterpartiesCreated: number
   entriesLinked: number
-  alreadyLinked: number
 }
 
 export async function backfillCounterpartiesAction(): Promise<ActionResponse<BackfillResult>> {
@@ -38,7 +37,7 @@ export async function backfillCounterpartiesAction(): Promise<ActionResponse<Bac
     })
 
     if (entriesWithoutCounterparty.length === 0) {
-      return successResponse({ counterpartiesCreated: 0, entriesLinked: 0, alreadyLinked: 0 })
+      return successResponse({ counterpartiesCreated: 0, entriesLinked: 0 })
     }
 
     const existingCounterparties = await prisma.counterparty.findMany({
@@ -71,13 +70,10 @@ export async function backfillCounterpartiesAction(): Promise<ActionResponse<Bac
 
     let counterpartiesCreated = 0
     let entriesLinked = 0
-    let alreadyLinked = 0
 
     const toCreate: Array<{ normalizedName: string; displayName: string; entryIds: string[] }> = []
     for (const [normalizedName, { displayName, entryIds }] of groupedByCounterparty) {
-      if (cpLookup.has(normalizedName)) {
-        alreadyLinked += entryIds.length
-      } else {
+      if (!cpLookup.has(normalizedName)) {
         toCreate.push({ normalizedName, displayName, entryIds })
       }
     }
@@ -116,7 +112,7 @@ export async function backfillCounterpartiesAction(): Promise<ActionResponse<Bac
     revalidatePath("/counterparties")
     revalidatePath("/transactions")
 
-    return successResponse({ counterpartiesCreated, entriesLinked, alreadyLinked })
+    return successResponse({ counterpartiesCreated, entriesLinked })
   } catch (error) {
     console.error("Error backfilling counterparties:", error)
     return errorResponse(

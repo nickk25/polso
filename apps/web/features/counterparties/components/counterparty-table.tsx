@@ -56,8 +56,7 @@ export function CounterpartyTable({
     const q = search.toLowerCase()
     return (
       cp.name.toLowerCase().includes(q) ||
-      cp.normalizedName.toLowerCase().includes(q) ||
-      cp.defaultCategory?.name.toLowerCase().includes(q)
+      (cp.defaultCategory?.name.toLowerCase().includes(q) ?? false)
     )
   })
 

@@ -53,6 +53,16 @@
     "selectTargetError": "Por favor selecciona un proveedor objetivo",
     "noVendorsToMerge": "No hay proveedores para fusionar"
   },
+  "toasts": {
+    "created": "Proveedor creado",
+    "createdDescription": "{name} ha sido creado.",
+    "updated": "Proveedor actualizado",
+    "updatedDescription": "{name} ha sido actualizado.",
+    "deleted": "Proveedor eliminado",
+    "deletedDescription": "{name} ha sido eliminado.",
+    "merged": "Proveedores fusionados",
+    "mergedDescription": "{deletedCount, plural, one {# proveedor} other {# proveedores}} fusionados en {targetName}. {entriesReassigned, plural, one {# transaccion} other {# transacciones}} reasignadas."
+  },
   "backfill": {
     "noNewVendors": "No hay nuevos proveedores para crear",
     "allAssigned": "Todas las transacciones ya tienen proveedores asignados.",
