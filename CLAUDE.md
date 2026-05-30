@@ -63,6 +63,7 @@ pnpm --filter @polso/db db:seed       # Seed database
 
 - Install: `pnpm dlx shadcn@latest add <component-name>` (installs to `apps/web`, then move to `packages/ui/`)
 - Style: `radix-lyra`, Phosphor icons, Tailwind CSS v4
+- **Never override component shape or spacing.** Do not add `rounded-*`, `px-*`, `h-*`, `w-*`, or similar overrides to `<Button>`, `<Badge>`, `<Input>`, or other UI primitives. The design system defines these — overriding them breaks visual consistency. Pass only `variant` and `size` props.
 
 ## Workflow Rules
 
