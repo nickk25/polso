@@ -195,7 +195,7 @@ export async function detectPatternsAction(): Promise<ActionResponse<DetectionRe
     console.error("Error detecting patterns:", error)
     return errorResponse(
       error instanceof Error ? error.message : "Failed to detect patterns",
-      "DETECTION_ERROR"
+      "ERROR"
     )
   }
 }

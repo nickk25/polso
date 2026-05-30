@@ -34,7 +34,7 @@ export interface RecurringPatternWithRelations {
   }
 }
 
-export async function getRecurringPatterns(options?: {
+async function getRecurringPatterns(options?: {
   confirmed?: boolean
   active?: boolean
 }): Promise<RecurringPatternWithRelations[]> {
@@ -54,23 +54,13 @@ export async function getRecurringPatterns(options?: {
     where,
     include: {
       counterparty: {
-        select: {
-          id: true,
-          name: true,
-          logoUrl: true,
-        },
+        select: { id: true, name: true, logoUrl: true },
       },
       category: {
-        select: {
-          id: true,
-          name: true,
-          color: true,
-        },
+        select: { id: true, name: true, color: true },
       },
       _count: {
-        select: {
-          entries: true,
-        },
+        select: { entries: true },
       },
     },
     orderBy: [
@@ -78,25 +68,6 @@ export async function getRecurringPatterns(options?: {
       { confidenceScore: "desc" },
       { lastOccurrence: "desc" },
     ],
-  })
-}
-
-export async function getRecurringPattern(id: string) {
-  const { organizationId } = await getAuthContext()
-
-  return prisma.recurringPattern.findFirst({
-    where: {
-      id,
-      organizationId,
-    },
-    include: {
-      counterparty: true,
-      category: true,
-      entries: {
-        orderBy: { date: "desc" },
-        take: 10,
-      },
-    },
   })
 }
 
@@ -112,36 +83,25 @@ export async function getPausedPatterns(): Promise<RecurringPatternWithRelations
   return getRecurringPatterns({ confirmed: true, active: false })
 }
 
-export async function getMonthlyRecurringTotal(): Promise<number> {
+export async function getOrganizationCurrency(): Promise<string> {
   const { organizationId } = await getAuthContext()
-
-  const patterns = await prisma.recurringPattern.findMany({
-    where: {
-      organizationId,
-      isConfirmed: true,
-      isActive: true,
-    },
-    select: {
-      expectedAmount: true,
-      frequency: true,
-    },
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { currency: true },
   })
+  return org?.currency ?? "EUR"
+}
 
+export function computeMonthlyTotal(patterns: RecurringPatternWithRelations[]): number {
   return patterns.reduce((total, pattern) => {
-    const amount = pattern.expectedAmount || 0
+    const amount = pattern.expectedAmount ?? 0
     switch (pattern.frequency) {
-      case "weekly":
-        return total + amount * 4.33
-      case "biweekly":
-        return total + amount * 2.17
-      case "monthly":
-        return total + amount
-      case "quarterly":
-        return total + amount / 3
-      case "yearly":
-        return total + amount / 12
-      default:
-        return total + amount
+      case "weekly": return total + amount * 4.33
+      case "biweekly": return total + amount * 2.17
+      case "monthly": return total + amount
+      case "quarterly": return total + amount / 3
+      case "yearly": return total + amount / 12
+      default: return total + amount
     }
   }, 0)
 }

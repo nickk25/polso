@@ -35,73 +35,44 @@ import {
 } from "../actions/manage-pattern"
 import type { RecurringPatternWithRelations } from "../queries/get-recurring-patterns"
 import { useTranslations } from "next-intl"
+import { formatCurrency } from "@/lib/format-currency"
 
 type PatternState = "suggestion" | "active" | "paused"
+type FrequencyKey = "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly"
 
 interface RecurringPatternCardProps {
   pattern: RecurringPatternWithRelations
-  showActions?: boolean
   state?: PatternState
+  currency?: string
 }
 
 export function RecurringPatternCard({
   pattern,
-  showActions = true,
   state = "active",
+  currency = "EUR",
 }: RecurringPatternCardProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const t = useTranslations("recurring")
   const tc = useTranslations("common")
 
-  const handleConfirm = async () => {
+  const withLoading = (action: () => Promise<unknown>) => async () => {
     setLoading(true)
-    await confirmPatternAction(pattern.id)
+    await action()
     setLoading(false)
     router.refresh()
   }
 
-  const handleDismiss = async () => {
-    setLoading(true)
-    await dismissPatternAction(pattern.id)
-    setLoading(false)
-    router.refresh()
-  }
-
-  const handlePause = async () => {
-    setLoading(true)
-    await pausePatternAction(pattern.id)
-    setLoading(false)
-    router.refresh()
-  }
-
-  const handleResume = async () => {
-    setLoading(true)
-    await resumePatternAction(pattern.id)
-    setLoading(false)
-    router.refresh()
-  }
-
-  const handleDelete = async () => {
-    setLoading(true)
-    await deletePatternAction(pattern.id)
-    setLoading(false)
-    router.refresh()
-  }
-
-  const formatCurrency = (amount: number | null) => {
-    if (amount === null) return "-"
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
+  const handleConfirm = withLoading(() => confirmPatternAction(pattern.id))
+  const handleDismiss = withLoading(() => dismissPatternAction(pattern.id))
+  const handlePause = withLoading(() => pausePatternAction(pattern.id))
+  const handleResume = withLoading(() => resumePatternAction(pattern.id))
+  const handleDelete = withLoading(() => deletePatternAction(pattern.id))
 
   const getNextExpectedDate = () => {
-    if (!pattern.lastOccurrence || !pattern.expectedDayOfMonth) return null
+    if (!pattern.lastOccurrence) return null
 
-    const last = new Date(pattern.lastOccurrence)
-    const next = new Date(last)
+    const next = new Date(pattern.lastOccurrence)
 
     switch (pattern.frequency) {
       case "weekly":
@@ -112,7 +83,7 @@ export function RecurringPatternCard({
         break
       case "monthly":
         next.setMonth(next.getMonth() + 1)
-        next.setDate(pattern.expectedDayOfMonth)
+        if (pattern.expectedDayOfMonth) next.setDate(pattern.expectedDayOfMonth)
         break
       case "quarterly":
         next.setMonth(next.getMonth() + 3)
@@ -174,7 +145,7 @@ export function RecurringPatternCard({
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Repeat className="h-3.5 w-3.5" />
-                  {t(`frequency.${pattern.frequency}` as any) || pattern.frequency}
+                  {t(`frequency.${pattern.frequency as FrequencyKey}`)}
                 </span>
 
                 {pattern.expectedDayOfMonth && (
@@ -186,7 +157,7 @@ export function RecurringPatternCard({
 
                 <span className="flex items-center gap-1">
                   <CurrencyDollar className="h-3.5 w-3.5" />
-                  {formatCurrency(pattern.expectedAmount)}
+                  {formatCurrency(pattern.expectedAmount ?? 0, currency)}
                 </span>
 
                 {pattern.category && (
@@ -225,178 +196,173 @@ export function RecurringPatternCard({
             </div>
           </div>
 
-          {showActions && (
-            <div className="flex items-center gap-1 shrink-0">
-              {state === "suggestion" && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleConfirm}
-                    disabled={loading}
-                    title={t("confirmPattern")}
-                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleDismiss}
-                    disabled={loading}
-                    title={t("dismissSuggestion")}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
+          <div className="flex items-center gap-1 shrink-0">
+            {state === "suggestion" && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleConfirm}
+                  disabled={loading}
+                  title={t("confirmPattern")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleDismiss}
+                  disabled={loading}
+                  title={t("dismissSuggestion")}
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
+            )}
 
-              {state === "active" && (
-                <>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={loading}
-                        title={t("pausePattern")}
-                        className="text-muted-foreground hover:text-foreground"
+            {state === "active" && (
+              <>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={loading}
+                      title={t("pausePattern")}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Pause className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t("pauseDialog.title")}</AlertDialogTitle>
+                      <AlertDialogDescription asChild>
+                        <div className="text-sm text-muted-foreground">
+                          {t("pauseDialog.description", { name: pattern.name })}
+                          <ul className="list-disc list-inside mt-2 space-y-1">
+                            <li>{t("pauseDialog.removeFromTotal")}</li>
+                            <li>{t("pauseDialog.stopExpecting")}</li>
+                            <li>{t("pauseDialog.keepHistorical")}</li>
+                          </ul>
+                          <p className="mt-2">
+                            {t("pauseDialog.manualResume")}
+                          </p>
+                        </div>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
+                      <AlertDialogAction onClick={handlePause}>
+                        {tc("actions.pause")}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={loading}
+                      title={t("deletePattern")}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t("deleteDialog.description", { name: pattern.name })}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        <Pause className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t("pauseDialog.title")}</AlertDialogTitle>
-                        <AlertDialogDescription asChild>
-                          <div className="text-sm text-muted-foreground">
-                            {t("pauseDialog.description", { name: pattern.name })}
-                            <ul className="list-disc list-inside mt-2 space-y-1">
-                              <li>{t("pauseDialog.removeFromTotal")}</li>
-                              <li>{t("pauseDialog.stopExpecting")}</li>
-                              <li>{t("pauseDialog.keepHistorical")}</li>
-                            </ul>
-                            <p className="mt-2">
-                              {t("pauseDialog.manualResume")}
-                            </p>
-                          </div>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
-                        <AlertDialogAction onClick={handlePause}>
-                          {tc("actions.pause")}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={loading}
-                        title={t("deletePattern")}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t("deleteDialog.description", { name: pattern.name })}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDelete}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {tc("actions.delete")}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
+                        {tc("actions.delete")}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
 
-              {state === "paused" && (
-                <>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={loading}
-                        title={t("resumePattern")}
-                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+            {state === "paused" && (
+              <>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={loading}
+                      title={t("resumePattern")}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Play className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t("resumeDialog.title")}</AlertDialogTitle>
+                      <AlertDialogDescription asChild>
+                        <div className="text-sm text-muted-foreground">
+                          {t("resumeDialog.description", { name: pattern.name })}
+                          <ul className="list-disc list-inside mt-2 space-y-1">
+                            <li>{t("resumeDialog.addBackToTotal")}</li>
+                            <li>{t("resumeDialog.startExpecting")}</li>
+                            <li>{t("resumeDialog.includeInAnalytics")}</li>
+                          </ul>
+                        </div>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleResume}>
+                        {tc("actions.resume")}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={loading}
+                      title={t("deletePattern")}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t("deleteDialog.description", { name: pattern.name })}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        <Play className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t("resumeDialog.title")}</AlertDialogTitle>
-                        <AlertDialogDescription asChild>
-                          <div className="text-sm text-muted-foreground">
-                            {t("resumeDialog.description", { name: pattern.name })}
-                            <ul className="list-disc list-inside mt-2 space-y-1">
-                              <li>{t("resumeDialog.addBackToTotal")}</li>
-                              <li>{t("resumeDialog.startExpecting")}</li>
-                              <li>{t("resumeDialog.includeInAnalytics")}</li>
-                            </ul>
-                          </div>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleResume}
-                          className="bg-green-600 text-white hover:bg-green-700"
-                        >
-                          {tc("actions.resume")}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={loading}
-                        title={t("deletePattern")}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t("deleteDialog.description", { name: pattern.name })}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDelete}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {tc("actions.delete")}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
-            </div>
-          )}
+                        {tc("actions.delete")}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

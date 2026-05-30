@@ -6,25 +6,22 @@ import {
   getConfirmedPatterns,
   getSuggestedPatterns,
   getPausedPatterns,
-  getMonthlyRecurringTotal,
+  getOrganizationCurrency,
+  computeMonthlyTotal,
 } from "@/features/intelligence/queries/get-recurring-patterns"
 import { getTranslations } from "next-intl/server"
 import { formatCurrency } from "@/lib/format-currency"
-import { getAuthContext } from "@polso/auth/get-session"
-import { prisma } from "@/lib/db"
 
 export default async function RecurringPage() {
   const t = await getTranslations("recurring")
-  const { organizationId } = await getAuthContext()
-  const [confirmedPatterns, suggestedPatterns, pausedPatterns, monthlyTotal, org] = await Promise.all([
+  const [confirmedPatterns, suggestedPatterns, pausedPatterns, currency] = await Promise.all([
     getConfirmedPatterns(),
     getSuggestedPatterns(),
     getPausedPatterns(),
-    getMonthlyRecurringTotal(),
-    prisma.organization.findUnique({ where: { id: organizationId }, select: { currency: true } }),
+    getOrganizationCurrency(),
   ])
 
-  const currency = org?.currency ?? "EUR"
+  const monthlyTotal = computeMonthlyTotal(confirmedPatterns)
   const hasPatterns = confirmedPatterns.length > 0 || suggestedPatterns.length > 0 || pausedPatterns.length > 0
 
   return (
@@ -33,7 +30,6 @@ export default async function RecurringPage() {
         <DetectPatternsButton />
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>
           <CardContent className="p-4">
@@ -92,7 +88,6 @@ export default async function RecurringPage() {
         </Card>
       </div>
 
-      {/* Suggestions Section */}
       {suggestedPatterns.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -111,13 +106,13 @@ export default async function RecurringPage() {
                 key={pattern.id}
                 pattern={pattern}
                 state="suggestion"
+                currency={currency}
               />
             ))}
           </div>
         </div>
       )}
 
-      {/* Active Patterns Section */}
       {confirmedPatterns.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -129,13 +124,12 @@ export default async function RecurringPage() {
           </div>
           <div className="grid gap-3">
             {confirmedPatterns.map((pattern) => (
-              <RecurringPatternCard key={pattern.id} pattern={pattern} state="active" />
+              <RecurringPatternCard key={pattern.id} pattern={pattern} state="active" currency={currency} />
             ))}
           </div>
         </div>
       )}
 
-      {/* Paused Patterns Section */}
       {pausedPatterns.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -150,13 +144,12 @@ export default async function RecurringPage() {
           </p>
           <div className="grid gap-3">
             {pausedPatterns.map((pattern) => (
-              <RecurringPatternCard key={pattern.id} pattern={pattern} state="paused" />
+              <RecurringPatternCard key={pattern.id} pattern={pattern} state="paused" currency={currency} />
             ))}
           </div>
         </div>
       )}
 
-      {/* Empty State */}
       {!hasPatterns && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
