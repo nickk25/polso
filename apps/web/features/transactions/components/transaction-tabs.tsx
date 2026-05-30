@@ -9,11 +9,11 @@ interface TransactionTabsProps {
 
 export function TransactionTabs({ tab }: TransactionTabsProps) {
   return (
-    <div className="flex items-center gap-1 border-b pb-0 -mt-2">
+    <div className="flex items-center gap-1 -mt-2">
       <Link
         href="/transactions"
         className={cn(
-          "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+          "px-3 py-2 text-sm font-medium border-b-2 transition-colors",
           tab === "expenses"
             ? "border-foreground text-foreground"
             : "border-transparent text-muted-foreground hover:text-foreground",
@@ -24,7 +24,7 @@ export function TransactionTabs({ tab }: TransactionTabsProps) {
       <Link
         href="/transactions?tab=income"
         className={cn(
-          "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+          "px-3 py-2 text-sm font-medium border-b-2 transition-colors",
           tab === "income"
             ? "border-foreground text-foreground"
             : "border-transparent text-muted-foreground hover:text-foreground",

@@ -71,12 +71,12 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-1 border-b">
+      <div className="flex items-center gap-1">
         {FILTER_KEYS.map((key) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
+            className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               statusFilter === key
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
