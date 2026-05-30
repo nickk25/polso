@@ -18,7 +18,7 @@
     "transactionFallback": "Transaccion"
   },
   "filters": {
-    "all": "Todos los documentos",
+    "all": "Todos",
     "done": "Emparejados",
     "suggested_match": "Sugeridos",
     "no_match": "Sin coincidencia",

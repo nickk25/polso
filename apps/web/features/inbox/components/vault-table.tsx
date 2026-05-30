@@ -76,7 +76,7 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-1 border-b overflow-x-auto">
+      <div className="flex items-center gap-1 border-b">
         {FILTER_KEYS.map((key) => (
           <button
             key={key}
