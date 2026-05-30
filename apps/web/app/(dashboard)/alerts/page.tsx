@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
-import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
 import { Bell, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr"
 import { getAlerts, getAlertStats } from "@/features/alerts/queries/get-alerts"
@@ -37,11 +36,7 @@ export default async function AlertsPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button variant="outline" size="sm" asChild>
           <Link href="/settings/notifications">
             <SlidersHorizontal className="h-4 w-4 mr-2" />
@@ -50,42 +45,20 @@ export default async function AlertsPage({ searchParams }: PageProps) {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("stats.total")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("stats.unread")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-500">
-              {stats.unread}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("stats.critical")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {stats.critical}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats */}
+      <div className="grid gap-4 grid-cols-3">
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("stats.total")}</p>
+          <p className="text-xl font-bold">{stats.total}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("stats.unread")}</p>
+          <p className="text-xl font-bold text-amber-500">{stats.unread}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("stats.critical")}</p>
+          <p className="text-xl font-bold text-destructive">{stats.critical}</p>
+        </div>
       </div>
 
       {/* Filters */}
@@ -95,30 +68,23 @@ export default async function AlertsPage({ searchParams }: PageProps) {
 
       {/* Alerts Table */}
       {alerts.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("title")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AlertTable alerts={alerts} />
-            <AlertPagination
-              currentPage={page}
-              totalPages={pages}
-              total={total}
-              pageSize={PAGE_SIZE}
-            />
-          </CardContent>
-        </Card>
+        <>
+          <AlertTable alerts={alerts} />
+          <AlertPagination
+            currentPage={page}
+            totalPages={pages}
+            total={total}
+            pageSize={PAGE_SIZE}
+          />
+        </>
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Bell className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">{t("empty.title")}</h3>
-            <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-              {t("empty.description")}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Bell className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">{t("empty.title")}</h3>
+          <p className="text-sm text-muted-foreground max-w-sm mt-1">
+            {t("empty.description")}
+          </p>
+        </div>
       )}
     </div>
   )

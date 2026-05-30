@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
+import { getAuthContext } from "@polso/auth/get-session";
 
 async function getOrganization(userId: string, userEmail: string | null) {
   // Check if user has an organization
@@ -75,6 +76,10 @@ export default async function DashboardLayout({
 
   // Get or create user's organization
   const organization = await getOrganization(user.id, user.email);
+  const { organizationId } = await getAuthContext();
+  const unreadAlertCount = await prisma.alert.count({
+    where: { organizationId, isDismissed: false, isRead: false },
+  });
 
   return (
     <div className="relative">
@@ -86,6 +91,7 @@ export default async function DashboardLayout({
             organizationName={organization.name}
             userName={user.name ?? user.email?.split("@")[0] ?? ""}
             userEmail={user.email ?? null}
+            unreadAlertCount={unreadAlertCount}
           />
         </header>
         <main className="flex-1 overflow-auto">{children}</main>

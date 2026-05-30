@@ -15,7 +15,6 @@ import {
   Tag,
   Export,
   Gear,
-  Bell,
   CaretDown,
 } from "@phosphor-icons/react";
 
@@ -52,7 +51,6 @@ export const NAV_ITEMS: NavItem[] = [
   { path: "/reports", labelKey: "reports", icon: ChartLine },
   { path: "/vault", labelKey: "vault", icon: Vault },
   { path: "/counterparties", labelKey: "vendors", icon: Buildings },
-  { path: "/alerts", labelKey: "alerts", icon: Bell },
   { path: "/export", labelKey: "export", icon: Export },
   { path: "/settings", labelKey: "settings", icon: Gear },
 ];

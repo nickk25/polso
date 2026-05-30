@@ -1,7 +1,9 @@
 "use client"
 
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { Bell } from "@phosphor-icons/react"
 import { MobileNav } from "./mobile-nav"
 import { UserMenu } from "./user-menu"
 
@@ -36,9 +38,10 @@ interface DashboardHeaderProps {
   organizationName: string
   userName: string
   userEmail: string | null
+  unreadAlertCount: number
 }
 
-export function DashboardHeader({ organizationName, userName, userEmail }: DashboardHeaderProps) {
+export function DashboardHeader({ organizationName, userName, userEmail, unreadAlertCount }: DashboardHeaderProps) {
   const pathname = usePathname()
   const t = useTranslations("common")
   const key = getTitleKey(pathname)
@@ -55,7 +58,15 @@ export function DashboardHeader({ organizationName, userName, userEmail }: Dashb
           </span>
         )}
       </div>
-      <div className="pr-4 md:pr-6">
+      <div className="pr-4 md:pr-6 flex items-center gap-2">
+        <Link href="/alerts" className="relative p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+          <Bell className="h-4 w-4" />
+          {unreadAlertCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+              {unreadAlertCount > 9 ? "9+" : unreadAlertCount}
+            </span>
+          )}
+        </Link>
         <UserMenu userName={userName} userEmail={userEmail} />
       </div>
     </div>
