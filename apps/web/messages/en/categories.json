@@ -40,5 +40,11 @@
     "noCategory": "No category",
     "customCategories": "Custom Categories",
     "systemCategories": "System Categories"
+  },
+  "table": {
+    "name": "Name",
+    "type": "Type",
+    "entries": "Entries",
+    "visible": "Visible"
   }
 }

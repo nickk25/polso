@@ -40,5 +40,11 @@
     "noCategory": "Sin categoria",
     "customCategories": "Categorias Personalizadas",
     "systemCategories": "Categorias del Sistema"
+  },
+  "table": {
+    "name": "Nombre",
+    "type": "Tipo",
+    "entries": "Entradas",
+    "visible": "Visible"
   }
 }
