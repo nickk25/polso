@@ -1,15 +1,7 @@
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 
-function toVendorWithStats(
-  cp: Omit<VendorWithStats, "totalSpent" | "lastEntryDate">,
-  totalSpent: number,
-  lastEntryDate: Date | null
-): VendorWithStats {
-  return { ...cp, totalSpent, lastEntryDate }
-}
-
-export interface VendorWithStats {
+export interface CounterpartyWithStats {
   id: string
   name: string
   normalizedName: string
@@ -33,7 +25,15 @@ export interface VendorWithStats {
   lastEntryDate: Date | null
 }
 
-export async function getVendors(): Promise<VendorWithStats[]> {
+function toCounterpartyWithStats(
+  cp: Omit<CounterpartyWithStats, "totalSpent" | "lastEntryDate">,
+  totalSpent: number,
+  lastEntryDate: Date | null
+): CounterpartyWithStats {
+  return { ...cp, totalSpent, lastEntryDate }
+}
+
+export async function getCounterparties(): Promise<CounterpartyWithStats[]> {
   const { organizationId } = await getAuthContext()
 
   const counterparties = await prisma.counterparty.findMany({
@@ -70,11 +70,11 @@ export async function getVendors(): Promise<VendorWithStats[]> {
 
   return counterparties.map((cp) => {
     const stats = statsMap.get(cp.id)
-    return toVendorWithStats(cp, stats?.totalSpent || 0, stats?.lastEntryDate || null)
+    return toCounterpartyWithStats(cp, stats?.totalSpent || 0, stats?.lastEntryDate || null)
   })
 }
 
-export async function getVendorById(id: string): Promise<VendorWithStats | null> {
+export async function getCounterpartyById(id: string): Promise<CounterpartyWithStats | null> {
   const { organizationId } = await getAuthContext()
 
   const cp = await prisma.counterparty.findFirst({
@@ -97,5 +97,5 @@ export async function getVendorById(id: string): Promise<VendorWithStats | null>
     _max: { date: true },
   })
 
-  return toVendorWithStats(cp, stats._sum.amount || 0, stats._max.date || null)
+  return toCounterpartyWithStats(cp, stats._sum.amount || 0, stats._max.date || null)
 }

@@ -33,13 +33,19 @@ import {
 } from "@polso/ui/alert-dialog"
 import { Spinner, Trash, Sparkle } from "@phosphor-icons/react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format-currency"
 import { CategorySelect } from "@/features/categories/components/category-select"
-import { createVendorAction, updateVendorAction, deleteVendorAction } from "../actions/manage-vendor"
-import type { VendorWithStats } from "../queries/get-vendors"
+import {
+  createCounterpartyAction,
+  updateCounterpartyAction,
+  deleteCounterpartyAction,
+} from "../actions/manage-counterparty"
+import type { CounterpartyWithStats } from "../queries/get-counterparties"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 
-interface VendorFormProps {
-  vendor?: VendorWithStats | null
+interface CounterpartyFormProps {
+  counterparty?: CounterpartyWithStats | null
+  currency: string
   categories: CategoryWithCount[]
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -47,17 +53,8 @@ interface VendorFormProps {
 
 const NONE_VALUE = "__none__"
 
-function formatCurrency(value: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
-export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFormProps) {
-  const t = useTranslations("vendors")
+export function CounterpartyForm({ counterparty, currency, categories, open, onOpenChange }: CounterpartyFormProps) {
+  const t = useTranslations("counterparties")
   const tc = useTranslations("common")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -70,17 +67,16 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
   const [defaultCategoryId, setDefaultCategoryId] = useState<string | null>(null)
   const [defaultEntryType, setDefaultEntryType] = useState<string>(NONE_VALUE)
 
-  const isEditing = !!vendor
+  const isEditing = !!counterparty
 
-  // Reset form when vendor changes or sheet opens
   useEffect(() => {
     if (open) {
-      if (vendor) {
-        setName(vendor.name)
-        setWebsite(vendor.website || "")
-        setTaxId(vendor.taxId || "")
-        setDefaultCategoryId(vendor.defaultCategoryId)
-        setDefaultEntryType(vendor.defaultEntryType || NONE_VALUE)
+      if (counterparty) {
+        setName(counterparty.name)
+        setWebsite(counterparty.website || "")
+        setTaxId(counterparty.taxId || "")
+        setDefaultCategoryId(counterparty.defaultCategoryId)
+        setDefaultEntryType(counterparty.defaultEntryType || NONE_VALUE)
       } else {
         setName("")
         setWebsite("")
@@ -90,7 +86,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
       }
       setError(null)
     }
-  }, [vendor, open])
+  }, [counterparty, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,14 +96,14 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
     const entryTypeValue = defaultEntryType === NONE_VALUE ? null : defaultEntryType
 
     const result = isEditing
-      ? await updateVendorAction(vendor!.id, {
+      ? await updateCounterpartyAction(counterparty!.id, {
           name,
           website: website || null,
           taxId: taxId || null,
           defaultCategoryId,
           defaultEntryType: entryTypeValue as "fixed" | "variable" | null,
         })
-      : await createVendorAction({
+      : await createCounterpartyAction({
           name,
           website: website || null,
           taxId: taxId || null,
@@ -122,9 +118,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
     }
 
     toast.success(isEditing ? "Vendor updated" : "Vendor created", {
-      description: isEditing
-        ? `${name} has been updated.`
-        : `${name} has been created.`,
+      description: `${name} has been ${isEditing ? "updated" : "created"}.`,
     })
 
     setLoading(false)
@@ -133,11 +127,10 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
   }
 
   const handleDelete = async () => {
-    if (!vendor) return
-
+    if (!counterparty) return
     setLoading(true)
 
-    const result = await deleteVendorAction(vendor.id)
+    const result = await deleteCounterpartyAction(counterparty.id)
 
     if (!result.success) {
       setError(result.error)
@@ -146,9 +139,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
       return
     }
 
-    toast.success("Vendor deleted", {
-      description: `${vendor.name} has been deleted.`,
-    })
+    toast.success("Vendor deleted", { description: `${counterparty.name} has been deleted.` })
 
     setLoading(false)
     setDeleteDialogOpen(false)
@@ -165,16 +156,16 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
             <SheetDescription>
               {isEditing ? (
                 <span className="flex items-center gap-2">
-                  {vendor.isAutoDetected && (
+                  {counterparty.isAutoDetected && (
                     <span className="inline-flex items-center gap-1 text-xs text-violet-500">
                       <Sparkle weight="fill" className="h-3 w-3" />
                       {t("form.autoDetected")}
                     </span>
                   )}
-                  {vendor._count.entries > 0 && (
+                  {counterparty._count.entries > 0 && (
                     <span>
-                      {t("form.expenseCount", { count: vendor._count.entries })} •{" "}
-                      {formatCurrency(vendor.totalSpent)}
+                      {t("form.expenseCount", { count: counterparty._count.entries })} •{" "}
+                      {formatCurrency(counterparty.totalSpent, currency)}
                     </span>
                   )}
                 </span>
@@ -216,9 +207,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
                 onChange={(e) => setTaxId(e.target.value)}
                 placeholder={t("form.taxIdPlaceholder")}
               />
-              <p className="text-xs text-muted-foreground">
-                {t("form.taxIdDescription")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("form.taxIdDescription")}</p>
             </div>
 
             <div className="space-y-2">
@@ -230,9 +219,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
                 placeholder={t("form.noDefaultCategory")}
                 className="w-full"
               />
-              <p className="text-xs text-muted-foreground">
-                {t("form.defaultCategoryDescription")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("form.defaultCategoryDescription")}</p>
             </div>
 
             <div className="space-y-2">
@@ -274,19 +261,14 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
                   {tc("actions.delete")}
                 </Button>
               )}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={loading}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
                 {tc("actions.cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
                   <>
                     <Spinner className="h-4 w-4 mr-2 animate-spin" />
-                    {isEditing ? tc("actions.saving") : tc("actions.loading")}
+                    {isEditing ? tc("actions.saving") : tc("actions.creating")}
                   </>
                 ) : isEditing ? (
                   tc("actions.saveChanges")
@@ -304,13 +286,13 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
           <AlertDialogHeader>
             <AlertDialogTitle>{t("form.deleteVendor")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {vendor && vendor._count.entries > 0 ? (
+              {counterparty && counterparty._count.entries > 0 ? (
                 <>
-                  {t("form.deleteHasExpenses", { count: vendor._count.entries })}{" "}
+                  {t("form.deleteHasExpenses", { count: counterparty._count.entries })}{" "}
                   {t("form.deleteReassign")}
                 </>
               ) : (
-                t("form.deleteConfirm", { name: vendor?.name ?? "" })
+                t("form.deleteConfirm", { name: counterparty?.name ?? "" })
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -318,7 +300,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
             <AlertDialogCancel disabled={loading}>{tc("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={loading || (vendor?._count.entries ?? 0) > 0}
+              disabled={loading || (counterparty?._count.entries ?? 0) > 0}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {loading ? (

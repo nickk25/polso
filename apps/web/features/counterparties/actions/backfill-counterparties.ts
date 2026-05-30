@@ -12,7 +12,7 @@ interface BackfillResult {
   alreadyLinked: number
 }
 
-export async function backfillVendorsAction(): Promise<ActionResponse<BackfillResult>> {
+export async function backfillCounterpartiesAction(): Promise<ActionResponse<BackfillResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
@@ -118,9 +118,9 @@ export async function backfillVendorsAction(): Promise<ActionResponse<BackfillRe
 
     return successResponse({ counterpartiesCreated, entriesLinked, alreadyLinked })
   } catch (error) {
-    console.error("Error backfilling vendors:", error)
+    console.error("Error backfilling counterparties:", error)
     return errorResponse(
-      error instanceof Error ? error.message : "Failed to create vendors from transactions",
+      error instanceof Error ? error.message : "Failed to create counterparties from transactions",
       "ERROR"
     )
   }

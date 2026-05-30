@@ -4,44 +4,37 @@ import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@polso/ui/button"
 import { Plus, Storefront } from "@phosphor-icons/react"
-import { VendorTable } from "./vendor-table"
-import { VendorForm } from "./vendor-form"
-import { VendorMergeDialog } from "./vendor-merge-dialog"
-import { BackfillVendorsButton } from "./backfill-vendors-button"
-import type { VendorWithStats } from "../queries/get-vendors"
+import { CounterpartyTable } from "./counterparty-table"
+import { CounterpartyForm } from "./counterparty-form"
+import { CounterpartyMergeDialog } from "./counterparty-merge-dialog"
+import { BackfillCounterpartiesButton } from "./backfill-counterparties-button"
+import type { CounterpartyWithStats } from "../queries/get-counterparties"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 
-interface VendorsPageContentProps {
-  vendors: VendorWithStats[]
+interface CounterpartiesPageContentProps {
+  counterparties: CounterpartyWithStats[]
+  currency: string
   categories: CategoryWithCount[]
 }
 
-export function VendorsPageContent({ vendors, categories }: VendorsPageContentProps) {
-  const t = useTranslations("vendors")
+export function CounterpartiesPageContent({ counterparties, currency, categories }: CounterpartiesPageContentProps) {
+  const t = useTranslations("counterparties")
   const [formOpen, setFormOpen] = useState(false)
   const [mergeOpen, setMergeOpen] = useState(false)
-  const [editingVendor, setEditingVendor] = useState<VendorWithStats | null>(null)
+  const [editing, setEditing] = useState<CounterpartyWithStats | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
-  const handleVendorClick = (vendor: VendorWithStats) => {
-    setEditingVendor(vendor)
+  const handleRowClick = (cp: CounterpartyWithStats) => {
+    setEditing(cp)
     setFormOpen(true)
   }
 
-  const handleNewVendor = () => {
-    setEditingVendor(null)
+  const handleNew = () => {
+    setEditing(null)
     setFormOpen(true)
   }
 
-  const handleMergeClick = () => {
-    setMergeOpen(true)
-  }
-
-  const handleMergeComplete = () => {
-    setSelectedIds([])
-  }
-
-  if (vendors.length === 0) {
+  if (counterparties.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
         <div className="rounded-full bg-muted p-4 mb-4">
@@ -52,15 +45,16 @@ export function VendorsPageContent({ vendors, categories }: VendorsPageContentPr
           {t("noVendorsDescription")}
         </p>
         <div className="flex gap-2">
-          <BackfillVendorsButton />
-          <Button onClick={handleNewVendor}>
+          <BackfillCounterpartiesButton />
+          <Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-2" />
             {t("addVendor")}
           </Button>
         </div>
 
-        <VendorForm
-          vendor={null}
+        <CounterpartyForm
+          counterparty={null}
+          currency={currency}
           categories={categories}
           open={formOpen}
           onOpenChange={setFormOpen}
@@ -71,44 +65,43 @@ export function VendorsPageContent({ vendors, categories }: VendorsPageContentPr
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-end">
         <div className="flex gap-2">
-          <BackfillVendorsButton />
-          <Button onClick={handleNewVendor}>
+          <BackfillCounterpartiesButton />
+          <Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-2" />
             {t("addVendor")}
           </Button>
         </div>
       </div>
 
-      {/* Table */}
-      <VendorTable
-        vendors={vendors}
+      <CounterpartyTable
+        counterparties={counterparties}
+        currency={currency}
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
-        onVendorClick={handleVendorClick}
-        onMergeClick={handleMergeClick}
+        onRowClick={handleRowClick}
+        onMergeClick={() => setMergeOpen(true)}
       />
 
-      {/* Form Sheet */}
-      <VendorForm
-        vendor={editingVendor}
+      <CounterpartyForm
+        counterparty={editing}
+        currency={currency}
         categories={categories}
         open={formOpen}
         onOpenChange={(open) => {
           setFormOpen(open)
-          if (!open) setEditingVendor(null)
+          if (!open) setEditing(null)
         }}
       />
 
-      {/* Merge Dialog */}
-      <VendorMergeDialog
-        vendors={vendors}
+      <CounterpartyMergeDialog
+        counterparties={counterparties}
+        currency={currency}
         selectedIds={selectedIds}
         open={mergeOpen}
         onOpenChange={setMergeOpen}
-        onMergeComplete={handleMergeComplete}
+        onMergeComplete={() => setSelectedIds([])}
       />
     </div>
   )

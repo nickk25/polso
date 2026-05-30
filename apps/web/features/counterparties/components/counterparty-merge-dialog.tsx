@@ -22,57 +22,53 @@ import {
 } from "@polso/ui/select"
 import { Spinner, GitMerge, ArrowRight } from "@phosphor-icons/react"
 import { toast } from "sonner"
-import { mergeVendorsAction } from "../actions/manage-vendor"
-import type { VendorWithStats } from "../queries/get-vendors"
+import { formatCurrency } from "@/lib/format-currency"
+import { mergeCounterpartiesAction } from "../actions/manage-counterparty"
+import type { CounterpartyWithStats } from "../queries/get-counterparties"
 
-interface VendorMergeDialogProps {
-  vendors: VendorWithStats[]
+interface CounterpartyMergeDialogProps {
+  counterparties: CounterpartyWithStats[]
+  currency: string
   selectedIds: string[]
   open: boolean
   onOpenChange: (open: boolean) => void
   onMergeComplete: () => void
 }
 
-export function VendorMergeDialog({
-  vendors,
+export function CounterpartyMergeDialog({
+  counterparties,
+  currency,
   selectedIds,
   open,
   onOpenChange,
   onMergeComplete,
-}: VendorMergeDialogProps) {
-  const t = useTranslations("vendors")
+}: CounterpartyMergeDialogProps) {
+  const t = useTranslations("counterparties")
   const tc = useTranslations("common")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [targetVendorId, setTargetVendorId] = useState<string>("")
+  const [targetId, setTargetId] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
 
-  // Get selected vendors
-  const selectedVendors = vendors.filter((v) => selectedIds.includes(v.id))
+  const selected = counterparties.filter((cp) => selectedIds.includes(cp.id))
+  const totalExpenses = selected.reduce((sum, cp) => sum + cp._count.entries, 0)
+  const totalSpent = selected.reduce((sum, cp) => sum + cp.totalSpent, 0)
 
-  // Calculate totals
-  const totalExpenses = selectedVendors.reduce((sum, v) => sum + v._count.entries, 0)
-  const totalSpent = selectedVendors.reduce((sum, v) => sum + v.totalSpent, 0)
-
-  // Reset target when dialog opens or selection changes
   useEffect(() => {
-    if (open && selectedIds.length > 0) {
-      // Default to the vendor with the most expenses
-      const sorted = [...selectedVendors].sort(
-        (a, b) => b._count.entries - a._count.entries
-      )
-      setTargetVendorId(sorted[0]?.id || "")
+    if (open && selected.length > 0) {
+      const sorted = [...selected].sort((a, b) => b._count.entries - a._count.entries)
+      setTargetId(sorted[0]?.id || "")
       setError(null)
     }
-  }, [open, selectedIds])
+  }, [open, selectedIds]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMerge = async () => {
-    if (!targetVendorId) {
+    if (!targetId) {
       setError(t("merge.selectTargetError"))
       return
     }
 
-    const sourceIds = selectedIds.filter((id) => id !== targetVendorId)
+    const sourceIds = selectedIds.filter((id) => id !== targetId)
     if (sourceIds.length === 0) {
       setError(t("merge.noVendorsToMerge"))
       return
@@ -81,10 +77,7 @@ export function VendorMergeDialog({
     setLoading(true)
     setError(null)
 
-    const result = await mergeVendorsAction({
-      sourceVendorIds: sourceIds,
-      targetVendorId,
-    })
+    const result = await mergeCounterpartiesAction({ sourceIds, targetId })
 
     if (!result.success) {
       setError(result.error)
@@ -92,10 +85,9 @@ export function VendorMergeDialog({
       return
     }
 
-    const targetVendor = vendors.find((v) => v.id === targetVendorId)
-
+    const target = counterparties.find((cp) => cp.id === targetId)
     toast.success("Vendors merged", {
-      description: `${result.data.vendorsDeleted} vendor${result.data.vendorsDeleted > 1 ? "s" : ""} merged into ${targetVendor?.name}. ${result.data.entriesReassigned} transaction${result.data.entriesReassigned > 1 ? "s" : ""} reassigned.`,
+      description: `${result.data.deletedCount} vendor${result.data.deletedCount > 1 ? "s" : ""} merged into ${target?.name}. ${result.data.entriesReassigned} transaction${result.data.entriesReassigned > 1 ? "s" : ""} reassigned.`,
     })
 
     setLoading(false)
@@ -104,8 +96,8 @@ export function VendorMergeDialog({
     router.refresh()
   }
 
-  const targetVendor = vendors.find((v) => v.id === targetVendorId)
-  const sourceVendors = selectedVendors.filter((v) => v.id !== targetVendorId)
+  const target = counterparties.find((cp) => cp.id === targetId)
+  const sources = selected.filter((cp) => cp.id !== targetId)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -116,24 +108,24 @@ export function VendorMergeDialog({
             {t("merge.title")}
           </DialogTitle>
           <DialogDescription>
-            {t("merge.description", { count: selectedVendors.length })}
+            {t("merge.description", { count: selected.length })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>{t("merge.keepTarget")}</Label>
-            <Select value={targetVendorId} onValueChange={setTargetVendorId}>
+            <Select value={targetId} onValueChange={setTargetId}>
               <SelectTrigger>
                 <SelectValue placeholder={t("merge.selectTarget")} />
               </SelectTrigger>
               <SelectContent>
-                {selectedVendors.map((vendor) => (
-                  <SelectItem key={vendor.id} value={vendor.id}>
+                {selected.map((cp) => (
+                  <SelectItem key={cp.id} value={cp.id}>
                     <span className="flex items-center gap-2">
-                      {vendor.name}
+                      {cp.name}
                       <span className="text-muted-foreground text-xs">
-                        ({vendor._count.entries} transactions)
+                        ({cp._count.entries} transactions)
                       </span>
                     </span>
                   </SelectItem>
@@ -142,29 +134,22 @@ export function VendorMergeDialog({
             </Select>
           </div>
 
-          {targetVendor && sourceVendors.length > 0 && (
+          {target && sources.length > 0 && (
             <div className="rounded-lg border p-4 space-y-3">
               <p className="text-sm font-medium">{t("merge.whatWillHappen")}</p>
               <div className="space-y-2">
-                {sourceVendors.map((vendor) => (
-                  <div
-                    key={vendor.id}
-                    className="flex items-center gap-2 text-sm text-muted-foreground"
-                  >
-                    <span className="line-through">{vendor.name}</span>
+                {sources.map((cp) => (
+                  <div key={cp.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="line-through">{cp.name}</span>
                     <ArrowRight className="h-3 w-3" />
-                    <span className="font-medium text-foreground">
-                      {targetVendor.name}
-                    </span>
+                    <span className="font-medium text-foreground">{target.name}</span>
                   </div>
                 ))}
               </div>
               <div className="pt-2 border-t text-sm">
-                <p>
-                  <strong>{totalExpenses}</strong> {t("merge.willBeReassigned")}
-                </p>
+                <p><strong>{totalExpenses}</strong> {t("merge.willBeReassigned")}</p>
                 <p className="text-muted-foreground">
-                  {t("merge.totalValue")} ${totalSpent.toLocaleString()}
+                  {t("merge.totalValue")} {formatCurrency(totalSpent, currency)}
                 </p>
               </div>
             </div>
@@ -177,7 +162,7 @@ export function VendorMergeDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             {tc("actions.cancel")}
           </Button>
-          <Button onClick={handleMerge} disabled={loading || !targetVendorId}>
+          <Button onClick={handleMerge} disabled={loading || !targetId}>
             {loading ? (
               <>
                 <Spinner className="h-4 w-4 mr-2 animate-spin" />

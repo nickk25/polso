@@ -6,7 +6,7 @@ import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 import { normalizeCounterpartyName } from "@polso/banking"
 
-interface CreateVendorInput {
+interface CreateCounterpartyInput {
   name: string
   website?: string | null
   taxId?: string | null
@@ -14,7 +14,7 @@ interface CreateVendorInput {
   defaultEntryType?: "fixed" | "variable" | null
 }
 
-interface UpdateVendorInput {
+interface UpdateCounterpartyInput {
   name?: string
   website?: string | null
   taxId?: string | null
@@ -22,40 +22,40 @@ interface UpdateVendorInput {
   defaultEntryType?: "fixed" | "variable" | null
 }
 
-interface MergeVendorsInput {
-  sourceVendorIds: string[]
-  targetVendorId: string
+interface MergeCounterpartiesInput {
+  sourceIds: string[]
+  targetId: string
 }
 
-interface VendorResult {
+interface CounterpartyResult {
   id: string
   name: string
   normalizedName: string
 }
 
-interface DeleteVendorResult {
+interface DeleteCounterpartyResult {
   deleted: boolean
   entryCount?: number
 }
 
-interface MergeVendorResult {
-  mergedVendorId: string
+interface MergeCounterpartiesResult {
+  mergedId: string
   entriesReassigned: number
   patternsReassigned: number
-  vendorsDeleted: number
+  deletedCount: number
 }
 
-export async function createVendorAction(
-  input: CreateVendorInput
-): Promise<ActionResponse<VendorResult>> {
+export async function createCounterpartyAction(
+  input: CreateCounterpartyInput
+): Promise<ActionResponse<CounterpartyResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
     if (!input.name || input.name.trim().length === 0) {
-      return errorResponse("Vendor name is required", "VALIDATION_ERROR")
+      return errorResponse("Name is required", "VALIDATION_ERROR")
     }
     if (input.name.length > 100) {
-      return errorResponse("Vendor name must be 100 characters or less", "VALIDATION_ERROR")
+      return errorResponse("Name must be 100 characters or less", "VALIDATION_ERROR")
     }
 
     const normalizedName = normalizeCounterpartyName(input.name.trim())
@@ -65,7 +65,7 @@ export async function createVendorAction(
     })
     if (existing) {
       return errorResponse(
-        `A vendor with a similar name already exists: "${existing.name}"`,
+        `A counterparty with a similar name already exists: "${existing.name}"`,
         "DUPLICATE_ERROR"
       )
     }
@@ -97,32 +97,32 @@ export async function createVendorAction(
 
     return successResponse({ id: cp.id, name: cp.name, normalizedName: cp.normalizedName })
   } catch (error) {
-    console.error("Error creating vendor:", error)
+    console.error("Error creating counterparty:", error)
     return errorResponse(
-      error instanceof Error ? error.message : "Failed to create vendor",
+      error instanceof Error ? error.message : "Failed to create counterparty",
       "ERROR"
     )
   }
 }
 
-export async function updateVendorAction(
-  vendorId: string,
-  input: UpdateVendorInput
-): Promise<ActionResponse<VendorResult>> {
+export async function updateCounterpartyAction(
+  counterpartyId: string,
+  input: UpdateCounterpartyInput
+): Promise<ActionResponse<CounterpartyResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
     const cp = await prisma.counterparty.findFirst({
-      where: { id: vendorId, organizationId },
+      where: { id: counterpartyId, organizationId },
     })
-    if (!cp) return errorResponse("Vendor not found", "NOT_FOUND")
+    if (!cp) return errorResponse("Counterparty not found", "NOT_FOUND")
 
     if (input.name !== undefined) {
       if (!input.name || input.name.trim().length === 0) {
-        return errorResponse("Vendor name is required", "VALIDATION_ERROR")
+        return errorResponse("Name is required", "VALIDATION_ERROR")
       }
       if (input.name.length > 100) {
-        return errorResponse("Vendor name must be 100 characters or less", "VALIDATION_ERROR")
+        return errorResponse("Name must be 100 characters or less", "VALIDATION_ERROR")
       }
     }
 
@@ -130,11 +130,11 @@ export async function updateVendorAction(
     if (input.name && input.name.trim() !== cp.name) {
       newNormalizedName = normalizeCounterpartyName(input.name.trim())
       const duplicate = await prisma.counterparty.findFirst({
-        where: { organizationId, normalizedName: newNormalizedName, id: { not: vendorId } },
+        where: { organizationId, normalizedName: newNormalizedName, id: { not: counterpartyId } },
       })
       if (duplicate) {
         return errorResponse(
-          `A vendor with a similar name already exists: "${duplicate.name}"`,
+          `A counterparty with a similar name already exists: "${duplicate.name}"`,
           "DUPLICATE_ERROR"
         )
       }
@@ -148,7 +148,7 @@ export async function updateVendorAction(
     }
 
     const updated = await prisma.counterparty.update({
-      where: { id: vendorId },
+      where: { id: counterpartyId },
       data: {
         name: input.name?.trim() ?? cp.name,
         normalizedName: newNormalizedName,
@@ -166,111 +166,111 @@ export async function updateVendorAction(
 
     return successResponse({ id: updated.id, name: updated.name, normalizedName: updated.normalizedName })
   } catch (error) {
-    console.error("Error updating vendor:", error)
+    console.error("Error updating counterparty:", error)
     return errorResponse(
-      error instanceof Error ? error.message : "Failed to update vendor",
+      error instanceof Error ? error.message : "Failed to update counterparty",
       "ERROR"
     )
   }
 }
 
-export async function deleteVendorAction(
-  vendorId: string
-): Promise<ActionResponse<DeleteVendorResult>> {
+export async function deleteCounterpartyAction(
+  counterpartyId: string
+): Promise<ActionResponse<DeleteCounterpartyResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
     const cp = await prisma.counterparty.findFirst({
-      where: { id: vendorId, organizationId },
+      where: { id: counterpartyId, organizationId },
       include: {
         _count: { select: { entries: true, recurringPatterns: true } },
       },
     })
-    if (!cp) return errorResponse("Vendor not found", "NOT_FOUND")
+    if (!cp) return errorResponse("Counterparty not found", "NOT_FOUND")
 
     if (cp._count.entries > 0) {
       return errorResponse(
-        `Cannot delete vendor with ${cp._count.entries} linked transaction${cp._count.entries > 1 ? "s" : ""}. Reassign them first or merge this vendor with another.`,
+        `Cannot delete counterparty with ${cp._count.entries} linked transaction${cp._count.entries > 1 ? "s" : ""}. Reassign them first or merge with another.`,
         "HAS_LINKED_ITEMS"
       )
     }
 
-    await prisma.counterparty.delete({ where: { id: vendorId } })
+    await prisma.counterparty.delete({ where: { id: counterpartyId } })
 
     revalidatePath("/counterparties")
     revalidatePath("/transactions")
 
     return successResponse({ deleted: true })
   } catch (error) {
-    console.error("Error deleting vendor:", error)
+    console.error("Error deleting counterparty:", error)
     return errorResponse(
-      error instanceof Error ? error.message : "Failed to delete vendor",
+      error instanceof Error ? error.message : "Failed to delete counterparty",
       "ERROR"
     )
   }
 }
 
-export async function mergeVendorsAction(
-  input: MergeVendorsInput
-): Promise<ActionResponse<MergeVendorResult>> {
+export async function mergeCounterpartiesAction(
+  input: MergeCounterpartiesInput
+): Promise<ActionResponse<MergeCounterpartiesResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    if (!input.sourceVendorIds || input.sourceVendorIds.length === 0) {
-      return errorResponse("At least one source vendor is required", "VALIDATION_ERROR")
+    if (!input.sourceIds || input.sourceIds.length === 0) {
+      return errorResponse("At least one source counterparty is required", "VALIDATION_ERROR")
     }
-    if (!input.targetVendorId) {
-      return errorResponse("Target vendor is required", "VALIDATION_ERROR")
+    if (!input.targetId) {
+      return errorResponse("Target counterparty is required", "VALIDATION_ERROR")
     }
-    if (input.sourceVendorIds.includes(input.targetVendorId)) {
-      return errorResponse("Target vendor cannot be in the source vendors list", "VALIDATION_ERROR")
+    if (input.sourceIds.includes(input.targetId)) {
+      return errorResponse("Target cannot be in the source list", "VALIDATION_ERROR")
     }
 
     const counterparties = await prisma.counterparty.findMany({
       where: {
         organizationId,
-        id: { in: [...input.sourceVendorIds, input.targetVendorId] },
+        id: { in: [...input.sourceIds, input.targetId] },
       },
       select: { id: true, detectionPatterns: true },
     })
 
-    if (counterparties.length !== input.sourceVendorIds.length + 1) {
-      return errorResponse("One or more vendors not found", "NOT_FOUND")
+    if (counterparties.length !== input.sourceIds.length + 1) {
+      return errorResponse("One or more counterparties not found", "NOT_FOUND")
     }
 
-    const targetCp = counterparties.find((c) => c.id === input.targetVendorId)
-    if (!targetCp) return errorResponse("Target vendor not found", "NOT_FOUND")
+    const targetCp = counterparties.find((c) => c.id === input.targetId)
+    if (!targetCp) return errorResponse("Target counterparty not found", "NOT_FOUND")
 
     const result = await prisma.$transaction(async (tx) => {
       const entriesUpdate = await tx.entry.updateMany({
-        where: { counterpartyId: { in: input.sourceVendorIds } },
-        data: { counterpartyId: input.targetVendorId },
+        where: { counterpartyId: { in: input.sourceIds } },
+        data: { counterpartyId: input.targetId },
       })
 
       const patternsUpdate = await tx.recurringPattern.updateMany({
-        where: { counterpartyId: { in: input.sourceVendorIds } },
-        data: { counterpartyId: input.targetVendorId },
+        where: { counterpartyId: { in: input.sourceIds } },
+        data: { counterpartyId: input.targetId },
       })
 
-      const sourceCps = counterparties.filter((c) => input.sourceVendorIds.includes(c.id))
+      const sourceCps = counterparties.filter((c) => input.sourceIds.includes(c.id))
       const allPatterns = new Set([
         ...targetCp.detectionPatterns,
         ...sourceCps.flatMap((c) => c.detectionPatterns),
       ])
 
       await tx.counterparty.update({
-        where: { id: input.targetVendorId },
+        where: { id: input.targetId },
         data: { detectionPatterns: Array.from(allPatterns) },
       })
 
       await tx.counterparty.deleteMany({
-        where: { id: { in: input.sourceVendorIds } },
+        where: { id: { in: input.sourceIds } },
       })
 
       return {
         entriesReassigned: entriesUpdate.count,
         patternsReassigned: patternsUpdate.count,
-        vendorsDeleted: input.sourceVendorIds.length,
+        deletedCount: input.sourceIds.length,
       }
     })
 
@@ -278,41 +278,38 @@ export async function mergeVendorsAction(
     revalidatePath("/transactions")
     revalidatePath("/recurring")
 
-    return successResponse({
-      mergedVendorId: input.targetVendorId,
-      ...result,
-    })
+    return successResponse({ mergedId: input.targetId, ...result })
   } catch (error) {
-    console.error("Error merging vendors:", error)
+    console.error("Error merging counterparties:", error)
     return errorResponse(
-      error instanceof Error ? error.message : "Failed to merge vendors",
+      error instanceof Error ? error.message : "Failed to merge counterparties",
       "ERROR"
     )
   }
 }
 
-export async function getVendorUsageAction(
-  vendorId: string
+export async function getCounterpartyUsageAction(
+  counterpartyId: string
 ): Promise<ActionResponse<{ entryCount: number; patternCount: number }>> {
   try {
     const { organizationId } = await getAuthContext()
 
     const cp = await prisma.counterparty.findFirst({
-      where: { id: vendorId, organizationId },
+      where: { id: counterpartyId, organizationId },
       include: {
         _count: { select: { entries: true, recurringPatterns: true } },
       },
     })
-    if (!cp) return errorResponse("Vendor not found", "NOT_FOUND")
+    if (!cp) return errorResponse("Counterparty not found", "NOT_FOUND")
 
     return successResponse({
       entryCount: cp._count.entries,
       patternCount: cp._count.recurringPatterns,
     })
   } catch (error) {
-    console.error("Error getting vendor usage:", error)
+    console.error("Error getting counterparty usage:", error)
     return errorResponse(
-      error instanceof Error ? error.message : "Failed to get vendor usage",
+      error instanceof Error ? error.message : "Failed to get counterparty usage",
       "ERROR"
     )
   }

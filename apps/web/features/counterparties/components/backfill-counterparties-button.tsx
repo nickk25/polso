@@ -6,27 +6,23 @@ import { useRouter } from "next/navigation"
 import { Button } from "@polso/ui/button"
 import { Sparkle, Spinner } from "@phosphor-icons/react"
 import { toast } from "sonner"
-import { backfillVendorsAction } from "../actions/backfill-vendors"
+import { backfillCounterpartiesAction } from "../actions/backfill-counterparties"
 
-export function BackfillVendorsButton() {
-  const t = useTranslations("vendors")
+export function BackfillCounterpartiesButton() {
+  const t = useTranslations("counterparties")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   const handleClick = async () => {
     setLoading(true)
-
-    const response = await backfillVendorsAction()
-
+    const response = await backfillCounterpartiesAction()
     setLoading(false)
 
     if (response.success && response.data) {
-      const { counterpartiesCreated, entriesLinked, alreadyLinked } = response.data
+      const { counterpartiesCreated, entriesLinked } = response.data
 
       if (counterpartiesCreated === 0 && entriesLinked === 0) {
-        toast.info(t("backfill.noNewVendors"), {
-          description: t("backfill.allAssigned"),
-        })
+        toast.info(t("backfill.noNewVendors"), { description: t("backfill.allAssigned") })
       } else if (counterpartiesCreated > 0) {
         toast.success(t("backfill.created", { count: counterpartiesCreated }), {
           description: t("backfill.linked", { count: entriesLinked }),
