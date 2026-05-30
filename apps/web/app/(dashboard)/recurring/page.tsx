@@ -1,28 +1,17 @@
 import { Card, CardContent } from "@polso/ui/card"
-import { Repeat, Lightbulb, CurrencyDollar, Pause } from "@phosphor-icons/react/dist/ssr"
+import { Repeat, Lightbulb, Pause } from "@phosphor-icons/react/dist/ssr"
 import { RecurringPatternCard } from "@/features/intelligence/components/recurring-pattern-card"
 import { DetectPatternsButton } from "@/features/intelligence/components/detect-patterns-button"
-import {
-  getConfirmedPatterns,
-  getSuggestedPatterns,
-  getPausedPatterns,
-  getOrganizationCurrency,
-  computeMonthlyTotal,
-} from "@/features/intelligence/queries/get-recurring-patterns"
+import { getAllPatternsGrouped, computeMonthlyTotal } from "@/features/intelligence/queries/get-recurring-patterns"
 import { getTranslations } from "next-intl/server"
 import { formatCurrency } from "@/lib/format-currency"
 
 export default async function RecurringPage() {
   const t = await getTranslations("recurring")
-  const [confirmedPatterns, suggestedPatterns, pausedPatterns, currency] = await Promise.all([
-    getConfirmedPatterns(),
-    getSuggestedPatterns(),
-    getPausedPatterns(),
-    getOrganizationCurrency(),
-  ])
+  const { confirmed, suggested, paused, currency } = await getAllPatternsGrouped()
 
-  const monthlyTotal = computeMonthlyTotal(confirmedPatterns)
-  const hasPatterns = confirmedPatterns.length > 0 || suggestedPatterns.length > 0 || pausedPatterns.length > 0
+  const monthlyTotal = computeMonthlyTotal(confirmed)
+  const hasPatterns = confirmed.length > 0 || suggested.length > 0 || paused.length > 0
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -32,76 +21,37 @@ export default async function RecurringPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <CurrencyDollar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("monthlyTotal")}</p>
-                <p className="text-xl font-semibold">{formatCurrency(monthlyTotal, currency)}</p>
-              </div>
-            </div>
-          </CardContent>
+          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("monthlyTotal")}</div>
+          <div className="px-4 pb-4 text-2xl font-bold">{formatCurrency(monthlyTotal, currency)}</div>
         </Card>
-
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
-                <Repeat className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("active")}</p>
-                <p className="text-xl font-semibold">{confirmedPatterns.length}</p>
-              </div>
-            </div>
-          </CardContent>
+          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("active")}</div>
+          <div className="px-4 pb-4 text-2xl font-bold">{confirmed.length}</div>
         </Card>
-
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-                <Lightbulb className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("toReview")}</p>
-                <p className="text-xl font-semibold">{suggestedPatterns.length}</p>
-              </div>
-            </div>
-          </CardContent>
+          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("toReview")}</div>
+          <div className="px-4 pb-4 text-2xl font-bold">{suggested.length}</div>
         </Card>
-
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                <Pause className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("paused")}</p>
-                <p className="text-xl font-semibold">{pausedPatterns.length}</p>
-              </div>
-            </div>
-          </CardContent>
+          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("paused")}</div>
+          <div className="px-4 pb-4 text-2xl font-bold">{paused.length}</div>
         </Card>
       </div>
 
-      {suggestedPatterns.length > 0 && (
+      {suggested.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-amber-500" />
             <h2 className="text-lg font-semibold">{t("suggestionsForReview")}</h2>
             <span className="text-sm text-muted-foreground">
-              ({suggestedPatterns.length})
+              ({suggested.length})
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
             {t("suggestionsDescription")}
           </p>
           <div className="grid gap-3">
-            {suggestedPatterns.map((pattern) => (
+            {suggested.map((pattern) => (
               <RecurringPatternCard
                 key={pattern.id}
                 pattern={pattern}
@@ -113,37 +63,37 @@ export default async function RecurringPage() {
         </div>
       )}
 
-      {confirmedPatterns.length > 0 && (
+      {confirmed.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Repeat className="h-5 w-5" />
             <h2 className="text-lg font-semibold">{t("activeRecurringExpenses")}</h2>
             <span className="text-sm text-muted-foreground">
-              ({confirmedPatterns.length})
+              ({confirmed.length})
             </span>
           </div>
           <div className="grid gap-3">
-            {confirmedPatterns.map((pattern) => (
+            {confirmed.map((pattern) => (
               <RecurringPatternCard key={pattern.id} pattern={pattern} state="active" currency={currency} />
             ))}
           </div>
         </div>
       )}
 
-      {pausedPatterns.length > 0 && (
+      {paused.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Pause className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-lg font-semibold text-muted-foreground">{t("pausedPatterns")}</h2>
             <span className="text-sm text-muted-foreground">
-              ({pausedPatterns.length})
+              ({paused.length})
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
             {t("pausedDescription")}
           </p>
           <div className="grid gap-3">
-            {pausedPatterns.map((pattern) => (
+            {paused.map((pattern) => (
               <RecurringPatternCard key={pattern.id} pattern={pattern} state="paused" currency={currency} />
             ))}
           </div>

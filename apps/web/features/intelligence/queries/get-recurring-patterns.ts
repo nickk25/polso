@@ -34,62 +34,46 @@ export interface RecurringPatternWithRelations {
   }
 }
 
-async function getRecurringPatterns(options?: {
-  confirmed?: boolean
-  active?: boolean
-}): Promise<RecurringPatternWithRelations[]> {
+export interface PatternsGrouped {
+  confirmed: RecurringPatternWithRelations[]
+  suggested: RecurringPatternWithRelations[]
+  paused: RecurringPatternWithRelations[]
+  currency: string
+}
+
+export async function getAllPatternsGrouped(): Promise<PatternsGrouped> {
   const { organizationId } = await getAuthContext()
 
-  const where: Record<string, unknown> = { organizationId }
+  const [patterns, org] = await Promise.all([
+    prisma.recurringPattern.findMany({
+      where: { organizationId },
+      include: {
+        counterparty: { select: { id: true, name: true, logoUrl: true } },
+        category: { select: { id: true, name: true, color: true } },
+        _count: { select: { entries: true } },
+      },
+    }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { currency: true },
+    }),
+  ])
 
-  if (options?.confirmed !== undefined) {
-    where.isConfirmed = options.confirmed
+  return {
+    // Confirmed+active: most recently seen first
+    confirmed: patterns
+      .filter((p) => p.isConfirmed && p.isActive)
+      .sort((a, b) => (b.lastOccurrence?.getTime() ?? 0) - (a.lastOccurrence?.getTime() ?? 0)),
+    // Suggestions: highest confidence first
+    suggested: patterns
+      .filter((p) => !p.isConfirmed && p.isActive)
+      .sort((a, b) => (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0)),
+    // Paused: most recently paused first
+    paused: patterns
+      .filter((p) => p.isConfirmed && !p.isActive)
+      .sort((a, b) => (b.pausedAt?.getTime() ?? 0) - (a.pausedAt?.getTime() ?? 0)),
+    currency: org?.currency ?? "EUR",
   }
-
-  if (options?.active !== undefined) {
-    where.isActive = options.active
-  }
-
-  return prisma.recurringPattern.findMany({
-    where,
-    include: {
-      counterparty: {
-        select: { id: true, name: true, logoUrl: true },
-      },
-      category: {
-        select: { id: true, name: true, color: true },
-      },
-      _count: {
-        select: { entries: true },
-      },
-    },
-    orderBy: [
-      { isConfirmed: "desc" },
-      { confidenceScore: "desc" },
-      { lastOccurrence: "desc" },
-    ],
-  })
-}
-
-export async function getSuggestedPatterns(): Promise<RecurringPatternWithRelations[]> {
-  return getRecurringPatterns({ confirmed: false, active: true })
-}
-
-export async function getConfirmedPatterns(): Promise<RecurringPatternWithRelations[]> {
-  return getRecurringPatterns({ confirmed: true, active: true })
-}
-
-export async function getPausedPatterns(): Promise<RecurringPatternWithRelations[]> {
-  return getRecurringPatterns({ confirmed: true, active: false })
-}
-
-export async function getOrganizationCurrency(): Promise<string> {
-  const { organizationId } = await getAuthContext()
-  const org = await prisma.organization.findUnique({
-    where: { id: organizationId },
-    select: { currency: true },
-  })
-  return org?.currency ?? "EUR"
 }
 
 export function computeMonthlyTotal(patterns: RecurringPatternWithRelations[]): number {
