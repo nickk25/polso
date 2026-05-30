@@ -25,7 +25,7 @@ export default async function VaultPage({
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      <div className="grid gap-4 grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center gap-2 mb-1">
             <Vault className="h-4 w-4 text-muted-foreground" />

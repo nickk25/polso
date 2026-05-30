@@ -76,7 +76,7 @@ export function ExportHistory({ exports }: ExportHistoryProps) {
       {exports.map((exp) => (
         <div
           key={exp.id}
-          className="flex items-center justify-between p-4 rounded-lg border bg-card"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border bg-card"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
@@ -98,22 +98,20 @@ export function ExportHistory({ exports }: ExportHistoryProps) {
               <div className="flex items-center gap-2">
                 <p className="font-medium text-sm truncate">{exp.name}</p>
                 {exp.status === "completed" && (
-                  <span className="text-xs text-green-600 flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3" weight="fill" />
-                  </span>
+                  <CheckCircle className="h-3.5 w-3.5 text-green-600 shrink-0" weight="fill" />
                 )}
                 {exp.status === "processing" && (
-                  <span className="text-xs text-amber-600 flex items-center gap-1">
+                  <span className="text-xs text-amber-600 flex items-center gap-1 shrink-0">
                     <Clock className="h-3 w-3" weight="fill" />
                     {t("processing")}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
                 <span>{formatDateRange(exp.startDate, exp.endDate)}</span>
                 {exp.status === "completed" && (
                   <>
-                    <span>·</span>
+                    <span className="hidden sm:inline">·</span>
                     <span>{t("expenses", { count: exp.entryCount ?? 0 })}</span>
                     <span>·</span>
                     <span>{t("invoices", { count: exp.documentCount ?? 0 })}</span>
@@ -122,16 +120,13 @@ export function ExportHistory({ exports }: ExportHistoryProps) {
                   </>
                 )}
                 {exp.status === "failed" && exp.errorMessage && (
-                  <>
-                    <span>·</span>
-                    <span className="text-red-500">{exp.errorMessage}</span>
-                  </>
+                  <span className="text-red-500">{exp.errorMessage}</span>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex items-center gap-2 shrink-0 sm:ml-4">
             {exp.status === "completed" && (
               <Button
                 variant="ghost"
