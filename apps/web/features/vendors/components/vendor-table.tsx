@@ -191,14 +191,14 @@ export function VendorTable({
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  {vendor._count.expenses}
+                  {vendor._count.entries}
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {formatCurrency(vendor.totalSpent)}
                 </TableCell>
                 <TableCell>
-                  {vendor.lastExpenseDate ? (
-                    format(new Date(vendor.lastExpenseDate), "MMM d, yyyy")
+                  {vendor.lastEntryDate ? (
+                    format(new Date(vendor.lastEntryDate), "MMM d, yyyy")
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}

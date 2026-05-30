@@ -51,7 +51,7 @@ export function VendorMergeDialog({
   const selectedVendors = vendors.filter((v) => selectedIds.includes(v.id))
 
   // Calculate totals
-  const totalExpenses = selectedVendors.reduce((sum, v) => sum + v._count.expenses, 0)
+  const totalExpenses = selectedVendors.reduce((sum, v) => sum + v._count.entries, 0)
   const totalSpent = selectedVendors.reduce((sum, v) => sum + v.totalSpent, 0)
 
   // Reset target when dialog opens or selection changes
@@ -59,7 +59,7 @@ export function VendorMergeDialog({
     if (open && selectedIds.length > 0) {
       // Default to the vendor with the most expenses
       const sorted = [...selectedVendors].sort(
-        (a, b) => b._count.expenses - a._count.expenses
+        (a, b) => b._count.entries - a._count.entries
       )
       setTargetVendorId(sorted[0]?.id || "")
       setError(null)
@@ -95,7 +95,7 @@ export function VendorMergeDialog({
     const targetVendor = vendors.find((v) => v.id === targetVendorId)
 
     toast.success("Vendors merged", {
-      description: `${result.data.vendorsDeleted} vendor${result.data.vendorsDeleted > 1 ? "s" : ""} merged into ${targetVendor?.name}. ${result.data.expensesReassigned} expense${result.data.expensesReassigned > 1 ? "s" : ""} reassigned.`,
+      description: `${result.data.vendorsDeleted} vendor${result.data.vendorsDeleted > 1 ? "s" : ""} merged into ${targetVendor?.name}. ${result.data.entriesReassigned} transaction${result.data.entriesReassigned > 1 ? "s" : ""} reassigned.`,
     })
 
     setLoading(false)
@@ -133,7 +133,7 @@ export function VendorMergeDialog({
                     <span className="flex items-center gap-2">
                       {vendor.name}
                       <span className="text-muted-foreground text-xs">
-                        ({vendor._count.expenses} expenses)
+                        ({vendor._count.entries} transactions)
                       </span>
                     </span>
                   </SelectItem>

@@ -1,9 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { PaperPlaneRight, Plus, At, Paperclip } from "@phosphor-icons/react"
+import { ArrowUp, Plus, At, Paperclip } from "@phosphor-icons/react"
 
-export function ChatInput() {
+interface ChatInputProps {
+  placeholder?: string
+}
+
+export function ChatInput({ placeholder = "How can I help you today?" }: ChatInputProps) {
   const [value, setValue] = useState("")
 
   function handleSubmit(e: React.FormEvent) {
@@ -14,7 +18,7 @@ export function ChatInput() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl">
-      <div className="relative rounded-xl border bg-card shadow-sm">
+      <div className="relative rounded-xl border bg-card">
         <textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -24,7 +28,7 @@ export function ChatInput() {
               handleSubmit(e)
             }
           }}
-          placeholder="How can I help you today?"
+          placeholder={placeholder}
           rows={1}
           className="w-full resize-none rounded-xl bg-transparent px-4 pt-3 pb-10 text-sm outline-none placeholder:text-muted-foreground"
         />
@@ -53,7 +57,7 @@ export function ChatInput() {
           disabled={!value.trim()}
           className="absolute bottom-2 right-2 rounded-lg bg-primary p-1.5 text-primary-foreground transition-opacity disabled:opacity-30"
         >
-          <PaperPlaneRight className="h-4 w-4" weight="fill" />
+          <ArrowUp className="h-4 w-4" weight="bold" />
         </button>
       </div>
     </form>

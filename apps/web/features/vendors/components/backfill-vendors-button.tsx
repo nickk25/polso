@@ -21,18 +21,18 @@ export function BackfillVendorsButton() {
     setLoading(false)
 
     if (response.success && response.data) {
-      const { vendorsCreated, expensesLinked, alreadyLinked } = response.data
+      const { counterpartiesCreated, entriesLinked, alreadyLinked } = response.data
 
-      if (vendorsCreated === 0 && expensesLinked === 0) {
+      if (counterpartiesCreated === 0 && entriesLinked === 0) {
         toast.info(t("backfill.noNewVendors"), {
           description: t("backfill.allAssigned"),
         })
-      } else if (vendorsCreated > 0) {
-        toast.success(t("backfill.created", { count: vendorsCreated }), {
-          description: t("backfill.linked", { count: expensesLinked }),
+      } else if (counterpartiesCreated > 0) {
+        toast.success(t("backfill.created", { count: counterpartiesCreated }), {
+          description: t("backfill.linked", { count: entriesLinked }),
         })
       } else {
-        toast.success(t("backfill.linkedOnly", { count: expensesLinked }), {
+        toast.success(t("backfill.linkedOnly", { count: entriesLinked }), {
           description: t("backfill.linkedDescription"),
         })
       }

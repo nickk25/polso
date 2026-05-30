@@ -1,0 +1,47 @@
+{
+  "title": "Vault",
+  "subtitle": "All uploaded receipts and documents",
+  "stats": {
+    "total": "Total documents",
+    "matched": "Matched",
+    "suggested": "Suggested",
+    "noMatch": "No match"
+  },
+  "table": {
+    "document": "Document",
+    "source": "Source",
+    "uploaded": "Uploaded",
+    "amount": "Amount",
+    "status": "Status",
+    "matchedTo": "Matched to",
+    "noDocuments": "No documents yet. Upload receipts via WhatsApp, Telegram, or the upload button.",
+    "transactionFallback": "Transaction"
+  },
+  "filters": {
+    "all": "All documents",
+    "done": "Matched",
+    "suggested_match": "Suggested",
+    "no_match": "No match",
+    "new": "New"
+  },
+  "statuses": {
+    "done": "Matched",
+    "suggested_match": "Suggested",
+    "no_match": "No match",
+    "new": "New",
+    "processing": "Processing",
+    "analyzing": "Analyzing"
+  },
+  "sources": {
+    "upload": "Upload",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "email": "Email"
+  },
+  "pagination": {
+    "total": "{count} documents",
+    "page": "Page {page} of {pages}",
+    "previous": "Previous",
+    "next": "Next"
+  }
+}

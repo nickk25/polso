@@ -1,0 +1,73 @@
+{
+  "title": "Transacciones",
+  "subtitle": "Todos los ingresos y gastos en una sola vista",
+  "stats": {
+    "income": "Este mes — Ingresos",
+    "expenses": "Este mes — Gastos",
+    "netCashFlow": "Flujo neto de caja"
+  },
+  "table": {
+    "date": "Fecha",
+    "description": "Descripcion",
+    "type": "Tipo",
+    "category": "Categoria",
+    "status": "Estado",
+    "amount": "Importe",
+    "noTransactions": "No se encontraron transacciones",
+    "vendor": "Proveedor",
+    "source": "Fuente"
+  },
+  "types": {
+    "all": "Todas",
+    "expense": "Gastos",
+    "income": "Ingresos"
+  },
+  "expenseTypes": {
+    "fixed": "Fijo",
+    "variable": "Variable"
+  },
+  "statuses": {
+    "all": "Todos los estados",
+    "pending": "Pendiente",
+    "verified": "Verificado",
+    "documented": "Documentado",
+    "confirmed": "Confirmado",
+    "excluded": "Excluido"
+  },
+  "bulk": {
+    "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
+    "expenses": "{count, plural, one {# gasto} other {# gastos}}",
+    "incomes": "{count, plural, one {# ingreso} other {# ingresos}}",
+    "categorize": "Categorizar",
+    "setType": "Tipo",
+    "setSource": "Fuente",
+    "setStatus": "Estado",
+    "deselect": "Deseleccionar"
+  },
+  "tableFilters": {
+    "searchPlaceholder": "Buscar...",
+    "dateRange": "Rango de fechas",
+    "allTypes": "Todos los tipos",
+    "allStatus": "Todos los estados",
+    "allCategories": "Todas las categorias",
+    "noCategory": "Sin categoria",
+    "clear": "Limpiar"
+  },
+  "editSheet": {
+    "title": "Editar transaccion",
+    "category": "Categoria",
+    "type": "Tipo",
+    "status": "Estado",
+    "documents": "Documentos y Recibos",
+    "noCategory": "Sin categoria",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  },
+  "pagination": {
+    "total": "{count} transacciones",
+    "page": "Pagina {page} de {pages}",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "search": "Buscar..."
+}

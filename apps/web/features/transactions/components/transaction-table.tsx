@@ -1,11 +1,22 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { useState, useEffect, useRef } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { format } from "date-fns"
 import { Badge } from "@polso/ui/badge"
 import { Button } from "@polso/ui/button"
-import { Input } from "@polso/ui/input"
+import { Checkbox } from "@polso/ui/checkbox"
+import { Label } from "@polso/ui/label"
+import { Separator } from "@polso/ui/separator"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@polso/ui/sheet"
 import {
   Table,
   TableBody,
@@ -21,39 +32,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@polso/ui/select"
-import { TrendUp, TrendDown, MagnifyingGlass, X } from "@phosphor-icons/react"
+import { Spinner, Receipt } from "@phosphor-icons/react"
+import { formatCurrency } from "@/lib/format-currency"
 import type { TransactionRow } from "@/features/transactions/queries/get-transactions"
-
-function formatCurrency(value: number, currency = "EUR") {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
+import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
+import { CategorySelect } from "@/features/categories/components/category-select"
+import { updateEntryAction } from "@/features/transactions/actions/update-transaction"
+import {
+  getTransactionDocumentsAction,
+  type TransactionDocumentWithUrl,
+} from "@/features/transactions/actions/document-actions"
+import { TransactionDocumentUpload } from "./transaction-document-upload"
+import { TransactionDocumentList } from "./transaction-document-list"
+import { TransactionBulkActionBar } from "./transaction-bulk-action-bar"
 
 interface TransactionTableProps {
   transactions: TransactionRow[]
   total: number
   pages: number
   page: number
-  type: string
-  status: string
-  search: string
-}
-
-const TYPE_LABELS: Record<string, string> = {
-  all: "All",
-  expense: "Expenses",
-  income: "Income",
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  all: "All statuses",
-  pending: "Pending",
-  documented: "Documented",
-  excluded: "Excluded",
+  categories: CategoryWithCount[]
 }
 
 export function TransactionTable({
@@ -61,203 +59,363 @@ export function TransactionTable({
   total,
   pages,
   page,
-  type,
-  status,
-  search,
+  categories,
 }: TransactionTableProps) {
+  const t = useTranslations("transactions")
+  const tc = useTranslations("common")
   const router = useRouter()
-  const pathname = usePathname()
-  const [searchValue, setSearchValue] = useState(search)
+  const searchParams = useSearchParams()
 
-  function updateParams(updates: Record<string, string>) {
-    const params = new URLSearchParams()
-    if (type && type !== "all") params.set("type", type)
-    if (status && status !== "all") params.set("status", status)
-    if (search) params.set("search", search)
-    if (page > 1) params.set("page", String(page))
-    Object.entries(updates).forEach(([k, v]) => {
-      if (v && v !== "all" && v !== "1") params.set(k, v)
-      else params.delete(k)
-    })
-    router.push(`${pathname}?${params.toString()}`)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const lastClickedIndex = useRef<number | null>(null)
+  const shiftHeld = useRef(false)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedIds.size > 0) setSelectedIds(new Set())
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [selectedIds.size])
+
+  const toggleSelect = (id: string, index: number, shiftKey: boolean) => {
+    if (shiftKey && lastClickedIndex.current !== null) {
+      const start = Math.min(lastClickedIndex.current, index)
+      const end = Math.max(lastClickedIndex.current, index)
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        for (let i = start; i <= end; i++) next.add(transactions[i].id)
+        return next
+      })
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+    }
+    lastClickedIndex.current = index
   }
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    updateParams({ search: searchValue, page: "1" })
+  const toggleSelectAll = () => {
+    if (selectedIds.size === transactions.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(transactions.map((t) => t.id)))
+  }
+
+  const allSelected = transactions.length > 0 && selectedIds.size === transactions.length
+  const someSelected = selectedIds.size > 0 && selectedIds.size < transactions.length
+  const selectedRows = transactions.filter((t) => selectedIds.has(t.id))
+
+  const [selected, setSelected] = useState<TransactionRow | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [editedCategoryId, setEditedCategoryId] = useState<string | null>(null)
+  const [editedEntryType, setEditedEntryType] = useState<string>("")
+  const [editedStatus, setEditedStatus] = useState<string>("")
+  const [documents, setDocuments] = useState<TransactionDocumentWithUrl[]>([])
+  const [documentsLoading, setDocumentsLoading] = useState(false)
+
+  useEffect(() => {
+    if (selected?.transactionId) {
+      setDocumentsLoading(true)
+      getTransactionDocumentsAction(selected.transactionId)
+        .then((result) => {
+          if (result.success) setDocuments(result.data.documents)
+        })
+        .finally(() => setDocumentsLoading(false))
+    } else {
+      setDocuments([])
+    }
+  }, [selected?.id, selected?.transactionId])
+
+  const handleRowClick = (tx: TransactionRow) => {
+    setSelected(tx)
+    setEditedCategoryId(tx.category?.id ?? null)
+    setEditedEntryType(tx.entryType ?? "variable")
+    setEditedStatus(tx.status)
+  }
+
+  const handleDocumentUploadComplete = (doc: TransactionDocumentWithUrl) => {
+    setDocuments((prev) => [doc, ...prev])
+    setEditedStatus("verified")
+    router.refresh()
+  }
+
+  const handleDocumentDelete = (documentId: string) => {
+    const remaining = documents.filter((d) => d.id !== documentId)
+    setDocuments(remaining)
+    if (remaining.length === 0) setEditedStatus("pending")
+    router.refresh()
+  }
+
+  const handleSave = async () => {
+    if (!selected) return
+    setLoading(true)
+    await updateEntryAction(selected.id, {
+      categoryId: editedCategoryId,
+      entryType: editedEntryType as "fixed" | "variable",
+      status: editedStatus as "pending" | "verified" | "excluded",
+    })
+    setLoading(false)
+    setSelected(null)
+    router.refresh()
+  }
+
+  const hasChanges =
+    selected &&
+    (editedCategoryId !== (selected.category?.id ?? null) ||
+      editedEntryType !== (selected.entryType ?? "variable") ||
+      editedStatus !== selected.status)
+
+  function pushPage(p: number) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (p <= 1) params.delete("page")
+    else params.set("page", String(p))
+    router.push(`/transactions?${params.toString()}`)
+  }
+
+  const getEntryTypeBadge = (tx: TransactionRow) => {
+    if (tx.direction === "income") {
+      return <Badge variant="default" className="text-[10px] font-medium">{t("types.income")}</Badge>
+    }
+    if (tx.entryType === "fixed") {
+      return <Badge variant="destructive" className="bg-red-500/10 text-red-500 border-red-500/20">{t("expenseTypes.fixed")}</Badge>
+    }
+    return <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 border-amber-500/20">{t("expenseTypes.variable")}</Badge>
+  }
+
+  const getStatusBadge = (tx: TransactionRow) => {
+    if (tx.status === "verified") {
+      return <Badge variant="default">{t("statuses.verified")}</Badge>
+    }
+    if (tx.status === "excluded") {
+      return <Badge variant="secondary">{t("statuses.excluded")}</Badge>
+    }
+    return <Badge variant="outline">{t("statuses.pending")}</Badge>
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Type tabs */}
-      <div className="flex items-center gap-1 border-b pb-0">
-        {Object.entries(TYPE_LABELS).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => updateParams({ type: key, page: "1" })}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              (type || "all") === key
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-        <div className="ml-auto flex items-center gap-2 pb-2">
-          <form onSubmit={handleSearch} className="flex items-center gap-1">
-            <div className="relative">
-              <MagnifyingGlass className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Search..."
-                className="h-8 pl-8 pr-8 text-xs w-48"
-              />
-              {searchValue && (
-                <button
-                  type="button"
-                  onClick={() => { setSearchValue(""); updateParams({ search: "", page: "1" }) }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3 w-3" />
-                </button>
+    <>
+      <Sheet open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null) }}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>{t("editSheet.title")}</SheetTitle>
+            <SheetDescription>
+              {selected && (
+                <>
+                  {selected.description || "—"}
+                  {" • "}
+                  {selected.direction === "income" ? "+" : "-"}{formatCurrency(selected.amount, selected.currency)}
+                </>
               )}
-            </div>
-          </form>
-          <Select
-            value={status || "all"}
-            onValueChange={(v) => updateParams({ status: v, page: "1" })}
-          >
-            <SelectTrigger className="h-8 text-xs w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key} className="text-xs">{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+            </SheetDescription>
+          </SheetHeader>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">Date</TableHead>
-              <TableHead className="text-xs">Description</TableHead>
-              <TableHead className="text-xs">Type</TableHead>
-              <TableHead className="text-xs">Category</TableHead>
-              <TableHead className="text-xs">Status</TableHead>
-              <TableHead className="text-xs text-right">Amount</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {transactions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-sm text-muted-foreground">
-                  No transactions found
-                </TableCell>
-              </TableRow>
-            ) : (
-              transactions.map((tx) => (
-                <TableRow
-                  key={`${tx.type}-${tx.id}`}
-                  className="cursor-pointer"
-                  onClick={() => router.push(`/${tx.type === "expense" ? "expenses" : "incomes"}?highlight=${tx.id}`)}
-                >
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                    {format(new Date(tx.date), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-xs font-medium max-w-[280px]">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div
-                        className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0"
-                        style={
-                          tx.category?.color
-                            ? { backgroundColor: `${tx.category.color}20`, color: tx.category.color }
-                            : { backgroundColor: tx.type === "income" ? "#22c55e20" : "#ef444420", color: tx.type === "income" ? "#22c55e" : "#ef4444" }
-                        }
-                      >
-                        {tx.type === "income"
-                          ? <TrendUp className="h-3.5 w-3.5" weight="bold" />
-                          : (tx.description || "?")[0]?.toUpperCase()}
+          {selected && (
+            <div className="flex flex-col flex-1 gap-6 p-4">
+              <div className="space-y-2">
+                <Label>{t("editSheet.category")}</Label>
+                <CategorySelect
+                  value={editedCategoryId}
+                  onValueChange={setEditedCategoryId}
+                  categories={categories}
+                  className="w-full"
+                />
+              </div>
+
+              {selected.direction === "expense" && (
+                <div className="space-y-2">
+                  <Label>{t("editSheet.type")}</Label>
+                  <Select value={editedEntryType} onValueChange={setEditedEntryType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-red-500" />
+                          {t("expenseTypes.fixed")}
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="variable">
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-amber-500" />
+                          {t("expenseTypes.variable")}
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>{t("editSheet.status")}</Label>
+                <Select value={editedStatus} onValueChange={setEditedStatus}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">{t("statuses.pending")}</SelectItem>
+                    <SelectItem value="verified">{t("statuses.verified")}</SelectItem>
+                    <SelectItem value="excluded">{t("statuses.excluded")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selected.transactionId && (
+                <>
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Receipt className="h-4 w-4 text-muted-foreground" />
+                        <Label>{t("editSheet.documents")}</Label>
                       </div>
-                      <span className="truncate">{tx.description || "—"}</span>
+                      {documents.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {documents.length}
+                        </Badge>
+                      )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={tx.type === "income" ? "default" : "secondary"} className="text-[10px] font-medium">
-                      {tx.type === "income" ? "Income" : tx.expenseType === "fixed" ? "Fixed" : "Variable"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {tx.category ? (
-                      <div className="flex items-center gap-1.5">
-                        <div
-                          className="h-2 w-2 rounded-full shrink-0"
-                          style={{ backgroundColor: tx.category.color }}
-                        />
-                        <span className="truncate max-w-[120px]">{tx.category.name}</span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        tx.status === "documented" ? "default"
-                        : tx.status === "excluded" ? "secondary"
-                        : "outline"
-                      }
-                      className="text-[10px]"
-                    >
-                      {tx.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs font-semibold text-right whitespace-nowrap">
-                    <span className={tx.type === "income" ? "text-green-500" : "text-red-500"}>
-                      {tx.type === "income" ? "+" : "-"}
-                      {formatCurrency(tx.amount, tx.currency)}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
 
-      {/* Pagination */}
+                    <TransactionDocumentList
+                      documents={documents}
+                      onDelete={handleDocumentDelete}
+                      loading={documentsLoading}
+                    />
+
+                    <TransactionDocumentUpload
+                      transactionId={selected.transactionId}
+                      onUploadComplete={handleDocumentUploadComplete}
+                      disabled={loading}
+                    />
+                  </div>
+                </>
+              )}
+
+              <SheetFooter className="mt-auto p-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSelected(null)}
+                  disabled={loading}
+                >
+                  {tc("actions.cancel")}
+                </Button>
+                <Button onClick={handleSave} disabled={loading || !hasChanges}>
+                  {loading ? (
+                    <>
+                      <Spinner className="h-4 w-4 mr-2 animate-spin" />
+                      {tc("actions.saving")}
+                    </>
+                  ) : (
+                    tc("actions.saveChanges")
+                  )}
+                </Button>
+              </SheetFooter>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {selectedIds.size > 0 && (
+        <TransactionBulkActionBar
+          selectedRows={selectedRows}
+          onClearSelection={() => setSelectedIds(new Set())}
+          categories={categories}
+        />
+      )}
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[40px]">
+              <Checkbox
+                checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                onCheckedChange={toggleSelectAll}
+                aria-label="Select all"
+              />
+            </TableHead>
+            <TableHead>{t("table.date")}</TableHead>
+            <TableHead>{t("table.description")}</TableHead>
+            <TableHead>{t("table.category")}</TableHead>
+            <TableHead>{t("table.type")}</TableHead>
+            <TableHead className="text-right">{t("table.amount")}</TableHead>
+            <TableHead>{t("table.status")}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transactions.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="h-32 text-center text-sm text-muted-foreground">
+                {t("table.noTransactions")}
+              </TableCell>
+            </TableRow>
+          ) : (
+            transactions.map((tx, index) => (
+              <TableRow
+                key={tx.id}
+                className="cursor-pointer hover:bg-muted/50"
+                data-state={selectedIds.has(tx.id) ? "selected" : undefined}
+                onClick={() => handleRowClick(tx)}
+              >
+                <TableCell>
+                  <Checkbox
+                    checked={selectedIds.has(tx.id)}
+                    onCheckedChange={() => toggleSelect(tx.id, index, shiftHeld.current)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      shiftHeld.current = e.shiftKey
+                    }}
+                    aria-label="Select row"
+                  />
+                </TableCell>
+                <TableCell className="font-medium whitespace-nowrap">
+                  {format(new Date(tx.date), "MMM d, yyyy")}
+                </TableCell>
+                <TableCell className="max-w-[300px] whitespace-normal">
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium truncate">{tx.description || "—"}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {tx.category ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: tx.category.color }} />
+                      <span>{tx.category.name}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell>{getEntryTypeBadge(tx)}</TableCell>
+                <TableCell className="text-right font-medium whitespace-nowrap">
+                  <span className={tx.direction === "income" ? "text-green-500" : ""}>
+                    {tx.direction === "income" ? "+" : "-"}{formatCurrency(tx.amount, tx.currency)}
+                  </span>
+                </TableCell>
+                <TableCell>{getStatusBadge(tx)}</TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
       {pages > 1 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{total} transactions</span>
+        <div className="flex items-center justify-between text-xs text-muted-foreground px-4 py-3 border-t">
+          <span>{t("pagination.total", { count: total })}</span>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-              disabled={page <= 1}
-              onClick={() => updateParams({ page: String(page - 1) })}
-            >
-              Previous
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => pushPage(page - 1)}>
+              {t("pagination.previous")}
             </Button>
-            <span>Page {page} of {pages}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-              disabled={page >= pages}
-              onClick={() => updateParams({ page: String(page + 1) })}
-            >
-              Next
+            <span>{t("pagination.page", { page, pages })}</span>
+            <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => pushPage(page + 1)}>
+              {t("pagination.next")}
             </Button>
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

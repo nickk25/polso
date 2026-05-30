@@ -57,8 +57,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
     router.refresh()
   }
 
-  const expenseCount = category._count.expenses
-  const incomeCount = category._count.incomes
+  const entryCount = category._count.entries
 
   return (
     <Card>
@@ -87,12 +86,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
               </div>
 
               <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                <span>
-                  {t("expenseCount", { count: expenseCount })}
-                  <span className="ml-1.5">
-                    {"| "}{t("incomeCount", { count: incomeCount })}
-                  </span>
-                </span>
+                <span>{t("entryCount", { count: entryCount })}</span>
               </div>
             </div>
           </div>
@@ -134,10 +128,10 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                     <AlertDialogTitle>{t("deleteCategoryTitle")}</AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="text-sm text-muted-foreground">
-                        {expenseCount > 0 ? (
+                        {entryCount > 0 ? (
                           <>
                             <p>
-                              {t.rich("deleteCategoryHasExpenses", { count: expenseCount, strong: (chunks) => <strong>{chunks}</strong> })}
+                              {t.rich("deleteCategoryHasExpenses", { count: entryCount, strong: (chunks) => <strong>{chunks}</strong> })}
                             </p>
                             <p className="mt-2">
                               {t("deleteCategoryReassign")}
@@ -156,7 +150,7 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
-                    {expenseCount === 0 && (
+                    {entryCount === 0 && (
                       <AlertDialogAction
                         onClick={handleDelete}
                         disabled={loading}

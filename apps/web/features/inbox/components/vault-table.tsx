@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter, usePathname } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { format } from "date-fns"
 import { Badge } from "@polso/ui/badge"
 import { Button } from "@polso/ui/button"
@@ -31,29 +32,27 @@ function formatCurrency(value: number, currency = "EUR") {
   }).format(value)
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive"; Icon: React.ElementType }> = {
-  done: { label: "Matched", variant: "default", Icon: CheckCircle },
-  suggested_match: { label: "Suggested", variant: "outline", Icon: Question },
-  no_match: { label: "No match", variant: "destructive", Icon: XCircle },
-  new: { label: "New", variant: "secondary", Icon: Clock },
-  processing: { label: "Processing", variant: "secondary", Icon: Spinner },
-  analyzing: { label: "Analyzing", variant: "secondary", Icon: Spinner },
+const STATUS_ICONS: Record<string, React.ElementType> = {
+  done: CheckCircle,
+  suggested_match: Question,
+  no_match: XCircle,
+  new: Clock,
+  processing: Spinner,
+  analyzing: Spinner,
 }
 
-const STATUS_FILTER_LABELS: Record<string, string> = {
-  all: "All documents",
-  done: "Matched",
-  suggested_match: "Suggested",
-  no_match: "No match",
-  new: "New",
+const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+  done: "default",
+  suggested_match: "outline",
+  no_match: "destructive",
+  new: "secondary",
+  processing: "secondary",
+  analyzing: "secondary",
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  upload: "Upload",
-  whatsapp: "WhatsApp",
-  telegram: "Telegram",
-  email: "Email",
-}
+const FILTER_KEYS = ["all", "done", "suggested_match", "no_match", "new"] as const
+const STATUS_KEYS = ["done", "suggested_match", "no_match", "new", "processing", "analyzing"] as const
+const SOURCE_KEYS = ["upload", "whatsapp", "telegram", "email"] as const
 
 interface VaultTableProps {
   items: VaultItem[]
@@ -64,6 +63,7 @@ interface VaultTableProps {
 }
 
 export function VaultTable({ items, total, pages, page, statusFilter }: VaultTableProps) {
+  const t = useTranslations("vault")
   const router = useRouter()
   const pathname = usePathname()
 
@@ -76,9 +76,8 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Status tabs */}
       <div className="flex items-center gap-1 border-b">
-        {Object.entries(STATUS_FILTER_LABELS).map(([key, label]) => (
+        {FILTER_KEYS.map((key) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
@@ -88,7 +87,7 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {label}
+            {t(`filters.${key}`)}
           </button>
         ))}
       </div>
@@ -97,26 +96,27 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs">Document</TableHead>
-              <TableHead className="text-xs">Source</TableHead>
-              <TableHead className="text-xs">Uploaded</TableHead>
-              <TableHead className="text-xs">Amount</TableHead>
-              <TableHead className="text-xs">Status</TableHead>
-              <TableHead className="text-xs">Matched to</TableHead>
+              <TableHead className="text-xs">{t("table.document")}</TableHead>
+              <TableHead className="text-xs">{t("table.source")}</TableHead>
+              <TableHead className="text-xs">{t("table.uploaded")}</TableHead>
+              <TableHead className="text-xs">{t("table.amount")}</TableHead>
+              <TableHead className="text-xs">{t("table.status")}</TableHead>
+              <TableHead className="text-xs">{t("table.matchedTo")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-32 text-center text-sm text-muted-foreground">
-                  No documents yet. Upload receipts via WhatsApp, Telegram, or the upload button.
+                  {t("table.noDocuments")}
                 </TableCell>
               </TableRow>
             ) : (
               items.map((item) => {
                 const isPdf = item.fileName.toLowerCase().endsWith(".pdf")
-                const statusCfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.new
-                const { Icon } = statusCfg
+                const statusKey = STATUS_KEYS.includes(item.status as typeof STATUS_KEYS[number]) ? item.status : "new"
+                const Icon = STATUS_ICONS[statusKey] ?? Clock
+                const variant = STATUS_VARIANTS[statusKey] ?? "secondary"
 
                 return (
                   <TableRow key={item.id}>
@@ -136,7 +136,9 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {SOURCE_LABELS[item.source] ?? item.source}
+                      {SOURCE_KEYS.includes(item.source as typeof SOURCE_KEYS[number])
+                        ? t(`sources.${item.source as typeof SOURCE_KEYS[number]}`)
+                        : item.source}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {format(new Date(item.createdAt), "MMM d, yyyy")}
@@ -147,16 +149,16 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
                         : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={statusCfg.variant} className="text-[10px] gap-1">
+                      <Badge variant={variant} className="text-[10px] gap-1">
                         <Icon className="h-3 w-3" />
-                        {statusCfg.label}
+                        {t(`statuses.${statusKey as typeof STATUS_KEYS[number]}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs">
                       {item.transaction ? (
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium truncate max-w-[180px]">
-                            {item.transaction.merchantName ?? item.transaction.description ?? "Transaction"}
+                            {item.transaction.merchantName ?? item.transaction.description ?? t("table.transactionFallback")}
                           </span>
                           <span className="text-[10px] text-muted-foreground">
                             {format(new Date(item.transaction.date), "MMM d")}
@@ -178,16 +180,14 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
 
       {pages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{total} documents</span>
+          <span>{t("pagination.total", { count: total })}</span>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-7 text-xs" disabled={page <= 1}
-              onClick={() => setFilter(statusFilter, page - 1)}>
-              Previous
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setFilter(statusFilter, page - 1)}>
+              {t("pagination.previous")}
             </Button>
-            <span>Page {page} of {pages}</span>
-            <Button variant="outline" size="sm" className="h-7 text-xs" disabled={page >= pages}
-              onClick={() => setFilter(statusFilter, page + 1)}>
-              Next
+            <span>{t("pagination.page", { page, pages })}</span>
+            <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => setFilter(statusFilter, page + 1)}>
+              {t("pagination.next")}
             </Button>
           </div>
         </div>

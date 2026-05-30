@@ -6,16 +6,16 @@ import {
   getMonthlySpendTrend,
   getCategoryBreakdown,
   getIncomeCategoryBreakdown,
-  getTopVendors,
+  getTopCounterparties,
   getCashFlow,
   getExpenseStatsForMonth,
+  getIncomeStats,
 } from "@/features/analytics/queries/get-analytics"
 import {
   getCashFlowForecast,
   getRevenueForecast,
   getExpenseForecast,
 } from "@/features/analytics/queries/get-forecasts"
-import { getIncomeStats } from "@/features/income/queries/get-income"
 import {
   CashFlowForecastCard,
   RevenueForecastCard,
@@ -27,15 +27,7 @@ import { AnalyticsFilters } from "@/features/analytics/components/analytics-filt
 import Link from "next/link"
 import { Button } from "@polso/ui/button"
 import { format, startOfMonth, parse } from "date-fns"
-
-function formatCurrency(value: number, currency = "EUR") {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+import { formatCurrency } from "@/lib/format-currency"
 
 export default async function ReportsPage({
   searchParams,
@@ -53,7 +45,7 @@ export default async function ReportsPage({
     burnRate,
     monthlyTrend,
     categoryBreakdown,
-    topVendors,
+    topCounterparties,
     cashFlow,
     incomeStats,
     incomeCategoryBreakdown,
@@ -65,7 +57,7 @@ export default async function ReportsPage({
     getBurnRateAndRunway(),
     getMonthlySpendTrend(6, selectedDate),
     getCategoryBreakdown(selectedDate),
-    getTopVendors(5, selectedDate),
+    getTopCounterparties(5, selectedDate),
     getCashFlow(6, selectedDate),
     getIncomeStats(selectedDate),
     getIncomeCategoryBreakdown(selectedDate),
@@ -78,7 +70,7 @@ export default async function ReportsPage({
   const hasData =
     monthlyTrend.some((m) => m.total > 0) ||
     categoryBreakdown.length > 0 ||
-    topVendors.length > 0 ||
+    topCounterparties.length > 0 ||
     incomeStats.totalThisMonth > 0
 
   if (!hasData) {
@@ -236,19 +228,19 @@ export default async function ReportsPage({
         <Card>
           <CardHeader><CardTitle>{t("topVendors")}</CardTitle></CardHeader>
           <CardContent>
-            {topVendors.length > 0 ? (
+            {topCounterparties.length > 0 ? (
               <div className="space-y-4">
-                {topVendors.map((vendor, index) => (
-                  <div key={vendor.vendorId || index} className="space-y-1">
+                {topCounterparties.map((cp, index) => (
+                  <div key={cp.counterpartyId || index} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="truncate max-w-[60%]">{vendor.vendorName}</span>
+                      <span className="truncate max-w-[60%]">{cp.counterpartyName}</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">{vendor.count}x</span>
-                        <span className="font-medium">{formatCurrency(vendor.total, currency)}</span>
+                        <span className="text-muted-foreground">{cp.count}x</span>
+                        <span className="font-medium">{formatCurrency(cp.total, currency)}</span>
                       </div>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full bg-primary transition-all" style={{ width: `${vendor.percentage}%` }} />
+                      <div className="h-full bg-primary transition-all" style={{ width: `${cp.percentage}%` }} />
                     </div>
                   </div>
                 ))}
@@ -294,28 +286,20 @@ export default async function ReportsPage({
         <Card>
           <CardHeader><CardTitle>{t("incomeBySource")}</CardTitle></CardHeader>
           <CardContent>
-            {incomeStats.bySource.length > 0 ? (
+            {incomeStats.byCategory.length > 0 ? (
               <div className="space-y-4">
                 {(() => {
-                  const sourceColors: Record<string, string> = {
-                    salary: "#22c55e", freelance: "#3b82f6", investment: "#a855f7",
-                    refund: "#f97316", transfer: "#06b6d4", other: "#6b7280",
-                  }
-                  const totalIncome = incomeStats.bySource.reduce((sum, s) => sum + s.total, 0)
-                  return incomeStats.bySource.map((source) => {
-                    const percentage = totalIncome > 0 ? (source.total / totalIncome) * 100 : 0
-                    const color = sourceColors[source.source] || sourceColors.other
+                  const totalIncome = incomeStats.byCategory.reduce((sum, c) => sum + c.total, 0)
+                  return incomeStats.byCategory.map((cat) => {
+                    const percentage = totalIncome > 0 ? (cat.total / totalIncome) * 100 : 0
                     return (
-                      <div key={source.source} className="space-y-1">
+                      <div key={cat.categoryId ?? "uncategorized"} className="space-y-1">
                         <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                            <span className="capitalize">{source.source}</span>
-                          </div>
-                          <span className="font-medium">{formatCurrency(source.total, currency)}</span>
+                          <span className="capitalize truncate max-w-[60%]">{cat.categoryName}</span>
+                          <span className="font-medium">{formatCurrency(cat.total, currency)}</span>
                         </div>
                         <div className="h-2 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full transition-all" style={{ width: `${percentage}%`, backgroundColor: color }} />
+                          <div className="h-full bg-green-500 transition-all" style={{ width: `${percentage}%` }} />
                         </div>
                       </div>
                     )

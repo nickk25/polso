@@ -164,10 +164,10 @@ export async function RevenueForecastCard({ forecast, currency = "USD" }: Revenu
             </div>
             <div className="space-y-2">
               {topClients.slice(0, 3).map((client) => (
-                <div key={client.clientId} className="flex items-center justify-between text-sm">
+                <div key={client.counterpartyId} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     {getTrendIcon(client.trend)}
-                    <span className="truncate max-w-[120px]">{client.clientName}</span>
+                    <span className="truncate max-w-[120px]">{client.counterpartyName}</span>
                   </div>
                   <span className="font-medium">
                     {formatCurrency(client.projectedRevenue, currency)}{t("revenueForecast.perMonth")}

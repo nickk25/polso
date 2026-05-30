@@ -2,25 +2,27 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { User, Buildings, Bank, Bell, Gear, UsersThree, Robot } from "@phosphor-icons/react"
 
 const TABS = [
-  { label: "Profile", href: "/settings/profile", Icon: User },
-  { label: "Organization", href: "/settings/organization", Icon: Buildings },
-  { label: "Banking", href: "/settings/banking", Icon: Bank },
-  { label: "Team", href: "/settings/team", Icon: UsersThree },
-  { label: "Notifications", href: "/settings/notifications", Icon: Bell },
-  { label: "Preferences", href: "/settings/preferences", Icon: Gear },
-  { label: "Agent", href: "/settings/agent", Icon: Robot },
-]
+  { key: "profile", href: "/settings/profile", Icon: User },
+  { key: "organization", href: "/settings/organization", Icon: Buildings },
+  { key: "banking", href: "/settings/banking", Icon: Bank },
+  { key: "team", href: "/settings/team", Icon: UsersThree },
+  { key: "notifications", href: "/settings/notifications", Icon: Bell },
+  { key: "preferences", href: "/settings/preferences", Icon: Gear },
+  { key: "agent", href: "/settings/agent", Icon: Robot },
+] as const
 
 export function SettingsTabs() {
+  const t = useTranslations("settings.tabs")
   const pathname = usePathname()
 
   return (
     <div className="border-b bg-background sticky top-0 z-10">
       <div className="flex items-center gap-0 px-6 overflow-x-auto">
-        {TABS.map(({ label, href, Icon }) => {
+        {TABS.map(({ key, href, Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + "/")
           return (
             <Link
@@ -33,7 +35,7 @@ export function SettingsTabs() {
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
-              {label}
+              {t(key)}
             </Link>
           )
         })}

@@ -1,0 +1,47 @@
+{
+  "title": "Archivos",
+  "subtitle": "Todos los recibos y documentos subidos",
+  "stats": {
+    "total": "Total documentos",
+    "matched": "Emparejados",
+    "suggested": "Sugeridos",
+    "noMatch": "Sin coincidencia"
+  },
+  "table": {
+    "document": "Documento",
+    "source": "Origen",
+    "uploaded": "Subido",
+    "amount": "Importe",
+    "status": "Estado",
+    "matchedTo": "Emparejado con",
+    "noDocuments": "Sin documentos aun. Sube recibos por WhatsApp, Telegram o el boton de subida.",
+    "transactionFallback": "Transaccion"
+  },
+  "filters": {
+    "all": "Todos los documentos",
+    "done": "Emparejados",
+    "suggested_match": "Sugeridos",
+    "no_match": "Sin coincidencia",
+    "new": "Nuevos"
+  },
+  "statuses": {
+    "done": "Emparejado",
+    "suggested_match": "Sugerido",
+    "no_match": "Sin coincidencia",
+    "new": "Nuevo",
+    "processing": "Procesando",
+    "analyzing": "Analizando"
+  },
+  "sources": {
+    "upload": "Subida",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "email": "Correo"
+  },
+  "pagination": {
+    "total": "{count} documentos",
+    "page": "Pagina {page} de {pages}",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  }
+}

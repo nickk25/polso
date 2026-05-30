@@ -1,0 +1,73 @@
+{
+  "title": "Transactions",
+  "subtitle": "All income and expenses in one view",
+  "stats": {
+    "income": "This month — Income",
+    "expenses": "This month — Expenses",
+    "netCashFlow": "Net cash flow"
+  },
+  "table": {
+    "date": "Date",
+    "description": "Description",
+    "type": "Type",
+    "category": "Category",
+    "status": "Status",
+    "amount": "Amount",
+    "noTransactions": "No transactions found",
+    "vendor": "Vendor",
+    "source": "Source"
+  },
+  "types": {
+    "all": "All",
+    "expense": "Expenses",
+    "income": "Income"
+  },
+  "expenseTypes": {
+    "fixed": "Fixed",
+    "variable": "Variable"
+  },
+  "statuses": {
+    "all": "All statuses",
+    "pending": "Pending",
+    "verified": "Verified",
+    "documented": "Documented",
+    "confirmed": "Confirmed",
+    "excluded": "Excluded"
+  },
+  "bulk": {
+    "selected": "{count, plural, one {# selected} other {# selected}}",
+    "expenses": "{count, plural, one {# expense} other {# expenses}}",
+    "incomes": "{count, plural, one {# income} other {# income}}",
+    "categorize": "Categorize",
+    "setType": "Set type",
+    "setSource": "Set source",
+    "setStatus": "Set status",
+    "deselect": "Deselect"
+  },
+  "tableFilters": {
+    "searchPlaceholder": "Search...",
+    "dateRange": "Date range",
+    "allTypes": "All types",
+    "allStatus": "All statuses",
+    "allCategories": "All categories",
+    "noCategory": "No category",
+    "clear": "Clear"
+  },
+  "editSheet": {
+    "title": "Edit transaction",
+    "category": "Category",
+    "type": "Type",
+    "status": "Status",
+    "documents": "Documents & Receipts",
+    "noCategory": "No category",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "pagination": {
+    "total": "{count} transactions",
+    "page": "Page {page} of {pages}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "search": "Search..."
+}

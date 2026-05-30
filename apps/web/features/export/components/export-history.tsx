@@ -14,8 +14,8 @@ interface Export {
   fileSize: number | null
   startDate: Date
   endDate: Date
-  expenseCount: number | null
-  invoiceCount: number | null
+  entryCount: number | null
+  documentCount: number | null
   status: string
   errorMessage: string | null
   createdAt: Date
@@ -114,9 +114,9 @@ export function ExportHistory({ exports }: ExportHistoryProps) {
                 {exp.status === "completed" && (
                   <>
                     <span>·</span>
-                    <span>{t("expenses", { count: exp.expenseCount ?? 0 })}</span>
+                    <span>{t("expenses", { count: exp.entryCount ?? 0 })}</span>
                     <span>·</span>
-                    <span>{t("invoices", { count: exp.invoiceCount ?? 0 })}</span>
+                    <span>{t("invoices", { count: exp.documentCount ?? 0 })}</span>
                     <span>·</span>
                     <span>{formatFileSize(exp.fileSize)}</span>
                   </>

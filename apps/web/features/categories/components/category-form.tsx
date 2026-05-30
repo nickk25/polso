@@ -63,7 +63,7 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
 
   const [name, setName] = useState("")
   const [color, setColor] = useState("#6366f1")
-  const [expenseType, setExpenseType] = useState<string>(NONE_VALUE)
+  const [entryType, setEntryType] = useState<string>(NONE_VALUE)
 
   const isEditing = !!category
 
@@ -73,11 +73,11 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
       if (category) {
         setName(category.name)
         setColor(category.color)
-        setExpenseType(category.expenseType || NONE_VALUE)
+        setEntryType(category.entryType || NONE_VALUE)
       } else {
         setName("")
         setColor("#6366f1")
-        setExpenseType(NONE_VALUE)
+        setEntryType(NONE_VALUE)
       }
       setError(null)
     }
@@ -88,18 +88,18 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
     setLoading(true)
     setError(null)
 
-    const expenseTypeValue = expenseType === NONE_VALUE ? null : expenseType
+    const entryTypeValue = entryType === NONE_VALUE ? null : entryType
 
     const result = isEditing
       ? await updateCategoryAction(category!.id, {
           name,
           color,
-          expenseType: expenseTypeValue,
+          entryType: entryTypeValue,
         })
       : await createCategoryAction({
           name,
           color,
-          expenseType: expenseTypeValue,
+          entryType: entryTypeValue,
         })
 
     if (!result.success) {
@@ -175,7 +175,7 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
 
           <div className="space-y-2">
             <Label htmlFor="expense-type">{t("form.defaultExpenseType")}</Label>
-            <Select value={expenseType} onValueChange={setExpenseType}>
+            <Select value={entryType} onValueChange={setEntryType}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t("form.none")} />
               </SelectTrigger>
@@ -186,7 +186,7 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {t("form.expenseTypeDescription")}
+              {t("form.entryTypeDescription")}
             </p>
           </div>
 

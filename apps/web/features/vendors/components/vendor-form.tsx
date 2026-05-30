@@ -68,7 +68,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
   const [website, setWebsite] = useState("")
   const [taxId, setTaxId] = useState("")
   const [defaultCategoryId, setDefaultCategoryId] = useState<string | null>(null)
-  const [defaultExpenseType, setDefaultExpenseType] = useState<string>(NONE_VALUE)
+  const [defaultEntryType, setDefaultEntryType] = useState<string>(NONE_VALUE)
 
   const isEditing = !!vendor
 
@@ -80,13 +80,13 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
         setWebsite(vendor.website || "")
         setTaxId(vendor.taxId || "")
         setDefaultCategoryId(vendor.defaultCategoryId)
-        setDefaultExpenseType(vendor.defaultExpenseType || NONE_VALUE)
+        setDefaultEntryType(vendor.defaultEntryType || NONE_VALUE)
       } else {
         setName("")
         setWebsite("")
         setTaxId("")
         setDefaultCategoryId(null)
-        setDefaultExpenseType(NONE_VALUE)
+        setDefaultEntryType(NONE_VALUE)
       }
       setError(null)
     }
@@ -97,7 +97,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
     setLoading(true)
     setError(null)
 
-    const expenseTypeValue = defaultExpenseType === NONE_VALUE ? null : defaultExpenseType
+    const entryTypeValue = defaultEntryType === NONE_VALUE ? null : defaultEntryType
 
     const result = isEditing
       ? await updateVendorAction(vendor!.id, {
@@ -105,14 +105,14 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
           website: website || null,
           taxId: taxId || null,
           defaultCategoryId,
-          defaultExpenseType: expenseTypeValue as "fixed" | "variable" | null,
+          defaultEntryType: entryTypeValue as "fixed" | "variable" | null,
         })
       : await createVendorAction({
           name,
           website: website || null,
           taxId: taxId || null,
           defaultCategoryId,
-          defaultExpenseType: expenseTypeValue as "fixed" | "variable" | null,
+          defaultEntryType: entryTypeValue as "fixed" | "variable" | null,
         })
 
     if (!result.success) {
@@ -171,9 +171,9 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
                       {t("form.autoDetected")}
                     </span>
                   )}
-                  {vendor._count.expenses > 0 && (
+                  {vendor._count.entries > 0 && (
                     <span>
-                      {t("form.expenseCount", { count: vendor._count.expenses })} •{" "}
+                      {t("form.expenseCount", { count: vendor._count.entries })} •{" "}
                       {formatCurrency(vendor.totalSpent)}
                     </span>
                   )}
@@ -237,7 +237,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
 
             <div className="space-y-2">
               <Label>{t("form.defaultExpenseType")}</Label>
-              <Select value={defaultExpenseType} onValueChange={setDefaultExpenseType}>
+              <Select value={defaultEntryType} onValueChange={setDefaultEntryType}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={t("form.none")} />
                 </SelectTrigger>
@@ -304,9 +304,9 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
           <AlertDialogHeader>
             <AlertDialogTitle>{t("form.deleteVendor")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {vendor && vendor._count.expenses > 0 ? (
+              {vendor && vendor._count.entries > 0 ? (
                 <>
-                  {t("form.deleteHasExpenses", { count: vendor._count.expenses })}{" "}
+                  {t("form.deleteHasExpenses", { count: vendor._count.entries })}{" "}
                   {t("form.deleteReassign")}
                 </>
               ) : (
@@ -318,7 +318,7 @@ export function VendorForm({ vendor, categories, open, onOpenChange }: VendorFor
             <AlertDialogCancel disabled={loading}>{tc("actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={loading || (vendor?._count.expenses ?? 0) > 0}
+              disabled={loading || (vendor?._count.entries ?? 0) > 0}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {loading ? (
