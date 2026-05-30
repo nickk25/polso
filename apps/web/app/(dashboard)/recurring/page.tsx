@@ -15,11 +15,11 @@ export default async function RecurringPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end">
         <DetectPatternsButton />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card>
           <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("monthlyTotal")}</div>
           <div className="px-4 pb-4 text-2xl font-bold">{formatCurrency(monthlyTotal, currency)}</div>
@@ -39,17 +39,12 @@ export default async function RecurringPage() {
       </div>
 
       {suggested.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-amber-500" />
-            <h2 className="text-lg font-semibold">{t("suggestionsForReview")}</h2>
-            <span className="text-sm text-muted-foreground">
-              ({suggested.length})
-            </span>
+            <Lightbulb className="h-4 w-4 text-amber-500" />
+            <span className="text-sm font-semibold">{t("suggestionsForReview")}</span>
+            <span className="text-xs text-muted-foreground">({suggested.length})</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {t("suggestionsDescription")}
-          </p>
           <div className="grid gap-3">
             {suggested.map((pattern) => (
               <RecurringPatternCard
@@ -64,13 +59,11 @@ export default async function RecurringPage() {
       )}
 
       {confirmed.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Repeat className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">{t("activeRecurringExpenses")}</h2>
-            <span className="text-sm text-muted-foreground">
-              ({confirmed.length})
-            </span>
+            <Repeat className="h-4 w-4" />
+            <span className="text-sm font-semibold">{t("activeRecurringExpenses")}</span>
+            <span className="text-xs text-muted-foreground">({confirmed.length})</span>
           </div>
           <div className="grid gap-3">
             {confirmed.map((pattern) => (
@@ -81,17 +74,12 @@ export default async function RecurringPage() {
       )}
 
       {paused.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Pause className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold text-muted-foreground">{t("pausedPatterns")}</h2>
-            <span className="text-sm text-muted-foreground">
-              ({paused.length})
-            </span>
+            <Pause className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-muted-foreground">{t("pausedPatterns")}</span>
+            <span className="text-xs text-muted-foreground">({paused.length})</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {t("pausedDescription")}
-          </p>
           <div className="grid gap-3">
             {paused.map((pattern) => (
               <RecurringPatternCard key={pattern.id} pattern={pattern} state="paused" currency={currency} />
