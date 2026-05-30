@@ -56,7 +56,7 @@ export function TransactionDocumentList({
   onDelete,
   loading = false,
 }: TransactionDocumentListProps) {
-  const t = useTranslations("expenses")
+  const t = useTranslations("transactions")
   const tc = useTranslations("common")
   const [previewDoc, setPreviewDoc] = useState<TransactionDocumentWithUrl | null>(null)
   const [deleteDoc, setDeleteDoc] = useState<TransactionDocumentWithUrl | null>(null)

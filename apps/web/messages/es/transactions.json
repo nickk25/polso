@@ -69,6 +69,24 @@
     "previous": "Anterior",
     "next": "Siguiente"
   },
+  "invoices": {
+    "preview": "Vista previa",
+    "download": "Descargar",
+    "deleteTitle": "Eliminar documento?",
+    "deleteDescription": "Esto eliminara permanentemente {name}. Esta accion no se puede deshacer.",
+    "deleted": "Documento eliminado",
+    "deleteFailed": "Error al eliminar el documento",
+    "downloadFailed": "Error al descargar el documento",
+    "dropzone": "Arrastra un archivo aqui o haz clic para subir",
+    "dropzoneFormats": "PDF, PNG, JPG, WEBP — max 10 MB",
+    "invalidFile": "Archivo no valido",
+    "invalidType": "El tipo de archivo {type} no es compatible",
+    "fileTooLarge": "El archivo es demasiado grande ({size} MB). El maximo es 10 MB",
+    "uploaded": "Documento subido",
+    "uploadFailed": "Error al subir",
+    "previewNotAvailable": "Vista previa no disponible para este tipo de archivo",
+    "downloadToView": "Descargar para ver"
+  },
   "search": "Buscar...",
   "emptyState": {
     "title": "Sin transacciones",

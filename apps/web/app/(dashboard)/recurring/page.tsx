@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
+import { Card, CardContent } from "@polso/ui/card"
 import { Repeat, Lightbulb, CurrencyDollar, Pause } from "@phosphor-icons/react/dist/ssr"
 import { RecurringPatternCard } from "@/features/intelligence/components/recurring-pattern-card"
 import { DetectPatternsButton } from "@/features/intelligence/components/detect-patterns-button"
@@ -9,22 +9,27 @@ import {
   getMonthlyRecurringTotal,
 } from "@/features/intelligence/queries/get-recurring-patterns"
 import { getTranslations } from "next-intl/server"
+import { getAuthContext } from "@polso/auth/get-session"
+import { prisma } from "@/lib/db"
 
 export default async function RecurringPage() {
   const t = await getTranslations("recurring")
-  const [confirmedPatterns, suggestedPatterns, pausedPatterns, monthlyTotal] = await Promise.all([
+  const { organizationId } = await getAuthContext()
+  const [confirmedPatterns, suggestedPatterns, pausedPatterns, monthlyTotal, org] = await Promise.all([
     getConfirmedPatterns(),
     getSuggestedPatterns(),
     getPausedPatterns(),
     getMonthlyRecurringTotal(),
+    prisma.organization.findUnique({ where: { id: organizationId }, select: { currency: true } }),
   ])
 
+  const currency = org?.currency ?? "EUR"
   const hasPatterns = confirmedPatterns.length > 0 || suggestedPatterns.length > 0 || pausedPatterns.length > 0
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("es-ES", {
       style: "currency",
-      currency: "USD",
+      currency,
     }).format(amount)
   }
 

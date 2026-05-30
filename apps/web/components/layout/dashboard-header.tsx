@@ -13,6 +13,7 @@ const PATH_MAP: Record<string, string> = {
   "/reports": "reports",
   "/vault": "vault",
   "/counterparties": "vendors",
+  "/alerts": "alerts",
   "/export": "export",
   "/settings/profile": "profile",
   "/settings/organization": "organization",

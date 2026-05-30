@@ -27,7 +27,7 @@ export function TransactionDocumentUpload({
   onUploadComplete,
   disabled = false,
 }: TransactionDocumentUploadProps) {
-  const t = useTranslations("expenses")
+  const t = useTranslations("transactions")
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploading, setUploading] = useState<{ file: File; progress: number; error?: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)

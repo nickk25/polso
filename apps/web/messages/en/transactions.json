@@ -69,6 +69,24 @@
     "previous": "Previous",
     "next": "Next"
   },
+  "invoices": {
+    "preview": "Preview",
+    "download": "Download",
+    "deleteTitle": "Delete document?",
+    "deleteDescription": "This will permanently delete {name}. This action cannot be undone.",
+    "deleted": "Document deleted",
+    "deleteFailed": "Failed to delete document",
+    "downloadFailed": "Failed to download document",
+    "dropzone": "Drop a file here or click to upload",
+    "dropzoneFormats": "PDF, PNG, JPG, WEBP — max 10 MB",
+    "invalidFile": "Invalid file",
+    "invalidType": "File type {type} is not supported",
+    "fileTooLarge": "File is too large ({size} MB). Maximum is 10 MB",
+    "uploaded": "Document uploaded",
+    "uploadFailed": "Upload failed",
+    "previewNotAvailable": "Preview not available for this file type",
+    "downloadToView": "Download to view"
+  },
   "search": "Search...",
   "emptyState": {
     "title": "No transactions yet",
