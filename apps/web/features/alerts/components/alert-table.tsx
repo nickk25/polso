@@ -107,6 +107,7 @@ export function AlertTable({ alerts }: AlertTableProps) {
 
   return (
     <>
+      <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -192,6 +193,7 @@ export function AlertTable({ alerts }: AlertTableProps) {
           ))}
         </TableBody>
       </Table>
+      </div>
 
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
