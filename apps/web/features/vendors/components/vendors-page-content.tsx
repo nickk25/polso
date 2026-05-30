@@ -72,10 +72,7 @@ export function VendorsPageContent({ vendors, categories }: VendorsPageContentPr
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p className="text-muted-foreground">
-          {t("vendorCount", { count: vendors.length })}
-        </p>
+      <div className="flex items-center justify-end">
         <div className="flex gap-2">
           <BackfillVendorsButton />
           <Button onClick={handleNewVendor}>
