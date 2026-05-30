@@ -53,6 +53,11 @@
     "selectTargetError": "Por favor selecciona un proveedor objetivo",
     "noVendorsToMerge": "No hay proveedores para fusionar"
   },
+  "suggestions": {
+    "title": "{count, plural, one {# sugerencia de fusion} other {# sugerencias de fusion}}",
+    "subtitle": "posibles proveedores duplicados detectados",
+    "merge": "Fusionar"
+  },
   "toasts": {
     "created": "Proveedor creado",
     "createdDescription": "{name} ha sido creado.",

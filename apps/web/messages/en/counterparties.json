@@ -53,6 +53,11 @@
     "selectTargetError": "Please select a target vendor",
     "noVendorsToMerge": "No vendors to merge"
   },
+  "suggestions": {
+    "title": "{count, plural, one {# merge suggestion} other {# merge suggestions}}",
+    "subtitle": "possible duplicate vendors detected",
+    "merge": "Merge"
+  },
   "toasts": {
     "created": "Vendor created",
     "createdDescription": "{name} has been created.",

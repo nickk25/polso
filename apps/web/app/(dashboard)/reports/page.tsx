@@ -93,68 +93,30 @@ export default async function ReportsPage({
     <div className="flex flex-col gap-6 p-6">
       <AnalyticsFilters selectedMonth={selectedMonthStr} />
 
-      {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("totalBalance")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(burnRate.totalBalance, currency)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("monthlyIncome")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-500">
-              +{formatCurrency(incomeStats.totalThisMonth, currency)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("monthlyExpenses")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">
-              -{formatCurrency(expenseStats.total, currency)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("netCashFlow")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${incomeStats.totalThisMonth - expenseStats.total >= 0 ? "text-green-500" : "text-red-500"}`}>
-              {incomeStats.totalThisMonth - expenseStats.total >= 0 ? "+" : ""}{formatCurrency(incomeStats.totalThisMonth - expenseStats.total, currency)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("runway")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {burnRate.runway > 0 ? `${burnRate.runway.toFixed(1)} mo` : "∞"}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("totalBalance")}</p>
+          <p className="text-xl font-bold">{formatCurrency(burnRate.totalBalance, currency)}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("monthlyIncome")}</p>
+          <p className="text-xl font-bold text-green-500">+{formatCurrency(incomeStats.totalThisMonth, currency)}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("monthlyExpenses")}</p>
+          <p className="text-xl font-bold text-red-500">-{formatCurrency(expenseStats.total, currency)}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("netCashFlow")}</p>
+          <p className={`text-xl font-bold ${incomeStats.totalThisMonth - expenseStats.total >= 0 ? "text-green-500" : "text-red-500"}`}>
+            {incomeStats.totalThisMonth - expenseStats.total >= 0 ? "+" : ""}
+            {formatCurrency(incomeStats.totalThisMonth - expenseStats.total, currency)}
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("runway")}</p>
+          <p className="text-xl font-bold">{burnRate.runway > 0 ? `${burnRate.runway.toFixed(1)} mo` : "∞"}</p>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@polso/ui/button"
 import { Plus, Storefront } from "@phosphor-icons/react"
 import { CounterpartyTable } from "./counterparty-table"
 import { CounterpartyForm } from "./counterparty-form"
 import { CounterpartyMergeDialog } from "./counterparty-merge-dialog"
+import { CounterpartyMergeSuggestions } from "./counterparty-merge-suggestions"
 import { BackfillCounterpartiesButton } from "./backfill-counterparties-button"
+import { computeMergeSuggestions } from "../lib/merge-suggestions"
 import type { CounterpartyWithStats } from "../queries/get-counterparties"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 
@@ -23,6 +25,13 @@ export function CounterpartiesPageContent({ counterparties, currency, categories
   const [mergeOpen, setMergeOpen] = useState(false)
   const [editing, setEditing] = useState<CounterpartyWithStats | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  const suggestions = useMemo(() => computeMergeSuggestions(counterparties), [counterparties])
+
+  const handleMergeGroup = (ids: string[]) => {
+    setSelectedIds(ids)
+    setMergeOpen(true)
+  }
 
   const handleRowClick = (cp: CounterpartyWithStats) => {
     setEditing(cp)
@@ -74,6 +83,8 @@ export function CounterpartiesPageContent({ counterparties, currency, categories
           </Button>
         </div>
       </div>
+
+      <CounterpartyMergeSuggestions suggestions={suggestions} onMergeGroup={handleMergeGroup} />
 
       <CounterpartyTable
         counterparties={counterparties}
