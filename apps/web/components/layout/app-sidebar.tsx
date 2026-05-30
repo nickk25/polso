@@ -1,19 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { authClient } from "@polso/auth/client";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@polso/ui/dropdown-menu";
 import {
   House,
   ArrowsLeftRight,
@@ -74,13 +65,10 @@ function getInitials(name: string): string {
 
 interface AppSidebarProps {
   organizationName: string;
-  userName: string;
-  userEmail: string | null;
 }
 
-export function AppSidebar({ organizationName, userName, userEmail }: AppSidebarProps) {
+export function AppSidebar({ organizationName }: AppSidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const t = useTranslations("common");
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(
@@ -249,57 +237,23 @@ export function AppSidebar({ organizationName, userName, userEmail }: AppSidebar
         </nav>
       </div>
 
-      {/* Footer */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="relative h-[40px] w-full flex items-center hover:bg-[#f7f7f7] dark:hover:bg-[#131313] transition-colors outline-none"
-          >
-            <div className="absolute left-[19px] w-[32px] h-[32px] flex items-center justify-center shrink-0">
-              <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs">
-                {initials}
-              </div>
-            </div>
-            <span
-              className={cn(
-                "absolute left-[60px] right-[15px] text-sm font-medium truncate text-left",
-                "transition-opacity duration-150",
-                isExpanded ? "opacity-100" : "opacity-0 pointer-events-none",
-              )}
-            >
-              {organizationName}
-            </span>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="end" className="w-56 mb-2">
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-semibold text-sm">{userName}</span>
-              {userEmail && (
-                <span className="text-xs text-muted-foreground">{userEmail}</span>
-              )}
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/settings/profile">Account</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/settings">Settings</Link>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            onClick={async () => {
-              await authClient.signOut();
-              router.replace("/auth/sign-in");
-            }}
-          >
-            Sign out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Footer — org name only */}
+      <div className="relative h-[40px] w-full flex items-center">
+        <div className="absolute left-[19px] w-[32px] h-[32px] flex items-center justify-center shrink-0">
+          <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs">
+            {initials}
+          </div>
+        </div>
+        <span
+          className={cn(
+            "absolute left-[60px] right-[15px] text-sm font-medium truncate text-left text-muted-foreground",
+            "transition-opacity duration-150",
+            isExpanded ? "opacity-100" : "opacity-0 pointer-events-none",
+          )}
+        >
+          {organizationName}
+        </span>
+      </div>
     </aside>
   );
 }

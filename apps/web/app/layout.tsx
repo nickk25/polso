@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/react"
 import { NextIntlClientProvider } from "next-intl"
+import { ThemeProvider } from "next-themes"
 import "./globals.css"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import { Toaster } from "@polso/ui/sonner"
@@ -75,9 +76,11 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={jetbrainsMono.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <AuthProvider>{children}</AuthProvider>
-        </NextIntlClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <AuthProvider>{children}</AuthProvider>
+          </NextIntlClientProvider>
+        </ThemeProvider>
         <Toaster />
         <Analytics />
       </body>

@@ -79,16 +79,13 @@ export default async function DashboardLayout({
   return (
     <div className="relative">
       <AuthCallbackRedirect />
-      <AppSidebar
-        organizationName={organization.name}
-        userName={user.name ?? user.email?.split("@")[0] ?? ""}
-        userEmail={user.email}
-      />
+      <AppSidebar organizationName={organization.name} />
       <div className="md:ml-[70px] min-h-screen flex flex-col">
         <header className="h-14 md:h-18 shrink-0 border-b flex items-center px-4 md:px-0">
           <DashboardHeader
             organizationName={organization.name}
             userName={user.name ?? user.email?.split("@")[0] ?? ""}
+            userEmail={user.email ?? null}
           />
         </header>
         <main className="flex-1 overflow-auto">{children}</main>
