@@ -69,5 +69,12 @@
     "previous": "Anterior",
     "next": "Siguiente"
   },
-  "search": "Buscar..."
+  "search": "Buscar...",
+  "emptyState": {
+    "title": "Sin transacciones",
+    "description": "Sincroniza tu banco conectado para cargar tus transacciones, o conecta una cuenta bancaria primero.",
+    "syncButton": "Sincronizar banco",
+    "connectButton": "Conectar banco",
+    "syncing": "Sincronizando..."
+  }
 }

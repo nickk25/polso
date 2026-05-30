@@ -69,5 +69,12 @@
     "previous": "Previous",
     "next": "Next"
   },
-  "search": "Search..."
+  "search": "Search...",
+  "emptyState": {
+    "title": "No transactions yet",
+    "description": "Sync your connected bank to load your transactions, or connect a bank account first.",
+    "syncButton": "Sync bank",
+    "connectButton": "Connect bank",
+    "syncing": "Syncing..."
+  }
 }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { neonAuth } from "@neondatabase/auth/next/server";
 import { prisma } from "@/lib/db";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
 
 async function getOrganization(userId: string, userEmail: string | null) {
@@ -84,7 +85,14 @@ export default async function DashboardLayout({
         userEmail={user.email}
       />
       <div className="md:ml-[70px] min-h-screen flex flex-col">
-        <header className="h-18 shrink-0 border-b" />
+        <header className="h-14 md:h-18 shrink-0 border-b flex items-center px-4 md:px-0">
+          <div className="md:hidden">
+            <MobileNav
+              organizationName={organization.name}
+              userName={user.name ?? user.email?.split("@")[0] ?? ""}
+            />
+          </div>
+        </header>
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>

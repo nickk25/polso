@@ -21,6 +21,7 @@ import { ArrowsClockwise, Trash, Warning, CheckCircle, Clock } from "@phosphor-i
 import { syncTransactionsAction } from "@/features/banking/actions/sync-transactions"
 import { disconnectBankAction } from "@/features/banking/actions/connect-bank"
 import type { Account } from "@/lib/types"
+import { formatCurrency as formatCurrencyUtil } from "@/lib/format-currency"
 
 interface AccountWithCount extends Account {
   _count: {
@@ -32,14 +33,9 @@ interface BankAccountCardProps {
   account: AccountWithCount
 }
 
-function formatCurrency(amount: number | null, currency: string = "USD") {
+function formatCurrency(amount: number | null, currency = "EUR") {
   if (amount === null) return "—"
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
+  return formatCurrencyUtil(amount, currency)
 }
 
 export function BankAccountCard({ account }: BankAccountCardProps) {

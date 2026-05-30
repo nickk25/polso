@@ -27,13 +27,13 @@ import {
   CaretDown,
 } from "@phosphor-icons/react";
 
-interface NavChild {
+export interface NavChild {
   path: string;
   labelKey: string;
   icon: React.ComponentType<{ size?: number }>;
 }
 
-interface NavItem {
+export interface NavItem {
   path: string;
   labelKey: string;
   icon: React.ComponentType<{ size?: number }>;
@@ -46,7 +46,7 @@ interface NavItem {
 //   label x-start: 63px = 15 + 40 + 8gap
 //   child indent: 55px = 15 + 40  |  footer avatar: left-19 / 32×32px
 //   If collapsed width changes, update w-[70px], w-[69px], md:ml-[70px] in layout together.
-const NAV_ITEMS: NavItem[] = [
+export const NAV_ITEMS: NavItem[] = [
   { path: "/dashboard", labelKey: "overview", icon: House },
   {
     path: "/transactions",
