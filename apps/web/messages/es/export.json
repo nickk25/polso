@@ -2,6 +2,20 @@
   "title": "Exportar",
   "subtitle": "Genera reportes para tu contador",
   "exportHistory": "Historial de Exportaciones",
+  "table": {
+    "name": "Nombre",
+    "period": "Periodo",
+    "entries": "Entradas",
+    "documents": "Documentos",
+    "size": "Tamano",
+    "status": "Estado",
+    "actions": ""
+  },
+  "statuses": {
+    "completed": "Completado",
+    "processing": "Procesando",
+    "failed": "Error"
+  },
   "newExport": "Nueva Exportacion",
   "noPreviousExports": "Sin exportaciones previas",
   "exportsWillAppearHere": "Las exportaciones que generes apareceran aqui",

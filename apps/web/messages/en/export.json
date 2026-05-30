@@ -2,6 +2,20 @@
   "title": "Export",
   "subtitle": "Generate reports for your accountant",
   "exportHistory": "Export History",
+  "table": {
+    "name": "Name",
+    "period": "Period",
+    "entries": "Entries",
+    "documents": "Documents",
+    "size": "Size",
+    "status": "Status",
+    "actions": ""
+  },
+  "statuses": {
+    "completed": "Completed",
+    "processing": "Processing",
+    "failed": "Failed"
+  },
   "newExport": "New Export",
   "noPreviousExports": "No previous exports",
   "exportsWillAppearHere": "Exports you generate will appear here",

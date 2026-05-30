@@ -1,11 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { getExports } from "@/features/export/queries/get-exports"
 import { ExportHistory } from "@/features/export/components/export-history"
 import { NewExportButton } from "@/features/export/components/new-export-button"
-import { getTranslations } from "next-intl/server"
 
 export default async function ExportPage() {
-  const t = await getTranslations("export")
   const exports = await getExports()
 
   return (
@@ -13,15 +10,7 @@ export default async function ExportPage() {
       <div className="flex items-center justify-end">
         <NewExportButton />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("exportHistory")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ExportHistory exports={exports} />
-        </CardContent>
-      </Card>
+      <ExportHistory exports={exports} />
     </div>
   )
 }
