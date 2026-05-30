@@ -1,4 +1,3 @@
-import { SettingsHeader } from "@/features/settings/components/settings-header"
 import { BankConnectionCard, type BankConnection } from "@/features/settings/components/bank-connection-card"
 import { ConnectBankButton } from "@/features/settings/components/connect-bank-button"
 import { getAccounts } from "@/features/banking/queries/get-accounts"
@@ -41,10 +40,6 @@ export default async function BankingSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <SettingsHeader
-        title={t("settings.title")}
-        description={t("settings.description")}
-      />
       <div className="max-w-3xl space-y-6">
         <Card>
           <CardHeader>

@@ -31,12 +31,6 @@ export default async function RecurringPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
-          <p className="text-muted-foreground">
-            {t("subtitle")}
-          </p>
-        </div>
         <DetectPatternsButton />
       </div>
 

@@ -1,4 +1,3 @@
-import { SettingsHeader } from "@/features/settings/components/settings-header"
 import { InviteDialog } from "@/features/team/components/invite-dialog"
 import { PendingInvitesTable } from "@/features/team/components/pending-invites-table"
 import { TeamMembersTable } from "@/features/team/components/team-members-table"
@@ -8,7 +7,6 @@ import { getPendingInvites } from "@/features/team/queries/get-pending-invites"
 import { getSubscription } from "@/features/billing/queries/get-subscription"
 import { getAuthContext } from "@polso/auth/get-session"
 import { getLimit } from "@/lib/plans"
-import { getTranslations } from "next-intl/server"
 
 export default async function TeamSettingsPage() {
   const { userId } = await getAuthContext()
@@ -25,15 +23,8 @@ export default async function TeamSettingsPage() {
   const currentCount = members.length + invites.length
   const isAtLimit = currentCount >= maxUsers
 
-  const t = await getTranslations("settings")
-
   return (
     <div className="flex flex-col gap-6 p-6">
-      <SettingsHeader
-        title={t("team.title")}
-        description={t("team.subtitle")}
-      />
-
       <div className="flex flex-col gap-6 max-w-4xl">
         {/* Header with usage and invite button */}
         <div className="flex items-center justify-between">

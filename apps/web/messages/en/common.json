@@ -16,7 +16,14 @@
     "export": "Export",
     "settings": "Settings",
     "manage": "Manage",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "profile": "Profile",
+    "organization": "Organization",
+    "banking": "Banking",
+    "team": "Team",
+    "notifications": "Notifications",
+    "preferences": "Preferences",
+    "agent": "Agent"
   },
   "actions": {
     "save": "Save",

@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { redirect } from "next/navigation"
-import { SettingsHeader } from "@/features/settings/components/settings-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@polso/ui/avatar"
@@ -22,10 +21,6 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <SettingsHeader
-        title={t("title")}
-        description={t("subtitle")}
-      />
       <div className="max-w-2xl space-y-6">
         <Card>
           <CardHeader>

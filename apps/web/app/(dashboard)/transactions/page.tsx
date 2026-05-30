@@ -58,8 +58,6 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
-
       {hasAny && (
         <div className="grid gap-4 md:grid-cols-3">
           <Card>

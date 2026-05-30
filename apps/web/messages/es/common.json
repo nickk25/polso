@@ -16,7 +16,14 @@
     "export": "Exportar",
     "settings": "Configuracion",
     "manage": "Gestionar",
-    "alerts": "Alertas"
+    "alerts": "Alertas",
+    "profile": "Perfil",
+    "organization": "Organizacion",
+    "banking": "Banca",
+    "team": "Equipo",
+    "notifications": "Notificaciones",
+    "preferences": "Preferencias",
+    "agent": "Agente"
   },
   "actions": {
     "save": "Guardar",

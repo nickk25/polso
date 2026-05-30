@@ -78,10 +78,6 @@ export default async function ReportsPage({
   if (!hasData) {
     return (
       <div className="flex flex-col gap-6 p-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Reports</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
         <Card>
           <CardContent className="p-0">
             <AnalyticsEmptyState hasConnectedBank={accounts.length > 0} />
@@ -95,13 +91,7 @@ export default async function ReportsPage({
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Reports</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <AnalyticsFilters selectedMonth={selectedMonthStr} />
-      </div>
+      <AnalyticsFilters selectedMonth={selectedMonthStr} />
 
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
