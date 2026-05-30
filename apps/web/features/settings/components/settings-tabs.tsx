@@ -20,7 +20,7 @@ export function SettingsTabs() {
   const pathname = usePathname()
 
   return (
-    <div className="border-b bg-background sticky top-0 z-10">
+    <div className="bg-background sticky top-0 z-10">
       <div className="flex items-center gap-0 px-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {TABS.map(({ key, href, Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + "/")
