@@ -4,22 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@polso/ui/sheet";
 import { List } from "@phosphor-icons/react";
-import { NAV_ITEMS } from "./app-sidebar";
-import type { NavItem } from "./app-sidebar";
-
-function isItemActive(item: NavItem, pathname: string): boolean {
-  if (item.path === "/dashboard") return pathname === "/dashboard";
-  return (
-    pathname === item.path ||
-    pathname.startsWith(item.path + "/") ||
-    (item.children?.some(
-      (c) => pathname === c.path || pathname.startsWith(c.path + "/"),
-    ) ?? false)
-  );
-}
+import { NAV_ITEMS, isNavItemActive, SidebarOrgFooter } from "./app-sidebar";
 
 interface MobileNavProps {
   organizationName: string;
@@ -56,7 +44,7 @@ export function MobileNav({ organizationName }: MobileNavProps) {
             <div className="flex flex-col gap-1">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
-                const active = isItemActive(item, pathname);
+                const active = isNavItemActive(item, pathname);
                 return (
                   <div key={item.path}>
                     <Link
@@ -77,9 +65,7 @@ export function MobileNav({ organizationName }: MobileNavProps) {
                       <div className="ml-6 mt-1 flex flex-col gap-1 border-l border-border pl-3 mb-1">
                         {item.children.map((child) => {
                           const ChildIcon = child.icon;
-                          const childActive =
-                            pathname === child.path ||
-                            pathname.startsWith(child.path + "/");
+                          const childActive = pathname === child.path || pathname.startsWith(child.path + "/");
                           return (
                             <Link
                               key={child.path}
@@ -106,12 +92,7 @@ export function MobileNav({ organizationName }: MobileNavProps) {
           </nav>
 
           <div className="border-t px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0">
-                {getInitials(organizationName)}
-              </div>
-              <p className="text-sm font-medium truncate">{organizationName}</p>
-            </div>
+            <SidebarOrgFooter organizationName={organizationName} />
           </div>
         </SheetContent>
       </Sheet>

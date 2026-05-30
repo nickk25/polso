@@ -55,6 +55,28 @@ export const NAV_ITEMS: NavItem[] = [
   { path: "/settings", labelKey: "settings", icon: Gear },
 ];
 
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  if (item.path === "/dashboard") return pathname === "/dashboard";
+  return (
+    pathname === item.path ||
+    pathname.startsWith(item.path + "/") ||
+    (item.children?.some(
+      (c) => pathname === c.path || pathname.startsWith(c.path + "/"),
+    ) ?? false)
+  );
+}
+
+export function SidebarOrgFooter({ organizationName }: { organizationName: string }) {
+  const initials = getInitials(organizationName);
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0">
+        {initials}
+      </div>
+      <span className="text-sm font-medium truncate">{organizationName}</span>
+    </div>
+  );
+}
 
 interface AppSidebarProps {
   organizationName: string;
@@ -67,7 +89,6 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(
     () => new Set(NAV_ITEMS.filter((item) => item.children).map((item) => item.path)),
   );
-  const initials = getInitials(organizationName);
 
   return (
     <aside
@@ -112,16 +133,7 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
           <div className="flex flex-col gap-2">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
-              const isActive =
-                item.path === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname === item.path ||
-                    pathname.startsWith(item.path + "/") ||
-                    (item.children?.some(
-                      (c) =>
-                        pathname === c.path ||
-                        pathname.startsWith(c.path + "/"),
-                    ) ?? false);
+              const isActive = isNavItemActive(item, pathname);
               const isItemExpanded = expandedItems.has(item.path);
               const showChildren = isExpanded && isItemExpanded;
 
@@ -230,22 +242,21 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
         </nav>
       </div>
 
-      {/* Footer — org name only */}
+      {/* Footer */}
       <div className="relative h-[40px] w-full flex items-center">
-        <div className="absolute left-[19px] w-[32px] h-[32px] flex items-center justify-center shrink-0">
+        <div className="absolute left-[19px]">
           <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs">
-            {initials}
+            {getInitials(organizationName)}
           </div>
         </div>
-        <span
+        <div
           className={cn(
-            "absolute left-[60px] right-[15px] text-sm font-medium truncate text-left text-muted-foreground",
-            "transition-opacity duration-150",
+            "absolute left-[60px] right-[15px] transition-opacity duration-150",
             isExpanded ? "opacity-100" : "opacity-0 pointer-events-none",
           )}
         >
-          {organizationName}
-        </span>
+          <span className="text-sm font-medium truncate text-muted-foreground">{organizationName}</span>
+        </div>
       </div>
     </aside>
   );
