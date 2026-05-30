@@ -42,7 +42,7 @@ model Organization {
   agentOptOut    Boolean @default(false) @map("agent_opt_out")
 
   // Export preferences
-  csvSeparator   String? @default(";") @map("csv_separator")
+  csvSeparator String? @default(";") @map("csv_separator")
 
   // Scheduled plan changes (for downgrades)
   scheduledPlanType     String?   @map("scheduled_plan_type")
@@ -50,34 +50,28 @@ model Organization {
   scheduledChangeAt     DateTime? @map("scheduled_change_at")
 
   // Relations
-  userOrganizations UserOrganization[]
-  accounts              Account[]
-  pendingRequisitions   PendingRequisition[]
-  transactions          Transaction[]
-  categories        Category[]
-  vendors           Vendor[]
-  clients           Client[]
-  expenses          Expense[]
-  incomes           Income[]
-  expenseInvoices   ExpenseInvoice[]
-  recurringPatterns RecurringPattern[]
-  dismissedPatterns DismissedPattern[]
-  alerts            Alert[]
-  exports               Export[]
-  invitations           Invitation[]
-  categoryPreferences   CategoryPreference[]
-  inboxItems            InboxItem[]
-  matchSuggestions      MatchSuggestion[]
-
-  // Agent channel link codes
-  agentLinkCodes AgentLinkCode[]
-
-  // Proactive messages sent by the agent
-  proactiveMessages ProactiveMessage[]
+  userOrganizations    UserOrganization[]
+  accounts             Account[]
+  pendingRequisitions  PendingRequisition[]
+  transactions         Transaction[]
+  entries              Entry[]
+  counterparties       Counterparty[]
+  categories           Category[]
+  transactionDocuments TransactionDocument[]
+  recurringPatterns    RecurringPattern[]
+  dismissedPatterns    DismissedPattern[]
+  alerts               Alert[]
+  exports              Export[]
+  invitations          Invitation[]
+  categoryPreferences  CategoryPreference[]
+  inboxItems           InboxItem[]
+  matchSuggestions     MatchSuggestion[]
+  agentLinkCodes       AgentLinkCode[]
+  proactiveMessages    ProactiveMessage[]
 
   // Partner ↔ Client links
-  partnerLinks  PartnerClient[] @relation("AsClient")
-  clientLinks   PartnerClient[] @relation("AsPartner")
+  partnerLinks PartnerClient[] @relation("AsClient")
+  clientLinks  PartnerClient[] @relation("AsPartner")
 
   @@map("organizations")
 }
@@ -89,7 +83,6 @@ model UserOrganization {
   role           String   @default("member")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId])
@@ -104,21 +97,21 @@ model UserOrganization {
 model Account {
   id                   String    @id @default(cuid())
   organizationId       String    @map("organization_id")
-  requisitionId        String?   @map("requisition_id")        // GoCardless requisition ID — groups all accounts from one bank connection
-  institutionId        String?   @map("institution_id")        // GoCardless institution ID
-  requisitionExpiresAt DateTime? @map("requisition_expires_at") // When the end-user agreement expires
-  externalAccountId    String?   @map("external_account_id")   // GoCardless account UUID
-  iban                 String?                                  // Account IBAN
-  bic                  String?                                  // Bank BIC/SWIFT
+  requisitionId        String?   @map("requisition_id")
+  institutionId        String?   @map("institution_id")
+  requisitionExpiresAt DateTime? @map("requisition_expires_at")
+  externalAccountId    String?   @map("external_account_id")
+  iban                 String?
+  bic                  String?
   name                 String
-  mask                 String?   // last 4 digits of IBAN
+  mask                 String?
   officialName         String?   @map("official_name")
-  accountType          String?   @map("account_type")          // depository, credit, loan
+  accountType          String?   @map("account_type")
   accountSubtype       String?   @map("account_subtype")
   currency             String    @default("EUR")
   institutionName      String?   @map("institution_name")
   institutionLogo      String?   @map("institution_logo")
-  status               String    @default("pending")           // pending, active, expired, disconnected
+  status               String    @default("pending")
   lastSyncedAt         DateTime? @map("last_synced_at")
   syncError            String?   @map("sync_error")
   syncErrorRetries     Int       @default(0) @map("sync_error_retries")
@@ -128,7 +121,6 @@ model Account {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  // Relations
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   alerts       Alert[]
@@ -139,8 +131,6 @@ model Account {
   @@map("accounts")
 }
 
-// Temporary storage for a GoCardless requisition before the user completes OAuth.
-// Cleaned up after the callback creates Account records.
 model PendingRequisition {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
@@ -162,32 +152,31 @@ model Transaction {
   id                    String    @id @default(cuid())
   organizationId        String    @map("organization_id")
   accountId             String    @map("account_id")
-  externalTransactionId String?   @map("external_transaction_id") // provider's transaction ID
+  externalTransactionId String?   @map("external_transaction_id")
   amount                Float
   currency              String    @default("EUR")
-  date                  DateTime  // primary booked date
+  date                  DateTime
   authorizedDate        DateTime? @map("authorized_date")
-  name                  String?   // raw transaction name from bank
-  merchantName          String?   @map("merchant_name") // cleaned merchant name
+  name                  String?
+  merchantName          String?   @map("merchant_name")
   pending               Boolean   @default(false)
-  paymentChannel        String?   @map("payment_channel") // online, in store, other
+  paymentChannel        String?   @map("payment_channel")
   transactionType       String?   @map("transaction_type") // debit, credit
-  category              String?   // provider's primary category
-  categoryDetailed      String?   @map("category_detailed") // provider's detailed category
-  counterpartyName      String?   @map("counterparty_name") // normalized for matching
+  category              String?
+  categoryDetailed      String?   @map("category_detailed")
+  counterpartyName      String?   @map("counterparty_name")
   createdAt             DateTime  @default(now()) @map("created_at")
 
-  // Relations
-  organization         Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  account              Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  expense              Expense?
-  income               Income?
-  inboxItems           InboxItem[]
-  matchSuggestions     MatchSuggestion[]
+  organization           Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account                Account                @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  entry                  Entry?
+  inboxItems             InboxItem[]
+  matchSuggestions       MatchSuggestion[]
   transactionAttachments TransactionAttachment[]
+  documents              TransactionDocument[]
 
   @@unique([accountId, externalTransactionId])
-  @@unique([organizationId, externalTransactionId]) // Prevent duplicates when relinking bank
+  @@unique([organizationId, externalTransactionId])
   @@index([organizationId])
   @@index([accountId])
   @@index([date])
@@ -196,29 +185,129 @@ model Transaction {
 }
 
 // ============================================
+// Entries - Unified enrichment layer (replaces Expense + Income)
+// ============================================
+
+model Entry {
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
+  transactionId  String? @unique @map("transaction_id") // null = manual entry
+
+  direction String // "expense" | "income"
+
+  amount      Float
+  currency    String   @default("EUR")
+  date        DateTime
+  description String?
+
+  // Enrichment
+  categoryId         String?  @map("category_id")
+  counterpartyId     String?  @map("counterparty_id")
+  entryType          String   @default("variable") @map("entry_type") // fixed | variable
+  recurringPatternId String?  @map("recurring_pattern_id")
+
+  // Status
+  status String @default("pending") // pending | verified | excluded
+
+  // Flags
+  isManual    Boolean @default(false) @map("is_manual")
+  isRecurring Boolean @default(false) @map("is_recurring")
+
+  notes String?
+
+  // Tax (IVA / VAT)
+  taxAmount Float? @map("tax_amount")
+  taxRate   Float? @map("tax_rate") // e.g. 0.21, 0.10, 0.04
+
+  // Categorization metadata
+  categorySource     String? @map("category_source") // vendor, gocardless, keyword, manual
+  categoryConfidence Float?  @map("category_confidence")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction      Transaction?      @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  category         Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  counterparty     Counterparty?     @relation(fields: [counterpartyId], references: [id], onDelete: SetNull)
+  recurringPattern RecurringPattern? @relation(fields: [recurringPatternId], references: [id], onDelete: SetNull)
+  alerts           Alert[]
+
+  @@index([organizationId])
+  @@index([date])
+  @@index([direction])
+  @@index([status])
+  @@index([entryType])
+  @@index([categoryId])
+  @@index([counterpartyId])
+  @@map("entries")
+}
+
+// ============================================
+// Counterparties - Unified vendors + clients
+// ============================================
+
+model Counterparty {
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
+
+  name           String
+  normalizedName String @map("normalized_name")
+
+  // "vendor" = pays them | "client" = pays us | "both" = appears on both sides
+  type String @default("vendor")
+
+  // Contact (foundation for future invoicing)
+  email String?
+  phone String?
+  website String?
+  taxId String? @map("tax_id") // NIF / CIF
+
+  // Visual
+  logoUrl String? @map("logo_url")
+
+  // Intelligence defaults
+  defaultCategoryId String? @map("default_category_id")
+  defaultEntryType  String? @map("default_entry_type") // fixed | variable
+  isAutoDetected    Boolean  @default(false) @map("is_auto_detected")
+  detectionPatterns String[] @map("detection_patterns")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  defaultCategory Category?         @relation(fields: [defaultCategoryId], references: [id], onDelete: SetNull)
+  entries         Entry[]
+  recurringPatterns RecurringPattern[]
+  dismissedPatterns DismissedPattern[]
+
+  @@unique([organizationId, normalizedName])
+  @@index([organizationId])
+  @@index([normalizedName])
+  @@map("counterparties")
+}
+
+// ============================================
 // Categories - System + Custom
 // ============================================
 
 model Category {
-  id             String   @id @default(cuid())
-  organizationId String?  @map("organization_id") // null for system categories
+  id             String  @id @default(cuid())
+  organizationId String? @map("organization_id") // null for system categories
   name           String
   slug           String
-  color          String   @default("#6366f1")
+  color          String  @default("#6366f1")
   icon           String?
-  parentId       String?  @map("parent_id")
-  isSystem       Boolean  @default(false) @map("is_system")
-  expenseType    String?  @map("expense_type") // fixed, variable, income, transfer
+  parentId       String? @map("parent_id")
+  isSystem       Boolean @default(false) @map("is_system")
+  entryType      String? @map("entry_type") // fixed, variable, income, transfer
   createdAt      DateTime @default(now()) @map("created_at")
 
-  // Relations
   organization      Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   parent            Category?            @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children          Category[]           @relation("CategoryHierarchy")
-  vendors           Vendor[]
-  clientDefaults    Client[]             @relation("ClientDefaultCategory")
-  expenses          Expense[]
-  incomes           Income[]
+  counterparties    Counterparty[]
+  entries           Entry[]
   recurringPatterns RecurringPattern[]
   preferences       CategoryPreference[]
 
@@ -229,8 +318,8 @@ model Category {
 }
 
 model CategoryPreference {
-  organizationId String @map("organization_id")
-  categoryId     String @map("category_id")
+  organizationId String  @map("organization_id")
+  categoryId     String  @map("category_id")
   isHidden       Boolean @default(false) @map("is_hidden")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -241,169 +330,6 @@ model CategoryPreference {
 }
 
 // ============================================
-// Vendors - Suppliers/Merchants
-// ============================================
-
-model Vendor {
-  id                 String   @id @default(cuid())
-  organizationId     String   @map("organization_id")
-  name               String
-  normalizedName     String   @map("normalized_name")
-  logoUrl            String?  @map("logo_url")
-  website            String?
-  taxId              String?  @map("tax_id")
-  defaultCategoryId  String?  @map("default_category_id")
-  defaultExpenseType String?  @map("default_expense_type") // fixed, variable
-  isAutoDetected     Boolean  @default(false) @map("is_auto_detected")
-  detectionPatterns  String[] @map("detection_patterns")
-  createdAt          DateTime @default(now()) @map("created_at")
-
-  // Relations
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  defaultCategory   Category?          @relation(fields: [defaultCategoryId], references: [id], onDelete: SetNull)
-  expenses          Expense[]
-  recurringPatterns RecurringPattern[]
-  dismissedPatterns DismissedPattern[]
-
-  @@unique([organizationId, normalizedName])
-  @@index([organizationId])
-  @@index([normalizedName])
-  @@map("vendors")
-}
-
-// ============================================
-// Clients - Income sources / Payers
-// ============================================
-
-model Client {
-  id                String   @id @default(cuid())
-  organizationId    String   @map("organization_id")
-  name              String
-  normalizedName    String   @map("normalized_name")
-  logoUrl           String?  @map("logo_url")
-  website           String?
-  taxId             String?  @map("tax_id")
-  defaultCategoryId String?  @map("default_category_id")
-  isAutoDetected    Boolean  @default(false) @map("is_auto_detected")
-  detectionPatterns String[] @map("detection_patterns")
-  createdAt         DateTime @default(now()) @map("created_at")
-
-  // Relations
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  defaultCategory Category?    @relation("ClientDefaultCategory", fields: [defaultCategoryId], references: [id], onDelete: SetNull)
-  incomes         Income[]
-
-  @@unique([organizationId, normalizedName])
-  @@index([organizationId])
-  @@index([normalizedName])
-  @@map("clients")
-}
-
-// ============================================
-// Expenses - Enriched transactions
-// ============================================
-
-model Expense {
-  id                 String    @id @default(cuid())
-  organizationId     String    @map("organization_id")
-  transactionId      String?   @unique @map("transaction_id")
-  amount             Float
-  currency           String    @default("EUR")
-  date               DateTime
-  description        String?
-  categoryId         String?   @map("category_id")
-  vendorId           String?   @map("vendor_id")
-  expenseType        String    @default("variable") @map("expense_type") // fixed, variable
-  recurringPatternId String?   @map("recurring_pattern_id")
-  status             String    @default("pending") // pending, documented, excluded
-  isManual           Boolean   @default(false) @map("is_manual")
-  notes              String?
-  categorySource     String?   @map("category_source") // vendor, gocardless, keyword, manual
-  categoryConfidence Float?    @map("category_confidence") // 0-1 confidence score
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-
-  // Relations
-  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  transaction      Transaction?       @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-  category         Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  vendor           Vendor?            @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  recurringPattern RecurringPattern?  @relation(fields: [recurringPatternId], references: [id], onDelete: SetNull)
-  invoices         ExpenseInvoice[]
-  alerts           Alert[]
-
-  @@index([organizationId])
-  @@index([date])
-  @@index([status])
-  @@index([expenseType])
-  @@index([categoryId])
-  @@index([vendorId])
-  @@map("expenses")
-}
-
-// ============================================
-// Income - Incoming money
-// ============================================
-
-model Income {
-  id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
-  transactionId  String?   @unique @map("transaction_id")
-  clientId       String?   @map("client_id")
-  amount         Float     // Always positive (absolute value)
-  currency       String    @default("USD")
-  date           DateTime
-  description    String?
-  categoryId     String?   @map("category_id")
-  source         String    @default("other") // salary, freelance, investment, refund, transfer, other
-  isRecurring    Boolean   @default(false) @map("is_recurring")
-  status         String    @default("pending") // pending, confirmed, excluded
-  notes          String?
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-
-  // Relations
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  transaction  Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  client       Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
-
-  @@index([organizationId])
-  @@index([date])
-  @@index([status])
-  @@index([source])
-  @@index([clientId])
-  @@map("incomes")
-}
-
-// ============================================
-// Expense Invoices - File attachments
-// ============================================
-
-model ExpenseInvoice {
-  id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
-  expenseId      String    @map("expense_id")
-  fileName       String    @map("file_name")
-  filePath       String    @map("file_path") // R2 object key
-  fileSize       Int?      @map("file_size")
-  mimeType       String?   @map("mime_type")
-  invoiceNumber  String?   @map("invoice_number")
-  invoiceDate    DateTime? @map("invoice_date")
-  vendorTaxId    String?   @map("vendor_tax_id")
-  totalAmount    Float?    @map("total_amount")
-  createdAt      DateTime  @default(now()) @map("created_at")
-
-  // Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  expense      Expense      @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId])
-  @@index([expenseId])
-  @@map("expense_invoices")
-}
-
-// ============================================
 // Recurring Patterns - Detected subscriptions
 // ============================================
 
@@ -411,29 +337,29 @@ model RecurringPattern {
   id                 String    @id @default(cuid())
   organizationId     String    @map("organization_id")
   name               String
-  vendorId           String?   @map("vendor_id")
+  counterpartyId     String?   @map("counterparty_id")
   frequency          String // weekly, biweekly, monthly, quarterly, yearly
   expectedAmount     Float?    @map("expected_amount")
   amountVariancePct  Float     @default(15) @map("amount_variance_pct")
   expectedDayOfMonth Int?      @map("expected_day_of_month")
   categoryId         String?   @map("category_id")
-  expenseType        String    @default("fixed") @map("expense_type")
+  entryType          String    @default("fixed") @map("entry_type") // fixed | variable
+  direction          String    @default("expense") @map("direction") // expense | income
   isActive           Boolean   @default(true) @map("is_active")
   isConfirmed        Boolean   @default(false) @map("is_confirmed")
   confidenceScore    Float?    @map("confidence_score")
   firstOccurrence    DateTime? @map("first_occurrence")
   lastOccurrence     DateTime? @map("last_occurrence")
   occurrenceCount    Int       @default(0) @map("occurrence_count")
-  pauseReason        String?   @map("pause_reason") // "manual" | "missed_payment"
+  pauseReason        String?   @map("pause_reason")
   pausedAt           DateTime? @map("paused_at")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
-  // Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  vendor       Vendor?      @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  category     Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  expenses     Expense[]
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty Counterparty? @relation(fields: [counterpartyId], references: [id], onDelete: SetNull)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  entries      Entry[]
   alerts       Alert[]
 
   @@index([organizationId])
@@ -449,22 +375,21 @@ model RecurringPattern {
 model Alert {
   id                 String   @id @default(cuid())
   organizationId     String   @map("organization_id")
-  type               String // low_balance, high_expense, missed_recurring, unusual_activity, runway_warning
+  type               String // low_balance, high_expense, missed_recurring, unusual_activity, runway_warning, high_income
   title              String
   message            String
   severity           String   @default("info") // info, warning, critical
   accountId          String?  @map("account_id")
-  expenseId          String?  @map("expense_id")
+  entryId            String?  @map("entry_id")
   recurringPatternId String?  @map("recurring_pattern_id")
   isRead             Boolean  @default(false) @map("is_read")
   isDismissed        Boolean  @default(false) @map("is_dismissed")
   metadata           Json?
   createdAt          DateTime @default(now()) @map("created_at")
 
-  // Relations
   organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   account          Account?          @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  expense          Expense?          @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  entry            Entry?            @relation(fields: [entryId], references: [id], onDelete: Cascade)
   recurringPattern RecurringPattern? @relation(fields: [recurringPatternId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
@@ -479,25 +404,24 @@ model Alert {
 // ============================================
 
 model Export {
-  id              String    @id @default(cuid())
-  organizationId  String    @map("organization_id")
-  name            String
-  filePath        String    @map("file_path") // R2 object key
-  fileSize        Int?      @map("file_size")
-  startDate       DateTime  @map("start_date")
-  endDate         DateTime  @map("end_date")
-  expenseCount    Int?      @map("expense_count")
-  invoiceCount    Int?      @map("invoice_count")
-  includesCsv     Boolean   @default(true) @map("includes_csv")
-  includesPdf     Boolean   @default(true) @map("includes_pdf")
-  includesInvoices Boolean  @default(true) @map("includes_invoices")
-  status          String    @default("pending") // pending, processing, completed, failed
-  errorMessage    String?   @map("error_message")
-  generatedByOrgId String?  @map("generated_by_org_id") // org that triggered the export (partner or client)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  completedAt     DateTime? @map("completed_at")
+  id               String    @id @default(cuid())
+  organizationId   String    @map("organization_id")
+  name             String
+  filePath         String    @map("file_path")
+  fileSize         Int?      @map("file_size")
+  startDate        DateTime  @map("start_date")
+  endDate          DateTime  @map("end_date")
+  entryCount       Int?      @map("entry_count")
+  documentCount    Int?      @map("document_count")
+  includesCsv      Boolean   @default(true) @map("includes_csv")
+  includesPdf      Boolean   @default(true) @map("includes_pdf")
+  includesDocuments Boolean  @default(true) @map("includes_documents")
+  status           String    @default("pending") // pending, processing, completed, failed
+  errorMessage     String?   @map("error_message")
+  generatedByOrgId String?   @map("generated_by_org_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  completedAt      DateTime? @map("completed_at")
 
-  // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
@@ -506,13 +430,13 @@ model Export {
 }
 
 // ============================================
-// User Preferences - Per-user settings
+// User Preferences
 // ============================================
 
 model UserPreference {
   id          String   @id @default(cuid())
   userId      String   @unique @map("user_id")
-  theme       String   @default("system") // light, dark, system
+  theme       String   @default("system")
   locale      String   @default("en-US")
   compactMode Boolean  @default(false) @map("compact_mode")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -522,7 +446,7 @@ model UserPreference {
 }
 
 // ============================================
-// Notification Settings - Per-user notification preferences
+// Notification Settings
 // ============================================
 
 model NotificationSetting {
@@ -538,8 +462,8 @@ model NotificationSetting {
   inAppAlerts          Boolean  @default(true) @map("in_app_alerts")
   lowBalanceThreshold  Float?   @map("low_balance_threshold")
   highExpenseThreshold Float?   @map("high_expense_threshold")
-  runwayThreshold      Float?   @default(3)    @map("runway_threshold")
-  unusualMultiplier    Float?   @default(2)    @map("unusual_multiplier")
+  runwayThreshold      Float?   @default(3) @map("runway_threshold")
+  unusualMultiplier    Float?   @default(2) @map("unusual_multiplier")
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
@@ -547,27 +471,26 @@ model NotificationSetting {
 }
 
 // ============================================
-// Dismissed Patterns - Prevent re-detection
+// Dismissed Patterns
 // ============================================
 
 model DismissedPattern {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
-  vendorId       String?  @map("vendor_id")
+  counterpartyId String?  @map("counterparty_id")
   patternName    String   @map("pattern_name")
   dismissedAt    DateTime @default(now()) @map("dismissed_at")
 
-  // Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  vendor       Vendor?      @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty Counterparty? @relation(fields: [counterpartyId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
-  @@index([vendorId])
+  @@index([counterpartyId])
   @@map("dismissed_patterns")
 }
 
 // ============================================
-// Invitations - Team member invitations
+// Invitations
 // ============================================
 
 model Invitation {
@@ -576,19 +499,17 @@ model Invitation {
   email          String
   role           String    @default("member")
   token          String    @unique
-  status         String    @default("pending") // pending, accepted, revoked
+  status         String    @default("pending")
   expiresAt      DateTime  @map("expires_at")
   invitedById    String    @map("invited_by_id")
   createdAt      DateTime  @default(now()) @map("created_at")
   acceptedAt     DateTime? @map("accepted_at")
 
-  // Email tracking
-  emailStatus   String?   @map("email_status") // sent, delivered, bounced, failed
+  emailStatus   String?   @map("email_status")
   emailSentAt   DateTime? @map("email_sent_at")
   emailError    String?   @map("email_error")
   resendEmailId String?   @map("resend_email_id")
 
-  // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
@@ -599,14 +520,14 @@ model Invitation {
 }
 
 // ============================================
-// Partner ↔ Client - Asesoría manages autónomos
+// Partner ↔ Client
 // ============================================
 
 model PartnerClient {
   id          String    @id @default(cuid())
   partnerId   String    @map("partner_id")
   clientId    String    @map("client_id")
-  status      String    @default("pending") // "pending" | "active" | "disconnected"
+  status      String    @default("pending")
   invitedAt   DateTime  @default(now()) @map("invited_at")
   connectedAt DateTime? @map("connected_at")
 
@@ -620,42 +541,35 @@ model PartnerClient {
 }
 
 // ============================================
-// Inbox - Received documents (receipts, invoices)
+// Inbox - Received documents
 // ============================================
 
 model InboxItem {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
 
-  // File
   fileName    String  @map("file_name")
-  filePath    String  @map("file_path") // R2 object key
-  contentType String? @map("content_type") // "application/pdf", "image/jpeg"
+  filePath    String  @map("file_path")
+  contentType String? @map("content_type")
   size        Int?
 
-  // OCR-extracted metadata
-  displayName String?  @map("display_name") // vendor name
+  displayName String?  @map("display_name")
   amount      Decimal? @db.Decimal(12, 2)
   currency    String   @default("EUR")
-  date        DateTime? // invoice date
-  cif         String?   // Spanish vendor tax ID
+  date        DateTime?
+  cif         String?
 
-  // Processing state
-  status String @default("new") // "new" | "processing" | "analyzing" | "suggested_match" | "no_match" | "done" | "archived"
-  source String @default("upload") // "upload" | "whatsapp" | "telegram" | "email"
+  status String @default("new")
+  source String @default("upload")
 
-  // WhatsApp metadata (only set when source = "whatsapp")
-  waMessageId String? @unique @map("wa_message_id") // deduplicate incoming messages
-  waSenderId  String? @map("wa_sender_id")          // phone number to reply to
+  waMessageId String? @unique @map("wa_message_id")
+  waSenderId  String? @map("wa_sender_id")
 
-  // Telegram metadata (only set when source = "telegram")
-  tgMessageId String? @unique @map("tg_message_id") // "{chatId}_{messageId}" for dedup
-  tgChatId    String? @map("tg_chat_id")             // chat ID to reply to
+  tgMessageId String? @unique @map("tg_message_id")
+  tgChatId    String? @map("tg_chat_id")
 
-  // OCR raw output
   meta Json?
 
-  // Confirmed match
   transactionId String? @map("transaction_id")
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -673,7 +587,7 @@ model InboxItem {
 }
 
 // ============================================
-// Match Suggestions - AI-suggested receipt↔transaction links
+// Match Suggestions
 // ============================================
 
 model MatchSuggestion {
@@ -682,17 +596,16 @@ model MatchSuggestion {
   transactionId  String @map("transaction_id")
   inboxItemId    String @map("inbox_item_id")
 
-  // Scores (0–1)
   confidenceScore Float @map("confidence_score")
-  amountScore     Float @map("amount_score")    // 30% weight
-  dateScore       Float @map("date_score")      // 15% weight
-  nameScore       Float @map("name_score")      // 10% weight
-  currencyScore   Float @map("currency_score")  // 5% weight
+  amountScore     Float @map("amount_score")
+  dateScore       Float @map("date_score")
+  nameScore       Float @map("name_score")
+  currencyScore   Float @map("currency_score")
 
-  matchType    String  @map("match_type") // "auto_matched" | "high_confidence" | "suggested"
+  matchType    String  @map("match_type")
   matchDetails Json?   @map("match_details")
 
-  status       String    @default("pending") // "pending" | "confirmed" | "declined" | "expired" | "unmatched"
+  status       String    @default("pending")
   userActionAt DateTime? @map("user_action_at")
   userActionBy String?   @map("user_action_by")
 
@@ -709,7 +622,33 @@ model MatchSuggestion {
 }
 
 // ============================================
-// Agent Link Codes - Temporary codes for connecting WhatsApp/Telegram
+// Transaction Documents - File attachments
+// ============================================
+
+model TransactionDocument {
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
+  transactionId  String @map("transaction_id")
+  fileName       String @map("file_name")
+  filePath       String @map("file_path")
+  fileSize       Int?   @map("file_size")
+  mimeType       String? @map("mime_type")
+  invoiceNumber  String? @map("invoice_number")
+  invoiceDate    DateTime? @map("invoice_date")
+  vendorTaxId    String? @map("vendor_tax_id")
+  totalAmount    Float?  @map("total_amount")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction  Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([transactionId])
+  @@map("transaction_documents")
+}
+
+// ============================================
+// Agent Link Codes
 // ============================================
 
 model AgentLinkCode {
@@ -745,16 +684,16 @@ model TransactionAttachment {
 }
 
 // ============================================
-// Proactive Messages - Agent-initiated outbound messages
+// Proactive Messages
 // ============================================
 
 model ProactiveMessage {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
-  channel        String   // "whatsapp" | "telegram"
-  messageType    String   @map("message_type") // "receipt_reminder" | "weekly_summary" | "monthly_summary" | "anomaly_alert"
-  content        String   // AI-generated message text that was sent
-  context        Json?    // Financial context passed to AI (audit trail)
+  channel        String
+  messageType    String   @map("message_type")
+  content        String
+  context        Json?
   sentAt         DateTime @default(now()) @map("sent_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -762,3 +701,4 @@ model ProactiveMessage {
   @@index([organizationId, messageType, sentAt])
   @@map("proactive_messages")
 }
+

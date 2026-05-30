@@ -2,12 +2,11 @@ import type { Prisma } from "./generated/prisma/client"
 
 /**
  * Canonical Prisma where input for transactions that have been documented.
- * A transaction is documented when its expense is marked "documented" OR
- * it has at least one inbox item (receipt) confirmed against it.
+ * A transaction is documented when its entry is verified OR it has an inbox item.
  */
 export const transactionDocumentedWhere = {
   OR: [
-    { expense: { status: "documented" } },
+    { entry: { status: "verified" } },
     { inboxItems: { some: {} } },
   ],
 } satisfies Prisma.TransactionWhereInput
