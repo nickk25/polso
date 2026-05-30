@@ -50,7 +50,7 @@ export function DashboardHeader({ organizationName, userName, userEmail, unreadA
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center">
         <div className="md:hidden">
-          <MobileNav organizationName={organizationName} userName={userName} />
+          <MobileNav organizationName={organizationName} />
         </div>
         {key && (
           <span className="text-sm font-semibold ml-3 md:ml-6 truncate">

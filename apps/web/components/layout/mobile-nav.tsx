@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
-import { authClient } from "@polso/auth/client";
+import { cn, getInitials } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@polso/ui/sheet";
-import { List, SignOut } from "@phosphor-icons/react";
+import { List } from "@phosphor-icons/react";
 import { NAV_ITEMS } from "./app-sidebar";
 import type { NavItem } from "./app-sidebar";
 
@@ -24,13 +23,11 @@ function isItemActive(item: NavItem, pathname: string): boolean {
 
 interface MobileNavProps {
   organizationName: string;
-  userName: string;
 }
 
-export function MobileNav({ organizationName, userName }: MobileNavProps) {
+export function MobileNav({ organizationName }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
   const t = useTranslations("common");
 
   return (
@@ -109,22 +106,11 @@ export function MobileNav({ organizationName, userName }: MobileNavProps) {
           </nav>
 
           <div className="border-t px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">{userName}</p>
-                <p className="text-xs text-muted-foreground">{organizationName}</p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0">
+                {getInitials(organizationName)}
               </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  await authClient.signOut();
-                  router.replace("/auth/sign-in");
-                }}
-                className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
-                aria-label="Sign out"
-              >
-                <SignOut size={16} />
-              </button>
+              <p className="text-sm font-medium truncate">{organizationName}</p>
             </div>
           </div>
         </SheetContent>
