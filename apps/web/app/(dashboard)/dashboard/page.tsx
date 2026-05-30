@@ -46,8 +46,8 @@ export default async function DashboardPage() {
   const greetingPrefix = hour < 12 ? t("greetingMorning") : hour < 18 ? t("greetingAfternoon") : t("greetingEvening")
 
   return (
-    // pt-[420px]: pushes the hero greeting section to the visual center of a typical viewport
-    <div className="flex flex-col min-h-full max-w-3xl mx-auto w-full px-6 gap-10 pt-[420px]">
+    // pt-[25vh]/md:pt-[420px]: visual center on mobile, fixed offset on desktop
+    <div className="flex flex-col min-h-full max-w-3xl mx-auto w-full px-6 gap-10 pt-[25vh] md:pt-[420px]">
 
       {/* Hero */}
       <div className="flex flex-col items-center gap-8">
