@@ -1,6 +1,14 @@
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 
+function toVendorWithStats(
+  cp: Omit<VendorWithStats, "totalSpent" | "lastEntryDate">,
+  totalSpent: number,
+  lastEntryDate: Date | null
+): VendorWithStats {
+  return { ...cp, totalSpent, lastEntryDate }
+}
+
 export interface VendorWithStats {
   id: string
   name: string
@@ -9,7 +17,7 @@ export interface VendorWithStats {
   website: string | null
   taxId: string | null
   defaultCategoryId: string | null
-  defaultExpenseType: string | null
+  defaultEntryType: string | null
   isAutoDetected: boolean
   detectionPatterns: string[]
   createdAt: Date
@@ -19,142 +27,75 @@ export interface VendorWithStats {
     color: string
   } | null
   _count: {
-    expenses: number
+    entries: number
   }
   totalSpent: number
-  lastExpenseDate: Date | null
+  lastEntryDate: Date | null
 }
 
-/**
- * Get all vendors for the current organization with stats
- */
 export async function getVendors(): Promise<VendorWithStats[]> {
   const { organizationId } = await getAuthContext()
 
-  // Get vendors with expense count
-  const vendors = await prisma.vendor.findMany({
+  const counterparties = await prisma.counterparty.findMany({
     where: { organizationId },
     include: {
       defaultCategory: {
-        select: {
-          id: true,
-          name: true,
-          color: true,
-        },
+        select: { id: true, name: true, color: true },
       },
       _count: {
-        select: {
-          expenses: true,
-        },
+        select: { entries: true },
       },
     },
     orderBy: { name: "asc" },
   })
 
-  // Get aggregate stats for each vendor
-  const vendorIds = vendors.map((v) => v.id)
+  const counterpartyIds = counterparties.map((c) => c.id)
 
-  const statsResult = await prisma.expense.groupBy({
-    by: ["vendorId"],
+  const statsResult = await prisma.entry.groupBy({
+    by: ["counterpartyId"],
     where: {
-      vendorId: { in: vendorIds },
+      counterpartyId: { in: counterpartyIds },
+      direction: "expense",
     },
-    _sum: {
-      amount: true,
-    },
-    _max: {
-      date: true,
-    },
+    _sum: { amount: true },
+    _max: { date: true },
   })
 
-  // Create a lookup map for stats
   const statsMap = new Map(
     statsResult.map((s) => [
-      s.vendorId,
-      {
-        totalSpent: s._sum.amount || 0,
-        lastExpenseDate: s._max.date,
-      },
+      s.counterpartyId,
+      { totalSpent: s._sum.amount || 0, lastEntryDate: s._max.date },
     ])
   )
 
-  // Combine vendor data with stats
-  return vendors.map((vendor) => ({
-    id: vendor.id,
-    name: vendor.name,
-    normalizedName: vendor.normalizedName,
-    logoUrl: vendor.logoUrl,
-    website: vendor.website,
-    taxId: vendor.taxId,
-    defaultCategoryId: vendor.defaultCategoryId,
-    defaultExpenseType: vendor.defaultExpenseType,
-    isAutoDetected: vendor.isAutoDetected,
-    detectionPatterns: vendor.detectionPatterns,
-    createdAt: vendor.createdAt,
-    defaultCategory: vendor.defaultCategory,
-    _count: vendor._count,
-    totalSpent: statsMap.get(vendor.id)?.totalSpent || 0,
-    lastExpenseDate: statsMap.get(vendor.id)?.lastExpenseDate || null,
-  }))
+  return counterparties.map((cp) => {
+    const stats = statsMap.get(cp.id)
+    return toVendorWithStats(cp, stats?.totalSpent || 0, stats?.lastEntryDate || null)
+  })
 }
 
-/**
- * Get a single vendor by ID with full details
- */
 export async function getVendorById(id: string): Promise<VendorWithStats | null> {
   const { organizationId } = await getAuthContext()
 
-  const vendor = await prisma.vendor.findFirst({
-    where: {
-      id,
-      organizationId,
-    },
+  const cp = await prisma.counterparty.findFirst({
+    where: { id, organizationId },
     include: {
       defaultCategory: {
-        select: {
-          id: true,
-          name: true,
-          color: true,
-        },
+        select: { id: true, name: true, color: true },
       },
       _count: {
-        select: {
-          expenses: true,
-        },
+        select: { entries: true },
       },
     },
   })
 
-  if (!vendor) return null
+  if (!cp) return null
 
-  // Get aggregate stats for this vendor
-  const stats = await prisma.expense.aggregate({
-    where: {
-      vendorId: vendor.id,
-    },
-    _sum: {
-      amount: true,
-    },
-    _max: {
-      date: true,
-    },
+  const stats = await prisma.entry.aggregate({
+    where: { counterpartyId: cp.id, direction: "expense" },
+    _sum: { amount: true },
+    _max: { date: true },
   })
 
-  return {
-    id: vendor.id,
-    name: vendor.name,
-    normalizedName: vendor.normalizedName,
-    logoUrl: vendor.logoUrl,
-    website: vendor.website,
-    taxId: vendor.taxId,
-    defaultCategoryId: vendor.defaultCategoryId,
-    defaultExpenseType: vendor.defaultExpenseType,
-    isAutoDetected: vendor.isAutoDetected,
-    detectionPatterns: vendor.detectionPatterns,
-    createdAt: vendor.createdAt,
-    defaultCategory: vendor.defaultCategory,
-    _count: vendor._count,
-    totalSpent: stats._sum.amount || 0,
-    lastExpenseDate: stats._max.date || null,
-  }
+  return toVendorWithStats(cp, stats._sum.amount || 0, stats._max.date || null)
 }

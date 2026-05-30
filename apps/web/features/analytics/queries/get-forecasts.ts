@@ -50,17 +50,19 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
   const endDate = endOfMonth(now)
 
   const [expenses, incomes, recurringPatterns] = await Promise.all([
-    prisma.expense.findMany({
+    prisma.entry.findMany({
       where: {
         organizationId,
+        direction: "expense",
         date: { gte: startDate, lte: endDate },
         status: { not: "excluded" },
       },
-      select: { amount: true, date: true, expenseType: true },
+      select: { amount: true, date: true, entryType: true },
     }),
-    prisma.income.findMany({
+    prisma.entry.findMany({
       where: {
         organizationId,
+        direction: "income",
         date: { gte: startDate, lte: endDate },
         status: { not: "excluded" },
       },
@@ -86,7 +88,7 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
 
   for (const expense of expenses) {
     const monthKey = format(new Date(expense.date), "yyyy-MM")
-    if (expense.expenseType === "fixed") {
+    if (expense.entryType === "fixed") {
       monthlyFixed.set(monthKey, (monthlyFixed.get(monthKey) || 0) + expense.amount)
     } else {
       monthlyVariable.set(monthKey, (monthlyVariable.get(monthKey) || 0) + expense.amount)
@@ -209,9 +211,9 @@ export interface CategoryRevenueForecast {
   projected: number
 }
 
-export interface ClientRevenueForecast {
-  clientId: string
-  clientName: string
+export interface CounterpartyRevenueForecast {
+  counterpartyId: string
+  counterpartyName: string
   projectedRevenue: number
   lastMonthRevenue: number
   trend: "growing" | "stable" | "declining"
@@ -233,7 +235,7 @@ export interface RevenueForecast {
   quarterProjection: number
   yearProjection: number
   monthOverMonthChange: number
-  topClients: ClientRevenueForecast[]
+  topClients: CounterpartyRevenueForecast[]
   byCategory: CategoryRevenueForecast[]
 }
 
@@ -243,18 +245,19 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
   const now = new Date()
   const threeMonthsAgo = startOfMonth(subMonths(now, 3))
 
-  // Get income data with client and category info
-  const incomes = await prisma.income.findMany({
+  // Get income data with counterparty and category info
+  const incomes = await prisma.entry.findMany({
     where: {
       organizationId,
+      direction: "income",
       date: { gte: threeMonthsAgo },
       status: { not: "excluded" },
     },
     select: {
       amount: true,
       date: true,
-      clientId: true,
-      client: { select: { id: true, name: true } },
+      counterpartyId: true,
+      counterparty: { select: { id: true, name: true } },
       categoryId: true,
       category: { select: { id: true, name: true, color: true } },
     },
@@ -262,21 +265,21 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
 
   // Calculate monthly totals, per-client totals, and per-category totals
   const monthlyTotals = new Map<string, number>()
-  const clientMonthlyTotals = new Map<string, Map<string, number>>()
-  const clientsMap = new Map<string, { name: string }>()
+  const counterpartyMonthlyTotals = new Map<string, Map<string, number>>()
+  const counterpartiesMap = new Map<string, { name: string }>()
   const categoryMonthly = new Map<string | null, Map<string, { amount: number; name: string; color: string }>>()
 
   for (const income of incomes) {
     const monthKey = format(new Date(income.date), "yyyy-MM")
     monthlyTotals.set(monthKey, (monthlyTotals.get(monthKey) || 0) + income.amount)
 
-    if (income.clientId && income.client) {
-      clientsMap.set(income.client.id, { name: income.client.name })
-      if (!clientMonthlyTotals.has(income.clientId)) {
-        clientMonthlyTotals.set(income.clientId, new Map())
+    if (income.counterpartyId && income.counterparty) {
+      counterpartiesMap.set(income.counterparty.id, { name: income.counterparty.name })
+      if (!counterpartyMonthlyTotals.has(income.counterpartyId)) {
+        counterpartyMonthlyTotals.set(income.counterpartyId, new Map())
       }
-      const clientMap = clientMonthlyTotals.get(income.clientId)!
-      clientMap.set(monthKey, (clientMap.get(monthKey) || 0) + income.amount)
+      const cpMap = counterpartyMonthlyTotals.get(income.counterpartyId)!
+      cpMap.set(monthKey, (cpMap.get(monthKey) || 0) + income.amount)
     }
 
     // Category tracking
@@ -294,12 +297,12 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
     catMap.set(monthKey, existing)
   }
 
-  // Split recurring vs one-time by client frequency
-  // Clients appearing in 2+ of the last 3 months = recurring
-  const recurringClientIds = new Set<string>()
-  for (const [clientId, monthlyData] of clientMonthlyTotals) {
+  // Split recurring vs one-time by counterparty frequency
+  // Counterparties appearing in 2+ of the last 3 months = recurring
+  const recurringCounterpartyIds = new Set<string>()
+  for (const [cpId, monthlyData] of counterpartyMonthlyTotals) {
     if (monthlyData.size >= 2) {
-      recurringClientIds.add(clientId)
+      recurringCounterpartyIds.add(cpId)
     }
   }
 
@@ -308,7 +311,7 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
 
   for (const income of incomes) {
     const monthKey = format(new Date(income.date), "yyyy-MM")
-    if (income.clientId && recurringClientIds.has(income.clientId)) {
+    if (income.counterpartyId && recurringCounterpartyIds.has(income.counterpartyId)) {
       monthlyRecurring.set(monthKey, (monthlyRecurring.get(monthKey) || 0) + income.amount)
     } else {
       monthlyOneTime.set(monthKey, (monthlyOneTime.get(monthKey) || 0) + income.amount)
@@ -340,31 +343,31 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
     ? ((lastMonthRevenue - twoMonthsAgoRevenue) / twoMonthsAgoRevenue) * 100
     : 0
 
-  // Build client-level forecasts
-  const clientForecasts: ClientRevenueForecast[] = []
+  // Build counterparty-level forecasts
+  const clientForecasts: CounterpartyRevenueForecast[] = []
 
-  for (const [clientId, monthlyData] of clientMonthlyTotals) {
-    const client = clientsMap.get(clientId)
-    if (!client) continue
+  for (const [cpId, monthlyData] of counterpartyMonthlyTotals) {
+    const cp = counterpartiesMap.get(cpId)
+    if (!cp) continue
 
-    const clientLastMonth = monthlyData.get(lastMonthKey) || 0
-    const clientTwoMonthsAgo = monthlyData.get(twoMonthsAgoKey) || 0
-    const clientValues = Array.from(monthlyData.values())
-    const clientAvg = clientValues.reduce((a, b) => a + b, 0) / clientValues.length
+    const cpLastMonth = monthlyData.get(lastMonthKey) || 0
+    const cpTwoMonthsAgo = monthlyData.get(twoMonthsAgoKey) || 0
+    const cpValues = Array.from(monthlyData.values())
+    const cpAvg = cpValues.reduce((a, b) => a + b, 0) / cpValues.length
 
     let trend: "growing" | "stable" | "declining" = "stable"
-    if (clientTwoMonthsAgo > 0) {
-      if (clientLastMonth > clientTwoMonthsAgo * 1.1) trend = "growing"
-      else if (clientLastMonth < clientTwoMonthsAgo * 0.9) trend = "declining"
+    if (cpTwoMonthsAgo > 0) {
+      if (cpLastMonth > cpTwoMonthsAgo * 1.1) trend = "growing"
+      else if (cpLastMonth < cpTwoMonthsAgo * 0.9) trend = "declining"
     }
 
     clientForecasts.push({
-      clientId,
-      clientName: client.name,
-      projectedRevenue: clientAvg,
-      lastMonthRevenue: clientLastMonth,
+      counterpartyId: cpId,
+      counterpartyName: cp.name,
+      projectedRevenue: cpAvg,
+      lastMonthRevenue: cpLastMonth,
       trend,
-      confidence: Math.min(0.9, clientValues.length * 0.25),
+      confidence: Math.min(0.9, cpValues.length * 0.25),
     })
   }
 
@@ -460,16 +463,17 @@ export async function getExpenseForecast(): Promise<ExpenseForecast> {
 
   // Get expense data with categories
   const [expenses, recurringPatterns] = await Promise.all([
-    prisma.expense.findMany({
+    prisma.entry.findMany({
       where: {
         organizationId,
+        direction: "expense",
         date: { gte: threeMonthsAgo },
         status: { not: "excluded" },
       },
       select: {
         amount: true,
         date: true,
-        expenseType: true,
+        entryType: true,
         categoryId: true,
         category: { select: { id: true, name: true, color: true } },
       },
@@ -495,7 +499,7 @@ export async function getExpenseForecast(): Promise<ExpenseForecast> {
   for (const expense of expenses) {
     const monthKey = format(new Date(expense.date), "yyyy-MM")
 
-    if (expense.expenseType === "fixed") {
+    if (expense.entryType === "fixed") {
       monthlyFixed.set(monthKey, (monthlyFixed.get(monthKey) || 0) + expense.amount)
     } else {
       monthlyVariable.set(monthKey, (monthlyVariable.get(monthKey) || 0) + expense.amount)

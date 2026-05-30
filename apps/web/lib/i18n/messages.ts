@@ -19,6 +19,8 @@ import enTeam from "@/messages/en/team.json"
 import enInvite from "@/messages/en/invite.json"
 import enAlerts from "@/messages/en/alerts.json"
 import enLegal from "@/messages/en/legal.json"
+import enTransactions from "@/messages/en/transactions.json"
+import enVault from "@/messages/en/vault.json"
 
 import esCommon from "@/messages/es/common.json"
 import esDashboard from "@/messages/es/dashboard.json"
@@ -39,6 +41,8 @@ import esTeam from "@/messages/es/team.json"
 import esInvite from "@/messages/es/invite.json"
 import esAlerts from "@/messages/es/alerts.json"
 import esLegal from "@/messages/es/legal.json"
+import esTransactions from "@/messages/es/transactions.json"
+import esVault from "@/messages/es/vault.json"
 
 const messages = {
   en: {
@@ -61,6 +65,8 @@ const messages = {
     invite: enInvite,
     alerts: enAlerts,
     legal: enLegal,
+    transactions: enTransactions,
+    vault: enVault,
   },
   es: {
     common: esCommon,
@@ -82,6 +88,8 @@ const messages = {
     invite: esInvite,
     alerts: esAlerts,
     legal: esLegal,
+    transactions: esTransactions,
+    vault: esVault,
   },
 } as const
 

@@ -7,24 +7,20 @@ import { successResponse, errorResponse, type ActionResponse } from "@/lib/types
 import { normalizeCounterpartyName } from "@polso/banking"
 
 interface BackfillResult {
-  vendorsCreated: number
-  expensesLinked: number
+  counterpartiesCreated: number
+  entriesLinked: number
   alreadyLinked: number
 }
 
-/**
- * Create vendors from existing transactions/expenses that don't have vendors yet
- * Groups by normalized counterparty name and creates one vendor per unique name
- */
 export async function backfillVendorsAction(): Promise<ActionResponse<BackfillResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    // Find all expenses without a vendor but with a transaction that has counterparty info
-    const expensesWithoutVendor = await prisma.expense.findMany({
+    const entriesWithoutCounterparty = await prisma.entry.findMany({
       where: {
         organizationId,
-        vendorId: null,
+        counterpartyId: null,
+        direction: "expense",
         transaction: {
           counterpartyName: { not: null },
         },
@@ -41,99 +37,86 @@ export async function backfillVendorsAction(): Promise<ActionResponse<BackfillRe
       },
     })
 
-    if (expensesWithoutVendor.length === 0) {
-      return successResponse({
-        vendorsCreated: 0,
-        expensesLinked: 0,
-        alreadyLinked: 0,
-      })
+    if (entriesWithoutCounterparty.length === 0) {
+      return successResponse({ counterpartiesCreated: 0, entriesLinked: 0, alreadyLinked: 0 })
     }
 
-    // Get existing vendors for lookup
-    const existingVendors = await prisma.vendor.findMany({
+    const existingCounterparties = await prisma.counterparty.findMany({
       where: { organizationId },
-      select: {
-        id: true,
-        normalizedName: true,
-      },
+      select: { id: true, normalizedName: true },
     })
 
-    const vendorLookup = new Map(
-      existingVendors.map((v) => [v.normalizedName, v.id])
-    )
+    const cpLookup = new Map(existingCounterparties.map((c) => [c.normalizedName, c.id]))
 
-    // Group expenses by normalized counterparty name
     const groupedByCounterparty = new Map<
       string,
-      { displayName: string; expenseIds: string[] }
+      { displayName: string; entryIds: string[] }
     >()
 
-    for (const expense of expensesWithoutVendor) {
-      const counterpartyName = expense.transaction?.counterpartyName
+    for (const entry of entriesWithoutCounterparty) {
+      const counterpartyName = entry.transaction?.counterpartyName
       if (!counterpartyName) continue
 
-      // Use merchant name for display, fall back to transaction name
+      const normalizedName = normalizeCounterpartyName(counterpartyName)
       const displayName =
-        expense.transaction?.merchantName ||
-        expense.transaction?.name ||
+        entry.transaction?.merchantName ||
+        entry.transaction?.name ||
         counterpartyName
 
-      if (!groupedByCounterparty.has(counterpartyName)) {
-        groupedByCounterparty.set(counterpartyName, {
-          displayName,
-          expenseIds: [],
-        })
+      if (!groupedByCounterparty.has(normalizedName)) {
+        groupedByCounterparty.set(normalizedName, { displayName, entryIds: [] })
       }
-      groupedByCounterparty.get(counterpartyName)!.expenseIds.push(expense.id)
+      groupedByCounterparty.get(normalizedName)!.entryIds.push(entry.id)
     }
 
-    let vendorsCreated = 0
-    let expensesLinked = 0
+    let counterpartiesCreated = 0
+    let entriesLinked = 0
     let alreadyLinked = 0
 
-    // Process each unique counterparty
-    for (const [normalizedName, { displayName, expenseIds }] of groupedByCounterparty) {
-      let vendorId = vendorLookup.get(normalizedName)
-
-      if (vendorId) {
-        // Vendor already exists, just link expenses
-        alreadyLinked += expenseIds.length
+    const toCreate: Array<{ normalizedName: string; displayName: string; entryIds: string[] }> = []
+    for (const [normalizedName, { displayName, entryIds }] of groupedByCounterparty) {
+      if (cpLookup.has(normalizedName)) {
+        alreadyLinked += entryIds.length
       } else {
-        // Create new vendor
-        const vendor = await prisma.vendor.create({
-          data: {
-            organizationId,
-            name: displayName,
-            normalizedName,
-            isAutoDetected: true,
-            detectionPatterns: [normalizedName],
-          },
-        })
-        vendorId = vendor.id
-        vendorLookup.set(normalizedName, vendorId)
-        vendorsCreated++
+        toCreate.push({ normalizedName, displayName, entryIds })
       }
-
-      // Link expenses to vendor
-      await prisma.expense.updateMany({
-        where: {
-          id: { in: expenseIds },
-        },
-        data: {
-          vendorId,
-        },
-      })
-      expensesLinked += expenseIds.length
     }
 
-    revalidatePath("/vendors")
-    revalidatePath("/expenses")
+    if (toCreate.length > 0) {
+      await prisma.counterparty.createMany({
+        data: toCreate.map(({ displayName, normalizedName }) => ({
+          organizationId,
+          name: displayName,
+          normalizedName,
+          type: "vendor" as const,
+          isAutoDetected: true,
+          detectionPatterns: [normalizedName],
+        })),
+        skipDuplicates: true,
+      })
+      const created = await prisma.counterparty.findMany({
+        where: { organizationId, normalizedName: { in: toCreate.map((t) => t.normalizedName) } },
+        select: { id: true, normalizedName: true },
+      })
+      for (const cp of created) {
+        cpLookup.set(cp.normalizedName, cp.id)
+      }
+      counterpartiesCreated = toCreate.length
+    }
 
-    return successResponse({
-      vendorsCreated,
-      expensesLinked,
-      alreadyLinked,
-    })
+    const updateOps: Promise<unknown>[] = []
+    for (const [normalizedName, { entryIds }] of groupedByCounterparty) {
+      const cpId = cpLookup.get(normalizedName)
+      if (!cpId) continue
+      entriesLinked += entryIds.length
+      updateOps.push(prisma.entry.updateMany({ where: { id: { in: entryIds } }, data: { counterpartyId: cpId } }))
+    }
+    await Promise.all(updateOps)
+
+    revalidatePath("/vendors")
+    revalidatePath("/transactions")
+
+    return successResponse({ counterpartiesCreated, entriesLinked, alreadyLinked })
   } catch (error) {
     console.error("Error backfilling vendors:", error)
     return errorResponse(

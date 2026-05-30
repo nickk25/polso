@@ -11,7 +11,7 @@ interface CreateVendorInput {
   website?: string | null
   taxId?: string | null
   defaultCategoryId?: string | null
-  defaultExpenseType?: "fixed" | "variable" | null
+  defaultEntryType?: "fixed" | "variable" | null
 }
 
 interface UpdateVendorInput {
@@ -19,12 +19,12 @@ interface UpdateVendorInput {
   website?: string | null
   taxId?: string | null
   defaultCategoryId?: string | null
-  defaultExpenseType?: "fixed" | "variable" | null
+  defaultEntryType?: "fixed" | "variable" | null
 }
 
 interface MergeVendorsInput {
-  sourceVendorIds: string[] // Vendors to merge FROM (will be deleted)
-  targetVendorId: string // Vendor to merge INTO (will keep)
+  sourceVendorIds: string[]
+  targetVendorId: string
 }
 
 interface VendorResult {
@@ -35,45 +35,34 @@ interface VendorResult {
 
 interface DeleteVendorResult {
   deleted: boolean
-  expenseCount?: number
+  entryCount?: number
 }
 
 interface MergeVendorResult {
   mergedVendorId: string
-  expensesReassigned: number
+  entriesReassigned: number
   patternsReassigned: number
   vendorsDeleted: number
 }
 
-/**
- * Create a new vendor manually
- */
 export async function createVendorAction(
   input: CreateVendorInput
 ): Promise<ActionResponse<VendorResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    // Validate name
     if (!input.name || input.name.trim().length === 0) {
       return errorResponse("Vendor name is required", "VALIDATION_ERROR")
     }
-
     if (input.name.length > 100) {
       return errorResponse("Vendor name must be 100 characters or less", "VALIDATION_ERROR")
     }
 
-    // Generate normalized name
     const normalizedName = normalizeCounterpartyName(input.name.trim())
 
-    // Check for duplicate normalized name
-    const existing = await prisma.vendor.findFirst({
-      where: {
-        organizationId,
-        normalizedName,
-      },
+    const existing = await prisma.counterparty.findFirst({
+      where: { organizationId, normalizedName },
     })
-
     if (existing) {
       return errorResponse(
         `A vendor with a similar name already exists: "${existing.name}"`,
@@ -81,43 +70,32 @@ export async function createVendorAction(
       )
     }
 
-    // Validate category if provided
     if (input.defaultCategoryId) {
       const category = await prisma.category.findFirst({
-        where: {
-          id: input.defaultCategoryId,
-          OR: [{ isSystem: true }, { organizationId }],
-        },
+        where: { id: input.defaultCategoryId, OR: [{ isSystem: true }, { organizationId }] },
       })
-
-      if (!category) {
-        return errorResponse("Category not found", "NOT_FOUND")
-      }
+      if (!category) return errorResponse("Category not found", "NOT_FOUND")
     }
 
-    // Create vendor
-    const vendor = await prisma.vendor.create({
+    const cp = await prisma.counterparty.create({
       data: {
         organizationId,
         name: input.name.trim(),
         normalizedName,
+        type: "vendor",
         website: input.website || null,
         taxId: input.taxId || null,
         defaultCategoryId: input.defaultCategoryId || null,
-        defaultExpenseType: input.defaultExpenseType || null,
+        defaultEntryType: input.defaultEntryType || null,
         isAutoDetected: false,
         detectionPatterns: [normalizedName],
       },
     })
 
     revalidatePath("/vendors")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
 
-    return successResponse({
-      id: vendor.id,
-      name: vendor.name,
-      normalizedName: vendor.normalizedName,
-    })
+    return successResponse({ id: cp.id, name: cp.name, normalizedName: cp.normalizedName })
   } catch (error) {
     console.error("Error creating vendor:", error)
     return errorResponse(
@@ -127,9 +105,6 @@ export async function createVendorAction(
   }
 }
 
-/**
- * Update an existing vendor
- */
 export async function updateVendorAction(
   vendorId: string,
   input: UpdateVendorInput
@@ -137,92 +112,59 @@ export async function updateVendorAction(
   try {
     const { organizationId } = await getAuthContext()
 
-    // Find the vendor
-    const vendor = await prisma.vendor.findFirst({
-      where: {
-        id: vendorId,
-        organizationId,
-      },
+    const cp = await prisma.counterparty.findFirst({
+      where: { id: vendorId, organizationId },
     })
+    if (!cp) return errorResponse("Vendor not found", "NOT_FOUND")
 
-    if (!vendor) {
-      return errorResponse("Vendor not found", "NOT_FOUND")
-    }
-
-    // Validate name if provided
     if (input.name !== undefined) {
       if (!input.name || input.name.trim().length === 0) {
         return errorResponse("Vendor name is required", "VALIDATION_ERROR")
       }
-
       if (input.name.length > 100) {
         return errorResponse("Vendor name must be 100 characters or less", "VALIDATION_ERROR")
       }
     }
 
-    // Generate new normalized name if name changed
-    let newNormalizedName = vendor.normalizedName
-    if (input.name && input.name.trim() !== vendor.name) {
+    let newNormalizedName = cp.normalizedName
+    if (input.name && input.name.trim() !== cp.name) {
       newNormalizedName = normalizeCounterpartyName(input.name.trim())
-
-      // Check for duplicate normalized name
-      const existing = await prisma.vendor.findFirst({
-        where: {
-          organizationId,
-          normalizedName: newNormalizedName,
-          id: { not: vendorId },
-        },
+      const duplicate = await prisma.counterparty.findFirst({
+        where: { organizationId, normalizedName: newNormalizedName, id: { not: vendorId } },
       })
-
-      if (existing) {
+      if (duplicate) {
         return errorResponse(
-          `A vendor with a similar name already exists: "${existing.name}"`,
+          `A vendor with a similar name already exists: "${duplicate.name}"`,
           "DUPLICATE_ERROR"
         )
       }
     }
 
-    // Validate category if provided
     if (input.defaultCategoryId) {
       const category = await prisma.category.findFirst({
-        where: {
-          id: input.defaultCategoryId,
-          OR: [{ isSystem: true }, { organizationId }],
-        },
+        where: { id: input.defaultCategoryId, OR: [{ isSystem: true }, { organizationId }] },
       })
-
-      if (!category) {
-        return errorResponse("Category not found", "NOT_FOUND")
-      }
+      if (!category) return errorResponse("Category not found", "NOT_FOUND")
     }
 
-    // Update vendor
-    const updated = await prisma.vendor.update({
+    const updated = await prisma.counterparty.update({
       where: { id: vendorId },
       data: {
-        name: input.name?.trim() ?? vendor.name,
+        name: input.name?.trim() ?? cp.name,
         normalizedName: newNormalizedName,
-        website: input.website !== undefined ? input.website : vendor.website,
-        taxId: input.taxId !== undefined ? input.taxId : vendor.taxId,
+        website: input.website !== undefined ? input.website : cp.website,
+        taxId: input.taxId !== undefined ? input.taxId : cp.taxId,
         defaultCategoryId:
-          input.defaultCategoryId !== undefined
-            ? input.defaultCategoryId
-            : vendor.defaultCategoryId,
-        defaultExpenseType:
-          input.defaultExpenseType !== undefined
-            ? input.defaultExpenseType
-            : vendor.defaultExpenseType,
+          input.defaultCategoryId !== undefined ? input.defaultCategoryId : cp.defaultCategoryId,
+        defaultEntryType:
+          input.defaultEntryType !== undefined ? input.defaultEntryType : cp.defaultEntryType,
       },
     })
 
     revalidatePath("/vendors")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
 
-    return successResponse({
-      id: updated.id,
-      name: updated.name,
-      normalizedName: updated.normalizedName,
-    })
+    return successResponse({ id: updated.id, name: updated.name, normalizedName: updated.normalizedName })
   } catch (error) {
     console.error("Error updating vendor:", error)
     return errorResponse(
@@ -232,51 +174,31 @@ export async function updateVendorAction(
   }
 }
 
-/**
- * Delete a vendor
- * Cannot delete if there are linked expenses (must reassign first)
- */
 export async function deleteVendorAction(
   vendorId: string
 ): Promise<ActionResponse<DeleteVendorResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    // Find the vendor with expense count
-    const vendor = await prisma.vendor.findFirst({
-      where: {
-        id: vendorId,
-        organizationId,
-      },
+    const cp = await prisma.counterparty.findFirst({
+      where: { id: vendorId, organizationId },
       include: {
-        _count: {
-          select: {
-            expenses: true,
-            recurringPatterns: true,
-          },
-        },
+        _count: { select: { entries: true, recurringPatterns: true } },
       },
     })
+    if (!cp) return errorResponse("Vendor not found", "NOT_FOUND")
 
-    if (!vendor) {
-      return errorResponse("Vendor not found", "NOT_FOUND")
-    }
-
-    // Check if vendor has linked expenses
-    if (vendor._count.expenses > 0) {
+    if (cp._count.entries > 0) {
       return errorResponse(
-        `Cannot delete vendor with ${vendor._count.expenses} linked expense${vendor._count.expenses > 1 ? "s" : ""}. Reassign them first or merge this vendor with another.`,
+        `Cannot delete vendor with ${cp._count.entries} linked transaction${cp._count.entries > 1 ? "s" : ""}. Reassign them first or merge this vendor with another.`,
         "HAS_LINKED_ITEMS"
       )
     }
 
-    // Delete the vendor
-    await prisma.vendor.delete({
-      where: { id: vendorId },
-    })
+    await prisma.counterparty.delete({ where: { id: vendorId } })
 
     revalidatePath("/vendors")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
 
     return successResponse({ deleted: true })
   } catch (error) {
@@ -288,105 +210,72 @@ export async function deleteVendorAction(
   }
 }
 
-/**
- * Merge multiple vendors into one
- * Reassigns all expenses and patterns from source vendors to target, then deletes sources
- */
 export async function mergeVendorsAction(
   input: MergeVendorsInput
 ): Promise<ActionResponse<MergeVendorResult>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    // Validate input
     if (!input.sourceVendorIds || input.sourceVendorIds.length === 0) {
       return errorResponse("At least one source vendor is required", "VALIDATION_ERROR")
     }
-
     if (!input.targetVendorId) {
       return errorResponse("Target vendor is required", "VALIDATION_ERROR")
     }
-
     if (input.sourceVendorIds.includes(input.targetVendorId)) {
-      return errorResponse(
-        "Target vendor cannot be in the source vendors list",
-        "VALIDATION_ERROR"
-      )
+      return errorResponse("Target vendor cannot be in the source vendors list", "VALIDATION_ERROR")
     }
 
-    // Verify all vendors belong to the organization
-    const vendors = await prisma.vendor.findMany({
+    const counterparties = await prisma.counterparty.findMany({
       where: {
         organizationId,
         id: { in: [...input.sourceVendorIds, input.targetVendorId] },
       },
-      select: {
-        id: true,
-        detectionPatterns: true,
-      },
+      select: { id: true, detectionPatterns: true },
     })
 
-    if (vendors.length !== input.sourceVendorIds.length + 1) {
+    if (counterparties.length !== input.sourceVendorIds.length + 1) {
       return errorResponse("One or more vendors not found", "NOT_FOUND")
     }
 
-    const targetVendor = vendors.find((v) => v.id === input.targetVendorId)
-    if (!targetVendor) {
-      return errorResponse("Target vendor not found", "NOT_FOUND")
-    }
+    const targetCp = counterparties.find((c) => c.id === input.targetVendorId)
+    if (!targetCp) return errorResponse("Target vendor not found", "NOT_FOUND")
 
-    // Perform merge in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Reassign all expenses from source vendors to target
-      const expensesUpdate = await tx.expense.updateMany({
-        where: {
-          vendorId: { in: input.sourceVendorIds },
-        },
-        data: {
-          vendorId: input.targetVendorId,
-        },
+      const entriesUpdate = await tx.entry.updateMany({
+        where: { counterpartyId: { in: input.sourceVendorIds } },
+        data: { counterpartyId: input.targetVendorId },
       })
 
-      // 2. Reassign all recurring patterns from source vendors to target
       const patternsUpdate = await tx.recurringPattern.updateMany({
-        where: {
-          vendorId: { in: input.sourceVendorIds },
-        },
-        data: {
-          vendorId: input.targetVendorId,
-        },
+        where: { counterpartyId: { in: input.sourceVendorIds } },
+        data: { counterpartyId: input.targetVendorId },
       })
 
-      // 3. Merge detection patterns from all source vendors into target
-      const sourceVendors = vendors.filter((v) => input.sourceVendorIds.includes(v.id))
+      const sourceCps = counterparties.filter((c) => input.sourceVendorIds.includes(c.id))
       const allPatterns = new Set([
-        ...targetVendor.detectionPatterns,
-        ...sourceVendors.flatMap((v) => v.detectionPatterns),
+        ...targetCp.detectionPatterns,
+        ...sourceCps.flatMap((c) => c.detectionPatterns),
       ])
 
-      await tx.vendor.update({
+      await tx.counterparty.update({
         where: { id: input.targetVendorId },
-        data: {
-          detectionPatterns: Array.from(allPatterns),
-        },
+        data: { detectionPatterns: Array.from(allPatterns) },
       })
 
-      // 4. Delete source vendors
-      await tx.vendor.deleteMany({
-        where: {
-          id: { in: input.sourceVendorIds },
-        },
+      await tx.counterparty.deleteMany({
+        where: { id: { in: input.sourceVendorIds } },
       })
 
       return {
-        expensesReassigned: expensesUpdate.count,
+        entriesReassigned: entriesUpdate.count,
         patternsReassigned: patternsUpdate.count,
         vendorsDeleted: input.sourceVendorIds.length,
       }
     })
 
     revalidatePath("/vendors")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
     revalidatePath("/recurring")
 
     return successResponse({
@@ -402,38 +291,23 @@ export async function mergeVendorsAction(
   }
 }
 
-/**
- * Get the count of expenses linked to a vendor
- * Useful for showing warning before delete
- */
 export async function getVendorUsageAction(
   vendorId: string
-): Promise<ActionResponse<{ expenseCount: number; patternCount: number }>> {
+): Promise<ActionResponse<{ entryCount: number; patternCount: number }>> {
   try {
     const { organizationId } = await getAuthContext()
 
-    const vendor = await prisma.vendor.findFirst({
-      where: {
-        id: vendorId,
-        organizationId,
-      },
+    const cp = await prisma.counterparty.findFirst({
+      where: { id: vendorId, organizationId },
       include: {
-        _count: {
-          select: {
-            expenses: true,
-            recurringPatterns: true,
-          },
-        },
+        _count: { select: { entries: true, recurringPatterns: true } },
       },
     })
-
-    if (!vendor) {
-      return errorResponse("Vendor not found", "NOT_FOUND")
-    }
+    if (!cp) return errorResponse("Vendor not found", "NOT_FOUND")
 
     return successResponse({
-      expenseCount: vendor._count.expenses,
-      patternCount: vendor._count.recurringPatterns,
+      entryCount: cp._count.entries,
+      patternCount: cp._count.recurringPatterns,
     })
   } catch (error) {
     console.error("Error getting vendor usage:", error)

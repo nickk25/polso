@@ -160,10 +160,11 @@ export async function detectHighSpendAlerts(organizationId: string): Promise<num
   const monthStart = startOfMonth(now)
   const monthEnd = endOfMonth(now)
 
-  const categorySpend = await prisma.expense.groupBy({
+  const categorySpend = await prisma.entry.groupBy({
     by: ["categoryId"],
     where: {
       organizationId,
+      direction: "expense",
       date: { gte: monthStart, lte: monthEnd },
       status: { not: "excluded" },
       categoryId: { not: null },
@@ -304,10 +305,11 @@ export async function detectRunwayCriticalAlerts(organizationId: string): Promis
   const threeMonthsAgo = startOfMonth(subMonths(now, 3))
   const lastMonthEnd = endOfMonth(subMonths(now, 1))
 
-  const monthlyExpenses = await prisma.expense.groupBy({
+  const monthlyExpenses = await prisma.entry.groupBy({
     by: ["date"],
     where: {
       organizationId,
+      direction: "expense",
       date: { gte: threeMonthsAgo, lte: lastMonthEnd },
       status: { not: "excluded" },
     },
@@ -434,9 +436,10 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
 
   // Get expenses from the last 7 days (newly synced)
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-  const recentExpenses = await prisma.expense.findMany({
+  const recentExpenses = await prisma.entry.findMany({
     where: {
       organizationId,
+      direction: "expense",
       createdAt: { gte: since },
       status: { not: "excluded" },
       categoryId: { not: null },
@@ -452,22 +455,23 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
 
   if (recentExpenses.length === 0) return 0
 
-  // Get already-alerted expense IDs to avoid re-alerting
-  const alertedExpenseIds = await prisma.alert.findMany({
+  // Get already-alerted entry IDs to avoid re-alerting
+  const alertedEntryIds = await prisma.alert.findMany({
     where: { organizationId, type: "unusual_activity" },
-    select: { expenseId: true },
+    select: { entryId: true },
   })
-  const alertedIds = new Set(alertedExpenseIds.map((a) => a.expenseId).filter(Boolean))
+  const alertedIds = new Set(alertedEntryIds.map((a) => a.entryId).filter(Boolean))
 
   // Batch-fetch category averages for last 90 days
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
   const candidateExpenses = recentExpenses.filter((e) => e.categoryId && !alertedIds.has(e.id))
   const categoryIds = [...new Set(candidateExpenses.map((e) => e.categoryId!))]
 
-  const categoryAverages = await prisma.expense.groupBy({
+  const categoryAverages = await prisma.entry.groupBy({
     by: ["categoryId"],
     where: {
       organizationId,
+      direction: "expense",
       categoryId: { in: categoryIds },
       status: { not: "excluded" },
       date: { gte: ninetyDaysAgo },
@@ -498,7 +502,7 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
   const anomalies = detectAnomalies(inputs, { multiplier })
 
   for (const anomaly of anomalies) {
-    const expense = candidateExpenses.find((e) => e.id === anomaly.expenseId)!
+    const expense = candidateExpenses.find((e) => e.id === anomaly.entryId)!
     const actualMultiplier = Math.round((anomaly.amount / anomaly.categoryAvg) * 10) / 10
     const currency = "USD"
 
@@ -509,9 +513,9 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
         title: `Unusual expense: ${anomaly.categoryName}`,
         message: `An expense of ${formatAmount(anomaly.amount, currency)} in ${anomaly.categoryName} is ${actualMultiplier}x your typical average of ${formatAmount(anomaly.categoryAvg, currency)}.`,
         severity: "warning",
-        expenseId: anomaly.expenseId,
+        entryId: anomaly.entryId,
         metadata: {
-          expenseDescription: expense.description,
+          entryDescription: expense.description,
           amount: anomaly.amount,
           averageAmount: anomaly.categoryAvg,
           multiplier: actualMultiplier,

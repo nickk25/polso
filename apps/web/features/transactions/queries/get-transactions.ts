@@ -2,10 +2,10 @@ import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import { startOfMonth } from "date-fns"
 
-export type TransactionType = "expense" | "income"
+export type TransactionDirection = "expense" | "income"
 
 export interface TransactionFilters {
-  type?: TransactionType | "all"
+  direction?: TransactionDirection | "all"
   dateFrom?: Date
   dateTo?: Date
   categoryId?: string
@@ -15,16 +15,16 @@ export interface TransactionFilters {
 
 export interface TransactionRow {
   id: string
-  type: TransactionType
+  direction: TransactionDirection
+  transactionId: string | null
   date: Date
   description: string | null
   amount: number
   currency: string
   status: string
   category: { id: string; name: string; color: string } | null
-  vendor: { id: string; name: string } | null
-  expenseType: string | null
-  source: string | null
+  counterparty: { id: string; name: string } | null
+  entryType: string | null
 }
 
 export interface TransactionStats {
@@ -41,15 +41,13 @@ export async function getTransactions(
 ): Promise<{ transactions: TransactionRow[]; total: number; pages: number }> {
   const { organizationId } = await getAuthContext()
 
-  const dateFrom = filters.dateFrom
-  const dateTo = filters.dateTo
-
-  const dateFilter = dateFrom || dateTo
-    ? {
-        ...(dateFrom && { gte: dateFrom }),
-        ...(dateTo && { lte: dateTo }),
-      }
-    : undefined
+  const dateFilter =
+    filters.dateFrom || filters.dateTo
+      ? {
+          ...(filters.dateFrom && { gte: filters.dateFrom }),
+          ...(filters.dateTo && { lte: filters.dateTo }),
+        }
+      : undefined
 
   const searchFilter = filters.search
     ? {
@@ -68,94 +66,61 @@ export async function getTransactions(
         ? { categoryId: filters.categoryId }
         : {}
 
-  const fetchExpenses = !filters.type || filters.type === "all" || filters.type === "expense"
-  const fetchIncome = !filters.type || filters.type === "all" || filters.type === "income"
+  const directionFilter =
+    filters.direction && filters.direction !== "all"
+      ? { direction: filters.direction }
+      : {}
 
-  const [expensesResult, incomesResult] = await Promise.all([
-    fetchExpenses
-      ? prisma.expense.findMany({
-          where: {
-            organizationId,
-            ...(dateFilter && { date: dateFilter }),
-            ...(filters.status && { status: filters.status }),
-            ...categoryFilter,
-            ...searchFilter,
-          },
-          select: {
-            id: true,
-            date: true,
-            description: true,
-            amount: true,
-            currency: true,
-            status: true,
-            expenseType: true,
-            category: { select: { id: true, name: true, color: true } },
-            vendor: { select: { id: true, name: true } },
-            transaction: { select: { merchantName: true, name: true } },
-          },
-          orderBy: { date: "desc" },
-        })
-      : Promise.resolve([]),
-    fetchIncome
-      ? prisma.income.findMany({
-          where: {
-            organizationId,
-            ...(dateFilter && { date: dateFilter }),
-            ...(filters.status && { status: filters.status }),
-            ...categoryFilter,
-            ...searchFilter,
-          },
-          select: {
-            id: true,
-            date: true,
-            description: true,
-            amount: true,
-            currency: true,
-            status: true,
-            source: true,
-            category: { select: { id: true, name: true, color: true } },
-            transaction: { select: { merchantName: true, name: true } },
-          },
-          orderBy: { date: "desc" },
-        })
-      : Promise.resolve([]),
+  const statusFilter = filters.status ? { status: filters.status } : {}
+
+  const where = {
+    organizationId,
+    ...(dateFilter && { date: dateFilter }),
+    ...directionFilter,
+    ...statusFilter,
+    ...categoryFilter,
+    ...searchFilter,
+  }
+
+  const [entries, total] = await Promise.all([
+    prisma.entry.findMany({
+      where,
+      select: {
+        id: true,
+        direction: true,
+        transactionId: true,
+        date: true,
+        description: true,
+        amount: true,
+        currency: true,
+        status: true,
+        entryType: true,
+        category: { select: { id: true, name: true, color: true } },
+        counterparty: { select: { id: true, name: true } },
+        transaction: { select: { merchantName: true, name: true } },
+      },
+      orderBy: { date: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.entry.count({ where }),
   ])
 
-  const rows: TransactionRow[] = [
-    ...expensesResult.map((e) => ({
-      id: e.id,
-      type: "expense" as const,
-      date: e.date,
-      description: e.transaction?.merchantName ?? e.transaction?.name ?? e.description,
-      amount: e.amount,
-      currency: e.currency,
-      status: e.status,
-      category: e.category,
-      vendor: e.vendor,
-      expenseType: e.expenseType,
-      source: null,
-    })),
-    ...incomesResult.map((i) => ({
-      id: i.id,
-      type: "income" as const,
-      date: i.date,
-      description: i.transaction?.merchantName ?? i.transaction?.name ?? i.description,
-      amount: i.amount,
-      currency: i.currency,
-      status: i.status,
-      category: i.category,
-      vendor: null,
-      expenseType: null,
-      source: i.source,
-    })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const transactions: TransactionRow[] = entries.map((e) => ({
+    id: e.id,
+    direction: e.direction as TransactionDirection,
+    transactionId: e.transactionId ?? null,
+    date: e.date,
+    description: e.transaction?.merchantName ?? e.transaction?.name ?? e.description,
+    amount: e.amount,
+    currency: e.currency,
+    status: e.status,
+    category: e.category,
+    counterparty: e.counterparty,
+    entryType: e.entryType,
+  }))
 
-  const total = rows.length
-  const pages = Math.ceil(total / pageSize)
-  const start = (page - 1) * pageSize
-  const paginated = rows.slice(start, start + pageSize)
-
-  return { transactions: paginated, total, pages }
+  return { transactions, total, pages: Math.ceil(total / pageSize) }
 }
 
 export async function getTransactionStats(): Promise<TransactionStats> {
@@ -163,12 +128,12 @@ export async function getTransactionStats(): Promise<TransactionStats> {
   const monthStart = startOfMonth(new Date())
 
   const [expenseAgg, incomeAgg] = await Promise.all([
-    prisma.expense.aggregate({
-      where: { organizationId, date: { gte: monthStart } },
+    prisma.entry.aggregate({
+      where: { organizationId, direction: "expense", date: { gte: monthStart } },
       _sum: { amount: true },
     }),
-    prisma.income.aggregate({
-      where: { organizationId, date: { gte: monthStart } },
+    prisma.entry.aggregate({
+      where: { organizationId, direction: "income", date: { gte: monthStart } },
       _sum: { amount: true },
     }),
   ])

@@ -105,9 +105,9 @@ export async function persistMatch(
         where: { id: inboxItem.id },
         data: { status: "done", transactionId: tx.id },
       }),
-      prisma.expense.updateMany({
+      prisma.entry.updateMany({
         where: { transactionId: tx.id, organizationId },
-        data: { status: "documented" },
+        data: { status: "verified" },
       }),
     ])
 

@@ -3,27 +3,24 @@ import { prisma } from "@/lib/db"
 import {
   normalizeCounterpartyName,
   getTransactionType,
-  detectIncomeSource,
   mapGoCardlessToPolsoCategory,
   selectPrimaryBalance,
   type BankTransaction,
 } from "@polso/banking"
 import { suggestCategory } from "@polso/intelligence"
-import { findOrCreateVendor, type MatchedVendor } from "@/features/vendors/lib/vendor-matcher"
-import { findOrCreateClient, type MatchedClient } from "@/features/clients/lib/client-matcher"
+import { findOrCreateCounterparty, type MatchedCounterparty } from "@/features/counterparties/lib/counterparty-matcher"
 import { matchAfterSync } from "@/features/inbox/lib/match-after-sync"
-import { backfillCategoriesCore } from "@/features/expenses/lib/backfill-core"
+import { backfillCategoriesCore } from "@/features/transactions/lib/backfill-core"
 import { getGoCardlessClient } from "./gocardless-client"
 
 export interface SyncResult {
   accountsUpdated: number
   transactionsImported: number
   transactionsModified: number
-  expensesCreated: number
-  incomesCreated: number
+  entriesCreated: number
 }
 
-type MerchantHistory = Map<string, { categories: Map<string, number>; expenseTypes: Map<string, number> }>
+type MerchantHistory = Map<string, { categories: Map<string, number>; entryTypes: Map<string, number> }>
 
 function mostFrequentInMap(map: Map<string, number>): string | null {
   let best: string | null = null
@@ -50,10 +47,9 @@ export async function syncTransactionsCore(
   })
 
   if (accounts.length === 0) {
-    return { accountsUpdated: 0, transactionsImported: 0, transactionsModified: 0, expensesCreated: 0, incomesCreated: 0 }
+    return { accountsUpdated: 0, transactionsImported: 0, transactionsModified: 0, entriesCreated: 0 }
   }
 
-  // Group by requisitionId to check connection status once per bank connection
   const requisitionGroups = new Map<string, typeof accounts>()
   for (const account of accounts) {
     if (!account.requisitionId) continue
@@ -62,57 +58,52 @@ export async function syncTransactionsCore(
     requisitionGroups.set(account.requisitionId, group)
   }
 
-  // Pre-fetch categories, vendors, and clients
-  const [categories, vendors, clients] = await Promise.all([
+  const [categories, counterparties] = await Promise.all([
     prisma.category.findMany({
       where: { OR: [{ isSystem: true }, { organizationId }] },
       select: { id: true, slug: true },
     }),
-    prisma.vendor.findMany({
+    prisma.counterparty.findMany({
       where: { organizationId },
-      select: { id: true, normalizedName: true, defaultCategoryId: true },
-    }),
-    prisma.client.findMany({
-      where: { organizationId },
-      select: { id: true, normalizedName: true, defaultCategoryId: true },
+      select: { id: true, normalizedName: true, defaultCategoryId: true, defaultEntryType: true },
     }),
   ])
 
   const categoryLookup = new Map(categories.map((c) => [c.slug, c.id]))
-  const vendorLookup = new Map(
-    vendors.map((v) => [v.normalizedName, { id: v.id, defaultCategoryId: v.defaultCategoryId }])
-  )
-  const clientLookup = new Map(
-    clients.map((c) => [c.normalizedName, { id: c.id, defaultCategoryId: c.defaultCategoryId }])
+  const counterpartyLookup = new Map(
+    counterparties.map((c) => [
+      c.normalizedName,
+      { id: c.id, defaultCategoryId: c.defaultCategoryId, defaultEntryType: c.defaultEntryType },
+    ])
   )
 
-  const historicalExpenses = await prisma.expense.findMany({
+  // Build merchant history from existing entries for intelligent categorization
+  const historicalEntries = await prisma.entry.findMany({
     where: { organizationId, categoryId: { not: null } },
     select: {
       categoryId: true,
-      expenseType: true,
+      entryType: true,
       transaction: { select: { merchantName: true } },
     },
   })
 
   const merchantHistory: MerchantHistory = new Map()
-  for (const e of historicalExpenses) {
+  for (const e of historicalEntries) {
     const key = e.transaction?.merchantName?.toLowerCase().trim()
     if (!key || !e.categoryId) continue
     if (!merchantHistory.has(key)) {
-      merchantHistory.set(key, { categories: new Map(), expenseTypes: new Map() })
+      merchantHistory.set(key, { categories: new Map(), entryTypes: new Map() })
     }
     const h = merchantHistory.get(key)!
     h.categories.set(e.categoryId, (h.categories.get(e.categoryId) ?? 0) + 1)
-    h.expenseTypes.set(e.expenseType, (h.expenseTypes.get(e.expenseType) ?? 0) + 1)
+    h.entryTypes.set(e.entryType, (h.entryTypes.get(e.entryType) ?? 0) + 1)
   }
 
   const gc = getGoCardlessClient()
 
   let totalTransactionsImported = 0
   let totalTransactionsModified = 0
-  let totalExpensesCreated = 0
-  let totalIncomesCreated = 0
+  let totalEntriesCreated = 0
   let accountsUpdated = 0
   const newTransactionIds: string[] = []
 
@@ -138,34 +129,26 @@ export async function syncTransactionsCore(
 
         await prisma.account.update({
           where: { id: account.id },
-          data: {
-            balanceCurrent,
-            lastSyncedAt: new Date(),
-            syncError: null,
-            syncErrorRetries: 0,
-          },
+          data: { balanceCurrent, lastSyncedAt: new Date(), syncError: null, syncErrorRetries: 0 },
         })
         accountsUpdated++
 
-        // initial=true → latest=false → full history; initial=false → latest=true → last 7 days
         const transactions = await gc.getTransactions(account.externalAccountId, !initial)
 
         for (const tx of transactions) {
-          const { imported, modified, expenseCreated, incomeCreated, transactionId } =
+          const { imported, modified, entryCreated, transactionId } =
             await upsertTransaction(
               organizationId,
               account.id,
               tx,
               categoryLookup,
-              vendorLookup,
-              clientLookup,
+              counterpartyLookup,
               merchantHistory
             )
 
           if (imported) { totalTransactionsImported++; newTransactionIds.push(transactionId) }
           if (modified) totalTransactionsModified++
-          if (expenseCreated) totalExpensesCreated++
-          if (incomeCreated) totalIncomesCreated++
+          if (entryCreated) totalEntriesCreated++
         }
       } catch (error) {
         console.error(`Error syncing account ${account.id}:`, error)
@@ -197,8 +180,7 @@ export async function syncTransactionsCore(
     accountsUpdated,
     transactionsImported: totalTransactionsImported,
     transactionsModified: totalTransactionsModified,
-    expensesCreated: totalExpensesCreated,
-    incomesCreated: totalIncomesCreated,
+    entriesCreated: totalEntriesCreated,
   }
 }
 
@@ -207,25 +189,34 @@ async function upsertTransaction(
   accountId: string,
   tx: BankTransaction,
   categoryLookup: Map<string, string>,
-  vendorLookup: Map<string, { id: string; defaultCategoryId: string | null }>,
-  clientLookup: Map<string, { id: string; defaultCategoryId: string | null }>,
+  counterpartyLookup: Map<string, MatchedCounterparty>,
   merchantHistory: MerchantHistory = new Map()
-): Promise<{ imported: boolean; modified: boolean; expenseCreated: boolean; incomeCreated: boolean; transactionId: string }> {
+): Promise<{ imported: boolean; modified: boolean; entryCreated: boolean; transactionId: string }> {
   const counterpartyName = tx.merchantName ?? tx.name ?? null
   const normalizedCounterparty = counterpartyName
     ? normalizeCounterpartyName(counterpartyName)
     : null
 
-  let matchedVendor: MatchedVendor | null = normalizedCounterparty
-    ? (vendorLookup.get(normalizedCounterparty) ?? null)
+  // Determine direction from amount sign (positive = expense, negative = income)
+  const direction = tx.amount > 0 ? "expense" : "income"
+
+  // Find/create counterparty
+  let matchedCounterparty: MatchedCounterparty | null = normalizedCounterparty
+    ? (counterpartyLookup.get(normalizedCounterparty) ?? null)
     : null
 
-  if (!matchedVendor && normalizedCounterparty && counterpartyName && tx.amount > 0) {
-    const vendor = await findOrCreateVendor(organizationId, counterpartyName, vendorLookup)
-    matchedVendor = vendor
-    vendorLookup.set(normalizedCounterparty, vendor)
+  if (!matchedCounterparty && normalizedCounterparty && counterpartyName) {
+    const cp = await findOrCreateCounterparty(
+      organizationId,
+      counterpartyName,
+      direction === "expense" ? "vendor" : "client",
+      counterpartyLookup
+    )
+    matchedCounterparty = cp
+    counterpartyLookup.set(normalizedCounterparty, cp)
   }
 
+  // Upsert the raw Transaction record
   const existing = await prisma.transaction.findFirst({
     where: { accountId, externalTransactionId: tx.externalTransactionId },
     select: { id: true },
@@ -263,30 +254,37 @@ async function upsertTransaction(
     imported = true
   }
 
-  let expenseCreated = false
-  let incomeCreated = false
+  let entryCreated = false
 
-  if (tx.amount > 0) {
-    const existingExpense = await prisma.expense.findUnique({
-      where: { transactionId: transaction.id },
-      select: { id: true },
-    })
+  const existingEntry = await prisma.entry.findUnique({
+    where: { transactionId: transaction.id },
+    select: { id: true },
+  })
 
-    if (!existingExpense) {
+  if (!existingEntry) {
+    // Build category suggestion for expenses
+    let categoryId: string | null = null
+    let categorySource: string | null = null
+    let categoryConfidence: number | null = null
+    let entryType = "variable"
+
+    if (direction === "expense") {
       const merchantKey = tx.merchantName?.toLowerCase().trim() ?? null
       const history = merchantKey ? merchantHistory.get(merchantKey) : null
       const historicalCategoryId = history ? mostFrequentInMap(history.categories) : null
       const historicalTxCount = history
-        ? [...history.expenseTypes.values()].reduce((a, b) => a + b, 0)
+        ? [...history.entryTypes.values()].reduce((a, b) => a + b, 0)
         : 0
-      const historicalExpenseType =
-        history && historicalTxCount >= 2 ? mostFrequentInMap(history.expenseTypes) : null
+      const historicalEntryType =
+        history && historicalTxCount >= 2 ? mostFrequentInMap(history.entryTypes) : null
+
+      if (historicalEntryType) entryType = historicalEntryType
+      if (matchedCounterparty?.defaultEntryType) entryType = matchedCounterparty.defaultEntryType
 
       const gcCategory = mapGoCardlessToPolsoCategory(tx.categoryDetailed, tx.category)
-
       const suggestion = suggestCategory(
         {
-          vendorDefaultCategoryId: matchedVendor?.defaultCategoryId,
+          vendorDefaultCategoryId: matchedCounterparty?.defaultCategoryId,
           historicalCategoryId,
           providerPrimaryCategory: gcCategory?.slug ?? tx.category,
           providerDetailedCategory: tx.categoryDetailed,
@@ -296,99 +294,54 @@ async function upsertTransaction(
         categoryLookup
       )
 
-      try {
-        await prisma.expense.create({
-          data: {
-            organizationId,
-            transactionId: transaction.id,
-            amount: tx.amount,
-            currency: tx.currency,
-            date: tx.date,
-            description: tx.merchantName ?? tx.name,
-            expenseType: historicalExpenseType ?? "variable",
-            status: "pending",
-            isManual: false,
-            vendorId: matchedVendor?.id ?? null,
-            categoryId: suggestion?.categoryId ?? null,
-            categorySource: suggestion?.source ?? null,
-            categoryConfidence: suggestion?.confidence ?? null,
-          },
-        })
-        expenseCreated = true
-      } catch (error) {
-        if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
-          throw error
-        }
+      if (suggestion) {
+        categoryId = suggestion.categoryId
+        categorySource = suggestion.source
+        categoryConfidence = suggestion.confidence
       }
+    } else {
+      // Income: use counterparty default category if available
+      categoryId = matchedCounterparty?.defaultCategoryId ?? null
+      if (categoryId) categorySource = "counterparty"
     }
-  }
 
-  if (tx.amount < 0) {
-    const existingIncome = await prisma.income.findUnique({
-      where: { transactionId: transaction.id },
-      select: { id: true },
-    })
-
-    if (!existingIncome) {
-      let matchedClient: MatchedClient | null = normalizedCounterparty
-        ? (clientLookup.get(normalizedCounterparty) ?? null)
-        : null
-
-      if (!matchedClient && normalizedCounterparty && counterpartyName) {
-        const client = await findOrCreateClient(organizationId, counterpartyName, clientLookup)
-        matchedClient = client
-        clientLookup.set(normalizedCounterparty, client)
-      }
-
-      try {
-        await prisma.income.create({
-          data: {
-            organizationId,
-            transactionId: transaction.id,
-            amount: Math.abs(tx.amount),
-            currency: tx.currency,
-            date: tx.date,
-            description: tx.merchantName ?? tx.name,
-            source: detectIncomeSource(tx),
-            status: "pending",
-            clientId: matchedClient?.id ?? null,
-          },
-        })
-        incomeCreated = true
-      } catch (error) {
-        if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
-          throw error
-        }
-      }
-    } else if (modified) {
-      await prisma.income.update({
-        where: { transactionId: transaction.id },
+    try {
+      await prisma.entry.create({
         data: {
+          organizationId,
+          transactionId: transaction.id,
+          direction,
           amount: Math.abs(tx.amount),
           currency: tx.currency,
           date: tx.date,
           description: tx.merchantName ?? tx.name,
-          source: detectIncomeSource(tx),
+          entryType,
+          status: "pending",
+          isManual: false,
+          counterpartyId: matchedCounterparty?.id ?? null,
+          categoryId,
+          categorySource,
+          categoryConfidence,
         },
       })
+      entryCreated = true
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
+        throw error
+      }
     }
-  } else if (tx.amount > 0 && modified) {
-    const existingExpense = await prisma.expense.findUnique({
+  } else if (modified) {
+    // Update entry amount/date/description when the raw transaction changes
+    await prisma.entry.update({
       where: { transactionId: transaction.id },
-      select: { id: true },
+      data: {
+        amount: Math.abs(tx.amount),
+        currency: tx.currency,
+        date: tx.date,
+        description: tx.merchantName ?? tx.name,
+      },
     })
-    if (existingExpense) {
-      await prisma.expense.update({
-        where: { id: existingExpense.id },
-        data: {
-          amount: tx.amount,
-          currency: tx.currency,
-          date: tx.date,
-          description: tx.merchantName ?? tx.name,
-        },
-      })
-    }
   }
 
-  return { imported, modified, expenseCreated, incomeCreated, transactionId: transaction.id }
+  return { imported, modified, entryCreated, transactionId: transaction.id }
 }

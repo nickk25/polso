@@ -7,11 +7,20 @@
  * - Vendor/counterparty patterns
  */
 
-import type { Expense, Vendor } from "@polso/db"
+interface EntryWithCounterparty {
+  id: string
+  amount: number
+  date: Date
+  description: string | null
+  status: string
+  categoryId: string | null
+  counterpartyId: string | null
+  counterparty?: { id: string; name: string; normalizedName: string } | null
+}
 
 export interface DetectedPattern {
   name: string
-  vendorId: string | null
+  counterpartyId: string | null
   frequency: "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly"
   expectedAmount: number
   amountVariancePct: number
@@ -21,11 +30,7 @@ export interface DetectedPattern {
   firstOccurrence: Date
   lastOccurrence: Date
   occurrenceCount: number
-  expenseIds: string[]
-}
-
-interface ExpenseWithVendor extends Expense {
-  vendor?: Vendor | null
+  entryIds: string[]
 }
 
 // Minimum occurrences needed to detect a pattern
@@ -41,7 +46,7 @@ const DEFAULT_AMOUNT_VARIANCE = 15
  * Detect recurring patterns from a list of expenses
  */
 export function detectRecurringPatterns(
-  expenses: ExpenseWithVendor[]
+  expenses: EntryWithCounterparty[]
 ): DetectedPattern[] {
   // Group expenses by vendor/counterparty
   const grouped = groupExpensesByVendor(expenses)
@@ -71,16 +76,16 @@ export function detectRecurringPatterns(
  * Group expenses by vendor or normalized description
  */
 function groupExpensesByVendor(
-  expenses: ExpenseWithVendor[]
-): Map<string, ExpenseWithVendor[]> {
-  const groups = new Map<string, ExpenseWithVendor[]>()
+  expenses: EntryWithCounterparty[]
+): Map<string, EntryWithCounterparty[]> {
+  const groups = new Map<string, EntryWithCounterparty[]>()
 
   for (const expense of expenses) {
     // Skip excluded expenses
     if (expense.status === "excluded") continue
 
-    // Use vendor name or description as key
-    const key = expense.vendor?.normalizedName ||
+    // Use counterparty name or description as key
+    const key = expense.counterparty?.normalizedName ||
       expense.description?.toLowerCase().trim() ||
       "unknown"
 
@@ -98,7 +103,7 @@ function groupExpensesByVendor(
  */
 function analyzeGroup(
   key: string,
-  expenses: ExpenseWithVendor[]
+  expenses: EntryWithCounterparty[]
 ): DetectedPattern | null {
   if (expenses.length < MIN_OCCURRENCES) return null
 
@@ -145,8 +150,8 @@ function analyzeGroup(
   const lastExpense = expenses[expenses.length - 1]
 
   return {
-    name: firstExpense.vendor?.name || firstExpense.description || key,
-    vendorId: firstExpense.vendorId,
+    name: firstExpense.counterparty?.name || firstExpense.description || key,
+    counterpartyId: firstExpense.counterpartyId,
     frequency,
     expectedAmount: Math.round(avgAmount * 100) / 100,
     amountVariancePct: Math.round(amountVariance * 100) / 100,
@@ -156,7 +161,7 @@ function analyzeGroup(
     firstOccurrence: new Date(firstExpense.date),
     lastOccurrence: new Date(lastExpense.date),
     occurrenceCount: expenses.length,
-    expenseIds: expenses.map((e) => e.id),
+    entryIds: expenses.map((e) => e.id),
   }
 }
 
@@ -213,7 +218,7 @@ function calculateVariance(amounts: number[], average: number): number {
  * Calculate expected day of month
  */
 function calculateExpectedDay(
-  expenses: ExpenseWithVendor[],
+  expenses: EntryWithCounterparty[],
   frequency: string
 ): number | null {
   if (frequency === "weekly" || frequency === "biweekly") {

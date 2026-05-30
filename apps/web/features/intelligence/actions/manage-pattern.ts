@@ -70,20 +70,15 @@ export async function dismissPatternAction(
     await prisma.dismissedPattern.create({
       data: {
         organizationId,
-        vendorId: pattern.vendorId,
+        counterpartyId: pattern.counterpartyId,
         patternName: pattern.name,
       },
     })
 
-    // Unlink expenses from this pattern
-    await prisma.expense.updateMany({
-      where: {
-        recurringPatternId: patternId,
-      },
-      data: {
-        recurringPatternId: null,
-        expenseType: "variable",
-      },
+    // Unlink entries from this pattern
+    await prisma.entry.updateMany({
+      where: { recurringPatternId: patternId },
+      data: { recurringPatternId: null, entryType: "variable" },
     })
 
     // Delete the pattern
@@ -92,7 +87,7 @@ export async function dismissPatternAction(
     })
 
     revalidatePath("/recurring")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
 
     return successResponse(undefined)
   } catch (error) {
@@ -215,15 +210,10 @@ export async function deletePatternAction(
       return errorResponse("Pattern not found", "NOT_FOUND")
     }
 
-    // Unlink expenses from this pattern
-    await prisma.expense.updateMany({
-      where: {
-        recurringPatternId: patternId,
-      },
-      data: {
-        recurringPatternId: null,
-        expenseType: "variable",
-      },
+    // Unlink entries from this pattern
+    await prisma.entry.updateMany({
+      where: { recurringPatternId: patternId },
+      data: { recurringPatternId: null, entryType: "variable" },
     })
 
     // Delete the pattern
@@ -232,7 +222,7 @@ export async function deletePatternAction(
     })
 
     revalidatePath("/recurring")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
 
     return successResponse(undefined)
   } catch (error) {

@@ -18,7 +18,7 @@ export interface AlertWithRelations {
   metadata: unknown
   createdAt: Date
   account: { id: string; name: string } | null
-  expense: { id: string; description: string | null } | null
+  entry: { id: string; description: string | null } | null
 }
 
 export interface AlertStats {
@@ -50,7 +50,7 @@ export async function getAlerts(
         account: {
           select: { id: true, name: true },
         },
-        expense: {
+        entry: {
           select: { id: true, description: true },
         },
       },

@@ -15,8 +15,7 @@ export async function syncTransactionsAction(
     const result = await syncTransactionsCore(organizationId, accountId, initial)
 
     revalidatePath("/settings/banking")
-    revalidatePath("/expenses")
-    revalidatePath("/incomes")
+    revalidatePath("/transactions")
     revalidatePath("/dashboard")
     revalidatePath("/analytics")
     revalidatePath("/vendors")

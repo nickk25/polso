@@ -9,7 +9,7 @@ export interface AnomalyInput {
 }
 
 export interface DetectedAnomaly {
-  expenseId: string
+  entryId: string
   description: string
   amount: number
   categoryName: string
@@ -36,7 +36,7 @@ export function detectAnomalies(
     if (expense.amount < expense.categoryAvg * multiplier) continue
 
     results.push({
-      expenseId: expense.id,
+      entryId: expense.id,
       description: expense.description ?? expense.categoryName ?? "Unknown",
       amount: expense.amount,
       categoryName: expense.categoryName ?? "Unknown",

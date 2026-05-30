@@ -10,14 +10,14 @@ interface CreateCategoryInput {
   color: string
   icon?: string | null
   parentId?: string | null
-  expenseType?: string | null
+  entryType?: string | null
 }
 
 interface UpdateCategoryInput {
   name?: string
   color?: string
   icon?: string | null
-  expenseType?: string | null
+  entryType?: string | null
 }
 
 interface CategoryResult {
@@ -124,13 +124,13 @@ export async function createCategoryAction(
         color: input.color,
         icon: input.icon || null,
         parentId: input.parentId || null,
-        expenseType: input.expenseType || null,
+        entryType: input.entryType || null,
         isSystem: false,
       },
     })
 
     revalidatePath("/categories")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
 
     return successResponse({
       id: category.id,
@@ -203,12 +203,12 @@ export async function updateCategoryAction(
         slug: newSlug,
         color: input.color ?? category.color,
         icon: input.icon !== undefined ? input.icon : category.icon,
-        expenseType: input.expenseType !== undefined ? input.expenseType : category.expenseType,
+        entryType: input.entryType !== undefined ? input.entryType : category.entryType,
       },
     })
 
     revalidatePath("/categories")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
 
     return successResponse({
       id: updated.id,
@@ -245,8 +245,7 @@ export async function deleteCategoryAction(
       include: {
         _count: {
           select: {
-            expenses: true,
-            incomes: true,
+            entries: true,
           },
         },
       },
@@ -256,8 +255,7 @@ export async function deleteCategoryAction(
       return errorResponse("Category not found or cannot be deleted", "NOT_FOUND")
     }
 
-    // Check if category has linked expenses or incomes
-    const totalLinked = category._count.expenses + category._count.incomes
+    const totalLinked = category._count.entries
     if (totalLinked > 0) {
       return errorResponse(
         `Cannot delete category with ${totalLinked} linked transaction${totalLinked > 1 ? "s" : ""}. Reassign them first.`,
@@ -271,7 +269,7 @@ export async function deleteCategoryAction(
     })
 
     revalidatePath("/categories")
-    revalidatePath("/expenses")
+    revalidatePath("/transactions")
 
     return successResponse({ deleted: true })
   } catch (error) {
@@ -289,7 +287,7 @@ export async function deleteCategoryAction(
  */
 export async function getCategoryUsageAction(
   categoryId: string
-): Promise<ActionResponse<{ expenseCount: number; incomeCount: number }>> {
+): Promise<ActionResponse<{ entryCount: number }>> {
   try {
     const { organizationId } = await getAuthContext()
 
@@ -304,8 +302,7 @@ export async function getCategoryUsageAction(
       include: {
         _count: {
           select: {
-            expenses: true,
-            incomes: true,
+            entries: true,
           },
         },
       },
@@ -316,8 +313,7 @@ export async function getCategoryUsageAction(
     }
 
     return successResponse({
-      expenseCount: category._count.expenses,
-      incomeCount: category._count.incomes,
+      entryCount: category._count.entries,
     })
   } catch (error) {
     console.error("Error getting category usage:", error)
@@ -357,8 +353,7 @@ export async function toggleCategoryVisibilityAction(
     })
 
     revalidatePath("/categories")
-    revalidatePath("/expenses")
-    revalidatePath("/incomes")
+    revalidatePath("/transactions")
 
     return successResponse({ isHidden })
   } catch (error) {

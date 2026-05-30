@@ -8,7 +8,8 @@ export interface RecurringPatternWithRelations {
   expectedAmount: number | null
   amountVariancePct: number
   expectedDayOfMonth: number | null
-  expenseType: string
+  entryType: string
+  direction: string
   isActive: boolean
   isConfirmed: boolean
   confidenceScore: number | null
@@ -18,7 +19,7 @@ export interface RecurringPatternWithRelations {
   pauseReason: string | null
   pausedAt: Date | null
   createdAt: Date
-  vendor: {
+  counterparty: {
     id: string
     name: string
     logoUrl: string | null
@@ -30,13 +31,10 @@ export interface RecurringPatternWithRelations {
     icon: string | null
   } | null
   _count: {
-    expenses: number
+    entries: number
   }
 }
 
-/**
- * Get all recurring patterns for the organization
- */
 export async function getRecurringPatterns(options?: {
   confirmed?: boolean
   active?: boolean
@@ -56,7 +54,7 @@ export async function getRecurringPatterns(options?: {
   return prisma.recurringPattern.findMany({
     where,
     include: {
-      vendor: {
+      counterparty: {
         select: {
           id: true,
           name: true,
@@ -73,7 +71,7 @@ export async function getRecurringPatterns(options?: {
       },
       _count: {
         select: {
-          expenses: true,
+          entries: true,
         },
       },
     },
@@ -85,9 +83,6 @@ export async function getRecurringPatterns(options?: {
   })
 }
 
-/**
- * Get a single recurring pattern by ID
- */
 export async function getRecurringPattern(id: string) {
   const { organizationId } = await getAuthContext()
 
@@ -97,9 +92,9 @@ export async function getRecurringPattern(id: string) {
       organizationId,
     },
     include: {
-      vendor: true,
+      counterparty: true,
       category: true,
-      expenses: {
+      entries: {
         orderBy: { date: "desc" },
         take: 10,
       },
@@ -107,30 +102,18 @@ export async function getRecurringPattern(id: string) {
   })
 }
 
-/**
- * Get suggested (unconfirmed) patterns for review
- */
 export async function getSuggestedPatterns(): Promise<RecurringPatternWithRelations[]> {
   return getRecurringPatterns({ confirmed: false, active: true })
 }
 
-/**
- * Get confirmed active patterns
- */
 export async function getConfirmedPatterns(): Promise<RecurringPatternWithRelations[]> {
   return getRecurringPatterns({ confirmed: true, active: true })
 }
 
-/**
- * Get paused patterns (confirmed but inactive)
- */
 export async function getPausedPatterns(): Promise<RecurringPatternWithRelations[]> {
   return getRecurringPatterns({ confirmed: true, active: false })
 }
 
-/**
- * Get total monthly recurring expense amount
- */
 export async function getMonthlyRecurringTotal(): Promise<number> {
   const { organizationId } = await getAuthContext()
 
@@ -146,12 +129,11 @@ export async function getMonthlyRecurringTotal(): Promise<number> {
     },
   })
 
-  // Convert all to monthly amounts
   return patterns.reduce((total, pattern) => {
     const amount = pattern.expectedAmount || 0
     switch (pattern.frequency) {
       case "weekly":
-        return total + amount * 4.33 // Average weeks per month
+        return total + amount * 4.33
       case "biweekly":
         return total + amount * 2.17
       case "monthly":

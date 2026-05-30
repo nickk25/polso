@@ -7,14 +7,14 @@ export interface ExpenseForPDF {
   amount: number
   currency: string
   description: string | null
-  expenseType: "fixed" | "variable" | null
-  vendor: {
+  entryType: "fixed" | "variable" | null
+  counterparty: {
     name: string
   } | null
   category: {
     name: string
   } | null
-  invoices: { id: string }[]
+  documents: { id: string }[]
 }
 
 export interface PDFGeneratorInput {
@@ -188,8 +188,8 @@ export async function generatePDF(input: PDFGeneratorInput): Promise<Buffer> {
   })
   y -= 25
 
-  const documented = expenses.filter((e) => e.invoices.length > 0).length
-  const undocumented = expenses.filter((e) => e.invoices.length === 0).length
+  const documented = expenses.filter((e) => e.documents.length > 0).length
+  const undocumented = expenses.filter((e) => e.documents.length === 0).length
 
   const statsCol = contentWidth / 3
   page.drawText("Total gastos", { x: margin, y, size: 9, font: font, color: gray })
@@ -241,9 +241,9 @@ export async function generatePDF(input: PDFGeneratorInput): Promise<Buffer> {
 
     const row = [
       format(new Date(expense.date), "dd/MM/yy"),
-      (expense.vendor?.name || expense.description || "—").substring(0, 20),
+      (expense.counterparty?.name || expense.description || "—").substring(0, 20),
       (expense.category?.name || "—").substring(0, 15),
-      expense.expenseType === "fixed" ? "Fijo" : "Var.",
+      expense.entryType === "fixed" ? "Fijo" : "Var.",
       formatCurrency(expense.amount, expense.currency),
     ]
 

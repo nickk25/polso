@@ -5,15 +5,15 @@ export interface ExpenseForCSV {
   amount: number
   currency: string
   description: string | null
-  expenseType: "fixed" | "variable" | null
+  entryType: "fixed" | "variable" | null
   status: string
-  vendor: {
+  counterparty: {
     name: string
   } | null
   category: {
     name: string
   } | null
-  invoices: { id: string }[]
+  documents: { id: string }[]
 }
 
 const CSV_HEADERS = [
@@ -54,13 +54,13 @@ export function generateCSV(expenses: ExpenseForCSV[]): string {
   for (const expense of expenses) {
     const row = [
       format(new Date(expense.date), "dd/MM/yyyy"),
-      escapeCSVField(expense.vendor?.name || "Sin proveedor"),
+      escapeCSVField(expense.counterparty?.name || "Sin proveedor"),
       escapeCSVField(expense.description || ""),
       escapeCSVField(expense.category?.name || "Sin categoria"),
-      expense.expenseType === "fixed" ? "Fijo" : "Variable",
+      expense.entryType === "fixed" ? "Fijo" : "Variable",
       formatSpanishNumber(expense.amount),
       expense.currency,
-      expense.invoices.length > 0 ? "Si" : "No",
+      expense.documents.length > 0 ? "Si" : "No",
     ]
     rows.push(row.join(";"))
   }

@@ -5,10 +5,8 @@ export type {
   Account,
   Transaction,
   Category,
-  Vendor,
-  Expense,
-  Income,
-  ExpenseInvoice,
+  Counterparty,
+  Entry,
   RecurringPattern,
   Alert,
   Export,
@@ -18,5 +16,5 @@ export type {
 } from "@polso/db"
 
 // Re-export from @polso/utils
-export type { ActionResponse, UserRole, ExpenseType, ExpenseStatus, IncomeSource, IncomeStatus, AccountStatus, RecurringFrequency, AlertType, AlertSeverity, ExportStatus, DashboardKPIs } from "@polso/utils"
+export type { ActionResponse, UserRole } from "@polso/utils"
 export { successResponse, errorResponse } from "@polso/utils"
