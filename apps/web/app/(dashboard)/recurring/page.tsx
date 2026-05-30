@@ -19,23 +19,23 @@ export default async function RecurringPage() {
         <DetectPatternsButton />
       </div>
 
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-        <Card>
-          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("monthlyTotal")}</div>
-          <div className="px-4 pb-4 text-2xl font-bold">{formatCurrency(monthlyTotal, currency)}</div>
-        </Card>
-        <Card>
-          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("active")}</div>
-          <div className="px-4 pb-4 text-2xl font-bold">{confirmed.length}</div>
-        </Card>
-        <Card>
-          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("toReview")}</div>
-          <div className="px-4 pb-4 text-2xl font-bold">{suggested.length}</div>
-        </Card>
-        <Card>
-          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("paused")}</div>
-          <div className="px-4 pb-4 text-2xl font-bold">{paused.length}</div>
-        </Card>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("monthlyTotal")}</p>
+          <p className="text-xl font-bold">{formatCurrency(monthlyTotal, currency)}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("active")}</p>
+          <p className="text-xl font-bold">{confirmed.length}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("toReview")}</p>
+          <p className="text-xl font-bold">{suggested.length}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("paused")}</p>
+          <p className="text-xl font-bold">{paused.length}</p>
+        </div>
       </div>
 
       {suggested.length > 0 && (

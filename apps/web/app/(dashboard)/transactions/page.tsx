@@ -59,20 +59,20 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
     <div className="flex flex-col gap-6 p-6">
       {hasAny && (
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("stats.income")}</div>
-            <div className="px-4 pb-4 text-2xl font-bold text-green-500">{formatCurrency(stats.totalIncome, stats.currency)}</div>
-          </Card>
-          <Card>
-            <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("stats.expenses")}</div>
-            <div className="px-4 pb-4 text-2xl font-bold">{formatCurrency(stats.totalExpenses, stats.currency)}</div>
-          </Card>
-          <Card>
-            <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("stats.netCashFlow")}</div>
-            <div className={`px-4 pb-4 text-2xl font-bold ${stats.netFlow >= 0 ? "text-green-500" : "text-red-500"}`}>
+          <div className="rounded-lg border bg-card p-4">
+            <p className="text-xs text-muted-foreground mb-1">{t("stats.income")}</p>
+            <p className="text-xl font-bold text-green-500">{formatCurrency(stats.totalIncome, stats.currency)}</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <p className="text-xs text-muted-foreground mb-1">{t("stats.expenses")}</p>
+            <p className="text-xl font-bold">{formatCurrency(stats.totalExpenses, stats.currency)}</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4">
+            <p className="text-xs text-muted-foreground mb-1">{t("stats.netCashFlow")}</p>
+            <p className={`text-xl font-bold ${stats.netFlow >= 0 ? "text-green-500" : "text-red-500"}`}>
               {formatCurrency(stats.netFlow, stats.currency)}
-            </div>
-          </Card>
+            </p>
+          </div>
         </div>
       )}
 

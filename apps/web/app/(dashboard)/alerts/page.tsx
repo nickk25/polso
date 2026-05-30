@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
-import { Card } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
 import { Bell, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr"
 import { getAlerts, getAlertStats } from "@/features/alerts/queries/get-alerts"
@@ -46,19 +45,19 @@ export default async function AlertsPage({ searchParams }: PageProps) {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("stats.total")}</div>
-          <div className="px-4 pb-4 text-2xl font-bold">{stats.total}</div>
-        </Card>
-        <Card>
-          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("stats.unread")}</div>
-          <div className="px-4 pb-4 text-2xl font-bold">{stats.unread}</div>
-        </Card>
-        <Card>
-          <div className="px-4 pt-4 pb-1 text-sm font-medium text-muted-foreground">{t("stats.critical")}</div>
-          <div className="px-4 pb-4 text-2xl font-bold text-destructive">{stats.critical}</div>
-        </Card>
+      <div className="grid gap-4 grid-cols-3">
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("stats.total")}</p>
+          <p className="text-xl font-bold">{stats.total}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("stats.unread")}</p>
+          <p className="text-xl font-bold">{stats.unread}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">{t("stats.critical")}</p>
+          <p className="text-xl font-bold text-destructive">{stats.critical}</p>
+        </div>
       </div>
 
 

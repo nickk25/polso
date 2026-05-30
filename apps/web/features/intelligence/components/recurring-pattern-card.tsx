@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
 import {
@@ -109,8 +108,7 @@ export function RecurringPatternCard({
   const pauseReasonText = getPauseReasonText()
 
   return (
-    <Card className={state === "paused" ? "opacity-75" : undefined}>
-      <CardContent className="p-4">
+    <div className={`rounded-lg border bg-card p-4${state === "paused" ? " opacity-75" : ""}`}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0 flex-1">
             <div
@@ -364,7 +362,6 @@ export function RecurringPatternCard({
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   )
 }
