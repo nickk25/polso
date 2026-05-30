@@ -108,8 +108,8 @@ export function RecurringPatternCard({
   const pauseReasonText = getPauseReasonText()
 
   return (
-    <div className={`rounded-lg border bg-card p-4${state === "paused" ? " opacity-75" : ""}`}>
-        <div className="flex items-start justify-between gap-4">
+    <div className="p-4">
+      <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0 flex-1">
             <div
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"

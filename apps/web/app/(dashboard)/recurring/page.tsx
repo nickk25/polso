@@ -45,7 +45,7 @@ export default async function RecurringPage() {
             <span className="text-sm font-semibold">{t("suggestionsForReview")}</span>
             <span className="text-xs text-muted-foreground">({suggested.length})</span>
           </div>
-          <div className="grid gap-3">
+          <div className="rounded-md border divide-y overflow-hidden">
             {suggested.map((pattern) => (
               <RecurringPatternCard
                 key={pattern.id}
@@ -65,7 +65,7 @@ export default async function RecurringPage() {
             <span className="text-sm font-semibold">{t("activeRecurringExpenses")}</span>
             <span className="text-xs text-muted-foreground">({confirmed.length})</span>
           </div>
-          <div className="grid gap-3">
+          <div className="rounded-md border divide-y overflow-hidden">
             {confirmed.map((pattern) => (
               <RecurringPatternCard key={pattern.id} pattern={pattern} state="active" currency={currency} />
             ))}
@@ -80,7 +80,7 @@ export default async function RecurringPage() {
             <span className="text-sm font-semibold text-muted-foreground">{t("pausedPatterns")}</span>
             <span className="text-xs text-muted-foreground">({paused.length})</span>
           </div>
-          <div className="grid gap-3">
+          <div className="rounded-md border divide-y overflow-hidden opacity-75">
             {paused.map((pattern) => (
               <RecurringPatternCard key={pattern.id} pattern={pattern} state="paused" currency={currency} />
             ))}
