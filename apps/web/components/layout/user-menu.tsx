@@ -14,12 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@polso/ui/dropdown-menu"
 import { User, Sun, Moon, Monitor, SignOut } from "@phosphor-icons/react"
-
-function getInitials(name: string): string {
-  const words = name.trim().split(/\s+/)
-  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
-  return name.slice(0, 2).toUpperCase()
-}
+import { getInitials } from "@/lib/utils"
 
 interface UserMenuProps {
   userName: string
@@ -30,9 +25,12 @@ export function UserMenu({ userName, userEmail }: UserMenuProps) {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
 
-  const nextTheme = theme === "light" ? "dark" : theme === "dark" ? "system" : "light"
-  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor
-  const themeLabel = theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System"
+  const THEME_CYCLE: Record<string, { next: string; Icon: React.ElementType; label: string }> = {
+    light: { next: "dark", Icon: Moon, label: "Dark" },
+    dark:  { next: "system", Icon: Monitor, label: "System" },
+    system: { next: "light", Icon: Sun, label: "Light" },
+  }
+  const { next: nextTheme, Icon: ThemeIcon, label: themeLabel } = THEME_CYCLE[theme ?? "system"]
 
   return (
     <DropdownMenu>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import {
   House,
   ArrowsLeftRight,
@@ -55,13 +55,6 @@ export const NAV_ITEMS: NavItem[] = [
   { path: "/settings", labelKey: "settings", icon: Gear },
 ];
 
-function getInitials(name: string): string {
-  const words = name.trim().split(/\s+/);
-  if (words.length >= 2) {
-    return (words[0][0] + words[1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
 
 interface AppSidebarProps {
   organizationName: string;

@@ -2,7 +2,7 @@ import { Card, CardContent } from "@polso/ui/card"
 import { Receipt } from "@phosphor-icons/react/dist/ssr"
 import { getTransactions, getTransactionStats } from "@/features/transactions/queries/get-transactions"
 import { getActiveCategories } from "@/features/categories/queries/get-categories"
-import { getAccounts } from "@/features/banking/queries/get-accounts"
+import { hasConnectedBank } from "@/features/banking/queries/get-accounts"
 import { TransactionFilters } from "@/features/transactions/components/transaction-filters"
 import { TransactionTable } from "@/features/transactions/components/transaction-table"
 import { TransactionEmptyState } from "@/features/transactions/components/transaction-empty-state"
@@ -33,7 +33,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   const dateFrom = params.dateFrom || undefined
   const dateTo = params.dateTo || undefined
 
-  const [t, categories, { transactions, total, pages }, stats, accounts] = await Promise.all([
+  const [t, categories, { transactions, total, pages }, stats, connectedBank] = await Promise.all([
     getTranslations("transactions"),
     getActiveCategories(),
     getTransactions(
@@ -49,12 +49,11 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
       PAGE_SIZE,
     ),
     getTransactionStats(),
-    getAccounts(),
+    hasConnectedBank(),
   ])
 
   const hasTransactions = transactions.length > 0
   const hasAny = total > 0 || stats.totalExpenses > 0 || stats.totalIncome > 0
-  const hasConnectedBank = accounts.length > 0
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -113,7 +112,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <TransactionEmptyState hasConnectedBank={hasConnectedBank} />
+            <TransactionEmptyState hasConnectedBank={connectedBank} />
           </CardContent>
         </Card>
       )}

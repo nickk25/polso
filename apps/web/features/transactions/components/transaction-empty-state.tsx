@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import Link from "next/link"
 import { Receipt, ArrowsClockwise, Plugs } from "@phosphor-icons/react"
 import { Button } from "@polso/ui/button"
 import { syncTransactionsAction } from "@/features/banking/actions/sync-transactions"
@@ -37,10 +38,10 @@ export function TransactionEmptyState({ hasConnectedBank }: TransactionEmptyStat
         </Button>
       ) : (
         <Button asChild variant="default">
-          <a href="/settings/banking">
+          <Link href="/settings/banking">
             <Plugs className="h-4 w-4 mr-2" />
             {t("emptyState.connectButton")}
-          </a>
+          </Link>
         </Button>
       )}
     </div>

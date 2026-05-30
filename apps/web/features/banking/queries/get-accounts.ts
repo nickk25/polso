@@ -18,6 +18,15 @@ export async function getAccounts(includeDisconnected = false) {
   })
 }
 
+export async function hasConnectedBank(): Promise<boolean> {
+  const { organizationId } = await getAuthContext()
+  const account = await prisma.account.findFirst({
+    where: { organizationId, status: { not: "disconnected" } },
+    select: { id: true },
+  })
+  return account !== null
+}
+
 export async function getAccount(id: string) {
   const { organizationId } = await getAuthContext()
 

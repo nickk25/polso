@@ -9,6 +9,7 @@ import {
   getMonthlyRecurringTotal,
 } from "@/features/intelligence/queries/get-recurring-patterns"
 import { getTranslations } from "next-intl/server"
+import { formatCurrency } from "@/lib/format-currency"
 import { getAuthContext } from "@polso/auth/get-session"
 import { prisma } from "@/lib/db"
 
@@ -26,16 +27,9 @@ export default async function RecurringPage() {
   const currency = org?.currency ?? "EUR"
   const hasPatterns = confirmedPatterns.length > 0 || suggestedPatterns.length > 0 || pausedPatterns.length > 0
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency,
-    }).format(amount)
-  }
-
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-start justify-between">
+      <div className="flex justify-end">
         <DetectPatternsButton />
       </div>
 
@@ -49,7 +43,7 @@ export default async function RecurringPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{t("monthlyTotal")}</p>
-                <p className="text-xl font-semibold">{formatCurrency(monthlyTotal)}</p>
+                <p className="text-xl font-semibold">{formatCurrency(monthlyTotal, currency)}</p>
               </div>
             </div>
           </CardContent>

@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Binoculars } from "@phosphor-icons/react/dist/ssr"
-import { getAccounts } from "@/features/banking/queries/get-accounts"
+import { hasConnectedBank } from "@/features/banking/queries/get-accounts"
 import { AnalyticsEmptyState } from "@/features/analytics/components/analytics-empty-state"
 import {
   getBurnRateAndRunway,
@@ -53,7 +53,7 @@ export default async function ReportsPage({
     revenueForecast,
     expenseForecast,
     expenseStats,
-    accounts,
+    connectedBank,
   ] = await Promise.all([
     getBurnRateAndRunway(),
     getMonthlySpendTrend(6, selectedDate),
@@ -66,7 +66,7 @@ export default async function ReportsPage({
     getRevenueForecast(),
     getExpenseForecast(),
     getExpenseStatsForMonth(selectedDate),
-    getAccounts(),
+    hasConnectedBank(),
   ])
 
   const hasData =
@@ -80,7 +80,7 @@ export default async function ReportsPage({
       <div className="flex flex-col gap-6 p-6">
         <Card>
           <CardContent className="p-0">
-            <AnalyticsEmptyState hasConnectedBank={accounts.length > 0} />
+            <AnalyticsEmptyState hasConnectedBank={connectedBank} />
           </CardContent>
         </Card>
       </div>
