@@ -21,16 +21,13 @@
     "all": "Todos",
     "done": "Emparejados",
     "suggested_match": "Sugeridos",
-    "no_match": "Sin coincidencia",
-    "new": "Nuevos"
+    "no_match": "Sin coincidencia"
   },
   "statuses": {
     "done": "Emparejado",
     "suggested_match": "Sugerido",
     "no_match": "Sin coincidencia",
-    "new": "Nuevo",
-    "processing": "Procesando",
-    "analyzing": "Analizando"
+    "processing": "Procesando"
   },
   "sources": {
     "upload": "Subida",

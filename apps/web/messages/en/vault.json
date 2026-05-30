@@ -21,16 +21,13 @@
     "all": "All",
     "done": "Matched",
     "suggested_match": "Suggested",
-    "no_match": "No match",
-    "new": "New"
+    "no_match": "No match"
   },
   "statuses": {
     "done": "Matched",
     "suggested_match": "Suggested",
     "no_match": "No match",
-    "new": "New",
-    "processing": "Processing",
-    "analyzing": "Analyzing"
+    "processing": "Processing"
   },
   "sources": {
     "upload": "Upload",

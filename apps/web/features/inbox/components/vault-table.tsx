@@ -19,7 +19,6 @@ import {
   CheckCircle,
   XCircle,
   Question,
-  Clock,
   Spinner,
 } from "@phosphor-icons/react"
 import type { VaultItem } from "@/features/inbox/queries/get-vault"
@@ -36,22 +35,18 @@ const STATUS_ICONS: Record<string, React.ElementType> = {
   done: CheckCircle,
   suggested_match: Question,
   no_match: XCircle,
-  new: Clock,
   processing: Spinner,
-  analyzing: Spinner,
 }
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   done: "default",
   suggested_match: "outline",
   no_match: "destructive",
-  new: "secondary",
   processing: "secondary",
-  analyzing: "secondary",
 }
 
-const FILTER_KEYS = ["all", "done", "suggested_match", "no_match", "new"] as const
-const STATUS_KEYS = ["done", "suggested_match", "no_match", "new", "processing", "analyzing"] as const
+const FILTER_KEYS = ["all", "done", "suggested_match", "no_match"] as const
+const STATUS_KEYS = ["done", "suggested_match", "no_match", "processing"] as const
 const SOURCE_KEYS = ["upload", "whatsapp", "telegram", "email"] as const
 
 interface VaultTableProps {
@@ -115,7 +110,7 @@ export function VaultTable({ items, total, pages, page, statusFilter }: VaultTab
               items.map((item) => {
                 const isPdf = item.fileName.toLowerCase().endsWith(".pdf")
                 const statusKey = STATUS_KEYS.includes(item.status as typeof STATUS_KEYS[number]) ? item.status : "new"
-                const Icon = STATUS_ICONS[statusKey] ?? Clock
+                const Icon = STATUS_ICONS[statusKey] ?? Spinner
                 const variant = STATUS_VARIANTS[statusKey] ?? "secondary"
 
                 return (

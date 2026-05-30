@@ -41,7 +41,7 @@ export async function matchAfterSync(
   const inboxItems = await prisma.inboxItem.findMany({
     where: {
       organizationId,
-      status: { in: ["new", "processing", "no_match"] },
+      status: { in: ["processing", "no_match"] },
       transactionId: null,
     },
     select: {
