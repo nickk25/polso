@@ -116,6 +116,7 @@ export function VendorTable({
       </div>
 
       {/* Table */}
+      <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -159,9 +160,9 @@ export function VendorTable({
                     }
                   />
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{vendor.name}</span>
+                <TableCell className="max-w-[180px]">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium truncate">{vendor.name}</span>
                     {vendor.isAutoDetected && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -208,6 +209,7 @@ export function VendorTable({
           )}
         </TableBody>
       </Table>
+      </div>
     </div>
   )
 }
