@@ -9,22 +9,22 @@ const prisma = new PrismaClient({ adapter })
 
 const systemCategories = [
   // Fixed expenses
-  { name: "Rent & Mortgage", slug: "rent-mortgage", color: "#ef4444", expenseType: "fixed" },
-  { name: "Utilities", slug: "utilities", color: "#f97316", expenseType: "fixed" },
-  { name: "Insurance", slug: "insurance", color: "#3b82f6", expenseType: "fixed" },
-  { name: "Subscriptions", slug: "subscriptions", color: "#8b5cf6", expenseType: "fixed" },
-  { name: "Salaries & Payroll", slug: "salaries-payroll", color: "#14b8a6", expenseType: "fixed" },
-  { name: "Loan Payments", slug: "loan-payments", color: "#64748b", expenseType: "fixed" },
+  { name: "Rent & Mortgage", slug: "rent-mortgage", color: "#ef4444", entryType: "fixed" },
+  { name: "Utilities", slug: "utilities", color: "#f97316", entryType: "fixed" },
+  { name: "Insurance", slug: "insurance", color: "#3b82f6", entryType: "fixed" },
+  { name: "Subscriptions", slug: "subscriptions", color: "#8b5cf6", entryType: "fixed" },
+  { name: "Salaries & Payroll", slug: "salaries-payroll", color: "#14b8a6", entryType: "fixed" },
+  { name: "Loan Payments", slug: "loan-payments", color: "#64748b", entryType: "fixed" },
 
   // Variable expenses
-  { name: "Office Supplies", slug: "office-supplies", color: "#06b6d4", expenseType: "variable" },
-  { name: "Marketing & Ads", slug: "marketing-ads", color: "#f43f5e", expenseType: "variable" },
-  { name: "Software & Tools", slug: "software-tools", color: "#6366f1", expenseType: "variable" },
-  { name: "Travel & Transport", slug: "travel-transport", color: "#22c55e", expenseType: "variable" },
-  { name: "Meals & Entertainment", slug: "meals-entertainment", color: "#eab308", expenseType: "variable" },
-  { name: "Professional Services", slug: "professional-services", color: "#a855f7", expenseType: "variable" },
-  { name: "Equipment", slug: "equipment", color: "#0ea5e9", expenseType: "variable" },
-  { name: "Miscellaneous", slug: "miscellaneous", color: "#94a3b8", expenseType: "variable" },
+  { name: "Office Supplies", slug: "office-supplies", color: "#06b6d4", entryType: "variable" },
+  { name: "Marketing & Ads", slug: "marketing-ads", color: "#f43f5e", entryType: "variable" },
+  { name: "Software & Tools", slug: "software-tools", color: "#6366f1", entryType: "variable" },
+  { name: "Travel & Transport", slug: "travel-transport", color: "#22c55e", entryType: "variable" },
+  { name: "Meals & Entertainment", slug: "meals-entertainment", color: "#eab308", entryType: "variable" },
+  { name: "Professional Services", slug: "professional-services", color: "#a855f7", entryType: "variable" },
+  { name: "Equipment", slug: "equipment", color: "#0ea5e9", entryType: "variable" },
+  { name: "Miscellaneous", slug: "miscellaneous", color: "#94a3b8", entryType: "variable" },
 ]
 
 async function main() {
@@ -45,7 +45,7 @@ async function main() {
         data: {
           name: category.name,
           color: category.color,
-          expenseType: category.expenseType,
+          entryType: category.entryType,
         },
       })
       console.log(`  Updated: ${category.name}`)
@@ -55,7 +55,7 @@ async function main() {
           name: category.name,
           slug: category.slug,
           color: category.color,
-          expenseType: category.expenseType,
+          entryType: category.entryType,
           isSystem: true,
           organizationId: null,
         },
