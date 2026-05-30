@@ -4,6 +4,7 @@ export {
   getAuthContext,
   getAuthContextWithType,
   getAuthContextOptional,
+  getUserProfile,
   type AuthContext,
   type PartnerAuthContext,
 } from "./get-session"

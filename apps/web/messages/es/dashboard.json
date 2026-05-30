@@ -3,7 +3,7 @@
   "greetingMorning": "Buenos dias",
   "greetingAfternoon": "Buenas tardes",
   "greetingEvening": "Buenas noches",
-  "transactionsThisMonth": "Has realizado {count} {count, plural, one {transaccion} other {transacciones}} este mes.",
+  "hasTransactionsThisMonth": "Aqui tienes tu resumen financiero del mes.",
   "noTransactionsThisMonth": "No tienes transacciones este mes.",
   "chatPlaceholder": "Como puedo ayudarte hoy?",
   "quickActions": {

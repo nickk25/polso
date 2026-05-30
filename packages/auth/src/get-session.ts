@@ -67,6 +67,16 @@ export async function getAuthContextWithType(): Promise<PartnerAuthContext> {
 }
 
 /**
+ * Get the authenticated user's name and email.
+ * Use this when you need user profile info (e.g. greeting) without org context.
+ */
+export async function getUserProfile(): Promise<{ id: string; name: string | null; email: string | null }> {
+  const { user } = await neonAuth()
+  if (!user) throw new Error("Unauthorized")
+  return { id: user.id, name: user.name ?? null, email: user.email ?? null }
+}
+
+/**
  * Get auth context without throwing. Returns null if not authenticated.
  */
 export async function getAuthContextOptional(): Promise<AuthContext | null> {

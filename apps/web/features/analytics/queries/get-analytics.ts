@@ -114,43 +114,33 @@ async function getCategoryBreakdownForDirection(
   const monthStart = startOfMonth(date)
   const monthEnd = endOfMonth(date)
 
-  const entries = await prisma.entry.findMany({
-    where: {
-      organizationId,
-      direction,
-      date: { gte: monthStart, lte: monthEnd },
-      status: { not: "excluded" },
-    },
-    select: {
-      amount: true,
-      category: { select: { id: true, name: true, color: true } },
-    },
+  const grouped = await prisma.entry.groupBy({
+    by: ["categoryId"],
+    where: { organizationId, direction, date: { gte: monthStart, lte: monthEnd }, status: { not: "excluded" } },
+    _sum: { amount: true },
+    _count: { _all: true },
   })
 
-  const categoryTotals = new Map<string | null, { name: string; color: string; total: number; count: number }>()
-  for (const entry of entries) {
-    const key = entry.category?.id || null
-    const current = categoryTotals.get(key) || {
-      name: entry.category?.name || "Uncategorized",
-      color: entry.category?.color || "#6b7280",
-      total: 0,
-      count: 0,
-    }
-    current.total += entry.amount
-    current.count++
-    categoryTotals.set(key, current)
-  }
+  const categoryIds = grouped.flatMap(g => g.categoryId ? [g.categoryId] : [])
+  const categories = categoryIds.length > 0
+    ? await prisma.category.findMany({ where: { id: { in: categoryIds } }, select: { id: true, name: true, color: true } })
+    : []
+  const catMap = new Map(categories.map(c => [c.id, c]))
 
-  const grandTotal = Array.from(categoryTotals.values()).reduce((sum, c) => sum + c.total, 0)
-  return Array.from(categoryTotals.entries())
-    .map(([id, data]) => ({
-      categoryId: id,
-      categoryName: data.name,
-      categoryColor: data.color,
-      total: data.total,
-      percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
-      count: data.count,
-    }))
+  const grandTotal = grouped.reduce((sum, g) => sum + (g._sum.amount ?? 0), 0)
+  return grouped
+    .map(g => {
+      const cat = g.categoryId ? catMap.get(g.categoryId) : undefined
+      const total = g._sum.amount ?? 0
+      return {
+        categoryId: g.categoryId,
+        categoryName: cat?.name ?? "Uncategorized",
+        categoryColor: cat?.color ?? "#6b7280",
+        total,
+        percentage: grandTotal > 0 ? (total / grandTotal) * 100 : 0,
+        count: g._count._all,
+      }
+    })
     .sort((a, b) => b.total - a.total)
 }
 
@@ -178,41 +168,33 @@ export async function getTopCounterparties(limit = 10, date = new Date()): Promi
   const monthStart = startOfMonth(date)
   const monthEnd = endOfMonth(date)
 
-  const entries = await prisma.entry.findMany({
-    where: {
-      organizationId,
-      direction: "expense",
-      date: { gte: monthStart, lte: monthEnd },
-      status: { not: "excluded" },
-    },
-    select: {
-      amount: true,
-      counterparty: { select: { id: true, name: true } },
-      transaction: { select: { merchantName: true } },
-    },
+  const grouped = await prisma.entry.groupBy({
+    by: ["counterpartyId"],
+    where: { organizationId, direction: "expense", date: { gte: monthStart, lte: monthEnd }, status: { not: "excluded" } },
+    _sum: { amount: true },
+    _count: { _all: true },
+    orderBy: { _sum: { amount: "desc" } },
+    take: limit,
   })
 
-  const totals = new Map<string | null, { name: string; total: number; count: number }>()
-  for (const entry of entries) {
-    const key = entry.counterparty?.id || null
-    const name = entry.counterparty?.name || entry.transaction?.merchantName || "Unknown"
-    const current = totals.get(key) || { name, total: 0, count: 0 }
-    current.total += entry.amount
-    current.count++
-    totals.set(key, current)
-  }
+  const counterpartyIds = grouped.flatMap(g => g.counterpartyId ? [g.counterpartyId] : [])
+  const counterparties = counterpartyIds.length > 0
+    ? await prisma.counterparty.findMany({ where: { id: { in: counterpartyIds } }, select: { id: true, name: true } })
+    : []
+  const cpMap = new Map(counterparties.map(c => [c.id, c]))
 
-  const grandTotal = Array.from(totals.values()).reduce((sum, v) => sum + v.total, 0)
-  return Array.from(totals.entries())
-    .map(([id, data]) => ({
-      counterpartyId: id,
-      counterpartyName: data.name,
-      total: data.total,
-      count: data.count,
-      percentage: grandTotal > 0 ? (data.total / grandTotal) * 100 : 0,
-    }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, limit)
+  const grandTotal = grouped.reduce((sum, g) => sum + (g._sum.amount ?? 0), 0)
+  return grouped.map(g => {
+    const cp = g.counterpartyId ? cpMap.get(g.counterpartyId) : undefined
+    const total = g._sum.amount ?? 0
+    return {
+      counterpartyId: g.counterpartyId,
+      counterpartyName: cp?.name ?? "Unknown",
+      total,
+      count: g._count._all,
+      percentage: grandTotal > 0 ? (total / grandTotal) * 100 : 0,
+    }
+  })
 }
 
 export interface CashFlowData {
@@ -305,35 +287,32 @@ export async function getIncomeStats(date = new Date()): Promise<IncomeStats> {
   const monthStart = startOfMonth(date)
   const monthEnd = endOfMonth(date)
 
-  const entries = await prisma.entry.findMany({
-    where: {
-      organizationId,
-      direction: "income",
-      date: { gte: monthStart, lte: monthEnd },
-      status: { not: "excluded" },
-    },
-    select: {
-      amount: true,
-      category: { select: { id: true, name: true } },
-    },
-  })
-
-  const totalThisMonth = entries.reduce((sum, e) => sum + e.amount, 0)
-  const byCategory = new Map<string | null, { name: string; total: number }>()
-  for (const e of entries) {
-    const key = e.category?.id ?? null
-    const current = byCategory.get(key) ?? { name: e.category?.name ?? "Uncategorized", total: 0 }
-    current.total += e.amount
-    byCategory.set(key, current)
+  const where = {
+    organizationId,
+    direction: "income" as const,
+    date: { gte: monthStart, lte: monthEnd },
+    status: { not: "excluded" as const },
   }
 
+  const [account, totalAgg, grouped] = await Promise.all([
+    prisma.account.findFirst({ where: { organizationId, status: "active" }, select: { currency: true } }),
+    prisma.entry.aggregate({ where, _sum: { amount: true } }),
+    prisma.entry.groupBy({ by: ["categoryId"], where, _sum: { amount: true }, orderBy: { _sum: { amount: "desc" } } }),
+  ])
+
+  const categoryIds = grouped.flatMap(g => g.categoryId ? [g.categoryId] : [])
+  const categories = categoryIds.length > 0
+    ? await prisma.category.findMany({ where: { id: { in: categoryIds } }, select: { id: true, name: true } })
+    : []
+  const catMap = new Map(categories.map(c => [c.id, c]))
+
   return {
-    totalThisMonth,
-    currency: "EUR",
-    byCategory: Array.from(byCategory.entries()).map(([categoryId, data]) => ({
-      categoryId,
-      categoryName: data.name,
-      total: data.total,
-    })).sort((a, b) => b.total - a.total),
+    totalThisMonth: totalAgg._sum.amount ?? 0,
+    currency: account?.currency ?? "EUR",
+    byCategory: grouped.map(g => ({
+      categoryId: g.categoryId,
+      categoryName: g.categoryId ? (catMap.get(g.categoryId)?.name ?? "Uncategorized") : "Uncategorized",
+      total: g._sum.amount ?? 0,
+    })),
   }
 }
