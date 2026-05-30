@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
-import { ChartLine, ArrowRight, Binoculars } from "@phosphor-icons/react/dist/ssr"
+import { Binoculars } from "@phosphor-icons/react/dist/ssr"
+import { getAccounts } from "@/features/banking/queries/get-accounts"
+import { AnalyticsEmptyState } from "@/features/analytics/components/analytics-empty-state"
 import {
   getBurnRateAndRunway,
   getMonthlySpendTrend,
@@ -24,8 +26,6 @@ import {
 import { MonthlySpendChart } from "@/features/analytics/components/monthly-spend-chart"
 import { CashFlowChart } from "@/features/analytics/components/cash-flow-chart"
 import { AnalyticsFilters } from "@/features/analytics/components/analytics-filters"
-import Link from "next/link"
-import { Button } from "@polso/ui/button"
 import { format, startOfMonth, parse } from "date-fns"
 import { formatCurrency } from "@/lib/format-currency"
 
@@ -53,6 +53,7 @@ export default async function ReportsPage({
     revenueForecast,
     expenseForecast,
     expenseStats,
+    accounts,
   ] = await Promise.all([
     getBurnRateAndRunway(),
     getMonthlySpendTrend(6, selectedDate),
@@ -65,6 +66,7 @@ export default async function ReportsPage({
     getRevenueForecast(),
     getExpenseForecast(),
     getExpenseStatsForMonth(selectedDate),
+    getAccounts(),
   ])
 
   const hasData =
@@ -80,20 +82,9 @@ export default async function ReportsPage({
           <h1 className="text-2xl font-semibold">Reports</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <ChartLine className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">{t("analyticsRequireData")}</h3>
-            <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-              {t("analyticsRequireDataDescription")}
-            </p>
-            <Button className="mt-4" asChild>
-              <Link href="/settings/banking">
-                {t("connectBankAccount")}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+          <CardContent className="p-0">
+            <AnalyticsEmptyState hasConnectedBank={accounts.length > 0} />
           </CardContent>
         </Card>
       </div>
