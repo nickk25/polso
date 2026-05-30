@@ -1,27 +1,30 @@
 {
   "title": "Resumen",
-  "subtitle": "Resumen financiero y metricas clave",
-  "currentBalance": "Saldo Actual",
-  "noAccountsConnected": "Sin cuentas conectadas",
-  "acrossAccounts": "En {count} {count, plural, one {cuenta} other {cuentas}}",
-  "monthlyIncome": "Ingresos Mensuales",
-  "transactionsThisMonth": "{count} transacciones este mes",
-  "monthlyExpenses": "Gastos Mensuales",
-  "netCashFlow": "Flujo de Caja Neto",
-  "incomeMinusExpenses": "Ingresos menos gastos",
-  "runway": "Pista Financiera",
-  "atCurrentBurnRate": "A la tasa de gasto actual",
-  "fixedExpenses": "Gastos Fijos",
-  "variableExpenses": "Gastos Variables",
-  "cashFlow6mo": "Flujo de Caja (6m)",
-  "noDataYet": "Sin datos aun",
-  "recentActivity": "Actividad Reciente",
-  "noTransactionsYet": "Sin transacciones aun",
-  "connectBank": "Conectar banco",
-  "connectedAccounts": "Cuentas Conectadas",
-  "manage": "Gestionar",
-  "connectYourFirstAccount": "Conecta tu primera cuenta",
-  "topCategories": "Categorias Principales (Este Mes)",
-  "details": "Detalles",
-  "noExpensesThisMonth": "Sin gastos este mes"
+  "greetingMorning": "Buenos dias",
+  "greetingAfternoon": "Buenas tardes",
+  "greetingEvening": "Buenas noches",
+  "transactionsThisMonth": "Has realizado {count} {count, plural, one {transaccion} other {transacciones}} este mes.",
+  "noTransactionsThisMonth": "No tienes transacciones este mes.",
+  "chatPlaceholder": "Como puedo ayudarte hoy?",
+  "quickActions": {
+    "addTransaction": "Agregar Transaccion",
+    "connectBank": "Conectar Banco",
+    "uploadReceipt": "Subir Recibo",
+    "export": "Exportar"
+  },
+  "stats": {
+    "cashBalance": "Saldo en Caja",
+    "netCashflow": "Flujo Neto",
+    "burnRate": "Tasa de Gasto",
+    "runway": "Pista Financiera",
+    "acrossAccounts": "en {count} {count, plural, one {cuenta} other {cuentas}}",
+    "noAccountsConnected": "Sin cuentas conectadas",
+    "thisMonth": "este mes",
+    "perMonth": "por mes",
+    "atCurrentBurn": "al ritmo actual"
+  },
+  "alerts": {
+    "needsAttention": "Requiere atencion",
+    "viewAll": "Ver todo"
+  }
 }

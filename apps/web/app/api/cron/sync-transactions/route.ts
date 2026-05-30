@@ -41,8 +41,7 @@ interface CronSyncResult {
   accountsFailed: number
   transactionsImported: number
   transactionsModified: number
-  expensesCreated: number
-  incomesCreated: number
+  entriesCreated: number
   alertsCreated: number
   alertErrors: number
   duration: number
@@ -69,8 +68,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
       accountsFailed: 0,
       transactionsImported: 0,
       transactionsModified: 0,
-      expensesCreated: 0,
-      incomesCreated: 0,
+      entriesCreated: 0,
       alertsCreated: 0,
       alertErrors: 0,
       duration: Date.now() - startTime,
@@ -83,8 +81,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
   let accountsFailed = 0
   let totalImported = 0
   let totalModified = 0
-  let totalExpenses = 0
-  let totalIncomes = 0
+  let totalEntries = 0
   const syncedOrgIds = new Set<string>()
 
   for (const { id: accountId, organizationId } of staleAccounts) {
@@ -93,8 +90,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
       accountsSynced += result.accountsUpdated
       totalImported += result.transactionsImported
       totalModified += result.transactionsModified
-      totalExpenses += result.expensesCreated
-      totalIncomes += result.incomesCreated
+      totalEntries += result.entriesCreated
       if (result.accountsUpdated > 0) syncedOrgIds.add(organizationId)
     } catch (error) {
       console.error(`[Cron] Error syncing account ${accountId}:`, error)
@@ -131,8 +127,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
     accountsFailed,
     transactionsImported: totalImported,
     transactionsModified: totalModified,
-    expensesCreated: totalExpenses,
-    incomesCreated: totalIncomes,
+    entriesCreated: totalEntries,
     alertsCreated,
     alertErrors,
     duration,

@@ -1,13 +1,7 @@
 import { redirect } from "next/navigation";
 import { neonAuth } from "@neondatabase/auth/next/server";
 import { prisma } from "@/lib/db";
-import {
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
-} from "@polso/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { Separator } from "@polso/ui/separator";
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
 
 async function getOrganization(userId: string, userEmail: string | null) {
@@ -82,17 +76,17 @@ export default async function DashboardLayout({
   const organization = await getOrganization(user.id, user.email);
 
   return (
-    <SidebarProvider>
+    <div className="relative">
       <AuthCallbackRedirect />
-      <AppSidebar organizationName={organization.name} userEmail={user.email} />
-      <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4 my-auto" />
-          <div className="flex-1" />
-        </header>
+      <AppSidebar
+        organizationName={organization.name}
+        userName={user.name ?? user.email?.split("@")[0] ?? ""}
+        userEmail={user.email}
+      />
+      <div className="md:ml-[70px] min-h-screen flex flex-col">
+        <header className="h-18 shrink-0 border-b" />
         <main className="flex-1 overflow-auto">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </div>
   );
 }

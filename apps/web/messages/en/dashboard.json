@@ -1,27 +1,30 @@
 {
   "title": "Overview",
-  "subtitle": "Financial overview and key metrics",
-  "currentBalance": "Current Balance",
-  "noAccountsConnected": "No accounts connected",
-  "acrossAccounts": "Across {count} {count, plural, one {account} other {accounts}}",
-  "monthlyIncome": "Monthly Income",
-  "transactionsThisMonth": "{count} transactions this month",
-  "monthlyExpenses": "Monthly Expenses",
-  "netCashFlow": "Net Cash Flow",
-  "incomeMinusExpenses": "Income minus expenses",
-  "runway": "Runway",
-  "atCurrentBurnRate": "At current burn rate",
-  "fixedExpenses": "Fixed Expenses",
-  "variableExpenses": "Variable Expenses",
-  "cashFlow6mo": "Cash Flow (6mo)",
-  "noDataYet": "No data yet",
-  "recentActivity": "Recent Activity",
-  "noTransactionsYet": "No transactions yet",
-  "connectBank": "Connect bank",
-  "connectedAccounts": "Connected Accounts",
-  "manage": "Manage",
-  "connectYourFirstAccount": "Connect your first account",
-  "topCategories": "Top Categories (This Month)",
-  "details": "Details",
-  "noExpensesThisMonth": "No expenses this month"
+  "greetingMorning": "Good morning",
+  "greetingAfternoon": "Good afternoon",
+  "greetingEvening": "Good evening",
+  "transactionsThisMonth": "You've made {count} {count, plural, one {transaction} other {transactions}} this month.",
+  "noTransactionsThisMonth": "You have no transactions this month.",
+  "chatPlaceholder": "How can I help you today?",
+  "quickActions": {
+    "addTransaction": "Add Transaction",
+    "connectBank": "Connect Bank",
+    "uploadReceipt": "Upload Receipt",
+    "export": "Export"
+  },
+  "stats": {
+    "cashBalance": "Cash Balance",
+    "netCashflow": "Net Cashflow",
+    "burnRate": "Burn Rate",
+    "runway": "Runway",
+    "acrossAccounts": "across {count} {count, plural, one {account} other {accounts}}",
+    "noAccountsConnected": "No accounts connected",
+    "thisMonth": "this month",
+    "perMonth": "per month",
+    "atCurrentBurn": "at current burn"
+  },
+  "alerts": {
+    "needsAttention": "Needs attention",
+    "viewAll": "View all"
+  }
 }

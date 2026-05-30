@@ -6,6 +6,7 @@ const LOCALE_COOKIE = "NEXT_LOCALE"
 
 const protectedPaths = [
   "/dashboard",
+  "/transactions",
   "/expenses",
   "/incomes",
   "/analytics",

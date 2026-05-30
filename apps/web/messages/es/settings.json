@@ -27,7 +27,11 @@
     "preferences": "Preferencias",
     "team": "Equipo",
     "billing": "Facturacion",
-    "banking": "Banca"
+    "banking": "Banca",
+    "profile": "Perfil",
+    "organization": "Organizacion",
+    "notifications": "Notificaciones",
+    "agent": "Agente"
   },
   "general": {
     "title": "Configuracion General",

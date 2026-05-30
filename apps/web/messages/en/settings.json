@@ -27,7 +27,11 @@
     "preferences": "Preferences",
     "team": "Team",
     "billing": "Billing",
-    "banking": "Banking"
+    "banking": "Banking",
+    "profile": "Profile",
+    "organization": "Organization",
+    "notifications": "Notifications",
+    "agent": "Agent"
   },
   "general": {
     "title": "General Settings",
