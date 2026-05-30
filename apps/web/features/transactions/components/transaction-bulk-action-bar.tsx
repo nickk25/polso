@@ -18,15 +18,7 @@ import {
 } from "@/features/transactions/actions/bulk-update-transaction"
 import type { TransactionRow } from "@/features/transactions/queries/get-transactions"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
-
-function formatCurrency(value: number, currency = "EUR") {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+import { formatCurrency } from "@/lib/format-currency"
 
 interface TransactionBulkActionBarProps {
   selectedRows: TransactionRow[]
@@ -47,14 +39,9 @@ export function TransactionBulkActionBar({
   const incomeRows = selectedRows.filter((r) => r.direction === "income")
   const allIds = selectedRows.map((r) => r.id)
   const count = selectedRows.length
-  const hasExpenses = expenseRows.length > 0
-  const hasIncome = incomeRows.length > 0
-  const mixedSelection = hasExpenses && hasIncome
-
   const expenseTotal = expenseRows.reduce((s, r) => s + r.amount, 0)
   const incomeTotal = incomeRows.reduce((s, r) => s + r.amount, 0)
-  const expenseCurrency = expenseRows[0]?.currency
-  const incomeCurrency = incomeRows[0]?.currency
+  const currency = selectedRows[0]?.currency ?? "EUR"
 
   const run = async (fn: () => Promise<unknown>) => {
     setLoading(true)
@@ -76,26 +63,12 @@ export function TransactionBulkActionBar({
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg border bg-background px-4 py-2 shadow-lg">
       {loading && <Spinner className="h-4 w-4 animate-spin" />}
 
-      {mixedSelection ? (
-        <>
-          <span className="text-sm text-muted-foreground">
-            {t("bulk.expenses", { count: expenseRows.length })}
-          </span>
-          <span className="text-sm text-muted-foreground">·</span>
-          <span className="text-sm text-muted-foreground">
-            {t("bulk.incomes", { count: incomeRows.length })}
-          </span>
-        </>
-      ) : (
-        <>
-          <span className="text-sm font-medium">{t("bulk.selected", { count })}</span>
-          {hasExpenses && (
-            <span className="text-sm text-muted-foreground">-{formatCurrency(expenseTotal, expenseCurrency)}</span>
-          )}
-          {hasIncome && (
-            <span className="text-sm text-green-500">+{formatCurrency(incomeTotal, incomeCurrency)}</span>
-          )}
-        </>
+      <span className="text-sm font-medium">{t("bulk.selected", { count })}</span>
+      {expenseTotal > 0 && (
+        <span className="text-sm text-red-500">-{formatCurrency(expenseTotal, currency)}</span>
+      )}
+      {incomeTotal > 0 && (
+        <span className="text-sm text-green-500">+{formatCurrency(incomeTotal, currency)}</span>
       )}
 
       <div className="h-4 w-px bg-border" />
