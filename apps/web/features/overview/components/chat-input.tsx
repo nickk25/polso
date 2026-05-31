@@ -1,36 +1,32 @@
 "use client"
 
-import { useState } from "react"
 import { ArrowUp, Plus, At, Paperclip } from "@phosphor-icons/react"
 
 interface ChatInputProps {
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
+  disabled?: boolean
   placeholder?: string
 }
 
-export function ChatInput({ placeholder = "How can I help you today?" }: ChatInputProps) {
-  const [value, setValue] = useState("")
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    // TODO: wire up to AI agent
-    setValue("")
-  }
-
+export function ChatInput({ value, onChange, onSubmit, disabled, placeholder = "How can I help you today?" }: ChatInputProps) {
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-2xl">
+    <form onSubmit={onSubmit} className="w-full max-w-2xl">
       <div className="relative rounded-xl border bg-card">
         <textarea
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={onChange}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault()
-              handleSubmit(e)
+              onSubmit(e as unknown as React.FormEvent<HTMLFormElement>)
             }
           }}
           placeholder={placeholder}
           rows={1}
-          className="w-full resize-none rounded-xl bg-transparent px-4 pt-3 pb-10 text-sm outline-none placeholder:text-muted-foreground"
+          disabled={disabled}
+          className="w-full resize-none rounded-xl bg-transparent px-4 pt-3 pb-10 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-60"
         />
         <div className="absolute bottom-2 left-3 flex items-center gap-1">
           <button
@@ -54,7 +50,7 @@ export function ChatInput({ placeholder = "How can I help you today?" }: ChatInp
         </div>
         <button
           type="submit"
-          disabled={!value.trim()}
+          disabled={!value.trim() || disabled}
           className="absolute bottom-2 right-2 rounded-lg bg-primary p-1.5 text-primary-foreground transition-opacity disabled:opacity-30"
         >
           <ArrowUp className="h-4 w-4" weight="bold" />
