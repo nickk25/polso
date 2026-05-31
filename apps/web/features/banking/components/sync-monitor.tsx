@@ -37,10 +37,12 @@ export function SyncMonitor() {
         const finalState: SyncState = hasError ? "error" : "success"
         setSyncState(finalState)
         router.refresh()
-        dismissRef.current = setTimeout(() => setSyncState(null), DISMISS_AFTER_MS)
-      }
-      if (!syncing && statusRef.current === "idle") {
-        stopPolling()
+        dismissRef.current = setTimeout(() => {
+          setSyncState(null)
+          // Allow detecting a future sync
+          statusRef.current = "idle"
+          pollingRef.current = setInterval(check, POLL_INTERVAL_MS)
+        }, DISMISS_AFTER_MS)
       }
     } catch {
       // keep polling on network error
