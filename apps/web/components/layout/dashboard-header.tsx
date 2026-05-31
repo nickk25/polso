@@ -63,9 +63,7 @@ export function DashboardHeader({ organizationName, userName, userEmail, userIma
         <Link href="/alerts" className="relative flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground transition-colors">
           <Bell className="h-4 w-4" />
           {unreadAlertCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-[14px] px-0.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
-              {unreadAlertCount > 9 ? "9+" : unreadAlertCount}
-            </span>
+            <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-red-500" />
           )}
         </Link>
         <UserMenu userName={userName} userEmail={userEmail} userImage={userImage} />
