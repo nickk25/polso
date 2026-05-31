@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { selectPrimaryBalance, getAvailableBalance, mapCashAccountType } from "@polso/banking"
 import { prisma } from "@/lib/db"
@@ -142,9 +142,12 @@ export async function GET(request: NextRequest) {
     // Clean up pending requisition
     await prisma.pendingRequisition.delete({ where: { id: pending.id } })
 
-    // Sync transactions immediately so the user lands on a populated banking page
-    await syncTransactionsCore(organizationId).catch((err) =>
-      console.error("[GoCardless callback] Initial sync error:", err)
+    // Full-history sync runs after the redirect so the user isn't blocked waiting.
+    // initial=true disables the 7-day window and fetches all available history.
+    after(() =>
+      syncTransactionsCore(organizationId, undefined, true).catch((err) =>
+        console.error("[GoCardless callback] Initial sync error:", err)
+      )
     )
 
     return redirect("/settings/banking?connected=true")
