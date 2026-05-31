@@ -1,21 +1,21 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { toast } from "sonner"
-import { SyncToastContent } from "./bank-sync-toast"
+import { useEffect, useRef, useState } from "react"
+import { SyncToastContent, type SyncState } from "./bank-sync-toast"
 
-const TOAST_ID = "bank-sync"
 const POLL_INTERVAL_MS = 3000
-const DEV_PREVIEW = true // set to false once design is approved
+const DISMISS_AFTER_MS = 6000
 
 export function SyncMonitor() {
-  const status = useRef<"idle" | "syncing" | "done">("idle")
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [syncState, setSyncState] = useState<SyncState | null>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const dismissRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const statusRef = useRef<"idle" | "syncing" | "done">("idle")
 
   function stopPolling() {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
     }
   }
 
@@ -25,55 +25,39 @@ export function SyncMonitor() {
       if (!res.ok) return
       const { syncing, hasError } = await res.json() as { syncing: boolean; hasError: boolean }
 
-      if (syncing && status.current === "idle") {
-        status.current = "syncing"
-        toast.custom(() => <SyncToastContent state="loading" />, {
-          id: TOAST_ID,
-          duration: Infinity,
-          position: "bottom-left",
-        })
+      if (syncing && statusRef.current === "idle") {
+        statusRef.current = "syncing"
+        setSyncState("loading")
       }
-
-      if (!syncing && status.current === "syncing") {
-        status.current = "done"
+      if (!syncing && statusRef.current === "syncing") {
+        statusRef.current = "done"
         stopPolling()
-        toast.custom(() => <SyncToastContent state={hasError ? "error" : "success"} />, {
-          id: TOAST_ID,
-          duration: 6000,
-          position: "bottom-left",
-        })
+        const finalState: SyncState = hasError ? "error" : "success"
+        setSyncState(finalState)
+        dismissRef.current = setTimeout(() => setSyncState(null), DISMISS_AFTER_MS)
       }
-
-      if (!syncing && status.current === "idle") {
+      if (!syncing && statusRef.current === "idle") {
         stopPolling()
       }
     } catch {
-      // network error — keep polling
+      // keep polling on network error
     }
   }
 
   useEffect(() => {
-    if (DEV_PREVIEW) {
-      status.current = "syncing"
-      toast.custom(() => <SyncToastContent state="loading" />, {
-        id: TOAST_ID,
-        duration: Infinity,
-        position: "bottom-left",
-      })
-      const t = setTimeout(() => {
-        toast.custom(() => <SyncToastContent state="success" />, {
-          id: TOAST_ID,
-          duration: 6000,
-          position: "bottom-left",
-        })
-      }, 6000)
-      return () => clearTimeout(t)
-    }
-
     check()
-    intervalRef.current = setInterval(check, POLL_INTERVAL_MS)
-    return () => stopPolling()
+    pollingRef.current = setInterval(check, POLL_INTERVAL_MS)
+    return () => {
+      stopPolling()
+      if (dismissRef.current) clearTimeout(dismissRef.current)
+    }
   }, [])
 
-  return null
+  if (!syncState) return null
+
+  return (
+    <div className="fixed bottom-8 left-4 md:left-[86px] z-50 w-80">
+      <SyncToastContent state={syncState} />
+    </div>
+  )
 }
