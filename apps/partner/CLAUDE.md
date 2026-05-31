@@ -156,7 +156,7 @@ R2_SECRET_ACCESS_KEY
 R2_BUCKET_NAME
 TELEGRAM_BOT_TOKEN        # Telegram reminder bot
 TELEGRAM_WEBHOOK_SECRET_TOKEN
-ANTHROPIC_API_KEY         # AI matching / OCR
+ANTHROPIC_API_KEY_OCR     # AI matching / OCR
 CRON_SECRET               # Cron job auth header
 ```
 

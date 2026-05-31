@@ -1,5 +1,7 @@
 import { generateObject } from "ai"
-import { anthropic } from "@ai-sdk/anthropic"
+import { createAnthropic } from "@ai-sdk/anthropic"
+
+const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY_OCR })
 import { z } from "zod"
 
 export const ReceiptSchema = z.object({

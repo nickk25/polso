@@ -157,7 +157,7 @@ GOCARDLESS_REDIRECT_URI   # GoCardless OAuth callback URI
 CRON_SECRET               # Cron job authentication
 RESEND_API_KEY            # Resend email
 CREEM_API_KEY             # Creem billing
-ANTHROPIC_API_KEY         # Claude API — used by /api/chat (dashboard assistant)
+ANTHROPIC_API_KEY_CHAT    # Claude API — used by /api/chat (dashboard assistant)
 NEXT_PUBLIC_APP_URL       # App URL
 ```
 

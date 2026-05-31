@@ -1,5 +1,7 @@
 import { generateText } from "ai"
-import { anthropic } from "@ai-sdk/anthropic"
+import { createAnthropic } from "@ai-sdk/anthropic"
+
+const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY_OCR })
 
 export type MessageType =
   | "receipt_reminder"

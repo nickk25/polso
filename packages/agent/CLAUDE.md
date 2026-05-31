@@ -27,7 +27,7 @@ TelegramMatchNotificationParams                   // type
 ## Environment variables
 
 ```env
-ANTHROPIC_API_KEY                # Anthropic API key — read automatically by @ai-sdk/anthropic
+ANTHROPIC_API_KEY_OCR            # Anthropic API key for OCR and proactive agent
 WHATSAPP_ACCESS_TOKEN            # Meta permanent token (System User token)
 WHATSAPP_PHONE_NUMBER_ID         # WhatsApp Business phone number ID
 WHATSAPP_WEBHOOK_VERIFY_TOKEN    # Token for Meta webhook verification challenge

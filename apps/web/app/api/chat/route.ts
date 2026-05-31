@@ -1,4 +1,6 @@
-import { anthropic } from "@ai-sdk/anthropic"
+import { createAnthropic } from "@ai-sdk/anthropic"
+
+const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY_CHAT })
 import { streamText } from "ai"
 import { NextRequest, NextResponse } from "next/server"
 import { getChatContext } from "@/features/agent/lib/context"
