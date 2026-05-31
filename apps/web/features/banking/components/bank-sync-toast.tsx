@@ -56,12 +56,12 @@ export function SyncToastContent({ state }: { state: SyncState }) {
         </p>
       </div>
 
-      {/* Shimmer bar */}
-      {state === "loading" && (
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      {/* Bar — always rendered so both states are the same height */}
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        {state === "loading" && (
           <div className="h-full w-1/2 rounded-full bg-primary/60 animate-[shimmer_1.5s_ease-in-out_infinite]" />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
