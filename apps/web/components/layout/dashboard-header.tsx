@@ -38,10 +38,11 @@ interface DashboardHeaderProps {
   organizationName: string
   userName: string
   userEmail: string | null
+  userImage: string | null
   unreadAlertCount: number
 }
 
-export function DashboardHeader({ organizationName, userName, userEmail, unreadAlertCount }: DashboardHeaderProps) {
+export function DashboardHeader({ organizationName, userName, userEmail, userImage, unreadAlertCount }: DashboardHeaderProps) {
   const pathname = usePathname()
   const t = useTranslations("common")
   const key = getTitleKey(pathname)
@@ -67,7 +68,7 @@ export function DashboardHeader({ organizationName, userName, userEmail, unreadA
             </span>
           )}
         </Link>
-        <UserMenu userName={userName} userEmail={userEmail} />
+        <UserMenu userName={userName} userEmail={userEmail} userImage={userImage} />
       </div>
     </div>
   )

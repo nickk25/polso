@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { authClient } from "@polso/auth/client"
-import { Avatar, AvatarFallback } from "@polso/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@polso/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,9 +19,10 @@ import { getInitials } from "@/lib/utils"
 interface UserMenuProps {
   userName: string
   userEmail: string | null
+  userImage: string | null
 }
 
-export function UserMenu({ userName, userEmail }: UserMenuProps) {
+export function UserMenu({ userName, userEmail, userImage }: UserMenuProps) {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
 
@@ -35,9 +36,10 @@ export function UserMenu({ userName, userEmail }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="outline-none">
-          <Avatar size="sm">
-            <AvatarFallback className="text-[10px] font-semibold">
+        <button type="button" className="outline-none rounded-full focus-visible:ring-2 focus-visible:ring-ring">
+          <Avatar>
+            <AvatarImage src={userImage ?? undefined} alt={userName} />
+            <AvatarFallback className="text-xs font-semibold">
               {getInitials(userName)}
             </AvatarFallback>
           </Avatar>

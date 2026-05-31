@@ -89,6 +89,7 @@ export default async function DashboardLayout({
             organizationName={organization.name}
             userName={user.name ?? user.email?.split("@")[0] ?? ""}
             userEmail={user.email ?? null}
+            userImage={user.image ?? null}
             unreadAlertCount={unreadAlertCount}
           />
         </header>
