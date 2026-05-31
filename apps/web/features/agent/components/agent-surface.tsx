@@ -74,7 +74,7 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
         // Chat takeover view — full-height column, no inherited padding
         <div className="fixed inset-0 left-[var(--sidebar-width,3.5rem)] flex flex-col bg-background z-10">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 h-14 border-b shrink-0">
+          <div className="flex items-center justify-between px-6 h-18 border-b shrink-0">
             <span className="text-sm font-medium">{ta("chatTitle")}</span>
             <button
               type="button"
@@ -88,7 +88,7 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
 
           {/* Messages — scrollable */}
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-3xl mx-auto px-6 py-6">
+            <div className="max-w-2xl mx-auto px-6 py-6">
               <MessageList messages={messages} isLoading={isLoading} />
               <div ref={messagesEndRef} />
               {error && (
@@ -98,8 +98,8 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
           </div>
 
           {/* Input + disclaimer — pinned at bottom */}
-          <div className="shrink-0 border-t px-6 py-4">
-            <div className="max-w-3xl mx-auto flex flex-col gap-2">
+          <div className="shrink-0 px-6 py-4">
+            <div className="max-w-2xl mx-auto flex flex-col gap-2">
               <ChatInput
                 value={input}
                 onChange={handleInputChange}

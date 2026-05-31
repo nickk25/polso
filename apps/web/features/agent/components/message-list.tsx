@@ -11,7 +11,7 @@ interface MessageListProps {
 
 export function MessageList({ messages, isLoading }: MessageListProps) {
   return (
-    <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
+    <div className="flex flex-col gap-6 w-full">
       {messages.map((message) => (
         <div key={message.id} className={message.role === "user" ? "flex justify-end" : "flex justify-start"}>
           <div
