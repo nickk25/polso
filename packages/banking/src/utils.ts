@@ -4,7 +4,7 @@
 
 import type { GCAccountBalance } from "./types"
 
-// Balance type priority tiers — from Midday's balance selection logic
+// Balance type priority tiers
 const BALANCE_TIERS = [
   ["interimBooked"],
   ["closingBooked"],

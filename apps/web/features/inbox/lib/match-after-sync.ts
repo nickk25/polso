@@ -6,7 +6,7 @@ import { persistMatch } from "./match-notifications"
  * After a GoCardless sync imports new transactions, run bidirectional matching
  * against all pending InboxItems for the organization.
  *
- * Two phases (mirrors Midday's match-transactions-bidirectional pattern):
+ * Two phases:
  *   Phase 1 — for each new transaction, find the best pending InboxItem
  *   Phase 2 — for remaining unmatched InboxItems, find the best new transaction
  *

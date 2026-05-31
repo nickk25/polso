@@ -1,6 +1,6 @@
 /**
  * GoCardless → Polso data transformers.
- * Modelled after Midday's transform.ts with Polso sign convention:
+ * GoCardless → Polso sign convention:
  *   positive amount = expense (money out)
  *   negative amount = income (money in)
  */
@@ -17,7 +17,7 @@ import type {
 import { selectPrimaryBalance, getAvailableBalance, mapCashAccountType } from "./utils"
 
 // ============================================
-// Transaction name — priority chain from Midday
+// Transaction name — priority chain
 // ============================================
 
 function transformTransactionName(transaction: GCRawTransaction): string {

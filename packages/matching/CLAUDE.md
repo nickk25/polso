@@ -1,6 +1,6 @@
 # packages/matching — @polso/matching
 
-Receipt↔transaction matching algorithm. Spanish-adapted scoring based on Midday's architecture.
+Receipt↔transaction matching algorithm. Spanish-adapted scoring.
 
 ## What it exports
 
@@ -42,10 +42,10 @@ DEFAULT_THRESHOLDS  // { autoMatch: 0.95, highConfidence: 0.75, suggested: 0.50 
 | `high_confidence` | ≥0.75 | Show with strong visual indicator |
 | `suggested` | ≥0.50 | Show as a suggestion for user review |
 
-## Spanish adaptations vs Midday
+## Spanish adaptations
 
 - IVA rates: 21% (general), 10% (reducido), 4% (superreducido) — prioritized over generic EU rates
-- Legal suffixes: S.L., S.A., S.L.U., S.C. (vs Midday's Inc, LLC, Ltd)
+- Legal suffixes: S.L., S.A., S.L.U., S.C. stripped during normalization
 - CIF matching: exact CIF/NIF match scores 1.0 on name — overrides all other name logic
 
 ## Calibration
