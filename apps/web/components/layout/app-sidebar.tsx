@@ -70,7 +70,7 @@ export function SidebarOrgFooter({ organizationName }: { organizationName: strin
   const initials = getInitials(organizationName);
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0">
+      <div className="flex h-7 w-7 items-center justify-center rounded border border-border bg-muted text-muted-foreground font-semibold text-xs shrink-0">
         {initials}
       </div>
       <span className="text-sm font-medium truncate">{organizationName}</span>
@@ -245,7 +245,7 @@ export function AppSidebar({ organizationName }: AppSidebarProps) {
       {/* Footer */}
       <div className="relative h-[40px] w-full flex items-center">
         <div className="absolute left-[19px]">
-          <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs">
+          <div className="flex h-7 w-7 items-center justify-center rounded border border-border bg-muted text-muted-foreground font-semibold text-xs">
             {getInitials(organizationName)}
           </div>
         </div>
