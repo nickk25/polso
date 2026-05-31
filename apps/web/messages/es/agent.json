@@ -1,5 +1,7 @@
 {
   "closeChat": "Cerrar chat",
   "chatError": "Algo salió mal. Inténtalo de nuevo.",
-  "newChat": "Nuevo chat"
+  "newChat": "Nuevo chat",
+  "chatTitle": "Polso AI",
+  "disclaimer": "Polso AI puede cometer errores. Verifica siempre los datos financieros importantes."
 }

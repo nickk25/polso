@@ -1,5 +1,7 @@
 {
   "closeChat": "Close chat",
   "chatError": "Something went wrong. Please try again.",
-  "newChat": "New chat"
+  "newChat": "New chat",
+  "chatTitle": "Polso AI",
+  "disclaimer": "Polso AI can make mistakes. Always verify important financial data."
 }

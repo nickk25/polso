@@ -71,10 +71,11 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
   return (
     <div className="flex flex-col min-h-full max-w-3xl mx-auto w-full px-6 gap-10 pt-[25vh] md:pt-[420px]">
       {isActive ? (
-        // Chat takeover view
-        <div className="flex flex-col flex-1 gap-4 pb-8">
-          {/* Close button */}
-          <div className="flex justify-end -mb-2">
+        // Chat takeover view — full-height column, no inherited padding
+        <div className="fixed inset-0 left-[var(--sidebar-width,3.5rem)] flex flex-col bg-background z-10">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 h-14 border-b shrink-0">
+            <span className="text-sm font-medium">{ta("chatTitle")}</span>
             <button
               type="button"
               onClick={handleClose}
@@ -85,26 +86,31 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
             </button>
           </div>
 
-          {/* Message list */}
-          <div className="flex-1">
-            <MessageList messages={messages} isLoading={isLoading} />
-            <div ref={messagesEndRef} />
+          {/* Messages — scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-6 py-6">
+              <MessageList messages={messages} isLoading={isLoading} />
+              <div ref={messagesEndRef} />
+              {error && (
+                <p className="text-xs text-red-500 text-center mt-4">{ta("chatError")}</p>
+              )}
+            </div>
           </div>
 
-          {/* Error */}
-          {error && (
-            <p className="text-xs text-red-500 text-center">{ta("chatError")}</p>
-          )}
-
-          {/* Input anchored at bottom */}
-          <div className="flex justify-center pt-2">
-            <ChatInput
-              value={input}
-              onChange={handleInputChange}
-              onSubmit={handleSubmit}
-              disabled={isLoading}
-              placeholder={t("chatPlaceholder")}
-            />
+          {/* Input + disclaimer — pinned at bottom */}
+          <div className="shrink-0 border-t px-6 py-4">
+            <div className="max-w-3xl mx-auto flex flex-col gap-2">
+              <ChatInput
+                value={input}
+                onChange={handleInputChange}
+                onSubmit={handleSubmit}
+                disabled={isLoading}
+                placeholder={t("chatPlaceholder")}
+              />
+              <p className="text-[11px] text-center text-muted-foreground/50">
+                {ta("disclaimer")}
+              </p>
+            </div>
           </div>
         </div>
       ) : (
