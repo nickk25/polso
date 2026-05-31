@@ -16,7 +16,6 @@ export async function getUserPreferences() {
       userId,
       theme: "system",
       locale: "en-US",
-      compactMode: false,
     }
   )
 }

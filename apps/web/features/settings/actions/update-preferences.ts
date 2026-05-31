@@ -10,7 +10,6 @@ import { localeMap } from "@/lib/i18n/config"
 interface UpdatePreferencesInput {
   theme: string
   locale: string
-  compactMode: boolean
 }
 
 export async function updatePreferencesAction(
@@ -25,12 +24,10 @@ export async function updatePreferencesAction(
         userId,
         theme: input.theme,
         locale: input.locale,
-        compactMode: input.compactMode,
       },
       update: {
         theme: input.theme,
         locale: input.locale,
-        compactMode: input.compactMode,
       },
     })
 

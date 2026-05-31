@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@polso/ui/button";
 import { Label } from "@polso/ui/label";
-import { Switch } from "@polso/ui/switch";
 import {
   Select,
   SelectContent,
@@ -37,7 +36,6 @@ interface PreferencesFormProps {
   preferences: {
     theme: string;
     locale: string;
-    compactMode: boolean;
   };
 }
 
@@ -48,7 +46,6 @@ export function PreferencesForm({ preferences }: PreferencesFormProps) {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState(preferences.theme);
   const [locale, setLocale] = useState(preferences.locale);
-  const [compactMode, setCompactMode] = useState(preferences.compactMode);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,7 +54,6 @@ export function PreferencesForm({ preferences }: PreferencesFormProps) {
     const result = await updatePreferencesAction({
       theme,
       locale,
-      compactMode,
     });
 
     setLoading(false);
@@ -113,20 +109,6 @@ export function PreferencesForm({ preferences }: PreferencesFormProps) {
             <p className="text-sm text-muted-foreground">
               {t("preferences.languageDescription")}
             </p>
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
-              <Label htmlFor="compactMode">{t("preferences.compactMode")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("preferences.compactModeDescription")}
-              </p>
-            </div>
-            <Switch
-              id="compactMode"
-              checked={compactMode}
-              onCheckedChange={setCompactMode}
-            />
           </div>
 
           <Button type="submit" disabled={loading}>
