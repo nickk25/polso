@@ -101,5 +101,17 @@
     "expenses": "Expenses",
     "netProfit": "Net Profit",
     "total": "Total"
+  },
+  "vat": {
+    "title": "VAT by quarter",
+    "subtitle": "IVA repercutido vs soportado (Modelo 303)",
+    "collected": "Collected",
+    "paid": "Paid",
+    "net": "Net",
+    "ytd": "YTD",
+    "empty": "No VAT activity yet",
+    "emptyHint": "Tag transactions with a VAT rate to see quarterly totals here.",
+    "currentQuarterKpi": "VAT this quarter",
+    "q": "Q{quarter}"
   }
 }

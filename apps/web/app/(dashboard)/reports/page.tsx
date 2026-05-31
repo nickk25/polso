@@ -12,6 +12,7 @@ import {
   getCashFlow,
   getExpenseStatsForMonth,
   getIncomeStats,
+  getVATSummary,
 } from "@/features/analytics/queries/get-analytics"
 import {
   getCashFlowForecast,
@@ -23,6 +24,7 @@ import {
   RevenueForecastCard,
   ExpenseForecastCard,
   ProfitLossTable,
+  VATSummaryCard,
 } from "@/features/analytics/components"
 import { MonthlySpendChart } from "@/features/analytics/components/monthly-spend-chart"
 import { CashFlowChart } from "@/features/analytics/components/cash-flow-chart"
@@ -55,6 +57,7 @@ export default async function ReportsPage({
     expenseForecast,
     expenseStats,
     connectedBank,
+    vatSummary,
   ] = await Promise.all([
     getBurnRateAndRunway(),
     getMonthlySpendTrend(6, selectedDate),
@@ -68,6 +71,7 @@ export default async function ReportsPage({
     getExpenseForecast(),
     getExpenseStatsForMonth(selectedDate),
     hasConnectedBank(),
+    getVATSummary(),
   ])
 
   const hasData =
@@ -128,6 +132,10 @@ export default async function ReportsPage({
         <CardContent>
           <ProfitLossTable data={cashFlow} currency={currency} />
         </CardContent>
+      </Card>
+
+      <Card>
+        <VATSummaryCard data={vatSummary} />
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">

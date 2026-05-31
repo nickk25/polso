@@ -61,7 +61,11 @@
     "documents": "Documents & Receipts",
     "noCategory": "No category",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "taxRate": "VAT rate",
+    "taxAmount": "VAT amount",
+    "noTax": "No VAT",
+    "vatExempt": "Exempt (0%)"
   },
   "pagination": {
     "total": "{count} transactions",
@@ -74,8 +78,11 @@
     "download": "Download",
     "deleteTitle": "Delete document?",
     "deleteDescription": "This will permanently delete {name}. This action cannot be undone.",
-    "deleted": "Document deleted",
-    "deleteFailed": "Failed to delete document",
+    "unlinkTitle": "Unlink from vault?",
+    "unlinkDescription": "This will remove the link between {name} and this transaction. The document will remain in your vault.",
+    "unlink": "Unlink",
+    "deleted": "Document removed",
+    "deleteFailed": "Failed to remove document",
     "downloadFailed": "Failed to download document",
     "dropzone": "Drop a file here or click to upload",
     "dropzoneFormats": "PDF, PNG, JPG, WEBP — max 10 MB",

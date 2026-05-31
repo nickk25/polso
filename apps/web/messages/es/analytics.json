@@ -101,5 +101,17 @@
     "expenses": "Gastos",
     "netProfit": "Beneficio Neto",
     "total": "Total"
+  },
+  "vat": {
+    "title": "IVA por trimestre",
+    "subtitle": "IVA repercutido vs soportado (Modelo 303)",
+    "collected": "Repercutido",
+    "paid": "Soportado",
+    "net": "Neto",
+    "ytd": "Acumulado",
+    "empty": "Sin movimientos con IVA",
+    "emptyHint": "Asigna un tipo de IVA a las transacciones para ver los totales trimestrales aqui.",
+    "currentQuarterKpi": "IVA del trimestre",
+    "q": "T{quarter}"
   }
 }

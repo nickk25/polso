@@ -21,7 +21,8 @@
     "noAccountsConnected": "No accounts connected",
     "thisMonth": "this month",
     "perMonth": "per month",
-    "atCurrentBurn": "at current burn"
+    "atCurrentBurn": "at current burn",
+    "vatThisQuarter": "VAT this quarter"
   },
   "alerts": {
     "needsAttention": "Needs attention",

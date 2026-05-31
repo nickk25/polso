@@ -22,6 +22,8 @@ interface KpiData {
   burnRate: number
   runway: number
   currency: string
+  vatCurrentQuarterNet: number | null
+  vatCurrentQuarterLabel: string
 }
 
 interface Alert {
@@ -191,6 +193,20 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
                 subLabel={t("stats.atCurrentBurn")}
               />
             </div>
+
+            {kpi.vatCurrentQuarterNet !== null && (
+              <div className="grid grid-cols-1 rounded-xl overflow-hidden border bg-border">
+                <KpiCell
+                  label={t("stats.vatThisQuarter")}
+                  value={
+                    <span className={kpi.vatCurrentQuarterNet >= 0 ? "text-amber-500" : "text-green-600 dark:text-green-400"}>
+                      {kpi.vatCurrentQuarterNet >= 0 ? "" : "-"}{formatCurrency(Math.abs(kpi.vatCurrentQuarterNet), kpi.currency)}
+                    </span>
+                  }
+                  subLabel={kpi.vatCurrentQuarterLabel}
+                />
+              </div>
+            )}
 
             {unreadAlerts.length > 0 && (
               <div className="space-y-1.5 pb-8">

@@ -21,7 +21,8 @@
     "noAccountsConnected": "Sin cuentas conectadas",
     "thisMonth": "este mes",
     "perMonth": "por mes",
-    "atCurrentBurn": "al ritmo actual"
+    "atCurrentBurn": "al ritmo actual",
+    "vatThisQuarter": "IVA del trimestre"
   },
   "alerts": {
     "needsAttention": "Requiere atencion",

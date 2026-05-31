@@ -33,7 +33,9 @@ import {
   SelectValue,
 } from "@polso/ui/select"
 import { Spinner, Receipt } from "@phosphor-icons/react"
+import { Input } from "@polso/ui/input"
 import { formatCurrency } from "@/lib/format-currency"
+import { SPANISH_IVA_RATES, calculateTaxFromGross } from "@polso/utils"
 import type { TransactionRow } from "@/features/transactions/queries/get-transactions"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 import { CategorySelect } from "@/features/categories/components/category-select"
@@ -112,6 +114,8 @@ export function TransactionTable({
   const [editedCategoryId, setEditedCategoryId] = useState<string | null>(null)
   const [editedEntryType, setEditedEntryType] = useState<string>("")
   const [editedStatus, setEditedStatus] = useState<string>("")
+  const [editedTaxRate, setEditedTaxRate] = useState<string>("")
+  const [editedTaxAmount, setEditedTaxAmount] = useState<string>("")
   const [documents, setDocuments] = useState<TransactionDocumentWithUrl[]>([])
   const [documentsLoading, setDocumentsLoading] = useState(false)
 
@@ -133,6 +137,17 @@ export function TransactionTable({
     setEditedCategoryId(tx.category?.id ?? null)
     setEditedEntryType(tx.entryType ?? "variable")
     setEditedStatus(tx.status)
+    setEditedTaxRate(tx.taxRate != null ? String(tx.taxRate) : "")
+    setEditedTaxAmount(tx.taxAmount != null ? String(tx.taxAmount) : "")
+  }
+
+  const handleTaxRateChange = (rate: string) => {
+    setEditedTaxRate(rate)
+    if (selected && rate !== "") {
+      const rateNum = parseFloat(rate)
+      const computed = calculateTaxFromGross(selected.amount, rateNum)
+      setEditedTaxAmount(computed > 0 ? String(computed) : "")
+    }
   }
 
   const handleDocumentUploadComplete = (doc: TransactionDocumentWithUrl) => {
@@ -155,6 +170,8 @@ export function TransactionTable({
       categoryId: editedCategoryId,
       entryType: editedEntryType as "fixed" | "variable",
       status: editedStatus as "pending" | "verified" | "excluded",
+      taxRate: editedTaxRate !== "" ? parseFloat(editedTaxRate) : null,
+      taxAmount: editedTaxAmount !== "" ? parseFloat(editedTaxAmount) : null,
     })
     setLoading(false)
     setSelected(null)
@@ -165,7 +182,9 @@ export function TransactionTable({
     selected &&
     (editedCategoryId !== (selected.category?.id ?? null) ||
       editedEntryType !== (selected.entryType ?? "variable") ||
-      editedStatus !== selected.status)
+      editedStatus !== selected.status ||
+      editedTaxRate !== (selected.taxRate != null ? String(selected.taxRate) : "") ||
+      editedTaxAmount !== (selected.taxAmount != null ? String(selected.taxAmount) : ""))
 
   function pushPage(p: number) {
     const params = new URLSearchParams(searchParams.toString())
@@ -261,6 +280,36 @@ export function TransactionTable({
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label>{t("editSheet.taxRate")}</Label>
+                <Select value={editedTaxRate} onValueChange={handleTaxRateChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t("editSheet.noTax")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SPANISH_IVA_RATES.map((r) => (
+                      <SelectItem key={r} value={String(r)}>
+                        {r === 0 ? t("editSheet.vatExempt") : `${Math.round(r * 100)}%`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {editedTaxRate !== "" && (
+                <div className="space-y-2">
+                  <Label>{t("editSheet.taxAmount")}</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editedTaxAmount}
+                    onChange={(e) => setEditedTaxAmount(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+              )}
 
               {selected.transactionId && (
                 <>

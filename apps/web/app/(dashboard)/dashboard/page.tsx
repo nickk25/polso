@@ -1,12 +1,12 @@
 import { getUserProfile } from "@polso/auth/get-session"
 import { getTranslations } from "next-intl/server"
 import { getAccountsSummary } from "@/features/banking/queries/get-accounts"
-import { getBurnRateAndRunway, getExpenseStatsForMonth, getIncomeStats } from "@/features/analytics/queries/get-analytics"
+import { getBurnRateAndRunway, getExpenseStatsForMonth, getIncomeStats, getVATSummary } from "@/features/analytics/queries/get-analytics"
 import { getAlerts } from "@/features/alerts/queries/get-alerts"
 import { AgentSurface } from "@/features/agent/components/agent-surface"
 
 export default async function DashboardPage() {
-  const [t, userProfile, accountsSummary, expenseStats, incomeStats, burnRateData, alertsResult] = await Promise.all([
+  const [t, userProfile, accountsSummary, expenseStats, incomeStats, burnRateData, alertsResult, vatSummary] = await Promise.all([
     getTranslations("dashboard"),
     getUserProfile(),
     getAccountsSummary(),
@@ -14,6 +14,7 @@ export default async function DashboardPage() {
     getIncomeStats(),
     getBurnRateAndRunway(),
     getAlerts({ isRead: false }, 1, 5),
+    getVATSummary(),
   ])
 
   const currency = accountsSummary.currency || "EUR"
@@ -35,6 +36,8 @@ export default async function DashboardPage() {
         burnRate: burnRateData.burnRate,
         runway: burnRateData.runway,
         currency,
+        vatCurrentQuarterNet: vatSummary.ytdCollected > 0 || vatSummary.ytdPaid > 0 ? vatSummary.currentQuarter.net : null,
+        vatCurrentQuarterLabel: `Q${vatSummary.currentQuarter.quarter} ${vatSummary.year}`,
       }}
       unreadAlerts={alertsResult.alerts.map((a) => ({
         id: a.id,

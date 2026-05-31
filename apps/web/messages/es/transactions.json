@@ -61,7 +61,11 @@
     "documents": "Documentos y Recibos",
     "noCategory": "Sin categoria",
     "save": "Guardar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "taxRate": "Tipo de IVA",
+    "taxAmount": "Importe IVA",
+    "noTax": "Sin IVA",
+    "vatExempt": "Exento (0%)"
   },
   "pagination": {
     "total": "{count} transacciones",
@@ -74,6 +78,9 @@
     "download": "Descargar",
     "deleteTitle": "Eliminar documento?",
     "deleteDescription": "Esto eliminara permanentemente {name}. Esta accion no se puede deshacer.",
+    "unlinkTitle": "Desvincular del archivo?",
+    "unlinkDescription": "Esto eliminara el vinculo entre {name} y esta transaccion. El documento permanecera en tu archivo.",
+    "unlink": "Desvincular",
     "deleted": "Documento eliminado",
     "deleteFailed": "Error al eliminar el documento",
     "downloadFailed": "Error al descargar el documento",
