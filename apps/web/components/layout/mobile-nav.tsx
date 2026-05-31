@@ -23,10 +23,10 @@ export function MobileNav({ organizationName }: MobileNavProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center justify-center w-10 h-10 rounded-md hover:bg-muted transition-colors"
+        className="flex items-center justify-center h-8 w-8 rounded-full border text-foreground hover:bg-muted transition-colors"
         aria-label="Open navigation"
       >
-        <List size={22} />
+        <List size={16} />
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
