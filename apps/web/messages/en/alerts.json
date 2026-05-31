@@ -15,7 +15,8 @@
     "low_balance": "Low Balance",
     "high_expense": "High Spend",
     "runway_warning": "Runway Critical",
-    "unusual_activity": "Unusual Activity"
+    "unusual_activity": "Unusual Activity",
+    "missed_recurring": "Missed Recurring"
   },
   "severity": {
     "info": "Info",

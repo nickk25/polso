@@ -5,6 +5,7 @@ import {
   sendHighSpendAlert,
   sendRunwayCriticalAlert,
   sendUnusualActivityAlert,
+  sendMissingRecurringAlert,
 } from "@/lib/email/send"
 import type { Locale } from "@/lib/i18n/config"
 import { detectAnomalies } from "@polso/intelligence"
@@ -544,6 +545,128 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
         formatAmount(anomaly.amount, currency),
         formatAmount(anomaly.categoryAvg, currency),
         String(actualMultiplier),
+        authUser.locale
+      ).catch(console.error)
+    }
+  }
+
+  return created
+}
+
+// ============================================================================
+// Missed Recurring Detection
+// ============================================================================
+
+function getNextExpectedDate(lastOccurrence: Date, frequency: string, expectedDayOfMonth: number | null): Date {
+  const next = new Date(lastOccurrence)
+  switch (frequency) {
+    case "weekly": next.setDate(next.getDate() + 7); break
+    case "biweekly": next.setDate(next.getDate() + 14); break
+    case "monthly":
+      next.setMonth(next.getMonth() + 1)
+      if (expectedDayOfMonth) next.setDate(expectedDayOfMonth)
+      break
+    case "quarterly": next.setMonth(next.getMonth() + 3); break
+    case "yearly": next.setFullYear(next.getFullYear() + 1); break
+    default: next.setMonth(next.getMonth() + 1)
+  }
+  return next
+}
+
+/**
+ * Detects confirmed recurring patterns whose next expected payment is overdue
+ * (past grace period). Creates one alert per pattern per 14 days.
+ */
+export async function detectMissedRecurringAlerts(organizationId: string): Promise<number> {
+  const gracePeriodDays = 7
+  const deduplicationDays = 14
+  const today = new Date()
+
+  const patterns = await prisma.recurringPattern.findMany({
+    where: { organizationId, isConfirmed: true, lastOccurrence: { not: null } },
+    select: {
+      id: true,
+      name: true,
+      frequency: true,
+      expectedAmount: true,
+      expectedDayOfMonth: true,
+      lastOccurrence: true,
+      counterparty: { select: { name: true } },
+    },
+  })
+
+  if (patterns.length === 0) return 0
+
+  const orgUsers = await prisma.userOrganization.findMany({
+    where: { organizationId },
+    select: { userId: true },
+  })
+
+  const userSettings = await Promise.all(
+    orgUsers.map(async ({ userId }) => {
+      const settings = await prisma.notificationSetting.findUnique({ where: { userId } })
+      return { userId, settings }
+    })
+  )
+
+  const alertableUsers = userSettings.filter((u) => u.settings?.emailAlerts !== false)
+  if (alertableUsers.length === 0) return 0
+
+  let created = 0
+
+  for (const pattern of patterns) {
+    if (!pattern.lastOccurrence) continue
+
+    const nextExpected = getNextExpectedDate(pattern.lastOccurrence, pattern.frequency, pattern.expectedDayOfMonth)
+    const graceCutoff = new Date(nextExpected)
+    graceCutoff.setDate(graceCutoff.getDate() + gracePeriodDays)
+
+    if (today <= graceCutoff) continue
+
+    const since = new Date(Date.now() - deduplicationDays * 24 * 60 * 60 * 1000)
+    const existing = await prisma.alert.findFirst({
+      where: {
+        organizationId,
+        type: "missed_recurring",
+        isDismissed: false,
+        createdAt: { gte: since },
+        metadata: { path: ["recurringPatternId"], equals: pattern.id },
+      },
+    })
+    if (existing) continue
+
+    const vendorName = pattern.counterparty?.name || pattern.name
+    const currency = "EUR"
+
+    await prisma.alert.create({
+      data: {
+        organizationId,
+        type: "missed_recurring",
+        severity: "warning",
+        title: `Missed recurring: ${vendorName}`,
+        message: `Expected payment of ${formatAmount(pattern.expectedAmount ?? 0, currency)} from ${vendorName} is overdue.`,
+        recurringPatternId: pattern.id,
+        metadata: {
+          recurringPatternId: pattern.id,
+          vendorName,
+          expectedAmount: pattern.expectedAmount ?? 0,
+          expectedDate: nextExpected.toISOString(),
+          frequency: pattern.frequency,
+        },
+      },
+    })
+    created++
+
+    for (const { userId } of alertableUsers) {
+      const authUser = await getUserEmailAndLocale(userId)
+      if (!authUser) continue
+
+      await sendMissingRecurringAlert(
+        authUser.email,
+        authUser.name,
+        vendorName,
+        formatAmount(pattern.expectedAmount ?? 0, currency),
+        format(nextExpected, "MMM d, yyyy"),
         authUser.locale
       ).catch(console.error)
     }

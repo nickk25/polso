@@ -15,7 +15,8 @@
     "low_balance": "Saldo Bajo",
     "high_expense": "Gasto Alto",
     "runway_warning": "Runway Crítico",
-    "unusual_activity": "Actividad Inusual"
+    "unusual_activity": "Actividad Inusual",
+    "missed_recurring": "Recurrente Perdido"
   },
   "severity": {
     "info": "Info",

@@ -25,6 +25,7 @@ export interface CreateExportInput {
   includesCsv?: boolean
   includesPdf?: boolean
   includesInvoices?: boolean
+  csvSeparator?: string
 }
 
 export interface CreateExportResult {
@@ -46,6 +47,7 @@ export async function createExportAction(
     const includesCsv = input.includesCsv !== false
     const includesPdf = input.includesPdf !== false
     const includesInvoices = input.includesInvoices !== false
+    const csvSeparator = input.csvSeparator || ";"
 
     const startDate = toUtcDayStart(new Date(input.startDate))
     const endDate = toUtcDayEnd(new Date(input.endDate))
@@ -83,7 +85,7 @@ export async function createExportAction(
     const zipFiles: ZipFile[] = []
 
     if (includesCsv) {
-      zipFiles.push({ name: "gastos.csv", content: generateCSV(expenses) })
+      zipFiles.push({ name: "gastos.csv", content: generateCSV(expenses, csvSeparator) })
     }
 
     if (includesPdf) {

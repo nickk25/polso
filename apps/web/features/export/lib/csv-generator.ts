@@ -27,10 +27,8 @@ const CSV_HEADERS = [
   "Documentado",
 ]
 
-function escapeCSVField(value: string): string {
-  // If the value contains comma, newline, or double quote, wrap in quotes
-  if (value.includes(",") || value.includes("\n") || value.includes('"')) {
-    // Escape double quotes by doubling them
+function escapeCSVField(value: string, separator: string): string {
+  if (value.includes(separator) || value.includes("\n") || value.includes('"')) {
     return `"${value.replace(/"/g, '""')}"`
   }
   return value
@@ -44,29 +42,26 @@ function formatSpanishNumber(value: number): string {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
 }
 
-export function generateCSV(expenses: ExpenseForCSV[]): string {
+export function generateCSV(expenses: ExpenseForCSV[], separator = ";"): string {
   const rows: string[] = []
 
-  // Add header row
-  rows.push(CSV_HEADERS.join(";"))
+  rows.push(CSV_HEADERS.join(separator))
 
-  // Add data rows
   for (const expense of expenses) {
     const row = [
       format(new Date(expense.date), "dd/MM/yyyy"),
-      escapeCSVField(expense.counterparty?.name || "Sin proveedor"),
-      escapeCSVField(expense.description || ""),
-      escapeCSVField(expense.category?.name || "Sin categoria"),
+      escapeCSVField(expense.counterparty?.name || "Sin proveedor", separator),
+      escapeCSVField(expense.description || "", separator),
+      escapeCSVField(expense.category?.name || "Sin categoria", separator),
       expense.entryType === "fixed" ? "Fijo" : "Variable",
       formatSpanishNumber(expense.amount),
       expense.currency,
       expense.documents.length > 0 ? "Si" : "No",
     ]
-    rows.push(row.join(";"))
+    rows.push(row.join(separator))
   }
 
-  // Use semicolon separator (more common in Spanish Excel)
-  // Add BOM for Excel to recognize UTF-8
+  // BOM for Excel UTF-8 recognition
   return "\uFEFF" + rows.join("\n")
 }
 

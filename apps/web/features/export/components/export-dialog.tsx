@@ -54,6 +54,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
   const [quarter, setQuarter] = useState<string>("Q1")
   const [month, setMonth] = useState<string>("1")
   const [year, setYear] = useState<string>(String(currentYear))
+  const [csvSeparator, setCsvSeparator] = useState<";" | ",">(";")
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>()
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>()
 
@@ -165,6 +166,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
       const response = await createExportAction({
         startDate: range.start,
         endDate: range.end,
+        csvSeparator,
       })
 
       if (response.success) {
@@ -358,6 +360,31 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                 </div>
               </div>
             )}
+
+            {/* CSV Separator */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t("dialog.separator")}</label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={csvSeparator === ";" ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setCsvSeparator(";")}
+                >
+                  {t("dialog.separatorSemicolon")}
+                </Button>
+                <Button
+                  type="button"
+                  variant={csvSeparator === "," ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setCsvSeparator(",")}
+                >
+                  {t("dialog.separatorComma")}
+                </Button>
+              </div>
+            </div>
 
             {/* Preview */}
             {range && (

@@ -5,8 +5,10 @@ import {
   detectHighSpendAlerts,
   detectRunwayCriticalAlerts,
   detectUnusualActivityAlerts,
+  detectMissedRecurringAlerts,
 } from "@/features/alerts/lib/detect-alerts"
 import { syncTransactionsCore } from "@/features/banking/lib/sync-core"
+import { detectPatternsForOrg } from "@/features/intelligence/lib/detect-patterns-core"
 
 const CRON_SECRET = process.env.CRON_SECRET
 const STALE_THRESHOLD_HOURS = 20
@@ -42,6 +44,7 @@ interface CronSyncResult {
   transactionsImported: number
   transactionsModified: number
   entriesCreated: number
+  patternsDetected: number
   alertsCreated: number
   alertErrors: number
   duration: number
@@ -69,6 +72,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
       transactionsImported: 0,
       transactionsModified: 0,
       entriesCreated: 0,
+      patternsDetected: 0,
       alertsCreated: 0,
       alertErrors: 0,
       duration: Date.now() - startTime,
@@ -82,6 +86,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
   let totalImported = 0
   let totalModified = 0
   let totalEntries = 0
+  let totalPatterns = 0
   const syncedOrgIds = new Set<string>()
 
   for (const { id: accountId, organizationId } of staleAccounts) {
@@ -98,19 +103,27 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
     }
   }
 
-  // Alert detection for all orgs that had accounts synced
+  // Pattern detection + alerts for all orgs that had accounts synced
   let alertsCreated = 0
   let alertErrors = 0
 
   for (const orgId of syncedOrgIds) {
     try {
-      const [low, high, runway, unusual] = await Promise.all([
+      const patterns = await detectPatternsForOrg(orgId)
+      totalPatterns += patterns.patternsDetected
+    } catch (error) {
+      console.error(`[Cron] detect-patterns error for org ${orgId}:`, error)
+    }
+
+    try {
+      const [low, high, runway, unusual, missed] = await Promise.all([
         detectLowBalanceAlerts(orgId),
         detectHighSpendAlerts(orgId),
         detectRunwayCriticalAlerts(orgId),
         detectUnusualActivityAlerts(orgId),
+        detectMissedRecurringAlerts(orgId),
       ])
-      alertsCreated += low + high + runway + unusual
+      alertsCreated += low + high + runway + unusual + missed
     } catch (error) {
       console.error(`[Cron] detect-alerts error for org ${orgId}:`, error)
       alertErrors++
@@ -119,7 +132,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
 
   const duration = Date.now() - startTime
   console.log(
-    `[Cron] Done in ${duration}ms: ${accountsSynced} synced, ${totalImported} new txns, ${alertsCreated} alerts`
+    `[Cron] Done in ${duration}ms: ${accountsSynced} synced, ${totalImported} new txns, ${totalPatterns} patterns, ${alertsCreated} alerts`
   )
 
   return {
@@ -128,6 +141,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
     transactionsImported: totalImported,
     transactionsModified: totalModified,
     entriesCreated: totalEntries,
+    patternsDetected: totalPatterns,
     alertsCreated,
     alertErrors,
     duration,
