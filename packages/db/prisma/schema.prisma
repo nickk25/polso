@@ -557,6 +557,8 @@ model InboxItem {
   currency    String   @default("EUR")
   date        DateTime?
   cif         String?
+  taxAmount   Decimal? @db.Decimal(12, 2) @map("tax_amount")
+  taxRate     Float?   @map("tax_rate")
 
   status String @default("new")
   source String @default("upload")
