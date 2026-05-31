@@ -60,10 +60,10 @@ export function DashboardHeader({ organizationName, userName, userEmail, userIma
         )}
       </div>
       <div className="pr-4 md:pr-6 flex items-center gap-2">
-        <Link href="/alerts" className="relative flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/alerts" className="relative flex h-8 w-8 items-center justify-center rounded-full border text-foreground transition-colors hover:bg-muted">
           <Bell className="h-4 w-4" />
           {unreadAlertCount > 0 && (
-            <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-red-500" />
+            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
           )}
         </Link>
         <UserMenu userName={userName} userEmail={userEmail} userImage={userImage} />
