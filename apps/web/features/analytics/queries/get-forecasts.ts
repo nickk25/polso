@@ -2,6 +2,23 @@ import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import { startOfMonth, endOfMonth, subMonths, addMonths, format } from "date-fns"
 
+function confidenceFromValues(values: number[]): number {
+  if (values.length === 0) return 0.4
+  if (values.length === 1) return 0.5
+  const mean = values.reduce((a, b) => a + b, 0) / values.length
+  if (mean === 0) return 0.4
+  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length
+  const cv = Math.sqrt(variance) / mean
+  return Math.max(0.3, Math.min(0.9, 1 - cv))
+}
+
+function weightedAvg(values: number[]): number {
+  if (values.length === 0) return 0
+  const weights = values.map((_, i) => i + 1)
+  const totalWeight = weights.reduce((a, b) => a + b, 0)
+  return values.reduce((sum, v, i) => sum + v * weights[i], 0) / totalWeight
+}
+
 // ============================================================================
 // Cash Flow Forecast
 // ============================================================================
@@ -181,8 +198,8 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
   let historyBalance = currentBalance
   for (let i = months.length - forecastMonths - 1; i >= 0; i--) {
     if (months[i].isHistorical) {
-      historyBalance -= months[i].projectedNet
       months[i].projectedBalance = historyBalance
+      historyBalance -= months[i].projectedNet
     }
   }
 
@@ -227,7 +244,6 @@ export interface RevenueForecast {
     projected: number
     breakdown: {
       recurring: number
-      trending: number
       oneTime: number
     }
     confidence: number
@@ -318,18 +334,20 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
     }
   }
 
-  // Calculate averages — same denominator so recurring + oneTime = total
-  const recurringValues = Array.from(monthlyRecurring.values())
-  const oneTimeValues = Array.from(monthlyOneTime.values())
-  const monthlyValues = Array.from(monthlyTotals.values())
+  // Sort monthly totals chronologically before weighting
+  const sortedMonthlyEntries = Array.from(monthlyTotals.entries()).sort(([a], [b]) => a.localeCompare(b))
+  const monthlyValues = sortedMonthlyEntries.map(([, v]) => v)
   const totalMonths = Math.max(monthlyValues.length, 1)
 
+  const recurringValues = Array.from(monthlyRecurring.values())
+  const oneTimeValues = Array.from(monthlyOneTime.values())
   const totalRecurring = recurringValues.reduce((a, b) => a + b, 0)
   const totalOneTime = oneTimeValues.reduce((a, b) => a + b, 0)
   const avgRecurring = totalRecurring / totalMonths
   const avgOneTime = totalOneTime / totalMonths
 
-  const nextMonthProjected = avgRecurring + avgOneTime
+  // Weighted avg gives more weight to recent months
+  const nextMonthProjected = weightedAvg(monthlyValues)
 
   // Monthly actuals
   const currentMonthKey = format(now, "yyyy-MM")
@@ -392,10 +410,11 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
   }
   categoryForecasts.sort((a, b) => b.projected - a.projected)
 
-  // Confidence based on data quality
-  const hasMultipleMonths = monthlyValues.length >= 2
-  const hasRecurringIncome = avgRecurring > 0
-  const confidence = hasRecurringIncome ? 0.8 : (hasMultipleMonths ? 0.6 : 0.4)
+  // CV-based confidence on positive income series
+  const confidence = confidenceFromValues(monthlyValues)
+
+  // Dampen trend: clamp MoM to ±10% single-factor adjustment
+  const trendFactor = Math.max(0.9, Math.min(1.1, 1 + (monthOverMonthChange / 100) * 0.3))
 
   return {
     lastMonth: lastMonthRevenue,
@@ -404,13 +423,12 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
       projected: nextMonthProjected,
       breakdown: {
         recurring: avgRecurring,
-        trending: 0,
         oneTime: avgOneTime,
       },
       confidence,
     },
-    quarterProjection: nextMonthProjected * 3,
-    yearProjection: nextMonthProjected * 12,
+    quarterProjection: nextMonthProjected * 3 * trendFactor,
+    yearProjection: nextMonthProjected * 12 * trendFactor,
     monthOverMonthChange,
     topClients: clientForecasts.slice(0, 5),
     byCategory: categoryForecasts.slice(0, 5),
@@ -598,10 +616,8 @@ export async function getExpenseForecast(): Promise<ExpenseForecast> {
   // Sort by projected amount
   categoryForecasts.sort((a, b) => b.projected - a.projected)
 
-  // Calculate confidence
-  const hasRecurring = recurringPatterns.length > 0
-  const hasHistory = fixedValues.length >= 2
-  const confidence = hasRecurring ? 0.8 : (hasHistory ? 0.6 : 0.4)
+  // CV-based confidence on positive expense series
+  const confidence = confidenceFromValues([...fixedValues, ...variableValues])
 
   return {
     lastMonth: lastMonthTotal,

@@ -1,3 +1,4 @@
+import { tokenize, jaccardSimilarity } from "@polso/matching"
 import type { CounterpartyWithStats } from "../queries/get-counterparties"
 
 export interface MergeSuggestionGroup {
@@ -6,23 +7,47 @@ export interface MergeSuggestionGroup {
   totalEntries: number
 }
 
-export function computeMergeSuggestions(counterparties: CounterpartyWithStats[]): MergeSuggestionGroup[] {
-  const groups = new Map<string, CounterpartyWithStats[]>()
+const JACCARD_THRESHOLD = 0.3
 
-  for (const cp of counterparties) {
-    if (cp._count.entries === 0) continue
-    const firstWord = cp.normalizedName.split(" ")[0]
-    if (!firstWord || firstWord.length < 4) continue
-    if (!groups.has(firstWord)) groups.set(firstWord, [])
-    groups.get(firstWord)!.push(cp)
+export function computeMergeSuggestions(counterparties: CounterpartyWithStats[]): MergeSuggestionGroup[] {
+  const active = counterparties.filter(cp => cp._count.entries > 0)
+  const tokenCache = new Map<string, string[]>()
+
+  const getTokens = (cp: CounterpartyWithStats): string[] => {
+    if (!tokenCache.has(cp.id)) tokenCache.set(cp.id, tokenize(cp.normalizedName))
+    return tokenCache.get(cp.id)!
   }
 
-  return Array.from(groups.entries())
-    .filter(([, cps]) => cps.length >= 2)
-    .map(([key, cps]) => ({
-      key,
-      counterparties: [...cps].sort((a, b) => b._count.entries - a._count.entries),
-      totalEntries: cps.reduce((sum, cp) => sum + cp._count.entries, 0),
-    }))
-    .sort((a, b) => b.totalEntries - a.totalEntries)
+  const visited = new Set<string>()
+  const groups: MergeSuggestionGroup[] = []
+
+  for (let i = 0; i < active.length; i++) {
+    const anchor = active[i]
+    if (visited.has(anchor.id)) continue
+
+    const group: CounterpartyWithStats[] = [anchor]
+    visited.add(anchor.id)
+
+    for (let j = i + 1; j < active.length; j++) {
+      const candidate = active[j]
+      if (visited.has(candidate.id)) continue
+
+      const score = jaccardSimilarity(getTokens(anchor), getTokens(candidate))
+      if (score >= JACCARD_THRESHOLD) {
+        group.push(candidate)
+        visited.add(candidate.id)
+      }
+    }
+
+    if (group.length >= 2) {
+      const sorted = [...group].sort((a, b) => b._count.entries - a._count.entries)
+      groups.push({
+        key: sorted[0].normalizedName,
+        counterparties: sorted,
+        totalEntries: group.reduce((sum, cp) => sum + cp._count.entries, 0),
+      })
+    }
+  }
+
+  return groups.sort((a, b) => b.totalEntries - a.totalEntries)
 }
