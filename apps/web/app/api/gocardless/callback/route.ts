@@ -142,6 +142,12 @@ export async function GET(request: NextRequest) {
     // Clean up pending requisition
     await prisma.pendingRequisition.delete({ where: { id: pending.id } })
 
+    // Mark accounts as pending sync — SyncMonitor polls for lastSyncedAt: null
+    await prisma.account.updateMany({
+      where: { organizationId, externalAccountId: { in: requisition.accounts } },
+      data: { lastSyncedAt: null },
+    })
+
     // Full-history sync runs after the redirect so the user isn't blocked waiting.
     // initial=true disables the 7-day window and fetches all available history.
     after(() =>

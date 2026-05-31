@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
+import { SyncMonitor } from "@/features/banking/components/sync-monitor";
 
 async function getOrganization(userId: string, userEmail: string | null) {
   // Check if user has an organization
@@ -82,6 +83,7 @@ export default async function DashboardLayout({
   return (
     <div className="relative">
       <AuthCallbackRedirect />
+      <SyncMonitor />
       <AppSidebar organizationName={organization.name} />
       <div className="md:ml-[70px] min-h-screen flex flex-col">
         <header className="h-14 md:h-18 shrink-0 border-b flex items-center px-4 md:px-0">
