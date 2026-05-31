@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { SyncToastContent, type SyncState } from "./bank-sync-toast"
 
 const POLL_INTERVAL_MS = 3000
 const DISMISS_AFTER_MS = 6000
 
 export function SyncMonitor() {
+  const router = useRouter()
   const [syncState, setSyncState] = useState<SyncState | null>(null)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const dismissRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -34,6 +36,7 @@ export function SyncMonitor() {
         stopPolling()
         const finalState: SyncState = hasError ? "error" : "success"
         setSyncState(finalState)
+        router.refresh()
         dismissRef.current = setTimeout(() => setSyncState(null), DISMISS_AFTER_MS)
       }
       if (!syncing && statusRef.current === "idle") {

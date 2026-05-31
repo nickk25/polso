@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@polso/ui/alert-dialog"
 import { ArrowsClockwise, Trash, Warning, CheckCircle, Clock } from "@phosphor-icons/react"
-import { syncTransactionsAction } from "@/features/banking/actions/sync-transactions"
+import { startManualSyncAction } from "@/features/banking/actions/sync-transactions"
 import { disconnectBankAction } from "@/features/banking/actions/connect-bank"
 import type { Account } from "@/lib/types"
 
@@ -72,9 +72,9 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
 
   async function handleSync() {
     setSyncing(true)
-    await syncTransactionsAction(firstAccount.id)
+    await startManualSyncAction(firstAccount.id)
     setSyncing(false)
-    router.refresh()
+    // SyncMonitor toast takes over from here — no router.refresh() needed yet
   }
 
   async function handleDisconnect() {

@@ -127,9 +127,11 @@ export async function syncTransactionsCore(
           ? parseFloat(primaryBalance.balanceAmount.amount)
           : null
 
+        // Update balance immediately but defer lastSyncedAt until all transactions are processed
+        // so SyncMonitor can accurately track progress via lastSyncedAt: null
         await prisma.account.update({
           where: { id: account.id },
-          data: { balanceCurrent, lastSyncedAt: new Date(), syncError: null, syncErrorRetries: 0 },
+          data: { balanceCurrent, syncError: null, syncErrorRetries: 0 },
         })
         accountsUpdated++
 
@@ -150,6 +152,11 @@ export async function syncTransactionsCore(
           if (modified) totalTransactionsModified++
           if (entryCreated) totalEntriesCreated++
         }
+
+        await prisma.account.update({
+          where: { id: account.id },
+          data: { lastSyncedAt: new Date() },
+        })
       } catch (error) {
         console.error(`Error syncing account ${account.id}:`, error)
         const retries = (account.syncErrorRetries ?? 0) + 1
