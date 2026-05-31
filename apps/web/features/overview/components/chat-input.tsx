@@ -26,7 +26,7 @@ export function ChatInput({ value, onChange, onSubmit, disabled, placeholder = "
           placeholder={placeholder}
           rows={1}
           disabled={disabled}
-          className="w-full resize-none rounded-xl bg-transparent px-4 py-3 pr-12 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-60"
+          className="w-full resize-none rounded-xl bg-transparent px-4 pt-3 pb-10 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-60"
         />
         <button
           type="submit"
