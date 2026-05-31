@@ -81,7 +81,7 @@ export default async function RootLayout({
             <AuthProvider>{children}</AuthProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
-        <Toaster />
+        <Toaster position="bottom-left" />
         <Analytics />
       </body>
     </html>
