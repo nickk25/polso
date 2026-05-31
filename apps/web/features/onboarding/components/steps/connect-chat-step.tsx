@@ -9,12 +9,12 @@ import { generateAgentLinkCodeAction } from "@/features/settings/actions/generat
 import { completeOnboardingAction } from "../../actions/complete-onboarding"
 
 interface ConnectChatStepProps {
-  whatsappConnected: boolean
+  telegramConnected: boolean
 }
 
-export function ConnectChatStep({ whatsappConnected }: ConnectChatStepProps) {
+export function ConnectChatStep({ telegramConnected }: ConnectChatStepProps) {
   const t = useTranslations("onboarding.steps.connectChat")
-  const [connected, setConnected] = useState(whatsappConnected)
+  const [connected, setConnected] = useState(telegramConnected)
   const [code, setCode] = useState<string | null>(null)
   const [expiresAt, setExpiresAt] = useState<Date | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(0)
@@ -62,7 +62,7 @@ export function ConnectChatStep({ whatsappConnected }: ConnectChatStepProps) {
         <div className="flex items-center gap-2">
           <Badge variant="default">
             <CheckCircle className="mr-1 h-3 w-3" />
-            {t("whatsappConnected")}
+            {t("telegramConnected")}
           </Badge>
         </div>
       ) : code ? (

@@ -12,7 +12,7 @@ const TOTAL_STEPS = 4
 interface OnboardingFlowProps {
   orgName: string
   currency: string
-  whatsappConnected: boolean
+  telegramConnected: boolean
   bankConnected: boolean
 }
 
@@ -33,14 +33,14 @@ const LEFT_CONTENT = [
   },
   {
     headline: "Receipts in seconds",
-    body: "Snap a photo in WhatsApp and your receipt is matched to a transaction automatically.",
+    body: "Send a photo in Telegram and your receipt is matched to a transaction automatically.",
   },
 ]
 
 export function OnboardingFlow({
   orgName,
   currency,
-  whatsappConnected,
+  telegramConnected,
   bankConnected,
 }: OnboardingFlowProps) {
   const t = useTranslations("onboarding")
@@ -128,7 +128,7 @@ export function OnboardingFlow({
               <ReconciliationStep onComplete={next} />
             )}
             {step === 3 && (
-              <ConnectChatStep whatsappConnected={whatsappConnected} />
+              <ConnectChatStep telegramConnected={telegramConnected} />
             )}
           </div>
         </div>

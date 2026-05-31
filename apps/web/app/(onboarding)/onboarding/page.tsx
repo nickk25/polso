@@ -32,7 +32,7 @@ export default async function OnboardingPage({
     <OnboardingFlow
       orgName={organization.name}
       currency={organization.currency}
-      whatsappConnected={!!organization.whatsappPhone}
+      telegramConnected={!!organization.telegramChatId}
       bankConnected={bankConnected}
     />
   )

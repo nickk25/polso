@@ -22,18 +22,18 @@
       "bullets": {
         "sync": "Las transacciones se sincronizan automáticamente cada día",
         "categorize": "Los gastos e ingresos se categorizan de forma inteligente",
-        "receipts": "Los recibos se vinculan a transacciones por WhatsApp o Telegram",
+        "receipts": "Los recibos se vinculan a transacciones por Telegram",
         "alerts": "Recibes alertas sobre anomalías y patrones recurrentes"
       },
       "continue": "Entendido, vamos"
     },
     "connectChat": {
-      "title": "Conecta WhatsApp",
-      "description": "Envía recibos y facturas directamente desde tu móvil. Genera un código y envíaselo al bot para vincular tu cuenta.",
-      "whatsappConnected": "WhatsApp conectado",
+      "title": "Conecta Telegram",
+      "description": "Envía recibos y facturas directamente desde tu móvil. Genera un código y envíaselo al bot de Telegram para vincular tu cuenta.",
+      "telegramConnected": "Telegram conectado",
       "generateCode": "Generar código de conexión",
       "codeExpires": "El código expira en",
-      "sendToBot": "Envía este código al bot de WhatsApp para vincular tu cuenta.",
+      "sendToBot": "Envía este código al bot de Telegram para vincular tu cuenta.",
       "refreshStatus": "Actualizar estado",
       "skip": "Omitir por ahora",
       "done": "Listo, ir al dashboard"
