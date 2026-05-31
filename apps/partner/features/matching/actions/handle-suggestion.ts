@@ -30,6 +30,21 @@ export async function confirmSuggestionAction(
 
     if (!link) return errorResponse("FORBIDDEN", "Sin acceso a este cliente")
 
+    const { transactionId, inboxItemId } = suggestion
+
+    const [inboxItemTax, existingEntry] = await Promise.all([
+      prisma.inboxItem.findUnique({ where: { id: inboxItemId }, select: { taxAmount: true, taxRate: true } }),
+      prisma.entry.findFirst({ where: { transactionId, organizationId: clientId }, select: { taxAmount: true, taxRate: true } }),
+    ])
+
+    const taxData: { taxAmount?: number; taxRate?: number } = {}
+    if (inboxItemTax?.taxAmount != null && existingEntry?.taxAmount == null) {
+      taxData.taxAmount = Number(inboxItemTax.taxAmount)
+    }
+    if (inboxItemTax?.taxRate != null && existingEntry?.taxRate == null) {
+      taxData.taxRate = inboxItemTax.taxRate
+    }
+
     await prisma.$transaction([
       prisma.matchSuggestion.update({
         where: { id: suggestionId },
@@ -40,21 +55,17 @@ export async function confirmSuggestionAction(
         },
       }),
       prisma.transactionAttachment.upsert({
-        where: {
-          transactionId_inboxItemId: {
-            transactionId: suggestion.transactionId,
-            inboxItemId: suggestion.inboxItemId,
-          },
-        },
-        create: {
-          transactionId: suggestion.transactionId,
-          inboxItemId: suggestion.inboxItemId,
-        },
+        where: { transactionId_inboxItemId: { transactionId, inboxItemId } },
+        create: { transactionId, inboxItemId },
         update: {},
       }),
       prisma.inboxItem.update({
-        where: { id: suggestion.inboxItemId },
-        data: { status: "done", transactionId: suggestion.transactionId },
+        where: { id: inboxItemId },
+        data: { status: "done", transactionId },
+      }),
+      prisma.entry.updateMany({
+        where: { transactionId, organizationId: clientId },
+        data: { status: "verified", ...taxData },
       }),
     ])
 

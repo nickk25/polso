@@ -10,6 +10,8 @@ interface UpdateEntryInput {
   entryType?: "fixed" | "variable"
   status?: "pending" | "verified" | "excluded"
   description?: string | null
+  taxRate?: number | null
+  taxAmount?: number | null
 }
 
 export async function updateEntryAction(
@@ -44,6 +46,8 @@ export async function updateEntryAction(
         ...(input.entryType !== undefined && { entryType: input.entryType }),
         ...(input.status !== undefined && { status: input.status }),
         ...(input.description !== undefined && { description: input.description }),
+        ...(input.taxRate !== undefined && { taxRate: input.taxRate }),
+        ...(input.taxAmount !== undefined && { taxAmount: input.taxAmount }),
         ...(categoryChanged && { categorySource: "manual", categoryConfidence: 1 }),
       },
     })

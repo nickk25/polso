@@ -240,6 +240,8 @@ async function processReceipt({
         currency: ocrData.currency ?? "EUR",
         date: ocrData.date ? new Date(ocrData.date) : null,
         cif: ocrData.cif,
+        taxAmount: ocrData.vatAmount,
+        taxRate: ocrData.vatRate,
         status: "processing",
         source: "telegram",
         tgMessageId: dedupKey,
@@ -333,6 +335,19 @@ async function confirmMatch(
     })
     if (!suggestion) return
 
+    const [inboxItemTax, existingEntry] = await Promise.all([
+      prisma.inboxItem.findUnique({ where: { id: inboxItemId }, select: { taxAmount: true, taxRate: true } }),
+      prisma.entry.findFirst({ where: { transactionId, organizationId }, select: { taxAmount: true, taxRate: true } }),
+    ])
+
+    const taxData: { taxAmount?: number; taxRate?: number } = {}
+    if (inboxItemTax?.taxAmount != null && existingEntry?.taxAmount == null) {
+      taxData.taxAmount = Number(inboxItemTax.taxAmount)
+    }
+    if (inboxItemTax?.taxRate != null && existingEntry?.taxRate == null) {
+      taxData.taxRate = inboxItemTax.taxRate
+    }
+
     await prisma.$transaction([
       prisma.transactionAttachment.upsert({
         where: { transactionId_inboxItemId: { transactionId, inboxItemId } },
@@ -346,6 +361,10 @@ async function confirmMatch(
       prisma.matchSuggestion.updateMany({
         where: { inboxItemId, transactionId },
         data: { status: "confirmed", userActionAt: new Date() },
+      }),
+      prisma.entry.updateMany({
+        where: { transactionId, organizationId },
+        data: { status: "verified", ...taxData },
       }),
     ])
 

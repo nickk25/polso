@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
-import { startOfMonth, endOfMonth, subMonths, format } from "date-fns"
+import { startOfMonth, endOfMonth, subMonths, format, getQuarter } from "date-fns"
+import { getFiscalQuarters, getCurrentQuarterNumber } from "@/features/analytics/lib/quarters"
 
 export interface BurnRateData {
   burnRate: number
@@ -314,5 +315,77 @@ export async function getIncomeStats(date = new Date()): Promise<IncomeStats> {
       categoryName: g.categoryId ? (catMap.get(g.categoryId)?.name ?? "Uncategorized") : "Uncategorized",
       total: g._sum.amount ?? 0,
     })),
+  }
+}
+
+export interface VATQuarter {
+  quarter: 1 | 2 | 3 | 4
+  start: Date
+  end: Date
+  collected: number
+  paid: number
+  net: number
+}
+
+export interface VATSummary {
+  year: number
+  currency: string
+  quarters: VATQuarter[]
+  currentQuarter: VATQuarter
+  ytdCollected: number
+  ytdPaid: number
+  ytdNet: number
+}
+
+export async function getVATSummary(year = new Date().getFullYear()): Promise<VATSummary> {
+  const { organizationId } = await getAuthContext()
+
+  const fiscalQuarters = getFiscalQuarters(year)
+  const yearStart = fiscalQuarters[0].start
+  const yearEnd = fiscalQuarters[3].end
+
+  const [entries, account] = await Promise.all([
+    prisma.entry.findMany({
+      where: {
+        organizationId,
+        taxAmount: { not: null },
+        status: { not: "excluded" },
+        date: { gte: yearStart, lte: yearEnd },
+      },
+      select: { taxAmount: true, date: true, direction: true },
+    }),
+    prisma.account.findFirst({ where: { organizationId, status: "active" }, select: { currency: true } }),
+  ])
+
+  const totals = new Map<number, { collected: number; paid: number }>()
+  for (const fq of fiscalQuarters) {
+    totals.set(fq.quarter, { collected: 0, paid: 0 })
+  }
+
+  for (const entry of entries) {
+    const q = getQuarter(new Date(entry.date)) as 1 | 2 | 3 | 4
+    const row = totals.get(q)
+    if (!row || entry.taxAmount == null) continue
+    const tax = Number(entry.taxAmount)
+    if (entry.direction === "income") row.collected += tax
+    else row.paid += tax
+  }
+
+  const quarters: VATQuarter[] = fiscalQuarters.map((fq) => {
+    const row = totals.get(fq.quarter) ?? { collected: 0, paid: 0 }
+    return { ...fq, collected: row.collected, paid: row.paid, net: row.collected - row.paid }
+  })
+
+  const currentQNum = getCurrentQuarterNumber()
+  const currentQuarter = quarters.find(q => q.quarter === currentQNum) ?? quarters[0]
+
+  return {
+    year,
+    currency: account?.currency ?? "EUR",
+    quarters,
+    currentQuarter,
+    ytdCollected: quarters.reduce((s, q) => s + q.collected, 0),
+    ytdPaid: quarters.reduce((s, q) => s + q.paid, 0),
+    ytdNet: quarters.reduce((s, q) => s + q.net, 0),
   }
 }
