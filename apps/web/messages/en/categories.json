@@ -29,11 +29,11 @@
     "name": "Name",
     "namePlaceholder": "e.g., SaaS Subscriptions",
     "color": "Color",
-    "defaultExpenseType": "Default Expense Type (optional)",
+    "defaultEntryType": "Default Entry Type (optional)",
     "none": "None",
     "fixed": "Fixed",
     "variable": "Variable",
-    "expenseTypeDescription": "Expenses with this category will default to this type."
+    "entryTypeDescription": "Transactions with this category will default to this type."
   },
   "select": {
     "noCategory": "No category",

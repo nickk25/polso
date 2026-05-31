@@ -29,11 +29,11 @@
     "name": "Nombre",
     "namePlaceholder": "ej., Suscripciones SaaS",
     "color": "Color",
-    "defaultExpenseType": "Tipo de Gasto Predeterminado (opcional)",
+    "defaultEntryType": "Tipo de Transaccion Predeterminado (opcional)",
     "none": "Ninguno",
     "fixed": "Fijo",
     "variable": "Variable",
-    "expenseTypeDescription": "Los gastos con esta categoria usaran este tipo de forma predeterminada."
+    "entryTypeDescription": "Las transacciones con esta categoria usaran este tipo de forma predeterminada."
   },
   "select": {
     "noCategory": "Sin categoria",

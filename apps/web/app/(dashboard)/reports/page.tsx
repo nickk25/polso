@@ -22,6 +22,7 @@ import {
   CashFlowForecastCard,
   RevenueForecastCard,
   ExpenseForecastCard,
+  ProfitLossTable,
 } from "@/features/analytics/components"
 import { MonthlySpendChart } from "@/features/analytics/components/monthly-spend-chart"
 import { CashFlowChart } from "@/features/analytics/components/cash-flow-chart"
@@ -118,6 +119,16 @@ export default async function ReportsPage({
           <p className="text-xl font-bold">{burnRate.runway > 0 ? `${burnRate.runway.toFixed(1)} mo` : "∞"}</p>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("pl.title")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("pl.subtitle")}</p>
+        </CardHeader>
+        <CardContent>
+          <ProfitLossTable data={cashFlow} currency={currency} />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>

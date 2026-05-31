@@ -92,5 +92,14 @@
     "fixed": "Fixed",
     "variable": "Variable",
     "byCategory": "By Category"
+  },
+  "pl": {
+    "title": "Profit & Loss",
+    "subtitle": "Revenue vs expenses over the last 6 months",
+    "row": "",
+    "revenue": "Revenue",
+    "expenses": "Expenses",
+    "netProfit": "Net Profit",
+    "total": "Total"
   }
 }

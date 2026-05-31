@@ -92,5 +92,14 @@
     "fixed": "Fijos",
     "variable": "Variables",
     "byCategory": "Por Categoria"
+  },
+  "pl": {
+    "title": "Resultados",
+    "subtitle": "Ingresos vs gastos en los ultimos 6 meses",
+    "row": "",
+    "revenue": "Ingresos",
+    "expenses": "Gastos",
+    "netProfit": "Beneficio Neto",
+    "total": "Total"
   }
 }

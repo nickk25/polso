@@ -173,7 +173,7 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="expense-type">{t("form.defaultExpenseType")}</Label>
+            <Label htmlFor="expense-type">{t("form.defaultEntryType")}</Label>
             <Select value={entryType} onValueChange={setEntryType}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t("form.none")} />
