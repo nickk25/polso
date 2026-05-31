@@ -111,20 +111,6 @@ export function RecurringPatternCard({
     <div className="p-4">
       <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-              style={{
-                backgroundColor: pattern.category?.color
-                  ? `${pattern.category.color}20`
-                  : "var(--muted)",
-              }}
-            >
-              <Repeat
-                className="h-5 w-5"
-                style={{ color: pattern.category?.color || "var(--muted-foreground)" }}
-              />
-            </div>
-
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h3 className="font-medium truncate">{pattern.name}</h3>
