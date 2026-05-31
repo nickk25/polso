@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { prisma } from "@/lib/db"
-import { OnboardingFlow } from "@/features/onboarding/components/onboarding-flow"
+import { OnboardingFlow } from "@/features/onboarding/components/onboarding-flow-client"
 
 export default async function OnboardingPage({
   searchParams,
