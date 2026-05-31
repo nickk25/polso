@@ -22,15 +22,23 @@ export function CategoryTable({ categories, onEdit, emptyState }: CategoryTableP
 
   return (
     <div className="rounded-md border overflow-x-auto">
-      <Table>
+      <Table className="table-fixed">
+        <colgroup>
+          <col className="w-10" />
+          <col />
+          <col className="w-28" />
+          <col className="w-24" />
+          <col className="w-28" />
+          <col className="w-24" />
+        </colgroup>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-10" />
+            <TableHead />
             <TableHead>{t("table.name")}</TableHead>
             <TableHead>{t("table.type")}</TableHead>
             <TableHead>{t("table.entries")}</TableHead>
             <TableHead>{t("table.visible")}</TableHead>
-            <TableHead className="w-24" />
+            <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
