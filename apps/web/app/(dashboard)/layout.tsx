@@ -76,6 +76,11 @@ export default async function DashboardLayout({
 
   // Get or create user's organization
   const organization = await getOrganization(user.id, user.email);
+
+  if (!organization.onboardingCompletedAt) {
+    redirect("/onboarding");
+  }
+
   const unreadAlertCount = await prisma.alert.count({
     where: { organizationId: organization.id, isDismissed: false, isRead: false },
   });

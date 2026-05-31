@@ -1,0 +1,44 @@
+{
+  "steps": {
+    "createOrg": {
+      "title": "Configura tu espacio de trabajo",
+      "description": "Cuéntanos sobre tu empresa para personalizar tu experiencia.",
+      "nameLabel": "Nombre de la empresa",
+      "namePlaceholder": "Acme SL",
+      "currencyLabel": "Moneda principal",
+      "continue": "Continuar"
+    },
+    "connectBank": {
+      "title": "Conecta tu banco",
+      "description": "Vincula tu cuenta empresarial para importar transacciones automáticamente. Puedes hacerlo más tarde.",
+      "connected": "¡Banco conectado!",
+      "connectedDescription": "Tu cuenta bancaria ha sido vinculada. Las transacciones empezarán a sincronizarse en breve.",
+      "skip": "Omitir por ahora",
+      "continue": "Continuar"
+    },
+    "reconciliation": {
+      "title": "Cómo funciona",
+      "description": "Esto es lo que ocurre una vez conectado tu banco.",
+      "bullets": {
+        "sync": "Las transacciones se sincronizan automáticamente cada día",
+        "categorize": "Los gastos e ingresos se categorizan de forma inteligente",
+        "receipts": "Los recibos se vinculan a transacciones por WhatsApp o Telegram",
+        "alerts": "Recibes alertas sobre anomalías y patrones recurrentes"
+      },
+      "continue": "Entendido, vamos"
+    },
+    "connectChat": {
+      "title": "Conecta WhatsApp",
+      "description": "Envía recibos y facturas directamente desde tu móvil. Genera un código y envíaselo al bot para vincular tu cuenta.",
+      "whatsappConnected": "WhatsApp conectado",
+      "generateCode": "Generar código de conexión",
+      "codeExpires": "El código expira en",
+      "sendToBot": "Envía este código al bot de WhatsApp para vincular tu cuenta.",
+      "refreshStatus": "Actualizar estado",
+      "skip": "Omitir por ahora",
+      "done": "Listo, ir al dashboard"
+    }
+  },
+  "progress": "Paso {current} de {total}",
+  "welcome": "Bienvenido a Polso"
+}

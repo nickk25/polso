@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     const userOrg = await prisma.userOrganization.findFirst({
       where: { userId: user.id },
-      select: { organizationId: true },
+      select: { organizationId: true, organization: { select: { onboardingCompletedAt: true } } },
     })
 
     if (!userOrg) {
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     const organizationId = userOrg.organizationId
+    const isOnboarding = !userOrg.organization.onboardingCompletedAt
 
     // Find the most recent pending requisition for this org
     const pending = await prisma.pendingRequisition.findFirst({
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
       // User authenticated but no accounts linked yet — redirect with success
       // and let the sync job pick them up when status becomes LN
       await prisma.pendingRequisition.delete({ where: { id: pending.id } })
-      return redirect("/settings/banking?connected=true")
+      return redirect(isOnboarding ? "/onboarding?connected=true" : "/settings/banking?connected=true")
     }
 
     // Fetch institution info for display
@@ -156,7 +157,7 @@ export async function GET(request: NextRequest) {
       )
     )
 
-    return redirect("/settings/banking?connected=true")
+    return redirect(isOnboarding ? "/onboarding?connected=true" : "/settings/banking?connected=true")
   } catch (err) {
     console.error("[GoCardless callback] Error processing callback:", err)
     return redirect("/settings/banking?error=connection_failed")

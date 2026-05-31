@@ -41,6 +41,9 @@ model Organization {
   telegramChatId String? @unique @map("telegram_chat_id")
   agentOptOut    Boolean @default(false) @map("agent_opt_out")
 
+  // Onboarding
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+
   // Export preferences
   csvSeparator String? @default(";") @map("csv_separator")
 

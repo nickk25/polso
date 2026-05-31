@@ -1,0 +1,44 @@
+{
+  "steps": {
+    "createOrg": {
+      "title": "Set up your workspace",
+      "description": "Tell us about your business so we can personalise your experience.",
+      "nameLabel": "Business name",
+      "namePlaceholder": "Acme SL",
+      "currencyLabel": "Base currency",
+      "continue": "Continue"
+    },
+    "connectBank": {
+      "title": "Connect your bank",
+      "description": "Link your business account to automatically import transactions. You can always do this later.",
+      "connected": "Bank connected!",
+      "connectedDescription": "Your bank account has been linked. Transactions will start syncing in the background.",
+      "skip": "Skip for now",
+      "continue": "Continue"
+    },
+    "reconciliation": {
+      "title": "How it works",
+      "description": "Here's what happens once your bank is connected.",
+      "bullets": {
+        "sync": "Transactions sync automatically every day",
+        "categorize": "Expenses and income are categorised intelligently",
+        "receipts": "Receipts are matched to transactions via WhatsApp or Telegram",
+        "alerts": "You get notified about anomalies and recurring patterns"
+      },
+      "continue": "Got it, let's go"
+    },
+    "connectChat": {
+      "title": "Connect WhatsApp",
+      "description": "Send receipts and invoices directly from your phone. Generate a code and send it to our bot to link your account.",
+      "whatsappConnected": "WhatsApp connected",
+      "generateCode": "Generate link code",
+      "codeExpires": "Code expires in",
+      "sendToBot": "Send this code to the WhatsApp bot to link your account.",
+      "refreshStatus": "Refresh status",
+      "skip": "Skip for now",
+      "done": "Done, go to dashboard"
+    }
+  },
+  "progress": "Step {current} of {total}",
+  "welcome": "Welcome to Polso"
+}
