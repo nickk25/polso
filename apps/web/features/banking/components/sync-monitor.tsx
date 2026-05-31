@@ -6,6 +6,7 @@ import { SyncToastContent } from "./bank-sync-toast"
 
 const TOAST_ID = "bank-sync"
 const POLL_INTERVAL_MS = 3000
+const DEV_PREVIEW = true // set to false once design is approved
 
 export function SyncMonitor() {
   const status = useRef<"idle" | "syncing" | "done">("idle")
@@ -52,6 +53,23 @@ export function SyncMonitor() {
   }
 
   useEffect(() => {
+    if (DEV_PREVIEW) {
+      status.current = "syncing"
+      toast.custom(() => <SyncToastContent state="loading" />, {
+        id: TOAST_ID,
+        duration: Infinity,
+        position: "bottom-left",
+      })
+      const t = setTimeout(() => {
+        toast.custom(() => <SyncToastContent state="success" />, {
+          id: TOAST_ID,
+          duration: 6000,
+          position: "bottom-left",
+        })
+      }, 6000)
+      return () => clearTimeout(t)
+    }
+
     check()
     intervalRef.current = setInterval(check, POLL_INTERVAL_MS)
     return () => stopPolling()
