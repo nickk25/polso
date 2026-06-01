@@ -4,13 +4,24 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { format } from "date-fns"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@polso/ui/sheet"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@polso/ui/alert-dialog"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
 import { Separator } from "@polso/ui/separator"
@@ -20,7 +31,6 @@ import {
   CheckCircle,
   XCircle,
   LinkBreak,
-  Archive,
   Spinner,
   Question,
   Trash,
@@ -33,7 +43,6 @@ import {
   rejectMatchAction,
   manualMatchAction,
   unmatchAction,
-  archiveItemAction,
   deleteInboxItemAction,
 } from "@/features/inbox/actions/vault-actions"
 import { deleteTransactionDocumentAction } from "@/features/transactions/actions/document-actions"
@@ -43,6 +52,47 @@ interface VaultItemSheetProps {
   item: VaultItem | null
   open: boolean
   onClose: () => void
+}
+
+function DeleteConfirmButton({
+  onConfirm,
+  disabled,
+  pending,
+  linked = false,
+}: {
+  onConfirm: () => void
+  disabled: boolean
+  pending: boolean
+  linked?: boolean
+}) {
+  const t = useTranslations("vault")
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm" disabled={disabled}>
+          {pending
+            ? <Spinner className="h-4 w-4 animate-spin" />
+            : <Trash className="h-4 w-4" />}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("sheet.deleteConfirmTitle")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {linked
+              ? t("sheet.deleteConfirmDescriptionLinked")
+              : t("sheet.deleteConfirmDescription")}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("sheet.deleteConfirmCancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {t("sheet.deleteConfirmConfirm")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
 }
 
 export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
@@ -142,20 +192,8 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                   {formatCurrency(tx.amount, item.currency)}
                 </p>
               </div>
-              {isLegacy ? (
-                // Legacy TransactionDocument — only option is permanent delete
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-red-500 hover:text-red-600 border-red-500/20 hover:bg-red-500/10"
-                  disabled={loading}
-                  onClick={() => run(() => deleteTransactionDocumentAction(item.legacyDocId!), "delete", t("sheet.deleted"))}
-                >
-                  {btnIcon("delete", Trash)}
-                  {t("sheet.deleteFile")}
-                </Button>
-              ) : (
-                <div className="flex gap-2">
+              <div className="flex gap-2">
+                {!isLegacy && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -166,29 +204,22 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                     {btnIcon("unlink", LinkBreak)}
                     {t("sheet.unlink")}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={loading}
-                    onClick={() => run(() => archiveItemAction(item.id), "archive")}
-                  >
-                    {btnIcon("archive", Archive)}
-                    {t("sheet.archive")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={loading}
-                    onClick={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
-                  >
-                    {btnIcon("delete", Trash)}
-                  </Button>
-                </div>
-              )}
+                )}
+                <DeleteConfirmButton
+                  disabled={loading}
+                  pending={pendingAction === "delete"}
+                  linked
+                  onConfirm={() =>
+                    isLegacy
+                      ? run(() => deleteTransactionDocumentAction(item.legacyDocId!), "delete", t("sheet.deleted"))
+                      : run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))
+                  }
+                />
+              </div>
             </div>
           )}
 
-          {/* Fix 1: suggested_match with active suggestion */}
+          {/* suggested_match with active suggestion */}
           {item.status === "suggested_match" && item.matchSuggestion && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -238,15 +269,22 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                       {t("sheet.reject")}
                     </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-muted-foreground"
-                    onClick={() => setShowPicker(true)}
-                    disabled={loading}
-                  >
-                    {t("sheet.findManually")}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 text-muted-foreground"
+                      onClick={() => setShowPicker(true)}
+                      disabled={loading}
+                    >
+                      {t("sheet.findManually")}
+                    </Button>
+                    <DeleteConfirmButton
+                      disabled={loading}
+                      pending={pendingAction === "delete"}
+                      onConfirm={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
+                    />
+                  </div>
                 </>
               ) : (
                 <VaultTransactionPicker
@@ -258,37 +296,22 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
             </div>
           )}
 
-          {/* suggested_match where the suggestion was already actioned (stale data) */}
+          {/* suggested_match where the suggestion was already actioned (stale) */}
           {item.status === "suggested_match" && !item.matchSuggestion && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">{t("sheet.noMatch")}</p>
               <p className="text-xs text-muted-foreground">{t("sheet.noMatchHint")}</p>
               {!showPicker ? (
-                <>
-                  <Button size="sm" className="w-full" onClick={() => setShowPicker(true)} disabled={loading}>
+                <div className="flex gap-2">
+                  <Button size="sm" className="flex-1" onClick={() => setShowPicker(true)} disabled={loading}>
                     {t("sheet.findManually")}
                   </Button>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      disabled={loading}
-                      onClick={() => run(() => archiveItemAction(item.id), "archive")}
-                    >
-                      {btnIcon("archive", Archive)}
-                      {t("sheet.archive")}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={loading}
-                      onClick={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
-                    >
-                      {btnIcon("delete", Trash)}
-                    </Button>
-                  </div>
-                </>
+                  <DeleteConfirmButton
+                    disabled={loading}
+                    pending={pendingAction === "delete"}
+                    onConfirm={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
+                  />
+                </div>
               ) : (
                 <VaultTransactionPicker
                   onSelect={handleTransactionSelected}
@@ -308,33 +331,20 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                     <span className="text-sm text-muted-foreground">{t("sheet.noMatch")}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">{t("sheet.noMatchHint")}</p>
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setShowPicker(true)}
-                    disabled={loading}
-                  >
-                    {t("sheet.findManually")}
-                  </Button>
                   <div className="flex gap-2">
                     <Button
-                      variant="outline"
                       size="sm"
                       className="flex-1"
+                      onClick={() => setShowPicker(true)}
                       disabled={loading}
-                      onClick={() => run(() => archiveItemAction(item.id), "archive")}
                     >
-                      {btnIcon("archive", Archive)}
-                      {t("sheet.archive")}
+                      {t("sheet.findManually")}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    <DeleteConfirmButton
                       disabled={loading}
-                      onClick={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
-                    >
-                      {btnIcon("delete", Trash)}
-                    </Button>
+                      pending={pendingAction === "delete"}
+                      onConfirm={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
+                    />
                   </div>
                 </>
               ) : (

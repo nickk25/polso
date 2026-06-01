@@ -56,12 +56,18 @@
     "searchHint": "Escribe para buscar una transaccion",
     "actionFailed": "La accion fallo. Intentalo de nuevo.",
     "deleteFile": "Eliminar archivo",
-    "deleted": "Documento eliminado"
+    "deleted": "Documento eliminado",
+    "deleteConfirmTitle": "¿Eliminar documento?",
+    "deleteConfirmDescription": "Esto eliminará el archivo de forma permanente. Esta acción no se puede deshacer.",
+    "deleteConfirmDescriptionLinked": "Esto eliminará el archivo de forma permanente y lo desvinculará de la transacción asociada. La transacción en sí no se eliminará. Esta acción no se puede deshacer.",
+    "deleteConfirmCancel": "Cancelar",
+    "deleteConfirmConfirm": "Eliminar"
   },
   "upload": {
     "button": "Subir documento",
     "uploading": "Subiendo...",
     "success": "Documento subido",
+    "successMultiple": "{count} documentos subidos",
     "error": "Error al subir",
     "invalidType": "Tipo de archivo no compatible. Usa PDF, PNG, JPG o WEBP.",
     "fileTooLarge": "El archivo es demasiado grande. El maximo es 10 MB."

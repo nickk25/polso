@@ -56,12 +56,18 @@
     "searchHint": "Type to search for a transaction",
     "actionFailed": "Action failed. Please try again.",
     "deleteFile": "Delete file",
-    "deleted": "Document deleted"
+    "deleted": "Document deleted",
+    "deleteConfirmTitle": "Delete document?",
+    "deleteConfirmDescription": "This will permanently delete the file and remove it from storage. This cannot be undone.",
+    "deleteConfirmDescriptionLinked": "This will permanently delete the file and unlink it from the matched transaction. The transaction itself will not be deleted. This cannot be undone.",
+    "deleteConfirmCancel": "Cancel",
+    "deleteConfirmConfirm": "Delete"
   },
   "upload": {
     "button": "Upload document",
     "uploading": "Uploading...",
     "success": "Document uploaded",
+    "successMultiple": "{count} documents uploaded",
     "error": "Upload failed",
     "invalidType": "File type not supported. Use PDF, PNG, JPG or WEBP.",
     "fileTooLarge": "File is too large. Maximum is 10 MB."
