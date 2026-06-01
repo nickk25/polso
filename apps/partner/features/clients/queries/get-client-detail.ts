@@ -12,10 +12,14 @@ export interface ClientDetail {
     id: string
     name: string
     institutionName: string | null
+    institutionLogo: string | null
     balanceCurrent: number | null
     currency: string
     status: string
     lastSyncedAt: Date | null
+    syncError: string | null
+    syncErrorRetries: number
+    requisitionExpiresAt: Date | null
   }>
   unmatchedInbox: number
   totalExpenses30d: number
@@ -49,10 +53,14 @@ export async function getClientDetail(
             id: true,
             name: true,
             institutionName: true,
+            institutionLogo: true,
             balanceCurrent: true,
             currency: true,
             status: true,
             lastSyncedAt: true,
+            syncError: true,
+            syncErrorRetries: true,
+            requisitionExpiresAt: true,
           },
         },
       },
