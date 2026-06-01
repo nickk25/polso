@@ -10,7 +10,8 @@
     "./action-response": "./src/action-response.ts",
     "./types": "./src/types.ts",
     "./export": "./src/export.ts",
-    "./upload": "./src/upload.ts"
+    "./upload": "./src/upload.ts",
+    "./quarters": "./src/quarters.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

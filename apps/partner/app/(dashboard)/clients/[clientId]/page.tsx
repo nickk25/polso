@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db"
 import { getClientDetail } from "@/features/clients/queries/get-client-detail"
 import { getClientOverview } from "@/features/clients/queries/get-client-overview"
 import { getClientExports } from "@/features/export/queries/get-client-exports"
+import { getClientVATSummary } from "@/features/analytics/queries/get-client-vat-summary"
+import { ClientVatCard } from "@/features/analytics/components/client-vat-card"
 import { ExportForm } from "@/components/export/export-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
@@ -65,7 +67,7 @@ export default async function ClientDetailPage({
   const { clientId } = await params
   const ctx = await getPartnerAuthContext()
 
-  const [client, overview, recentExports, partnerOrg] = await Promise.all([
+  const [client, overview, recentExports, partnerOrg, vatSummary] = await Promise.all([
     getClientDetail(ctx.organizationId, clientId),
     getClientOverview(ctx.organizationId, clientId),
     getClientExports(ctx.organizationId, clientId),
@@ -73,6 +75,7 @@ export default async function ClientDetailPage({
       where: { id: ctx.organizationId },
       select: { csvSeparator: true },
     }),
+    getClientVATSummary(ctx.organizationId, clientId),
   ])
 
   const monthLabel = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
@@ -391,6 +394,11 @@ export default async function ClientDetailPage({
             ))}
           </div>
         </CardContent>
+      </Card>
+
+      {/* ── VAT Summary ───────────────────────────────────────────────── */}
+      <Card>
+        <ClientVatCard data={vatSummary} />
       </Card>
 
       {/* ── Export ────────────────────────────────────────────────────── */}
