@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     "@polso/billing",
     "@polso/db",
     "@polso/email",
+    "@polso/inbox",
     "@polso/matching",
     "@polso/plans",
     "@polso/storage",

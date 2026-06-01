@@ -16,6 +16,7 @@
     "@polso/billing": "workspace:*",
     "@polso/db": "workspace:*",
     "@polso/email": "workspace:*",
+    "@polso/inbox": "workspace:^",
     "@polso/intelligence": "workspace:*",
     "@polso/matching": "workspace:*",
     "@polso/plans": "workspace:*",

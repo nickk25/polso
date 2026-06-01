@@ -1,8 +1,10 @@
+import { after } from "next/server"
 import { NextRequest, NextResponse } from "next/server"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { prisma } from "@/lib/db"
 import { uploadFile, getSignedDownloadUrl } from "@/lib/storage/r2"
 import { randomUUID } from "crypto"
+import { extractReceiptData } from "@polso/agent/ocr"
 
 import { UPLOAD_ACCEPTED_TYPES, UPLOAD_MAX_FILE_SIZE } from "@/lib/upload"
 
@@ -81,6 +83,28 @@ export async function POST(request: NextRequest) {
       }
 
       return item
+    })
+
+    // Background OCR to populate displayName, amount, taxAmount, taxRate (item is already matched)
+    after(async () => {
+      try {
+        const ocrData = await extractReceiptData(fileBuffer, file.type)
+        await prisma.inboxItem.update({
+          where: { id: inboxItem.id },
+          data: {
+            displayName: ocrData.displayName,
+            amount: ocrData.amount,
+            currency: ocrData.currency ?? "EUR",
+            date: ocrData.date ? new Date(ocrData.date) : null,
+            cif: ocrData.cif,
+            taxAmount: ocrData.vatAmount,
+            taxRate: ocrData.vatRate,
+            meta: ocrData as object,
+          },
+        })
+      } catch (err) {
+        console.error("[transaction-documents/upload] OCR error:", err)
+      }
     })
 
     const downloadUrl = await getSignedDownloadUrl(key, 3600)

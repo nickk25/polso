@@ -35,6 +35,9 @@ importers:
       '@polso/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@polso/inbox':
+        specifier: workspace:^
+        version: link:../../packages/inbox
       '@polso/intelligence':
         specifier: workspace:*
         version: link:../../packages/intelligence
@@ -162,6 +165,9 @@ importers:
       '@polso/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@polso/inbox':
+        specifier: workspace:^
+        version: link:../../packages/inbox
       '@polso/intelligence':
         specifier: workspace:*
         version: link:../../packages/intelligence
@@ -411,6 +417,25 @@ importers:
       '@types/react':
         specifier: ^19
         version: 19.2.8
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/inbox:
+    dependencies:
+      '@polso/agent':
+        specifier: workspace:*
+        version: link:../agent
+      '@polso/db':
+        specifier: workspace:*
+        version: link:../db
+      '@polso/matching':
+        specifier: workspace:*
+        version: link:../matching
+    devDependencies:
+      '@polso/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       typescript:
         specifier: ^5
         version: 5.9.3

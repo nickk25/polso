@@ -4,7 +4,6 @@ import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@polso/ui/button"
 import { Input } from "@polso/ui/input"
-import { Label } from "@polso/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -15,6 +14,7 @@ import {
 import { Spinner, UploadSimple } from "@phosphor-icons/react"
 import { uploadInboxItemAction } from "@/features/inbox/actions/upload-inbox-item"
 import { toast } from "@polso/ui/sonner"
+import { UPLOAD_ACCEPTED_TYPES, UPLOAD_MAX_FILE_SIZE } from "@/lib/upload"
 
 interface UploadInboxButtonProps {
   clientId: string
@@ -25,50 +25,49 @@ export function UploadInboxButton({ clientId }: UploadInboxButtonProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
-  const [displayName, setDisplayName] = useState("")
-  const [amount, setAmount] = useState("")
-  const [date, setDate] = useState("")
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
   const reset = () => {
-    setFile(null)
-    setDisplayName("")
-    setAmount("")
-    setDate("")
+    setSelectedFiles([])
     if (fileRef.current) fileRef.current.value = ""
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] ?? null
-    setFile(f)
-    if (f && !displayName) {
-      // Pre-fill vendor name from file name (strip extension)
-      setDisplayName(f.name.replace(/\.[^.]+$/, ""))
+    const files = Array.from(e.target.files ?? [])
+    const valid = files.filter(
+      (f) => UPLOAD_ACCEPTED_TYPES.includes(f.type) && f.size <= UPLOAD_MAX_FILE_SIZE
+    )
+    if (valid.length < files.length) {
+      toast.error("Algunos archivos no son válidos (tipo o tamaño)")
     }
+    setSelectedFiles(valid)
   }
 
   const handleSubmit = async () => {
-    if (!file) return
+    if (selectedFiles.length === 0) return
 
     setLoading(true)
     try {
-      const buffer = await file.arrayBuffer()
-      const base64 = Buffer.from(buffer).toString("base64")
+      const filesPayload = await Promise.all(
+        selectedFiles.map(async (file) => {
+          const buffer = await file.arrayBuffer()
+          return {
+            fileName: file.name,
+            fileData: Buffer.from(buffer).toString("base64"),
+            contentType: file.type || "application/octet-stream",
+            fileSize: file.size,
+          }
+        })
+      )
 
-      const result = await uploadInboxItemAction({
-        clientId,
-        fileName: file.name,
-        fileData: base64,
-        contentType: file.type || "application/octet-stream",
-        fileSize: file.size,
-        displayName: displayName.trim() || undefined,
-        amount: amount ? parseFloat(amount.replace(",", ".")) : undefined,
-        currency: "EUR",
-        date: date || undefined,
-      })
+      const result = await uploadInboxItemAction({ clientId, files: filesPayload })
 
       if (result.success) {
-        toast.success("Comprobante subido")
+        toast.success(
+          selectedFiles.length === 1
+            ? "Comprobante subido — procesando en segundo plano"
+            : `${selectedFiles.length} comprobantes subidos — procesando en segundo plano`
+        )
         setOpen(false)
         reset()
         router.refresh()
@@ -97,47 +96,23 @@ export function UploadInboxButton({ clientId }: UploadInboxButtonProps) {
 
           <div className="flex flex-col gap-4 py-2">
             <div className="space-y-2">
-              <Label>Archivo <span className="text-red-500">*</span></Label>
               <Input
                 ref={fileRef}
                 type="file"
-                accept="application/pdf,image/*"
+                multiple
+                accept={UPLOAD_ACCEPTED_TYPES.join(",")}
                 onChange={handleFileChange}
               />
-              {file && (
+              {selectedFiles.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  {(file.size / 1024).toFixed(0)} KB · {file.type}
+                  {selectedFiles.length === 1
+                    ? `${selectedFiles[0]!.name} · ${(selectedFiles[0]!.size / 1024).toFixed(0)} KB`
+                    : `${selectedFiles.length} archivos seleccionados`}
                 </p>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Proveedor (opcional)</Label>
-              <Input
-                placeholder="Nombre del proveedor"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Importe (opcional)</Label>
-                <Input
-                  placeholder="0,00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  inputMode="decimal"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Fecha (opcional)</Label>
-                <Input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-              </div>
+              <p className="text-xs text-muted-foreground/70">
+                El OCR extraerá proveedor, importe e IVA automáticamente.
+              </p>
             </div>
           </div>
 
@@ -145,7 +120,7 @@ export function UploadInboxButton({ clientId }: UploadInboxButtonProps) {
             <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={!file || loading}>
+            <Button onClick={handleSubmit} disabled={selectedFiles.length === 0 || loading}>
               {loading ? (
                 <>
                   <Spinner className="mr-2 h-4 w-4 animate-spin" />

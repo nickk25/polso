@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     "@polso/billing",
     "@polso/intelligence",
     "@polso/matching",
+    "@polso/inbox",
     "react-markdown",
     "remark-gfm",
   ],
