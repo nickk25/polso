@@ -2,11 +2,9 @@ import Link from "next/link"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { getMatchSuggestions } from "@/features/matching/queries/get-match-suggestions"
 import { Button } from "@polso/ui/button"
-import { Badge } from "@polso/ui/badge"
-import { Card, CardContent } from "@polso/ui/card"
-import { ArrowLeft, CheckCircle, Eye } from "@phosphor-icons/react/dist/ssr"
-import { SuggestionActions } from "@/components/matching/suggestion-actions"
+import { ArrowLeft, CheckCircle } from "@phosphor-icons/react/dist/ssr"
 import { RunMatchingButton } from "@/components/matching/run-matching-button"
+import { SuggestionList } from "@/features/matching/components/suggestion-list"
 
 export default async function ConciliationPage({
   params,
@@ -17,21 +15,8 @@ export default async function ConciliationPage({
   const ctx = await getPartnerAuthContext()
   const suggestions = await getMatchSuggestions(ctx.organizationId, clientId)
 
-  const matchTypeLabel: Record<string, string> = {
-    auto_matched: "Match automático",
-    high_confidence: "Alta confianza",
-    suggested: "Sugerido",
-  }
-
-  const matchTypeBadge: Record<string, "default" | "secondary" | "outline"> = {
-    auto_matched: "default",
-    high_confidence: "secondary",
-    suggested: "outline",
-  }
-
   return (
     <div className="flex flex-col gap-6 p-6">
-      
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
@@ -56,92 +41,7 @@ export default async function ConciliationPage({
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {suggestions.map((s) => (
-            <Card key={s.id}>
-              <CardContent className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-start sm:justify-between">
-                {/* Transaction side */}
-                <div className="flex-1">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">
-                    Transacción bancaria
-                  </p>
-                  <p className="text-sm font-medium">
-                    {s.transaction.merchantName ?? s.transaction.name ?? "—"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {s.transaction.date.toLocaleDateString("es-ES")}
-                    {" · "}
-                    {s.transaction.amount.toLocaleString("es-ES", {
-                      style: "currency",
-                      currency: s.transaction.currency,
-                    })}
-                  </p>
-                </div>
-
-                {/* Score */}
-                <div className="flex flex-col items-center gap-1">
-                  <Badge variant={matchTypeBadge[s.matchType] ?? "outline"}>
-                    {matchTypeLabel[s.matchType] ?? s.matchType}
-                  </Badge>
-                  <p className="text-lg font-bold">
-                    {Math.round(s.confidenceScore * 100)}%
-                  </p>
-                </div>
-
-                {/* Inbox side */}
-                <div className="flex-1 text-right sm:text-left">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">
-                    Comprobante
-                  </p>
-                  <p className="text-sm font-medium">
-                    {s.inboxItem.displayName ?? s.inboxItem.fileName}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {s.inboxItem.date?.toLocaleDateString("es-ES") ?? "—"}
-                    {s.inboxItem.amount !== null && (
-                      <>
-                        {" · "}
-                        {Number(s.inboxItem.amount).toLocaleString("es-ES", {
-                          style: "currency",
-                          currency: s.inboxItem.currency,
-                        })}
-                      </>
-                    )}
-                    {s.inboxItem.taxRate !== null && (
-                      <>
-                        {" · "}IVA {Math.round((s.inboxItem.taxRate as number) * 100)}%
-                        {s.inboxItem.taxAmount !== null && (
-                          <>
-                            {" "}
-                            {Number(s.inboxItem.taxAmount).toLocaleString("es-ES", {
-                              style: "currency",
-                              currency: s.inboxItem.currency,
-                            })}
-                          </>
-                        )}
-                      </>
-                    )}
-                  </p>
-                  <a
-                    href={`/api/inbox/${s.inboxItem.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                  >
-                    <Eye className="h-3 w-3" />
-                    Ver factura
-                  </a>
-                </div>
-
-                {/* Actions */}
-                <SuggestionActions
-                  suggestionId={s.id}
-                  clientId={clientId}
-                />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <SuggestionList suggestions={suggestions} clientId={clientId} />
       )}
     </div>
   )
