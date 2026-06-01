@@ -1,4 +1,7 @@
 import { format } from "date-fns"
+import { generateInvoiceFileName, escapeCsv } from "@polso/utils/export"
+
+export { generateInvoiceFileName }
 
 export interface ExpenseForCSV {
   date: Date
@@ -27,15 +30,7 @@ const CSV_HEADERS = [
   "Documentado",
 ]
 
-function escapeCSVField(value: string, separator: string): string {
-  if (value.includes(separator) || value.includes("\n") || value.includes('"')) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
-}
-
 function formatSpanishNumber(value: number): string {
-  // Spanish format: comma as decimal separator, dot as thousands
   return value
     .toFixed(2)
     .replace(".", ",")
@@ -50,9 +45,9 @@ export function generateCSV(expenses: ExpenseForCSV[], separator = ";"): string 
   for (const expense of expenses) {
     const row = [
       format(new Date(expense.date), "dd/MM/yyyy"),
-      escapeCSVField(expense.counterparty?.name || "Sin proveedor", separator),
-      escapeCSVField(expense.description || "", separator),
-      escapeCSVField(expense.category?.name || "Sin categoria", separator),
+      escapeCsv(expense.counterparty?.name || "Sin proveedor", separator),
+      escapeCsv(expense.description || "", separator),
+      escapeCsv(expense.category?.name || "Sin categoria", separator),
       expense.entryType === "fixed" ? "Fijo" : "Variable",
       formatSpanishNumber(expense.amount),
       expense.currency,
@@ -62,7 +57,7 @@ export function generateCSV(expenses: ExpenseForCSV[], separator = ";"): string 
   }
 
   // BOM for Excel UTF-8 recognition
-  return "\uFEFF" + rows.join("\n")
+  return "﻿" + rows.join("\n")
 }
 
 export function generateExportFileName(
@@ -73,20 +68,4 @@ export function generateExportFileName(
   const start = format(startDate, "yyyy-MM-dd")
   const end = format(endDate, "yyyy-MM-dd")
   return `polso-export-${start}_${end}.${type}`
-}
-
-export function generateInvoiceFileName(
-  date: Date,
-  vendorName: string | null,
-  amount: number,
-  originalExtension: string
-): string {
-  const dateStr = format(date, "yyyy-MM-dd")
-  const vendor = (vendorName || "unknown")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .substring(0, 30)
-  const amountStr = amount.toFixed(2).replace(".", "_")
-  return `${dateStr}_${vendor}_${amountStr}.${originalExtension}`
 }

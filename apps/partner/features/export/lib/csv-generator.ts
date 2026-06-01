@@ -1,21 +1,7 @@
-import { format } from "date-fns"
+import { generateInvoiceFileName, escapeCsv } from "@polso/utils/export"
 import type { ExportableTransaction } from "../queries/get-exportable-data"
 
-export function generateInvoiceFileName(
-  date: Date,
-  vendorName: string | null,
-  amount: number,
-  ext: string
-): string {
-  const dateStr = format(date, "yyyy-MM-dd")
-  const vendor = (vendorName ?? "unknown")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .substring(0, 30)
-  const amountStr = amount.toFixed(2).replace(".", "_")
-  return `${dateStr}_${vendor}_${amountStr}.${ext}`
-}
+export { generateInvoiceFileName }
 
 const HEADERS = [
   "Fecha",
@@ -44,14 +30,6 @@ function formatAmount(amount: number): string {
   return amount.toFixed(2).replace(".", ",")
 }
 
-function escapeCsv(value: string | null | undefined, sep: string): string {
-  if (value === null || value === undefined) return ""
-  const str = String(value)
-  if (str.includes(sep) || str.includes('"') || str.includes("\n")) {
-    return `"${str.replace(/"/g, '""')}"`
-  }
-  return str
-}
 
 export function generateCsv(
   rows: ExportableTransaction[],
