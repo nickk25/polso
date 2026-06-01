@@ -8,6 +8,8 @@ export type MessageType =
   | "weekly_summary"
   | "monthly_summary"
   | "anomaly_alert"
+  | "receipt_request_list"
+  | "bank_reconnect"
 
 export interface ProactiveContext {
   orgName: string
@@ -47,6 +49,14 @@ export interface ProactiveContext {
     expectedAmount: number
     currency: string
   }>
+  receiptRequest?: {
+    transactions: Array<{ date: Date; amount: number; name: string }>
+  }
+  bankReconnect?: {
+    institutionName: string
+    expiresAt: Date | null
+    errorMessage: string | null
+  }
 }
 
 const SYSTEM_PROMPT = `Eres el asistente financiero de Polso. Te comunicas directamente con el dueño o responsable financiero de una empresa española por WhatsApp o Telegram.
@@ -135,6 +145,26 @@ function buildUserPrompt(ctx: ProactiveContext): string {
       if (anomalyLines) parts.push(`Gastos inusuales:\n${anomalyLines}`)
       if (missingLines) parts.push(`Cargos recurrentes no detectados este mes:\n${missingLines}`)
       return `Alertas para ${ctx.orgName}:\n${parts.join("\n\n")}\n\nRedacta una alerta breve y accionable.`
+    }
+
+    case "receipt_request_list": {
+      const txs = ctx.receiptRequest?.transactions ?? []
+      const lines = txs
+        .slice(0, 5)
+        .map((t) => `- ${t.name}: ${fmt(t.amount, "EUR")} (${new Date(t.date).toLocaleDateString("es-ES")})`)
+        .join("\n")
+      const extra = txs.length > 5 ? `\n... y ${txs.length - 5} más` : ""
+      return `Tu asesor necesita las facturas de estos ${txs.length} gastos de ${ctx.orgName}:\n${lines}${extra}\n\nRedacta un mensaje amable y directo pidiendo que envíe las facturas cuanto antes.`
+    }
+
+    case "bank_reconnect": {
+      const b = ctx.bankReconnect!
+      const reason = b.errorMessage
+        ? `ha tenido un error: "${b.errorMessage}"`
+        : b.expiresAt
+          ? `caduca el ${new Date(b.expiresAt).toLocaleDateString("es-ES")}`
+          : "necesita reconexión"
+      return `La conexión bancaria de ${ctx.orgName} con ${b.institutionName} ${reason}. Sin reconexión no recibiremos sus movimientos.\n\nRedacta un mensaje breve y amable pidiendo al cliente que inicie sesión en Polso y vuelva a conectar el banco.`
     }
   }
 }
