@@ -3,7 +3,7 @@ import { getPartnerAuthContext } from "@/lib/auth"
 import { getClientInbox } from "@/features/inbox/queries/get-client-inbox"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
-import { ArrowLeft, FileText } from "@phosphor-icons/react/dist/ssr"
+import { ArrowLeft, FileText, DownloadSimple } from "@phosphor-icons/react/dist/ssr"
 import { UploadInboxButton } from "@/components/inbox/upload-inbox-button"
 
 const statusLabel: Record<string, string> = {
@@ -82,9 +82,19 @@ export default async function ClientInboxPage({
                   <span>{item.date.toLocaleDateString("es-ES")}</span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Fuente: {item.source} · {item.createdAt.toLocaleDateString("es-ES")}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  {item.source} · {item.createdAt.toLocaleDateString("es-ES")}
+                </p>
+                <a
+                  href={`/api/inbox/${item.id}`}
+                  download={item.fileName}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center justify-center h-6 w-6 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                >
+                  <DownloadSimple className="h-3.5 w-3.5" />
+                </a>
+              </div>
             </div>
           ))}
         </div>

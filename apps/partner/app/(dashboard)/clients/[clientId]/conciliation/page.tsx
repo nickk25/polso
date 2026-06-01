@@ -4,7 +4,7 @@ import { getMatchSuggestions } from "@/features/matching/queries/get-match-sugge
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
 import { Card, CardContent } from "@polso/ui/card"
-import { ArrowLeft, CheckCircle, XCircle } from "@phosphor-icons/react/dist/ssr"
+import { ArrowLeft, CheckCircle, Eye } from "@phosphor-icons/react/dist/ssr"
 import { SuggestionActions } from "@/components/matching/suggestion-actions"
 import { RunMatchingButton } from "@/components/matching/run-matching-button"
 
@@ -108,6 +108,15 @@ export default async function ConciliationPage({
                       </>
                     )}
                   </p>
+                  <a
+                    href={`/api/inbox/${s.inboxItem.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <Eye className="h-3 w-3" />
+                    Ver factura
+                  </a>
                 </div>
 
                 {/* Actions */}

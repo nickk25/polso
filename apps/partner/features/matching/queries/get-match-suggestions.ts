@@ -20,6 +20,7 @@ export interface MatchSuggestionWithDetails {
     currency: string
   }
   inboxItem: {
+    id: string
     fileName: string
     displayName: string | null
     amount: unknown
@@ -66,6 +67,7 @@ export async function getMatchSuggestions(
       },
       inboxItem: {
         select: {
+          id: true,
           fileName: true,
           displayName: true,
           amount: true,
