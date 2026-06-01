@@ -20,3 +20,14 @@ export function getFiscalQuarters(year: number): FiscalQuarter[] {
 export function getCurrentQuarterNumber(): 1 | 2 | 3 | 4 {
   return (Math.floor(new Date().getMonth() / 3) + 1) as 1 | 2 | 3 | 4
 }
+
+export function getCurrentQuarter(now: Date = new Date()): FiscalQuarter {
+  const quarters = getFiscalQuarters(now.getFullYear())
+  const qNum = (Math.floor(now.getMonth() / 3) + 1) as 1 | 2 | 3 | 4
+  return quarters[qNum - 1]!
+}
+
+export function getDaysToQuarterEnd(now: Date = new Date()): number {
+  const quarter = getCurrentQuarter(now)
+  return Math.floor((quarter.end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+}
