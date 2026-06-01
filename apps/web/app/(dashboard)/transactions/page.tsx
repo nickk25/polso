@@ -20,6 +20,7 @@ interface PageProps {
     category?: string
     dateFrom?: string
     dateTo?: string
+    noVat?: string
   }>
 }
 
@@ -32,6 +33,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   const category = params.category || undefined
   const dateFrom = params.dateFrom || undefined
   const dateTo = params.dateTo || undefined
+  const noVat = params.noVat === "1"
 
   const [t, categories, { transactions, total, pages }, stats, connectedBank] = await Promise.all([
     getTranslations("transactions"),
@@ -44,6 +46,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
         categoryId: category,
         dateFrom: dateFrom ? new Date(dateFrom) : undefined,
         dateTo: dateTo ? new Date(dateTo) : undefined,
+        noVat: noVat || undefined,
       },
       page,
       PAGE_SIZE,
@@ -85,6 +88,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
             category={category}
             dateFrom={dateFrom}
             dateTo={dateTo}
+            noVat={noVat}
             categories={categories}
           />
         </div>

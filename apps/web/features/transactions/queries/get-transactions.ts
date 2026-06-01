@@ -11,6 +11,7 @@ export interface TransactionFilters {
   categoryId?: string
   status?: string
   search?: string
+  noVat?: boolean
 }
 
 export interface TransactionRow {
@@ -74,6 +75,7 @@ export async function getTransactions(
       : {}
 
   const statusFilter = filters.status ? { status: filters.status } : {}
+  const noVatFilter = filters.noVat ? { taxRate: null } : {}
 
   const where = {
     organizationId,
@@ -82,6 +84,7 @@ export async function getTransactions(
     ...statusFilter,
     ...categoryFilter,
     ...searchFilter,
+    ...noVatFilter,
   }
 
   const [entries, total] = await Promise.all([

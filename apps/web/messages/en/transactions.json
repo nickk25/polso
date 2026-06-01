@@ -51,6 +51,7 @@
     "allStatus": "All statuses",
     "allCategories": "All categories",
     "noCategory": "No category",
+    "noVat": "No VAT",
     "clear": "Clear"
   },
   "editSheet": {
@@ -92,7 +93,8 @@
     "uploaded": "Document uploaded",
     "uploadFailed": "Upload failed",
     "previewNotAvailable": "Preview not available for this file type",
-    "downloadToView": "Download to view"
+    "downloadToView": "Download to view",
+    "vaultBadge": "Vault"
   },
   "search": "Search...",
   "emptyState": {

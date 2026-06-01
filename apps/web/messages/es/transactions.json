@@ -51,6 +51,7 @@
     "allStatus": "Todos los estados",
     "allCategories": "Todas las categorias",
     "noCategory": "Sin categoria",
+    "noVat": "Sin IVA",
     "clear": "Limpiar"
   },
   "editSheet": {
@@ -92,7 +93,8 @@
     "uploaded": "Documento subido",
     "uploadFailed": "Error al subir",
     "previewNotAvailable": "Vista previa no disponible para este tipo de archivo",
-    "downloadToView": "Descargar para ver"
+    "downloadToView": "Descargar para ver",
+    "vaultBadge": "Vault"
   },
   "search": "Buscar...",
   "emptyState": {

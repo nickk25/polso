@@ -25,6 +25,7 @@ interface TransactionFiltersProps {
   category?: string
   dateFrom?: string
   dateTo?: string
+  noVat?: boolean
   categories: CategoryWithCount[]
 }
 
@@ -35,6 +36,7 @@ export function TransactionFilters({
   category,
   dateFrom,
   dateTo,
+  noVat,
   categories,
 }: TransactionFiltersProps) {
   const router = useRouter()
@@ -89,7 +91,7 @@ export function TransactionFilters({
     })
   }
 
-  const hasFilters = search || type || status || category || dateFrom || dateTo
+  const hasFilters = search || type || status || category || dateFrom || dateTo || noVat
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -162,6 +164,14 @@ export function TransactionFilters({
           <SelectItem value="excluded">{t("statuses.excluded")}</SelectItem>
         </SelectContent>
       </Select>
+
+      <Button
+        variant={noVat ? "secondary" : "outline"}
+        onClick={() => updateParams({ noVat: noVat ? null : "1" })}
+        disabled={isPending}
+      >
+        {t("tableFilters.noVat")}
+      </Button>
 
       {hasFilters && (
         <Button variant="ghost" onClick={clearFilters} disabled={isPending}>
