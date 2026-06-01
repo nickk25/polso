@@ -34,6 +34,7 @@ import {
   manualMatchAction,
   unmatchAction,
   archiveItemAction,
+  deleteInboxItemAction,
 } from "@/features/inbox/actions/vault-actions"
 import { deleteTransactionDocumentAction } from "@/features/transactions/actions/document-actions"
 import { VaultTransactionPicker } from "./vault-transaction-picker"
@@ -176,6 +177,14 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                     {btnIcon("archive", Archive)}
                     {t("sheet.archive")}
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                    onClick={() => run(() => deleteInboxItemAction(item.id), "delete")}
+                  >
+                    {btnIcon("delete", Trash)}
+                  </Button>
                 </div>
               )}
             </div>
@@ -251,7 +260,7 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
             </div>
           )}
 
-          {/* Fix 1: suggested_match where the suggestion was already actioned (stale data) */}
+          {/* suggested_match where the suggestion was already actioned (stale data) */}
           {item.status === "suggested_match" && !item.matchSuggestion && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">{t("sheet.noMatch")}</p>
@@ -261,16 +270,26 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                   <Button size="sm" className="w-full" onClick={() => setShowPicker(true)} disabled={loading}>
                     {t("sheet.findManually")}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    disabled={loading}
-                    onClick={() => run(() => archiveItemAction(item.id), "archive")}
-                  >
-                    {btnIcon("archive", Archive)}
-                    {t("sheet.archive")}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      disabled={loading}
+                      onClick={() => run(() => archiveItemAction(item.id), "archive")}
+                    >
+                      {btnIcon("archive", Archive)}
+                      {t("sheet.archive")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => run(() => deleteInboxItemAction(item.id), "delete")}
+                    >
+                      {btnIcon("delete", Trash)}
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <VaultTransactionPicker
@@ -299,16 +318,26 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                   >
                     {t("sheet.findManually")}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    disabled={loading}
-                    onClick={() => run(() => archiveItemAction(item.id), "archive")}
-                  >
-                    {btnIcon("archive", Archive)}
-                    {t("sheet.archive")}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      disabled={loading}
+                      onClick={() => run(() => archiveItemAction(item.id), "archive")}
+                    >
+                      {btnIcon("archive", Archive)}
+                      {t("sheet.archive")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => run(() => deleteInboxItemAction(item.id), "delete")}
+                    >
+                      {btnIcon("delete", Trash)}
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <VaultTransactionPicker

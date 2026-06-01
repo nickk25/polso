@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
+import { deleteFile } from "@/lib/storage/r2"
 
 export async function confirmMatchAction(
   matchSuggestionId: string
@@ -240,6 +241,50 @@ export async function archiveItemAction(
   } catch (error) {
     console.error("Error archiving item:", error)
     return errorResponse("Failed to archive document", "ERROR")
+  }
+}
+
+export async function deleteInboxItemAction(
+  inboxItemId: string
+): Promise<ActionResponse<undefined>> {
+  try {
+    const { organizationId } = await getAuthContext()
+
+    const inboxItem = await prisma.inboxItem.findFirst({
+      where: { id: inboxItemId, organizationId },
+      select: { id: true, filePath: true, transactionId: true },
+    })
+
+    if (!inboxItem) return errorResponse("Document not found", "NOT_FOUND")
+
+    try {
+      await deleteFile(inboxItem.filePath)
+    } catch (error) {
+      console.error("Error deleting file from R2:", error)
+    }
+
+    await prisma.inboxItem.delete({ where: { id: inboxItemId } })
+
+    if (inboxItem.transactionId) {
+      const [remaining, attachments] = await Promise.all([
+        prisma.transactionDocument.count({ where: { transactionId: inboxItem.transactionId, organizationId } }),
+        prisma.transactionAttachment.count({ where: { transactionId: inboxItem.transactionId } }),
+      ])
+      if (remaining === 0 && attachments === 0) {
+        await prisma.entry.updateMany({
+          where: { transactionId: inboxItem.transactionId, organizationId },
+          data: { status: "pending" },
+        })
+      }
+    }
+
+    revalidatePath("/vault")
+    revalidatePath("/transactions")
+    revalidatePath("/dashboard")
+    return successResponse(undefined)
+  } catch (error) {
+    console.error("Error deleting inbox item:", error)
+    return errorResponse("Failed to delete document", "ERROR")
   }
 }
 
