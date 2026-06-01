@@ -15,6 +15,10 @@ export interface ClientTransaction {
   expenseType: string | null
   taxAmount: number | null
   taxRate: number | null
+  entryId: string | null
+  entryStatus: string | null
+  entryNotes: string | null
+  counterparty: { id: string; name: string; logoUrl: string | null } | null
   inboxItems: Array<{ id: string; fileName: string; status: string; source: string }>
 }
 
@@ -100,7 +104,17 @@ export async function getClientTransactions(
         currency: true,
         pending: true,
         account: { select: { name: true } },
-        entry: { select: { status: true, entryType: true, taxAmount: true, taxRate: true } },
+        entry: {
+          select: {
+            id: true,
+            status: true,
+            entryType: true,
+            taxAmount: true,
+            taxRate: true,
+            notes: true,
+            counterparty: { select: { id: true, name: true, logoUrl: true } },
+          },
+        },
         inboxItems: {
           select: { id: true, fileName: true, status: true, source: true },
         },
@@ -119,6 +133,10 @@ export async function getClientTransactions(
       expenseType: t.entry?.entryType ?? null,
       taxAmount: t.entry?.taxAmount ?? null,
       taxRate: t.entry?.taxRate ?? null,
+      entryId: t.entry?.id ?? null,
+      entryStatus: t.entry?.status ?? null,
+      entryNotes: t.entry?.notes ?? null,
+      counterparty: t.entry?.counterparty ?? null,
     })),
   }
 }
