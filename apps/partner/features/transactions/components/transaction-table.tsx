@@ -4,6 +4,9 @@ import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Badge } from "@polso/ui/badge"
+import { Button } from "@polso/ui/button"
+import { Input } from "@polso/ui/input"
+import { Label } from "@polso/ui/label"
 import { Separator } from "@polso/ui/separator"
 import { Skeleton } from "@polso/ui/skeleton"
 import {
@@ -21,15 +24,110 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@polso/ui/sheet"
-import { Paperclip, Receipt, ArrowSquareOut, TelegramLogo, WhatsappLogo, DownloadSimple, Eye } from "@phosphor-icons/react"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@polso/ui/popover"
+import { Paperclip, Receipt, ArrowSquareOut, TelegramLogo, WhatsappLogo, DownloadSimple, Eye, PencilSimple } from "@phosphor-icons/react"
+import { toast } from "@polso/ui/sonner"
+import { SPANISH_IVA_RATES } from "@polso/utils"
 import {
   getTransactionInvoicesAction,
   type PartnerInvoice,
 } from "../actions/get-transaction-invoices"
+import { updateClientEntryTaxAction } from "../actions/update-client-entry-tax"
 import type { ClientTransaction } from "../queries/get-client-transactions"
 
 interface TransactionTableProps {
   transactions: ClientTransaction[]
+  clientId: string
+}
+
+function VatCell({
+  tx,
+  clientId,
+}: {
+  tx: ClientTransaction
+  clientId: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [rate, setRate] = useState<string>(tx.taxRate !== null ? String(tx.taxRate) : "")
+  const [amount, setAmount] = useState<string>(tx.taxAmount !== null ? String(tx.taxAmount) : "")
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    const parsedRate = rate === "" ? null : parseFloat(rate)
+    const parsedAmount = amount === "" ? null : parseFloat(amount)
+    const result = await updateClientEntryTaxAction(clientId, tx.id, parsedRate, parsedAmount)
+    setSaving(false)
+    if (result.success) {
+      toast.success("IVA actualizado")
+      setOpen(false)
+    } else {
+      toast.error(result.error ?? "Error al guardar")
+    }
+  }
+
+  const display =
+    tx.taxRate !== null
+      ? `${Math.round(tx.taxRate * 100)}%`
+      : null
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground group"
+        >
+          {display ?? <span className="text-muted-foreground/50">—</span>}
+          <PencilSimple className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-52" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium">Editar IVA</p>
+          <div className="space-y-1">
+            <Label className="text-xs">Tipo</Label>
+            <select
+              value={rate}
+              onChange={(e) => {
+                setRate(e.target.value)
+                if (e.target.value !== "" && tx.amount) {
+                  const r = parseFloat(e.target.value)
+                  const calc = Math.round(Math.abs(tx.amount) * r / (1 + r) * 100) / 100
+                  setAmount(String(calc))
+                }
+              }}
+              className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+            >
+              <option value="">Sin IVA</option>
+              {SPANISH_IVA_RATES.filter((r) => r > 0).map((r) => (
+                <option key={r} value={String(r)}>
+                  {Math.round(r * 100)}%
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Cuota IVA (€)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+            />
+          </div>
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? "Guardando…" : "Guardar"}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -69,7 +167,7 @@ function ExpenseTypeBadge({ type }: { type: string | null }) {
   )
 }
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
+export function TransactionTable({ transactions, clientId }: TransactionTableProps) {
   const [selected, setSelected] = useState<ClientTransaction | null>(null)
   const [invoices, setInvoices] = useState<PartnerInvoice[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
@@ -109,6 +207,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <TableHead>Cuenta</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead className="text-right">Importe</TableHead>
+            <TableHead>IVA</TableHead>
             <TableHead>Comprobante</TableHead>
           </TableRow>
         </TableHeader>
@@ -144,6 +243,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 }`}
               >
                 {formatCurrency(tx.amount, tx.currency)}
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <VatCell tx={tx} clientId={clientId} />
               </TableCell>
               <TableCell>
                 <ReceiptStatusBadge tx={tx} />

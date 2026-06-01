@@ -125,7 +125,7 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
           <CardTitle className="text-sm">Movimientos</CardTitle>
         </CardHeader>
         <CardContent>
-          <TransactionTable transactions={items} />
+          <TransactionTable transactions={items} clientId={clientId} />
           <TransactionPagination
             clientId={clientId}
             currentPage={page}
