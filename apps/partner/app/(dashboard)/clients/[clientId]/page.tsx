@@ -5,8 +5,11 @@ import { getClientDetail } from "@/features/clients/queries/get-client-detail"
 import { getClientOverview } from "@/features/clients/queries/get-client-overview"
 import { getClientExports } from "@/features/export/queries/get-client-exports"
 import { getClientVATSummary } from "@/features/analytics/queries/get-client-vat-summary"
+import { getClientProfitLoss } from "@/features/analytics/queries/get-client-profit-loss"
 import { ClientVatCard } from "@/features/analytics/components/client-vat-card"
+import { ClientPLTable } from "@/features/analytics/components/client-pl-table"
 import { ExportForm } from "@/components/export/export-form"
+import { BankReconnectButton } from "@/components/bank/bank-reconnect-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
@@ -18,6 +21,7 @@ import {
   Paperclip,
   CheckCircle,
   Warning,
+  XCircle,
   Sparkle,
   Stack,
   TrendUp,
@@ -67,7 +71,7 @@ export default async function ClientDetailPage({
   const { clientId } = await params
   const ctx = await getPartnerAuthContext()
 
-  const [client, overview, recentExports, partnerOrg, vatSummary] = await Promise.all([
+  const [client, overview, recentExports, partnerOrg, vatSummary, pl] = await Promise.all([
     getClientDetail(ctx.organizationId, clientId),
     getClientOverview(ctx.organizationId, clientId),
     getClientExports(ctx.organizationId, clientId),
@@ -76,6 +80,7 @@ export default async function ClientDetailPage({
       select: { csvSeparator: true },
     }),
     getClientVATSummary(ctx.organizationId, clientId),
+    getClientProfitLoss(ctx.organizationId, clientId, 6),
   ])
 
   const monthLabel = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
@@ -94,6 +99,19 @@ export default async function ClientDetailPage({
     return latest
   }, null)
   const isStaleSince = lastSyncedAt && lastSyncedAt < sevenDaysAgo
+
+  const reconnectRateLimited = client.lastContactedAt
+    ? new Date(client.lastContactedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+    : false
+
+  const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+  function getAccountSeverity(account: (typeof client.accounts)[number]): "error" | "warning" | "ok" {
+    if (account.status === "error" || account.syncError) return "error"
+    if (account.requisitionExpiresAt && account.requisitionExpiresAt < sevenDaysFromNow) return "warning"
+    if (account.lastSyncedAt && account.lastSyncedAt < sevenDaysAgo) return "warning"
+    return "ok"
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -219,6 +237,18 @@ export default async function ClientDetailPage({
           </Link>
         </Card>
       </div>
+
+      {/* ── P&L card ──────────────────────────────────────────────────── */}
+      {pl.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pérdidas y ganancias — últimos 6 meses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ClientPLTable data={pl} currency={currency} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Work area: inbox + suggestions ────────────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -354,44 +384,90 @@ export default async function ClientDetailPage({
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y">
-            {client.accounts.map((account) => (
-              <div key={account.id} className="flex items-center justify-between px-6 py-3">
-                <div>
-                  <p className="text-sm font-medium">{account.name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {account.institutionName && (
-                      <p className="text-xs text-muted-foreground">{account.institutionName}</p>
+            {client.accounts.map((account) => {
+              const severity = getAccountSeverity(account)
+              return (
+                <div key={account.id} className="flex items-start justify-between px-6 py-4 gap-4">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    {account.institutionLogo && (
+                      <img
+                        src={account.institutionLogo}
+                        alt={account.institutionName ?? ""}
+                        className="h-8 w-8 rounded object-contain shrink-0 mt-0.5"
+                      />
                     )}
-                    {account.lastSyncedAt && (
-                      <p className="text-xs text-muted-foreground">
-                        · Sync {formatDistanceToNow(account.lastSyncedAt, { locale: es, addSuffix: true })}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{account.name}</p>
+                      <div className="flex flex-wrap items-center gap-x-2 mt-0.5">
+                        {account.institutionName && (
+                          <p className="text-xs text-muted-foreground">{account.institutionName}</p>
+                        )}
+                        {account.lastSyncedAt && (
+                          <p className="text-xs text-muted-foreground">
+                            · Sync {formatDistanceToNow(account.lastSyncedAt, { locale: es, addSuffix: true })}
+                          </p>
+                        )}
+                        {account.requisitionExpiresAt && (
+                          <p className="text-xs text-muted-foreground">
+                            · Caduca {formatDistanceToNow(account.requisitionExpiresAt, { locale: es, addSuffix: true })}
+                          </p>
+                        )}
+                      </div>
+                      {severity === "error" && account.syncError && (
+                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                          <XCircle className="h-3.5 w-3.5 shrink-0" />
+                          {account.syncError}
+                        </p>
+                      )}
+                      {severity === "warning" && account.requisitionExpiresAt && account.requisitionExpiresAt < sevenDaysFromNow && (
+                        <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                          <Warning className="h-3.5 w-3.5 shrink-0" />
+                          Conexión expira pronto — pide al cliente que reconecte
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {account.balanceCurrent !== null && (
+                      <p className="text-sm font-semibold tabular-nums">
+                        {account.balanceCurrent.toLocaleString("es-ES", {
+                          style: "currency",
+                          currency: account.currency,
+                          maximumFractionDigits: 0,
+                        })}
                       </p>
+                    )}
+                    <Badge
+                      variant={
+                        severity === "error"
+                          ? "destructive"
+                          : severity === "warning"
+                            ? "secondary"
+                            : "default"
+                      }
+                      className="text-xs"
+                    >
+                      {severity === "error"
+                        ? "Error"
+                        : severity === "warning"
+                          ? "Advertencia"
+                          : account.status === "active"
+                            ? "Activa"
+                            : account.status === "disconnected"
+                              ? "Desconectada"
+                              : "Error"}
+                    </Badge>
+                    {severity !== "ok" && (client.telegramChatId || client.whatsappPhone) && (
+                      <BankReconnectButton
+                        clientId={clientId}
+                        accountId={account.id}
+                        disabledByRateLimit={reconnectRateLimited}
+                      />
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  {account.balanceCurrent !== null && (
-                    <p className="text-sm font-semibold tabular-nums">
-                      {account.balanceCurrent.toLocaleString("es-ES", {
-                        style: "currency",
-                        currency: account.currency,
-                        maximumFractionDigits: 0,
-                      })}
-                    </p>
-                  )}
-                  <Badge
-                    variant={account.status === "active" ? "default" : "secondary"}
-                    className="text-xs"
-                  >
-                    {account.status === "active"
-                      ? "Activa"
-                      : account.status === "disconnected"
-                        ? "Desconectada"
-                        : "Error"}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </CardContent>
       </Card>
