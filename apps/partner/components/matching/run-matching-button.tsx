@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@polso/ui/button"
 import { Spinner, ArrowsClockwise } from "@phosphor-icons/react"
 import { runMatchingAction } from "@/features/matching/actions/run-matching"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 
 interface RunMatchingButtonProps {
   clientId: string

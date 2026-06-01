@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from "@polso/ui/alert-dialog"
 import { Spinner, Trash, Sparkle } from "@phosphor-icons/react"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import { formatCurrency } from "@/lib/format-currency"
 import { CategorySelect } from "@/features/categories/components/category-select"
 import {

@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@polso/ui/select"
 import { Spinner, GitMerge, ArrowRight } from "@phosphor-icons/react"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import { formatCurrency } from "@/lib/format-currency"
 import { mergeCounterpartiesAction } from "../actions/manage-counterparty"
 import type { CounterpartyWithStats } from "../queries/get-counterparties"

@@ -3,18 +3,10 @@
 import { useState, useCallback, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { CloudArrowUp, Spinner } from "@phosphor-icons/react"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import type { TransactionDocumentWithUrl } from "../actions/document-actions"
 
-const ACCEPTED_TYPES = [
-  "application/pdf",
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/webp",
-]
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+import { UPLOAD_ACCEPTED_TYPES, UPLOAD_MAX_FILE_SIZE } from "@/lib/upload"
 
 interface TransactionDocumentUploadProps {
   transactionId: string
@@ -33,11 +25,11 @@ export function TransactionDocumentUpload({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const uploadFile = async (file: File) => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
+    if (!UPLOAD_ACCEPTED_TYPES.includes(file.type)) {
       toast.error(t("invoices.invalidFile"), { description: t("invoices.invalidType", { type: file.type }) })
       return
     }
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > UPLOAD_MAX_FILE_SIZE) {
       toast.error(t("invoices.invalidFile"), { description: t("invoices.fileTooLarge", { size: (file.size / 1024 / 1024).toFixed(1) }) })
       return
     }
@@ -113,7 +105,7 @@ export function TransactionDocumentUpload({
         ref={fileInputRef}
         type="file"
         className="hidden"
-        accept={ACCEPTED_TYPES.join(",")}
+        accept={UPLOAD_ACCEPTED_TYPES.join(",")}
         onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); if (fileInputRef.current) fileInputRef.current.value = "" }}
         disabled={disabled || !!uploading}
       />

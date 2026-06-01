@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@polso/ui/select"
 import { updateCsvSeparatorAction } from "../actions/update-csv-separator"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 
 export function CsvSeparatorSelect({ value }: { value: string }) {
   const [isPending, startTransition] = useTransition()

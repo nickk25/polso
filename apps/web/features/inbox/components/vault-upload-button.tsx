@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { CloudArrowUp, Spinner } from "@phosphor-icons/react"
 import { Button } from "@polso/ui/button"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 
-const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"]
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+import { UPLOAD_ACCEPTED_TYPES, UPLOAD_MAX_FILE_SIZE } from "@/lib/upload"
 
 export function VaultUploadButton() {
   const t = useTranslations("vault")
@@ -16,28 +15,32 @@ export function VaultUploadButton() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
 
-  async function handleFile(file: File) {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.error(t("upload.invalidType"))
-      return
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error(t("upload.fileTooLarge"))
-      return
+  async function handleFiles(files: FileList) {
+    const fileArray = Array.from(files)
+
+    for (const file of fileArray) {
+      if (!UPLOAD_ACCEPTED_TYPES.includes(file.type)) {
+        toast.error(t("upload.invalidType"), { description: file.name })
+        return
+      }
+      if (file.size > UPLOAD_MAX_FILE_SIZE) {
+        toast.error(t("upload.fileTooLarge"), { description: file.name })
+        return
+      }
     }
 
     setUploading(true)
     try {
       const formData = new FormData()
-      formData.append("file", file)
+      for (const file of fileArray) formData.append("file", file)
 
       const res = await fetch("/api/vault/upload", { method: "POST", body: formData })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || "Upload failed")
-      }
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Upload failed")
 
-      toast.success(t("upload.success"))
+      toast.success(
+        data.uploaded === 1 ? t("upload.success") : t("upload.successMultiple", { count: data.uploaded })
+      )
       router.refresh()
     } catch (error) {
       toast.error(t("upload.error"), {
@@ -54,11 +57,11 @@ export function VaultUploadButton() {
       <input
         ref={fileInputRef}
         type="file"
+        multiple
         className="hidden"
-        accept={ACCEPTED_TYPES.join(",")}
+        accept={UPLOAD_ACCEPTED_TYPES.join(",")}
         onChange={(e) => {
-          const f = e.target.files?.[0]
-          if (f) handleFile(f)
+          if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files)
         }}
       />
       <Button

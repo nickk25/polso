@@ -14,7 +14,7 @@ import {
 } from "@polso/ui/dialog"
 import { Spinner, UploadSimple } from "@phosphor-icons/react"
 import { uploadInboxItemAction } from "@/features/inbox/actions/upload-inbox-item"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 
 interface UploadInboxButtonProps {
   clientId: string

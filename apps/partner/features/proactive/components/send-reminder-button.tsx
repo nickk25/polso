@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@polso/ui/button"
 import { PaperPlaneTilt } from "@phosphor-icons/react"
 import { sendReminderAction } from "../actions/send-reminder"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 
 export function SendReminderButton({
   clientId,

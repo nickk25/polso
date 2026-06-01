@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@polso/ui/dialog"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import { deleteTransactionDocumentAction, type TransactionDocumentWithUrl } from "../actions/document-actions"
 import { unmatchAction } from "@/features/inbox/actions/vault-actions"
 import { LinkBreak } from "@phosphor-icons/react"

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import { Button } from "@polso/ui/button"
 import { Input } from "@polso/ui/input"
 import { Label } from "@polso/ui/label"

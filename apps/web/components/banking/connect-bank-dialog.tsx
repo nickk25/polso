@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@polso/ui/dialog"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import type { BankProvider } from "@polso/banking"
 
 interface ConnectBankDialogProps {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import { Button } from "@polso/ui/button"
 import { CheckCircle, XCircle } from "@phosphor-icons/react"
 import { confirmSuggestionAction, declineSuggestionAction } from "@/features/matching/actions/handle-suggestion"

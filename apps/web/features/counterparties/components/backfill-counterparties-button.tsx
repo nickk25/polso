@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@polso/ui/button"
 import { Sparkle, Spinner } from "@phosphor-icons/react"
-import { toast } from "sonner"
+import { toast } from "@polso/ui/sonner"
 import { backfillCounterpartiesAction } from "../actions/backfill-counterparties"
 
 export function BackfillCounterpartiesButton() {
