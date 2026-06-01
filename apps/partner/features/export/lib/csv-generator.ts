@@ -16,6 +16,8 @@ const HEADERS = [
   "Estado conciliación",
   "Archivo adjunto",
   "Notas",
+  "IVA %",
+  "Cuota IVA",
 ]
 
 function formatDate(date: Date): string {
@@ -37,7 +39,8 @@ export function generateCsv(
 ): string {
   const lines: string[] = []
 
-  lines.push(HEADERS.map((h) => escapeCsv(h, separator)).join(separator))
+  // BOM for Excel UTF-8 recognition on macOS
+  lines.push("﻿" + HEADERS.map((h) => escapeCsv(h, separator)).join(separator))
 
   for (const row of rows) {
     // Use the renamed filename so accountants can cross-reference with facturas/ folder
@@ -63,6 +66,8 @@ export function generateCsv(
       row.conciliationStatus === "matched" ? "Conciliado" : "Sin conciliar",
       attachmentDisplay,
       row.notes ?? "",
+      row.taxRate !== null ? String(Math.round(row.taxRate * 100)) : "",
+      row.taxAmount !== null ? formatAmount(row.taxAmount) : "",
     ]
     lines.push(cells.map((c) => escapeCsv(c, separator)).join(separator))
   }
