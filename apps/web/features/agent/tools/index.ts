@@ -14,6 +14,7 @@ import { getExpenseForecastTool } from "./get-expense-forecast"
 import { getCategoryBreakdownTool } from "./get-category-breakdown"
 import { getBurnAndRunway } from "./get-burn-and-runway"
 import { getTopCounterpartiesTool } from "./get-top-counterparties"
+import { getVATSummaryTool } from "./get-vat-summary"
 
 export function buildTools() {
   return {
@@ -33,5 +34,6 @@ export function buildTools() {
     get_category_breakdown: getCategoryBreakdownTool,
     get_burn_and_runway: getBurnAndRunway,
     get_top_counterparties: getTopCounterpartiesTool,
+    get_vat_summary: getVATSummaryTool,
   }
 }

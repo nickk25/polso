@@ -35,7 +35,10 @@ import {
 import { Spinner, Receipt } from "@phosphor-icons/react"
 import { Input } from "@polso/ui/input"
 import { formatCurrency } from "@/lib/format-currency"
-import { SPANISH_IVA_RATES, calculateTaxFromGross } from "@polso/utils"
+import { calculateTaxFromGross } from "@polso/utils"
+
+// Common EU VAT rates shown as quick-select presets (percent, not decimal)
+const EU_VAT_PRESETS = [0, 4, 7, 10, 13, 19, 20, 21, 23] as const
 import type { TransactionRow } from "@/features/transactions/queries/get-transactions"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
 import { CategorySelect } from "@/features/categories/components/category-select"
@@ -137,15 +140,16 @@ export function TransactionTable({
     setEditedCategoryId(tx.category?.id ?? null)
     setEditedEntryType(tx.entryType ?? "variable")
     setEditedStatus(tx.status)
-    setEditedTaxRate(tx.taxRate != null ? String(tx.taxRate) : "")
+    // taxRate stored as percent string ("21") for display; DB stores decimal (0.21)
+    setEditedTaxRate(tx.taxRate != null ? String(Math.round(tx.taxRate * 1000) / 10) : "")
     setEditedTaxAmount(tx.taxAmount != null ? String(tx.taxAmount) : "")
   }
 
-  const handleTaxRateChange = (rate: string) => {
-    setEditedTaxRate(rate)
-    if (selected && rate !== "") {
-      const rateNum = parseFloat(rate)
-      const computed = calculateTaxFromGross(selected.amount, rateNum)
+  const handleTaxRateChange = (pct: string) => {
+    setEditedTaxRate(pct)
+    if (selected && pct !== "") {
+      const rateDecimal = parseFloat(pct) / 100
+      const computed = calculateTaxFromGross(selected.amount, rateDecimal)
       setEditedTaxAmount(computed > 0 ? String(computed) : "")
     }
   }
@@ -170,7 +174,7 @@ export function TransactionTable({
       categoryId: editedCategoryId,
       entryType: editedEntryType as "fixed" | "variable",
       status: editedStatus as "pending" | "verified" | "excluded",
-      taxRate: editedTaxRate !== "" ? parseFloat(editedTaxRate) : null,
+      taxRate: editedTaxRate !== "" ? parseFloat(editedTaxRate) / 100 : null,
       taxAmount: editedTaxAmount !== "" ? parseFloat(editedTaxAmount) : null,
     })
     setLoading(false)
@@ -183,7 +187,7 @@ export function TransactionTable({
     (editedCategoryId !== (selected.category?.id ?? null) ||
       editedEntryType !== (selected.entryType ?? "variable") ||
       editedStatus !== selected.status ||
-      editedTaxRate !== (selected.taxRate != null ? String(selected.taxRate) : "") ||
+      editedTaxRate !== (selected.taxRate != null ? String(Math.round(selected.taxRate * 1000) / 10) : "") ||
       editedTaxAmount !== (selected.taxAmount != null ? String(selected.taxAmount) : ""))
 
   function pushPage(p: number) {
@@ -283,18 +287,35 @@ export function TransactionTable({
 
               <div className="space-y-2">
                 <Label>{t("editSheet.taxRate")}</Label>
-                <Select value={editedTaxRate} onValueChange={handleTaxRateChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t("editSheet.noTax")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SPANISH_IVA_RATES.map((r) => (
-                      <SelectItem key={r} value={String(r)}>
-                        {r === 0 ? t("editSheet.vatExempt") : `${Math.round(r * 100)}%`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={editedTaxRate}
+                    onChange={(e) => handleTaxRateChange(e.target.value)}
+                    placeholder={t("editSheet.noTax")}
+                    className="w-28"
+                  />
+                  <span className="text-sm text-muted-foreground shrink-0">%</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {EU_VAT_PRESETS.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => handleTaxRateChange(String(p))}
+                      className={`px-2 py-0.5 rounded text-xs border transition-colors ${
+                        editedTaxRate === String(p)
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-muted-foreground border-border hover:border-foreground"
+                      }`}
+                    >
+                      {p === 0 ? t("editSheet.vatExempt") : `${p}%`}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {editedTaxRate !== "" && (
