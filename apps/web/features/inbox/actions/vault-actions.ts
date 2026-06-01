@@ -263,7 +263,12 @@ export async function deleteInboxItemAction(
       console.error("Error deleting file from R2:", error)
     }
 
-    await prisma.inboxItem.delete({ where: { id: inboxItemId } })
+    // Delete related rows first — no cascade on these FK relations
+    await prisma.$transaction([
+      prisma.matchSuggestion.deleteMany({ where: { inboxItemId } }),
+      prisma.transactionAttachment.deleteMany({ where: { inboxItemId } }),
+      prisma.inboxItem.delete({ where: { id: inboxItemId } }),
+    ])
 
     if (inboxItem.transactionId) {
       const [remaining, attachments] = await Promise.all([

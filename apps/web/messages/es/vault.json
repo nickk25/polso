@@ -55,7 +55,8 @@
     "searchNoResults": "No se encontraron transacciones",
     "searchHint": "Escribe para buscar una transaccion",
     "actionFailed": "La accion fallo. Intentalo de nuevo.",
-    "deleteFile": "Eliminar archivo"
+    "deleteFile": "Eliminar archivo",
+    "deleted": "Documento eliminado"
   },
   "pagination": {
     "total": "{count} documentos",

@@ -55,7 +55,8 @@
     "searchNoResults": "No transactions found",
     "searchHint": "Type to search for a transaction",
     "actionFailed": "Action failed. Please try again.",
-    "deleteFile": "Delete file"
+    "deleteFile": "Delete file",
+    "deleted": "Document deleted"
   },
   "pagination": {
     "total": "{count} documents",

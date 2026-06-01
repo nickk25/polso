@@ -53,14 +53,12 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
 
   const loading = pendingAction !== null
 
-  async function run(action: () => Promise<{ success: boolean; error?: string }>, key: string) {
+  async function run(action: () => Promise<{ success: boolean; error?: string }>, key: string, successMsg?: string) {
     setPendingAction(key)
     try {
       const result = await action()
-      if (!result.success) {
-        toast.error(t("sheet.actionFailed"))
-        return
-      }
+      if (!result.success) throw new Error(result.error)
+      if (successMsg) toast.success(successMsg)
       router.refresh()
       onClose()
     } catch {
@@ -151,7 +149,7 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                   size="sm"
                   className="w-full text-red-500 hover:text-red-600 border-red-500/20 hover:bg-red-500/10"
                   disabled={loading}
-                  onClick={() => run(() => deleteTransactionDocumentAction(item.legacyDocId!), "delete")}
+                  onClick={() => run(() => deleteTransactionDocumentAction(item.legacyDocId!), "delete", t("sheet.deleted"))}
                 >
                   {btnIcon("delete", Trash)}
                   {t("sheet.deleteFile")}
@@ -181,7 +179,7 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                     variant="outline"
                     size="sm"
                     disabled={loading}
-                    onClick={() => run(() => deleteInboxItemAction(item.id), "delete")}
+                    onClick={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
                   >
                     {btnIcon("delete", Trash)}
                   </Button>
@@ -285,7 +283,7 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                       variant="outline"
                       size="sm"
                       disabled={loading}
-                      onClick={() => run(() => deleteInboxItemAction(item.id), "delete")}
+                      onClick={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
                     >
                       {btnIcon("delete", Trash)}
                     </Button>
@@ -333,7 +331,7 @@ export function VaultItemSheet({ item, open, onClose }: VaultItemSheetProps) {
                       variant="outline"
                       size="sm"
                       disabled={loading}
-                      onClick={() => run(() => deleteInboxItemAction(item.id), "delete")}
+                      onClick={() => run(() => deleteInboxItemAction(item.id), "delete", t("sheet.deleted"))}
                     >
                       {btnIcon("delete", Trash)}
                     </Button>
