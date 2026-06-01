@@ -243,7 +243,7 @@ export default async function ClientDetailPage({
 
       {/* ── Quarter pendings card ─────────────────────────────────────── */}
       {quarterPendings.daysToClose <= 60 && (
-        <ClientPendingsCard clientId={clientId} pendings={quarterPendings} />
+        <ClientPendingsCard clientId={clientId} pendings={quarterPendings} currency={currency} />
       )}
 
       {/* ── P&L card ──────────────────────────────────────────────────── */}

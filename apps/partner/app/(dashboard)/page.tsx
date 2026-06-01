@@ -350,6 +350,20 @@ export default async function DashboardPage() {
 
   const incompleteCount = clients.filter((c) => c.coverage !== null && c.coverage < 100).length
 
+  const quarterMap = quarterRollup
+    ? Object.fromEntries(quarterRollup.clients.map((c) => [c.clientId, c]))
+    : {}
+  const sortedClients =
+    inQuarterMode && quarterRollup
+      ? [...clients].sort((a, b) => {
+          const aq = quarterMap[a.clientId]
+          const bq = quarterMap[b.clientId]
+          const aScore = (aq?.ivaPendingCount ?? 0) + (aq?.receiptPendingCount ?? 0)
+          const bScore = (bq?.ivaPendingCount ?? 0) + (bq?.receiptPendingCount ?? 0)
+          return bScore - aScore
+        })
+      : clients
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -736,25 +750,10 @@ export default async function DashboardPage() {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          {(() => {
-            const quarterMap = quarterRollup
-              ? Object.fromEntries(quarterRollup.clients.map((c) => [c.clientId, c]))
-              : {}
-            const sortedClients = inQuarterMode && quarterRollup
-              ? [...clients].sort((a, b) => {
-                  const aq = quarterMap[a.clientId]
-                  const bq = quarterMap[b.clientId]
-                  const aScore = (aq?.ivaPendingCount ?? 0) + (aq?.receiptPendingCount ?? 0)
-                  const bScore = (bq?.ivaPendingCount ?? 0) + (bq?.receiptPendingCount ?? 0)
-                  return bScore - aScore
-                })
-              : clients
-
-            return (
-              <div className="divide-y">
-                {sortedClients.map((client) => {
-                  const qStatus = quarterMap[client.clientId]
-                  return (
+          <div className="divide-y">
+            {sortedClients.map((client) => {
+              const qStatus = quarterMap[client.clientId]
+              return (
                     <Link
                       key={client.clientId}
                       href={`/clients/${client.clientId}/transactions`}
@@ -818,8 +817,6 @@ export default async function DashboardPage() {
                   )
                 })}
               </div>
-            )
-          })()}
         </CardContent>
       </Card>
     </div>

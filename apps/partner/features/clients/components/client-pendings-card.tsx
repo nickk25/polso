@@ -6,17 +6,18 @@ import type { ClientQuarterPendings } from "../queries/get-client-quarter-pendin
 interface Props {
   clientId: string
   pendings: ClientQuarterPendings
+  currency?: string
 }
 
-function fmt(amount: number) {
+function fmt(amount: number, currency: string) {
   return amount.toLocaleString("es-ES", {
     style: "currency",
-    currency: "EUR",
+    currency,
     maximumFractionDigits: 0,
   })
 }
 
-export function ClientPendingsCard({ clientId, pendings }: Props) {
+export function ClientPendingsCard({ clientId, pendings, currency = "EUR" }: Props) {
   const { quarter, daysToClose, ivaPending, receiptPending, suggestionsPending } = pendings
   const allClear = ivaPending.count === 0 && receiptPending.count === 0 && suggestionsPending === 0
 
@@ -52,7 +53,7 @@ export function ClientPendingsCard({ clientId, pendings }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">Sin IVA clasificado</p>
                   <p className="text-xs text-muted-foreground">
-                    {ivaPending.count} {ivaPending.count === 1 ? "registro" : "registros"} · {fmt(ivaPending.amount)}
+                    {ivaPending.count} {ivaPending.count === 1 ? "registro" : "registros"} · {fmt(ivaPending.amount, currency)}
                   </p>
                 </div>
                 <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -68,7 +69,7 @@ export function ClientPendingsCard({ clientId, pendings }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">Sin comprobante</p>
                   <p className="text-xs text-muted-foreground">
-                    {receiptPending.count} {receiptPending.count === 1 ? "transacción" : "transacciones"} · {fmt(receiptPending.amount)}
+                    {receiptPending.count} {receiptPending.count === 1 ? "transacción" : "transacciones"} · {fmt(receiptPending.amount, currency)}
                   </p>
                 </div>
                 <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

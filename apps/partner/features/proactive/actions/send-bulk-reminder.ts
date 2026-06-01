@@ -2,7 +2,7 @@
 
 import { getPartnerAuthContext } from "@/lib/auth"
 import { prisma, transactionDocumentedWhere } from "@polso/db"
-import { sendReminderInternal } from "./send-reminder"
+import { sendReminderInternal } from "../lib/send-reminder-internal"
 import { successResponse, errorResponse } from "@polso/utils/action-response"
 import type { ActionResponse } from "@polso/utils/action-response"
 import { startOfMonth, endOfMonth } from "date-fns"
