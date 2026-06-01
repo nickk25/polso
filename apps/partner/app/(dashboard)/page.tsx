@@ -21,8 +21,11 @@ import {
   ArrowUp,
 } from "@phosphor-icons/react/dist/ssr"
 import { formatDistanceToNow, differenceInDays, endOfMonth } from "date-fns"
+import { getPartnerQuarterRollup } from "@/features/clients/queries/get-partner-quarter-rollup"
+import { getDaysToQuarterEnd, getCurrentQuarter } from "@polso/utils/quarters"
 import { es } from "date-fns/locale"
 import Link from "next/link"
+import { BulkReminderButton } from "@/components/dashboard/bulk-reminder-button"
 
 function startOfMonth(d = new Date()) {
   const r = new Date(d)
@@ -305,8 +308,14 @@ function formatAmount(amount: unknown, currency: string) {
 
 export default async function DashboardPage() {
   const ctx = await getPartnerAuthContext()
-  const data = await getDashboardData(ctx.organizationId)
+  const [data, quarterRollup] = await Promise.all([
+    getDashboardData(ctx.organizationId),
+    getPartnerQuarterRollup(ctx.organizationId),
+  ])
   const monthLabel = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
+  const daysToQuarterEnd = getDaysToQuarterEnd()
+  const currentQuarter = getCurrentQuarter()
+  const inQuarterMode = daysToQuarterEnd <= 30
 
   if (!data) {
     return (
@@ -339,11 +348,16 @@ export default async function DashboardPage() {
     ? ((progress.conciliatedThisMonth - progress.conciliatedLastMonth) / progress.conciliatedLastMonth) * 100
     : null
 
+  const incompleteCount = clients.filter((c) => c.coverage !== null && c.coverage < 100).length
+
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground capitalize">{monthLabel}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground capitalize">{monthLabel}</p>
+        </div>
+        <BulkReminderButton incompleteCount={incompleteCount} />
       </div>
 
       {/* ── Row 1: KPIs ─────────────────────────────────────────────── */}
@@ -390,14 +404,27 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cierre del mes</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {inQuarterMode ? `Cierre del trimestre Q${currentQuarter.quarter}` : "Cierre del mes"}
+            </CardTitle>
             <CalendarBlank className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${kpis.daysToClose <= 5 ? "text-red-500" : kpis.daysToClose <= 10 ? "text-amber-500" : ""}`}>
-              {kpis.daysToClose}
-            </div>
-            <p className="text-xs text-muted-foreground">días para fin de mes</p>
+            {inQuarterMode ? (
+              <>
+                <div className={`text-2xl font-bold ${daysToQuarterEnd <= 7 ? "text-red-500" : daysToQuarterEnd <= 14 ? "text-amber-500" : ""}`}>
+                  {daysToQuarterEnd}
+                </div>
+                <p className="text-xs text-muted-foreground">días para Modelo 303</p>
+              </>
+            ) : (
+              <>
+                <div className={`text-2xl font-bold ${kpis.daysToClose <= 5 ? "text-red-500" : kpis.daysToClose <= 10 ? "text-amber-500" : ""}`}>
+                  {kpis.daysToClose}
+                </div>
+                <p className="text-xs text-muted-foreground">días para fin de mes</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -690,8 +717,17 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Estado de clientes — {new Date().toLocaleDateString("es-ES", { month: "long" })}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-0.5">Cobertura de documentación por cliente</p>
+            {inQuarterMode ? (
+              <>
+                <CardTitle>Estado de clientes — Q{currentQuarter.quarter} {new Date().getFullYear()}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">Cobertura trimestral e IVA pendiente por cliente</p>
+              </>
+            ) : (
+              <>
+                <CardTitle>Estado de clientes — {new Date().toLocaleDateString("es-ES", { month: "long" })}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">Cobertura de documentación por cliente</p>
+              </>
+            )}
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/clients">
@@ -700,60 +736,90 @@ export default async function DashboardPage() {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y">
-            {clients.map((client) => (
-              <Link
-                key={client.clientId}
-                href={`/clients/${client.clientId}/transactions`}
-                className="flex items-center gap-4 px-6 py-3 hover:bg-muted/50 transition-colors"
-              >
-                {/* Name + sync warning */}
-                <div className="w-40 shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    {client.isStaleSince ? (
-                      <Warning className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                    ) : client.coverage === 100 ? (
-                      <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                    ) : (
-                      <span className="h-3.5 w-3.5 shrink-0" />
-                    )}
-                    <p className="text-sm font-medium truncate">{client.clientName}</p>
-                  </div>
-                  {client.lastSyncedAt && (
-                    <p className="text-xs text-muted-foreground pl-5">
-                      Sync {formatDistanceToNow(client.lastSyncedAt, { locale: es, addSuffix: true })}
-                    </p>
-                  )}
-                </div>
+          {(() => {
+            const quarterMap = quarterRollup
+              ? Object.fromEntries(quarterRollup.clients.map((c) => [c.clientId, c]))
+              : {}
+            const sortedClients = inQuarterMode && quarterRollup
+              ? [...clients].sort((a, b) => {
+                  const aq = quarterMap[a.clientId]
+                  const bq = quarterMap[b.clientId]
+                  const aScore = (aq?.ivaPendingCount ?? 0) + (aq?.receiptPendingCount ?? 0)
+                  const bScore = (bq?.ivaPendingCount ?? 0) + (bq?.receiptPendingCount ?? 0)
+                  return bScore - aScore
+                })
+              : clients
 
-                {/* Coverage bar */}
-                <div className="flex-1 min-w-0">
-                  {client.coverage !== null ? (
-                    <CoverageBar pct={client.coverage} />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Sin gastos</span>
-                  )}
-                </div>
+            return (
+              <div className="divide-y">
+                {sortedClients.map((client) => {
+                  const qStatus = quarterMap[client.clientId]
+                  return (
+                    <Link
+                      key={client.clientId}
+                      href={`/clients/${client.clientId}/transactions`}
+                      className="flex items-center gap-4 px-6 py-3 hover:bg-muted/50 transition-colors"
+                    >
+                      {/* Name + sync warning */}
+                      <div className="w-40 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          {client.isStaleSince ? (
+                            <Warning className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                          ) : client.coverage === 100 ? (
+                            <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                          ) : (
+                            <span className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          <p className="text-sm font-medium truncate">{client.clientName}</p>
+                        </div>
+                        {client.lastSyncedAt && (
+                          <p className="text-xs text-muted-foreground pl-5">
+                            Sync {formatDistanceToNow(client.lastSyncedAt, { locale: es, addSuffix: true })}
+                          </p>
+                        )}
+                      </div>
 
-                {/* Counts */}
-                <div className="hidden sm:flex items-center gap-4 shrink-0 text-right">
-                  <div>
-                    <p className="text-sm font-medium tabular-nums">{client.documented}/{client.total}</p>
-                    <p className="text-xs text-muted-foreground">documentados</p>
-                  </div>
-                  {client.unmatched > 0 ? (
-                    <Badge variant="outline" className="text-xs text-orange-600 border-orange-200 shrink-0">
-                      {client.unmatched} sin match
-                    </Badge>
-                  ) : (
-                    <span className="text-xs text-muted-foreground w-20 text-right">—</span>
-                  )}
-                </div>
+                      {/* Coverage bar */}
+                      <div className="flex-1 min-w-0">
+                        {inQuarterMode && qStatus ? (
+                          qStatus.coverageQuarterPct !== null ? (
+                            <CoverageBar pct={qStatus.coverageQuarterPct} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Sin gastos</span>
+                          )
+                        ) : client.coverage !== null ? (
+                          <CoverageBar pct={client.coverage} />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sin gastos</span>
+                        )}
+                      </div>
 
-                <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-              </Link>
-            ))}
-          </div>
+                      {/* Counts + IVA badge in quarter mode */}
+                      <div className="hidden sm:flex items-center gap-3 shrink-0">
+                        <div className="text-right">
+                          <p className="text-sm font-medium tabular-nums">{client.documented}/{client.total}</p>
+                          <p className="text-xs text-muted-foreground">documentados</p>
+                        </div>
+                        {inQuarterMode && qStatus && qStatus.ivaPendingCount > 0 ? (
+                          <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 shrink-0">
+                            IVA: {qStatus.ivaPendingCount}
+                          </Badge>
+                        ) : client.unmatched > 0 ? (
+                          <Badge variant="outline" className="text-xs text-orange-600 border-orange-200 shrink-0">
+                            {client.unmatched} sin match
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground w-20 text-right">—</span>
+                        )}
+                      </div>
+
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </Link>
+                  )
+                })}
+              </div>
+            )
+          })()}
         </CardContent>
       </Card>
     </div>
