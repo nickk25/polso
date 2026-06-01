@@ -6,6 +6,53 @@ import { getPartnerAuthContext } from "@/lib/auth"
 import { successResponse, errorResponse } from "@polso/utils/action-response"
 import type { ActionResponse } from "@polso/utils/action-response"
 
+async function confirmSuggestionInternal(
+  suggestionId: string,
+  partnerId: string,
+  clientId: string,
+  userId: string,
+): Promise<void> {
+  const suggestion = await prisma.matchSuggestion.findFirst({
+    where: { id: suggestionId, organizationId: clientId },
+  })
+  if (!suggestion) throw new Error("Sugerencia no encontrada")
+
+  const { transactionId, inboxItemId } = suggestion
+
+  const [inboxItemTax, existingEntry] = await Promise.all([
+    prisma.inboxItem.findUnique({ where: { id: inboxItemId }, select: { taxAmount: true, taxRate: true } }),
+    prisma.entry.findFirst({ where: { transactionId, organizationId: clientId }, select: { taxAmount: true, taxRate: true } }),
+  ])
+
+  const taxData: { taxAmount?: number; taxRate?: number } = {}
+  if (inboxItemTax?.taxAmount != null && existingEntry?.taxAmount == null) {
+    taxData.taxAmount = Number(inboxItemTax.taxAmount)
+  }
+  if (inboxItemTax?.taxRate != null && existingEntry?.taxRate == null) {
+    taxData.taxRate = inboxItemTax.taxRate
+  }
+
+  await prisma.$transaction([
+    prisma.matchSuggestion.update({
+      where: { id: suggestionId },
+      data: { status: "confirmed", userActionAt: new Date(), userActionBy: userId },
+    }),
+    prisma.transactionAttachment.upsert({
+      where: { transactionId_inboxItemId: { transactionId, inboxItemId } },
+      create: { transactionId, inboxItemId },
+      update: {},
+    }),
+    prisma.inboxItem.update({
+      where: { id: inboxItemId },
+      data: { status: "done", transactionId },
+    }),
+    prisma.entry.updateMany({
+      where: { transactionId, organizationId: clientId },
+      data: { status: "verified", ...taxData },
+    }),
+  ])
+}
+
 export async function confirmSuggestionAction(
   suggestionId: string,
   clientId: string
@@ -13,61 +60,12 @@ export async function confirmSuggestionAction(
   try {
     const ctx = await getPartnerAuthContext()
 
-    const suggestion = await prisma.matchSuggestion.findFirst({
-      where: { id: suggestionId, organizationId: clientId },
-    })
-
-    if (!suggestion) return errorResponse("NOT_FOUND", "Sugerencia no encontrada")
-
-    // Verify partner has access to this client
     const link = await prisma.partnerClient.findFirst({
-      where: {
-        partnerId: ctx.organizationId,
-        clientId,
-        status: "active",
-      },
+      where: { partnerId: ctx.organizationId, clientId, status: "active" },
     })
-
     if (!link) return errorResponse("FORBIDDEN", "Sin acceso a este cliente")
 
-    const { transactionId, inboxItemId } = suggestion
-
-    const [inboxItemTax, existingEntry] = await Promise.all([
-      prisma.inboxItem.findUnique({ where: { id: inboxItemId }, select: { taxAmount: true, taxRate: true } }),
-      prisma.entry.findFirst({ where: { transactionId, organizationId: clientId }, select: { taxAmount: true, taxRate: true } }),
-    ])
-
-    const taxData: { taxAmount?: number; taxRate?: number } = {}
-    if (inboxItemTax?.taxAmount != null && existingEntry?.taxAmount == null) {
-      taxData.taxAmount = Number(inboxItemTax.taxAmount)
-    }
-    if (inboxItemTax?.taxRate != null && existingEntry?.taxRate == null) {
-      taxData.taxRate = inboxItemTax.taxRate
-    }
-
-    await prisma.$transaction([
-      prisma.matchSuggestion.update({
-        where: { id: suggestionId },
-        data: {
-          status: "confirmed",
-          userActionAt: new Date(),
-          userActionBy: ctx.userId,
-        },
-      }),
-      prisma.transactionAttachment.upsert({
-        where: { transactionId_inboxItemId: { transactionId, inboxItemId } },
-        create: { transactionId, inboxItemId },
-        update: {},
-      }),
-      prisma.inboxItem.update({
-        where: { id: inboxItemId },
-        data: { status: "done", transactionId },
-      }),
-      prisma.entry.updateMany({
-        where: { transactionId, organizationId: clientId },
-        data: { status: "verified", ...taxData },
-      }),
-    ])
+    await confirmSuggestionInternal(suggestionId, ctx.organizationId, clientId, ctx.userId)
 
     revalidatePath(`/clients/${clientId}/conciliation`)
     revalidatePath(`/clients/${clientId}`)
