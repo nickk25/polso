@@ -29,6 +29,7 @@
     "./sonner": "./src/components/sonner.tsx",
     "./switch": "./src/components/switch.tsx",
     "./table": "./src/components/table.tsx",
+    "./textarea": "./src/components/textarea.tsx",
     "./tooltip": "./src/components/tooltip.tsx",
     "./use-mobile": "./src/hooks/use-mobile.ts"
   },

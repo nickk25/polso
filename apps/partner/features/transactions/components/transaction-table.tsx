@@ -9,6 +9,7 @@ import { Input } from "@polso/ui/input"
 import { Label } from "@polso/ui/label"
 import { Separator } from "@polso/ui/separator"
 import { Skeleton } from "@polso/ui/skeleton"
+import { Textarea } from "@polso/ui/textarea"
 import {
   Table,
   TableBody,
@@ -36,7 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@polso/ui/select"
-import { Paperclip, Receipt, ArrowSquareOut, TelegramLogo, WhatsappLogo, DownloadSimple, Eye, PencilSimple } from "@phosphor-icons/react"
+import { Checkbox } from "@polso/ui/checkbox"
+import { Paperclip, Receipt, ArrowSquareOut, TelegramLogo, WhatsappLogo, DownloadSimple, Eye, PencilSimple, EnvelopeSimple } from "@phosphor-icons/react"
 import { toast } from "@polso/ui/sonner"
 import { SPANISH_IVA_RATES } from "@polso/utils"
 import {
@@ -44,11 +46,15 @@ import {
   type PartnerInvoice,
 } from "../actions/get-transaction-invoices"
 import { updateClientEntryTaxAction } from "../actions/update-client-entry-tax"
+import { updateClientEntryAction } from "../actions/update-client-entry"
+import { sendReceiptRequestAction } from "../../proactive/actions/send-receipt-request"
 import type { ClientTransaction } from "../queries/get-client-transactions"
+import type { ClientCounterparty } from "../queries/get-client-counterparties"
 
 interface TransactionTableProps {
   transactions: ClientTransaction[]
   clientId: string
+  counterparties: ClientCounterparty[]
 }
 
 function VatCell({
@@ -181,10 +187,48 @@ function ExpenseTypeBadge({ type }: { type: string | null }) {
   )
 }
 
-export function TransactionTable({ transactions, clientId }: TransactionTableProps) {
+export function TransactionTable({ transactions, clientId, counterparties }: TransactionTableProps) {
   const [selected, setSelected] = useState<ClientTransaction | null>(null)
   const [invoices, setInvoices] = useState<PartnerInvoice[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
+
+  // Bulk receipt request state
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [sendingRequest, setSendingRequest] = useState(false)
+
+  const needsReceiptIds = transactions
+    .filter((tx) => tx.expenseStatus !== "documented" && tx.inboxItems.length === 0)
+    .map((tx) => tx.id)
+
+  function toggleCheck(txId: string) {
+    setCheckedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(txId)) next.delete(txId)
+      else next.add(txId)
+      return next
+    })
+  }
+
+  async function handleReceiptRequest() {
+    if (checkedIds.size === 0) return
+    setSendingRequest(true)
+    const result = await sendReceiptRequestAction(clientId, Array.from(checkedIds))
+    setSendingRequest(false)
+    if (result.success) {
+      toast.success("Solicitud enviada al cliente")
+      setCheckedIds(new Set())
+    } else {
+      toast.error(result.error ?? "Error al enviar la solicitud")
+    }
+  }
+
+  // Editable sheet state
+  const [editStatus, setEditStatus] = useState<string>("pending")
+  const [editCounterpartyId, setEditCounterpartyId] = useState<string | null>(null)
+  const [editNotes, setEditNotes] = useState("")
+  const [savingStatus, setSavingStatus] = useState(false)
+  const [savingCounterparty, setSavingCounterparty] = useState(false)
+  const [savingNotes, setSavingNotes] = useState(false)
 
   useEffect(() => {
     if (!selected) {
@@ -192,12 +236,53 @@ export function TransactionTable({ transactions, clientId }: TransactionTablePro
       return
     }
     setInvoicesLoading(true)
+    setEditStatus(selected.entryStatus ?? "pending")
+    setEditCounterpartyId(selected.counterparty?.id ?? null)
+    setEditNotes(selected.entryNotes ?? "")
     getTransactionInvoicesAction(selected.id)
       .then((result) => {
         if (result.success) setInvoices(result.data)
       })
       .finally(() => setInvoicesLoading(false))
   }, [selected?.id])
+
+  async function handleStatusChange(newStatus: string) {
+    if (!selected) return
+    setSavingStatus(true)
+    const result = await updateClientEntryAction(clientId, selected.id, { status: newStatus as "pending" | "verified" | "excluded" })
+    setSavingStatus(false)
+    if (result.success) {
+      setEditStatus(newStatus)
+      toast.success("Estado actualizado")
+    } else {
+      toast.error(result.error ?? "Error al guardar")
+    }
+  }
+
+  async function handleCounterpartyChange(cpId: string | null) {
+    if (!selected) return
+    setSavingCounterparty(true)
+    const result = await updateClientEntryAction(clientId, selected.id, { counterpartyId: cpId })
+    setSavingCounterparty(false)
+    if (result.success) {
+      setEditCounterpartyId(cpId)
+      toast.success("Proveedor actualizado")
+    } else {
+      toast.error(result.error ?? "Error al guardar")
+    }
+  }
+
+  async function handleNotesSave() {
+    if (!selected) return
+    setSavingNotes(true)
+    const result = await updateClientEntryAction(clientId, selected.id, { notes: editNotes || null })
+    setSavingNotes(false)
+    if (result.success) {
+      toast.success("Notas guardadas")
+    } else {
+      toast.error(result.error ?? "Error al guardar")
+    }
+  }
 
   if (transactions.length === 0) {
     return (
@@ -213,9 +298,27 @@ export function TransactionTable({ transactions, clientId }: TransactionTablePro
 
   return (
     <>
+      {/* Bulk receipt-request bar */}
+      {checkedIds.size > 0 && (
+        <div className="flex items-center gap-3 mb-3 px-1">
+          <span className="text-sm text-muted-foreground">{checkedIds.size} seleccionada{checkedIds.size !== 1 ? "s" : ""}</span>
+          <Button size="sm" onClick={handleReceiptRequest} disabled={sendingRequest}>
+            <EnvelopeSimple className="mr-1.5 h-4 w-4" />
+            {sendingRequest ? "Enviando…" : "Pedir facturas"}
+          </Button>
+          <button
+            onClick={() => setCheckedIds(new Set())}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Limpiar
+          </button>
+        </div>
+      )}
+
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-8" />
             <TableHead>Fecha</TableHead>
             <TableHead>Descripción</TableHead>
             <TableHead>Cuenta</TableHead>
@@ -226,12 +329,22 @@ export function TransactionTable({ transactions, clientId }: TransactionTablePro
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map((tx) => (
+          {transactions.map((tx) => {
+            const needsReceipt = tx.expenseStatus !== "documented" && tx.inboxItems.length === 0
+            return (
             <TableRow
               key={tx.id}
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => setSelected(tx)}
             >
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                {needsReceipt && (
+                  <Checkbox
+                    checked={checkedIds.has(tx.id)}
+                    onCheckedChange={() => toggleCheck(tx.id)}
+                  />
+                )}
+              </TableCell>
               <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                 {format(new Date(tx.date), "d MMM yyyy", { locale: es })}
               </TableCell>
@@ -265,7 +378,8 @@ export function TransactionTable({ transactions, clientId }: TransactionTablePro
                 <ReceiptStatusBadge tx={tx} />
               </TableCell>
             </TableRow>
-          ))}
+            )
+          })}
         </TableBody>
       </Table>
 
@@ -307,16 +421,23 @@ export function TransactionTable({ transactions, clientId }: TransactionTablePro
                     <ExpenseTypeBadge type={selected.expenseType} />
                   </div>
                 )}
-                {selected.expenseStatus && (
+                {selected.entryId && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Estado</p>
-                    <p className="font-medium">
-                      {selected.expenseStatus === "documented"
-                        ? "Documentado"
-                        : selected.expenseStatus === "excluded"
-                          ? "Excluido"
-                          : "Pendiente"}
-                    </p>
+                    <p className="text-xs text-muted-foreground mb-1">Estado</p>
+                    <Select
+                      value={editStatus}
+                      onValueChange={handleStatusChange}
+                      disabled={savingStatus}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pendiente</SelectItem>
+                        <SelectItem value="verified">Verificado</SelectItem>
+                        <SelectItem value="excluded">Excluido</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
                 {selected.taxRate !== null && (
@@ -333,6 +454,26 @@ export function TransactionTable({ transactions, clientId }: TransactionTablePro
                     </p>
                   </div>
                 )}
+                {selected.entryId && counterparties.length > 0 && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground mb-1">Proveedor / Cliente</p>
+                    <Select
+                      value={editCounterpartyId ?? "none"}
+                      onValueChange={(v) => handleCounterpartyChange(v === "none" ? null : v)}
+                      disabled={savingCounterparty}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Sin asignar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sin asignar</SelectItem>
+                        {counterparties.map((cp) => (
+                          <SelectItem key={cp.id} value={cp.id}>{cp.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 {selected.pending && (
                   <div className="col-span-2">
                     <Badge variant="secondary" className="text-xs">
@@ -341,6 +482,21 @@ export function TransactionTable({ transactions, clientId }: TransactionTablePro
                   </div>
                 )}
               </div>
+
+              {selected.entryId && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Notas</Label>
+                  <Textarea
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    placeholder="Añade notas sobre esta transacción…"
+                    className="text-sm min-h-[60px]"
+                  />
+                  <Button size="sm" variant="outline" onClick={handleNotesSave} disabled={savingNotes}>
+                    {savingNotes ? "Guardando…" : "Guardar notas"}
+                  </Button>
+                </div>
+              )}
 
               <Separator />
 

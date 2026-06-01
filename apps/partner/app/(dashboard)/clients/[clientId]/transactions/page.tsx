@@ -4,6 +4,7 @@ import {
   getClientTransactions,
   getClientTransactionStats,
 } from "@/features/transactions/queries/get-client-transactions"
+import { getClientCounterparties } from "@/features/transactions/queries/get-client-counterparties"
 import { TransactionFilters } from "@/features/transactions/components/transaction-filters"
 import { TransactionPagination } from "@/features/transactions/components/transaction-pagination"
 import { TransactionTable } from "@/features/transactions/components/transaction-table"
@@ -40,7 +41,7 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
 
   const ctx = await getPartnerAuthContext()
 
-  const [{ items, total, pages }, stats] = await Promise.all([
+  const [{ items, total, pages }, stats, counterparties] = await Promise.all([
     getClientTransactions(ctx.organizationId, clientId, {
       page,
       pageSize: PAGE_SIZE,
@@ -50,6 +51,7 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
       to: dateTo ? new Date(dateTo) : undefined,
     }),
     getClientTransactionStats(ctx.organizationId, clientId),
+    getClientCounterparties(ctx.organizationId, clientId),
   ])
 
   return (
@@ -125,7 +127,7 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
           <CardTitle className="text-sm">Movimientos</CardTitle>
         </CardHeader>
         <CardContent>
-          <TransactionTable transactions={items} clientId={clientId} />
+          <TransactionTable transactions={items} clientId={clientId} counterparties={counterparties} />
           <TransactionPagination
             clientId={clientId}
             currentPage={page}
