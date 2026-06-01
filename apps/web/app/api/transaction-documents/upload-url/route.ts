@@ -4,15 +4,7 @@ import { prisma } from "@/lib/db"
 import { uploadFile, getSignedDownloadUrl } from "@/lib/storage/r2"
 import { randomUUID } from "crypto"
 
-const ALLOWED_TYPES = [
-  "application/pdf",
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/webp",
-]
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+import { UPLOAD_ACCEPTED_TYPES, UPLOAD_MAX_FILE_SIZE } from "@/lib/upload"
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,11 +31,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing file or transactionId" }, { status: 400 })
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!UPLOAD_ACCEPTED_TYPES.includes(file.type)) {
       return NextResponse.json({ error: `Invalid file type` }, { status: 400 })
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > UPLOAD_MAX_FILE_SIZE) {
       return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 })
     }
 
