@@ -14,7 +14,7 @@
     "amount": "Amount",
     "status": "Status",
     "matchedTo": "Matched to",
-    "noDocuments": "No documents yet. Upload receipts via Telegram or the upload button in any transaction.",
+    "noDocuments": "No documents yet. Upload a receipt using the button above, or send one via Telegram.",
     "transactionFallback": "Transaction"
   },
   "filters": {
@@ -57,6 +57,14 @@
     "actionFailed": "Action failed. Please try again.",
     "deleteFile": "Delete file",
     "deleted": "Document deleted"
+  },
+  "upload": {
+    "button": "Upload document",
+    "uploading": "Uploading...",
+    "success": "Document uploaded",
+    "error": "Upload failed",
+    "invalidType": "File type not supported. Use PDF, PNG, JPG or WEBP.",
+    "fileTooLarge": "File is too large. Maximum is 10 MB."
   },
   "pagination": {
     "total": "{count} documents",

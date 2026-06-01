@@ -14,7 +14,7 @@
     "amount": "Importe",
     "status": "Estado",
     "matchedTo": "Emparejado con",
-    "noDocuments": "Sin documentos aun. Sube recibos por Telegram o usa el boton de subida en cualquier transaccion.",
+    "noDocuments": "Sin documentos aun. Sube un recibo con el boton de arriba o envialo por Telegram.",
     "transactionFallback": "Transaccion"
   },
   "filters": {
@@ -57,6 +57,14 @@
     "actionFailed": "La accion fallo. Intentalo de nuevo.",
     "deleteFile": "Eliminar archivo",
     "deleted": "Documento eliminado"
+  },
+  "upload": {
+    "button": "Subir documento",
+    "uploading": "Subiendo...",
+    "success": "Documento subido",
+    "error": "Error al subir",
+    "invalidType": "Tipo de archivo no compatible. Usa PDF, PNG, JPG o WEBP.",
+    "fileTooLarge": "El archivo es demasiado grande. El maximo es 10 MB."
   },
   "pagination": {
     "total": "{count} documentos",
