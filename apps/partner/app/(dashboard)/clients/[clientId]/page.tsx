@@ -6,8 +6,10 @@ import { getClientOverview } from "@/features/clients/queries/get-client-overvie
 import { getClientExports } from "@/features/export/queries/get-client-exports"
 import { getClientVATSummary } from "@/features/analytics/queries/get-client-vat-summary"
 import { getClientProfitLoss } from "@/features/analytics/queries/get-client-profit-loss"
+import { getClientQuarterPendings } from "@/features/clients/queries/get-client-quarter-pendings"
 import { ClientVatCard } from "@/features/analytics/components/client-vat-card"
 import { ClientPLTable } from "@/features/analytics/components/client-pl-table"
+import { ClientPendingsCard } from "@/features/clients/components/client-pendings-card"
 import { ExportForm } from "@/components/export/export-form"
 import { BankReconnectButton } from "@/components/bank/bank-reconnect-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
@@ -71,7 +73,7 @@ export default async function ClientDetailPage({
   const { clientId } = await params
   const ctx = await getPartnerAuthContext()
 
-  const [client, overview, recentExports, partnerOrg, vatSummary, pl] = await Promise.all([
+  const [client, overview, recentExports, partnerOrg, vatSummary, pl, quarterPendings] = await Promise.all([
     getClientDetail(ctx.organizationId, clientId),
     getClientOverview(ctx.organizationId, clientId),
     getClientExports(ctx.organizationId, clientId),
@@ -81,6 +83,7 @@ export default async function ClientDetailPage({
     }),
     getClientVATSummary(ctx.organizationId, clientId),
     getClientProfitLoss(ctx.organizationId, clientId, 6),
+    getClientQuarterPendings(ctx.organizationId, clientId),
   ])
 
   const monthLabel = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })
@@ -237,6 +240,11 @@ export default async function ClientDetailPage({
           </Link>
         </Card>
       </div>
+
+      {/* ── Quarter pendings card ─────────────────────────────────────── */}
+      {quarterPendings.daysToClose <= 60 && (
+        <ClientPendingsCard clientId={clientId} pendings={quarterPendings} />
+      )}
 
       {/* ── P&L card ──────────────────────────────────────────────────── */}
       {pl.length > 0 && (
