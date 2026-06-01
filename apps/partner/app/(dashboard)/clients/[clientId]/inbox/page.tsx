@@ -78,6 +78,14 @@ export default async function ClientInboxPage({
                     })}
                   </span>
                 )}
+                {item.taxRate !== null && (
+                  <span>
+                    IVA {Math.round(item.taxRate * 100)}%
+                    {item.taxAmount !== null && (
+                      <> · {Number(item.taxAmount).toLocaleString("es-ES", { style: "currency", currency: item.currency })}</>
+                    )}
+                  </span>
+                )}
                 {item.date && (
                   <span>{item.date.toLocaleDateString("es-ES")}</span>
                 )}

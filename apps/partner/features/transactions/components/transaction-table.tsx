@@ -203,6 +203,20 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                     </p>
                   </div>
                 )}
+                {selected.taxRate !== null && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">IVA</p>
+                    <p className="font-medium">
+                      {Math.round(selected.taxRate * 100)}%
+                      {selected.taxAmount !== null && (
+                        <span className="text-muted-foreground">
+                          {" · "}
+                          {formatCurrency(selected.taxAmount, selected.currency)}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
                 {selected.pending && (
                   <div className="col-span-2">
                     <Badge variant="secondary" className="text-xs">

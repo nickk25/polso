@@ -11,6 +11,8 @@ export interface InboxItemSummary {
   status: string
   source: string
   transactionId: string | null
+  taxAmount: { toNumber: () => number } | null
+  taxRate: number | null
   createdAt: Date
 }
 
@@ -44,6 +46,8 @@ export async function getClientInbox(
         status: true,
         source: true,
         transactionId: true,
+        taxAmount: true,
+        taxRate: true,
         createdAt: true,
       },
     }),

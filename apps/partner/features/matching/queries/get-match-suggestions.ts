@@ -26,6 +26,8 @@ export interface MatchSuggestionWithDetails {
     amount: unknown
     currency: string
     date: Date | null
+    taxAmount: unknown
+    taxRate: number | null
   }
 }
 
@@ -73,6 +75,8 @@ export async function getMatchSuggestions(
           amount: true,
           currency: true,
           date: true,
+          taxAmount: true,
+          taxRate: true,
         },
       },
     },

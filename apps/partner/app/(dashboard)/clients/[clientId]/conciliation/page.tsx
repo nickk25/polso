@@ -107,6 +107,20 @@ export default async function ConciliationPage({
                         })}
                       </>
                     )}
+                    {s.inboxItem.taxRate !== null && (
+                      <>
+                        {" · "}IVA {Math.round((s.inboxItem.taxRate as number) * 100)}%
+                        {s.inboxItem.taxAmount !== null && (
+                          <>
+                            {" "}
+                            {Number(s.inboxItem.taxAmount).toLocaleString("es-ES", {
+                              style: "currency",
+                              currency: s.inboxItem.currency,
+                            })}
+                          </>
+                        )}
+                      </>
+                    )}
                   </p>
                   <a
                     href={`/api/inbox/${s.inboxItem.id}`}

@@ -13,6 +13,8 @@ export interface ClientTransaction {
   accountName: string
   expenseStatus: string | null
   expenseType: string | null
+  taxAmount: number | null
+  taxRate: number | null
   inboxItems: Array<{ id: string; fileName: string; status: string; source: string }>
 }
 
@@ -98,7 +100,7 @@ export async function getClientTransactions(
         currency: true,
         pending: true,
         account: { select: { name: true } },
-        entry: { select: { status: true, entryType: true } },
+        entry: { select: { status: true, entryType: true, taxAmount: true, taxRate: true } },
         inboxItems: {
           select: { id: true, fileName: true, status: true, source: true },
         },
@@ -115,6 +117,8 @@ export async function getClientTransactions(
       accountName: t.account.name,
       expenseStatus: t.entry?.status ?? null,
       expenseType: t.entry?.entryType ?? null,
+      taxAmount: t.entry?.taxAmount ?? null,
+      taxRate: t.entry?.taxRate ?? null,
     })),
   }
 }
