@@ -12,25 +12,33 @@ export async function updateClientEntryTaxAction(
   taxRate: number | null,
   taxAmount: number | null,
 ): Promise<ActionResponse<void>> {
-  const ctx = await getPartnerAuthContext()
-  if (ctx.orgType !== "partner") return errorResponse("Acceso no autorizado", "FORBIDDEN")
+  try {
+    const ctx = await getPartnerAuthContext()
+    if (ctx.orgType !== "partner") return errorResponse("Acceso no autorizado", "FORBIDDEN")
 
-  const link = await prisma.partnerClient.findFirst({
-    where: { partnerId: ctx.organizationId, clientId, status: "active" },
-  })
-  if (!link) return errorResponse("Acceso no autorizado", "FORBIDDEN")
+    const link = await prisma.partnerClient.findFirst({
+      where: { partnerId: ctx.organizationId, clientId, status: "active" },
+    })
+    if (!link) return errorResponse("Acceso no autorizado", "FORBIDDEN")
 
-  const entry = await prisma.entry.findFirst({
-    where: { transactionId, organizationId: clientId },
-    select: { id: true },
-  })
-  if (!entry) return errorResponse("Entrada no encontrada", "NOT_FOUND")
+    const entry = await prisma.entry.findFirst({
+      where: { transactionId, organizationId: clientId },
+      select: { id: true },
+    })
+    if (!entry) return errorResponse("Entrada no encontrada", "NOT_FOUND")
 
-  await prisma.entry.update({
-    where: { id: entry.id },
-    data: { taxRate, taxAmount },
-  })
+    await prisma.entry.update({
+      where: { id: entry.id },
+      data: { taxRate, taxAmount },
+    })
 
-  revalidatePath(`/clients/${clientId}/transactions`)
-  return successResponse(undefined)
+    revalidatePath(`/clients/${clientId}/transactions`)
+    return successResponse(undefined)
+  } catch (error) {
+    console.error("updateClientEntryTax error:", error)
+    return errorResponse(
+      error instanceof Error ? error.message : "Error al actualizar IVA",
+      "ERROR"
+    )
+  }
 }

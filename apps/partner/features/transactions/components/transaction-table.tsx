@@ -29,6 +29,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@polso/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@polso/ui/select"
 import { Paperclip, Receipt, ArrowSquareOut, TelegramLogo, WhatsappLogo, DownloadSimple, Eye, PencilSimple } from "@phosphor-icons/react"
 import { toast } from "@polso/ui/sonner"
 import { SPANISH_IVA_RATES } from "@polso/utils"
@@ -91,25 +98,32 @@ function VatCell({
           <p className="text-sm font-medium">Editar IVA</p>
           <div className="space-y-1">
             <Label className="text-xs">Tipo</Label>
-            <select
-              value={rate}
-              onChange={(e) => {
-                setRate(e.target.value)
-                if (e.target.value !== "" && tx.amount) {
-                  const r = parseFloat(e.target.value)
+            <Select
+              value={rate === "" ? "none" : rate}
+              onValueChange={(v) => {
+                const newRate = v === "none" ? "" : v
+                setRate(newRate)
+                if (newRate !== "" && tx.amount) {
+                  const r = parseFloat(newRate)
                   const calc = Math.round(Math.abs(tx.amount) * r / (1 + r) * 100) / 100
                   setAmount(String(calc))
+                } else {
+                  setAmount("")
                 }
               }}
-              className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
             >
-              <option value="">Sin IVA</option>
-              {SPANISH_IVA_RATES.filter((r) => r > 0).map((r) => (
-                <option key={r} value={String(r)}>
-                  {Math.round(r * 100)}%
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Sin IVA" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin IVA</SelectItem>
+                {SPANISH_IVA_RATES.filter((r) => r > 0).map((r) => (
+                  <SelectItem key={r} value={String(r)}>
+                    {Math.round(r * 100)}%
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Cuota IVA (€)</Label>

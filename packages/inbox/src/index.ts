@@ -2,14 +2,7 @@ import { prisma } from "@polso/db"
 import { extractReceiptData } from "@polso/agent/ocr"
 import { findBestMatches } from "@polso/matching"
 
-/**
- * Run OCR on a newly-uploaded InboxItem, update its extracted fields,
- * then find and persist the best matching transaction.
- *
- * Does NOT send WhatsApp/Telegram notifications — those are handled by the
- * webhook flows in apps/web which already have their own runMatchingForInboxItem.
- * Use this for vault, transaction-document, and partner uploads.
- */
+// OCR + matching pipeline for upload flows — no WhatsApp/Telegram notifications
 export async function processInboxItem(
   organizationId: string,
   inboxItemId: string,

@@ -32,9 +32,6 @@ export async function uploadInboxItemAction(
     })
     if (!link) return errorResponse("Client not found", "NOT_FOUND")
 
-    const ids: string[] = []
-    const deferred: Array<{ id: string; buffer: Buffer; contentType: string }> = []
-
     for (const f of input.files) {
       if (!UPLOAD_ACCEPTED_TYPES.includes(f.contentType)) {
         return errorResponse(`Tipo de archivo no soportado: ${f.fileName}`, "VALIDATION_ERROR")
@@ -42,31 +39,34 @@ export async function uploadInboxItemAction(
       if (f.fileSize > UPLOAD_MAX_FILE_SIZE) {
         return errorResponse(`Archivo demasiado grande: ${f.fileName}`, "VALIDATION_ERROR")
       }
-
-      const fileId = nanoid()
-      const ext = f.fileName.split(".").pop() ?? "bin"
-      const key = `inbox/${input.clientId}/${fileId}.${ext}`
-
-      const buffer = Buffer.from(f.fileData, "base64")
-      await uploadFile(key, buffer, f.contentType)
-
-      const item = await prisma.inboxItem.create({
-        data: {
-          organizationId: input.clientId,
-          fileName: f.fileName,
-          filePath: key,
-          contentType: f.contentType,
-          size: f.fileSize,
-          status: "processing",
-          source: "upload",
-        },
-      })
-
-      ids.push(item.id)
-      deferred.push({ id: item.id, buffer, contentType: f.contentType })
     }
 
-    for (const { id, buffer, contentType } of deferred) {
+    const items = await Promise.all(
+      input.files.map(async (f) => {
+        const fileId = nanoid()
+        const ext = f.fileName.split(".").pop() ?? "bin"
+        const key = `inbox/${input.clientId}/${fileId}.${ext}`
+        const buffer = Buffer.from(f.fileData, "base64")
+
+        await uploadFile(key, buffer, f.contentType)
+
+        const item = await prisma.inboxItem.create({
+          data: {
+            organizationId: input.clientId,
+            fileName: f.fileName,
+            filePath: key,
+            contentType: f.contentType,
+            size: f.fileSize,
+            status: "processing",
+            source: "upload",
+          },
+        })
+
+        return { id: item.id, buffer, contentType: f.contentType }
+      })
+    )
+
+    for (const { id, buffer, contentType } of items) {
       after(async () => {
         await processInboxItem(input.clientId, id, buffer, contentType)
         revalidatePath(`/clients/${input.clientId}/inbox`)
@@ -75,7 +75,7 @@ export async function uploadInboxItemAction(
     }
 
     revalidatePath(`/clients/${input.clientId}/inbox`)
-    return successResponse({ ids })
+    return successResponse({ ids: items.map((i) => i.id) })
   } catch (error) {
     console.error("upload-inbox-item error:", error)
     return errorResponse(
