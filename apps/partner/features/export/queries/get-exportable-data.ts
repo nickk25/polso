@@ -16,6 +16,8 @@ export interface ExportableTransaction {
   attachmentContentType: string | null
   conciliationStatus: "matched" | "unmatched"
   notes: string | null
+  taxRate: number | null
+  taxAmount: number | null
 }
 
 export async function getExportableData(
@@ -43,18 +45,15 @@ export async function getExportableData(
       amount: true,
       currency: true,
       account: { select: { name: true } },
-      expense: {
+      entry: {
         select: {
-          expenseType: true,
+          entryType: true,
           notes: true,
           status: true,
+          taxAmount: true,
+          taxRate: true,
           category: { select: { name: true } },
-          vendor: { select: { name: true } },
-          invoices: {
-            select: { fileName: true, filePath: true, mimeType: true },
-            take: 1,
-            orderBy: { createdAt: "desc" },
-          },
+          counterparty: { select: { name: true } },
         },
       },
       transactionAttachments: {
@@ -72,26 +71,16 @@ export async function getExportableData(
     merchantName: t.merchantName,
     amount: t.amount,
     currency: t.currency,
-    categoryName: t.expense?.category?.name ?? null,
-    expenseType: t.expense?.expenseType ?? null,
-    vendorName: t.expense?.vendor?.name ?? null,
+    categoryName: t.entry?.category?.name ?? null,
+    expenseType: t.entry?.entryType ?? null,
+    vendorName: t.entry?.counterparty?.name ?? null,
     accountName: t.account.name,
-    attachmentFileName:
-      t.transactionAttachments[0]?.inboxItem?.fileName ??
-      t.expense?.invoices[0]?.fileName ??
-      null,
-    attachmentFilePath:
-      t.transactionAttachments[0]?.inboxItem?.filePath ??
-      t.expense?.invoices[0]?.filePath ??
-      null,
-    attachmentContentType:
-      t.transactionAttachments[0]?.inboxItem?.contentType ??
-      t.expense?.invoices[0]?.mimeType ??
-      null,
-    conciliationStatus:
-      t.transactionAttachments.length > 0 || t.expense?.status === "documented"
-        ? "matched"
-        : "unmatched",
-    notes: t.expense?.notes ?? null,
+    attachmentFileName: t.transactionAttachments[0]?.inboxItem?.fileName ?? null,
+    attachmentFilePath: t.transactionAttachments[0]?.inboxItem?.filePath ?? null,
+    attachmentContentType: t.transactionAttachments[0]?.inboxItem?.contentType ?? null,
+    conciliationStatus: t.transactionAttachments.length > 0 ? "matched" : "unmatched",
+    notes: t.entry?.notes ?? null,
+    taxRate: t.entry?.taxRate ?? null,
+    taxAmount: t.entry?.taxAmount ?? null,
   }))
 }

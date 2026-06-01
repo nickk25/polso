@@ -78,13 +78,13 @@ export async function GET(request: NextRequest) {
             filePath: key,
             startDate: new Date(from),
             endDate: new Date(to),
-            expenseCount: rows.length,
-            invoiceCount: zipFiles.length - 1, // exclude the CSV itself
+            entryCount: rows.length,
+            documentCount: zipFiles.length - 1,
             status: "completed",
             completedAt: new Date(),
             generatedByOrgId: ctx.organizationId,
             includesPdf: false,
-            includesInvoices: true,
+            includesDocuments: true,
           },
         })
       )

@@ -7,7 +7,7 @@ export interface ClientExport {
   filePath: string
   startDate: Date
   endDate: Date
-  expenseCount: number | null
+  entryCount: number | null
   createdAt: Date
   generatedByName: string
 }
@@ -39,7 +39,7 @@ export async function getClientExports(
       filePath: true,
       startDate: true,
       endDate: true,
-      expenseCount: true,
+      entryCount: true,
       createdAt: true,
       generatedByOrgId: true,
     },

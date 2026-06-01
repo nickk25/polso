@@ -425,8 +425,8 @@ export default async function ClientDetailPage({
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-4">
-                        {e.expenseCount !== null && (
-                          <span className="text-xs text-muted-foreground">{e.expenseCount} filas</span>
+                        {e.entryCount !== null && (
+                          <span className="text-xs text-muted-foreground">{e.entryCount} filas</span>
                         )}
                         <DownloadSimple className="h-4 w-4 text-muted-foreground" />
                       </div>

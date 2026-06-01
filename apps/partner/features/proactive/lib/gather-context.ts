@@ -144,10 +144,11 @@ export async function getAnomalies(organizationId: string): Promise<{
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
 
-  // Recent expenses with category info
-  const recentExpenses = await prisma.expense.findMany({
+  // Recent expense entries with category info
+  const recentExpenses = await prisma.entry.findMany({
     where: {
       organizationId,
+      direction: "expense",
       createdAt: { gte: since },
       status: { not: "excluded" },
       categoryId: { not: null },
@@ -157,18 +158,19 @@ export async function getAnomalies(organizationId: string): Promise<{
       amount: true,
       description: true,
       categoryId: true,
+      currency: true,
       category: { select: { name: true } },
-      transaction: { select: { currency: true } },
     },
   })
 
   // Batch-fetch category averages for last 90 days
   const categoryIds = [...new Set(recentExpenses.map((e) => e.categoryId).filter(Boolean) as string[])]
 
-  const categoryAverages = await prisma.expense.groupBy({
+  const categoryAverages = await prisma.entry.groupBy({
     by: ["categoryId"],
     where: {
       organizationId,
+      direction: "expense",
       categoryId: { in: categoryIds },
       status: { not: "excluded" },
       date: { gte: ninetyDaysAgo },
@@ -198,12 +200,12 @@ export async function getAnomalies(organizationId: string): Promise<{
 
   const detected = detectAnomalies(inputs, { multiplier: 2, limit: 3 })
 
-  const currencyMap = new Map(recentExpenses.map((e) => [e.id, e.transaction?.currency ?? "EUR"]))
+  const currencyMap = new Map(recentExpenses.map((e) => [e.id, e.currency ?? "EUR"]))
 
   const anomalies: NonNullable<ProactiveContext["anomalies"]> = detected.map((a) => ({
     description: a.description,
     amount: a.amount,
-    currency: currencyMap.get(a.expenseId) ?? "EUR",
+    currency: currencyMap.get(a.entryId) ?? "EUR",
     categoryName: a.categoryName,
     categoryAvg: a.categoryAvg,
   }))
@@ -233,10 +235,11 @@ export async function getAnomalies(organizationId: string): Promise<{
   for (const pattern of recurringPatterns) {
     if (!pattern.expectedAmount) continue
 
-    // Check if there's an expense linked to this specific recurring pattern this month
-    const found = await prisma.expense.count({
+    // Check if there's an entry linked to this specific recurring pattern this month
+    const found = await prisma.entry.count({
       where: {
         organizationId,
+        direction: "expense",
         recurringPatternId: pattern.id,
         date: { gte: monthStart, lte: monthEnd },
       },
@@ -295,7 +298,7 @@ async function countConciliated(organizationId: string, from: Date, to: Date): P
       OR: [
         { transactionAttachments: { some: {} } },
         { inboxItems: { some: { transactionId: { not: null } } } },
-        { expense: { status: "documented" } },
+        { entry: { status: "verified" } },
       ],
     },
   })
@@ -312,10 +315,11 @@ async function getTopCategories(
   from: Date,
   to: Date
 ): Promise<Array<{ name: string; amount: number }>> {
-  const expenses = await prisma.expense.groupBy({
+  const expenses = await prisma.entry.groupBy({
     by: ["categoryId"],
     where: {
       organizationId,
+      direction: "expense",
       date: { gte: from, lte: to },
       status: { not: "excluded" },
       categoryId: { not: null },

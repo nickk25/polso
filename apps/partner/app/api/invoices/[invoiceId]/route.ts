@@ -13,20 +13,19 @@ export async function GET(
 
     const { invoiceId } = await params
 
-    const invoice = await prisma.expenseInvoice.findUnique({
+    const item = await prisma.inboxItem.findUnique({
       where: { id: invoiceId },
       select: {
         id: true,
         fileName: true,
         filePath: true,
-        mimeType: true,
+        contentType: true,
         organizationId: true,
       },
     })
 
-    if (!invoice) return new NextResponse("Not found", { status: 404 })
+    if (!item) return new NextResponse("Not found", { status: 404 })
 
-    // Verify partner has an active link to this client
     const userOrg = await prisma.userOrganization.findFirst({
       where: { userId: user.id },
       select: { organizationId: true },
@@ -37,19 +36,19 @@ export async function GET(
     const link = await prisma.partnerClient.findFirst({
       where: {
         partnerId: userOrg.organizationId,
-        clientId: invoice.organizationId,
+        clientId: item.organizationId,
         status: "active",
       },
     })
 
     if (!link) return new NextResponse("Forbidden", { status: 403 })
 
-    const { body, contentType } = await getFile(invoice.filePath)
+    const { body, contentType } = await getFile(item.filePath)
 
     return new NextResponse(Buffer.from(body), {
       headers: {
-        "Content-Type": contentType ?? invoice.mimeType ?? "application/octet-stream",
-        "Content-Disposition": `inline; filename="${invoice.fileName}"`,
+        "Content-Type": contentType ?? item.contentType ?? "application/octet-stream",
+        "Content-Disposition": `inline; filename="${item.fileName}"`,
       },
     })
   } catch (error) {

@@ -98,7 +98,7 @@ export async function getClientTransactions(
         currency: true,
         pending: true,
         account: { select: { name: true } },
-        expense: { select: { status: true, expenseType: true } },
+        entry: { select: { status: true, entryType: true } },
         inboxItems: {
           select: { id: true, fileName: true, status: true, source: true },
         },
@@ -113,8 +113,8 @@ export async function getClientTransactions(
     items: transactions.map((t) => ({
       ...t,
       accountName: t.account.name,
-      expenseStatus: t.expense?.status ?? null,
-      expenseType: t.expense?.expenseType ?? null,
+      expenseStatus: t.entry?.status ?? null,
+      expenseType: t.entry?.entryType ?? null,
     })),
   }
 }

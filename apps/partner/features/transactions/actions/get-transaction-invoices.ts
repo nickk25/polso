@@ -30,31 +30,33 @@ export async function getTransactionInvoicesAction(
         },
       },
       select: {
-        expense: {
+        transactionAttachments: {
           select: {
-            invoices: {
+            inboxItem: {
               select: {
                 id: true,
                 fileName: true,
-                fileSize: true,
-                mimeType: true,
+                size: true,
+                contentType: true,
                 createdAt: true,
               },
-              orderBy: { createdAt: "desc" },
             },
           },
+          orderBy: { inboxItem: { createdAt: "desc" } },
         },
       },
     })
 
     if (!transaction) return errorResponse("Not found", "NOT_FOUND")
 
-    const invoices = transaction.expense?.invoices ?? []
-
     return successResponse(
-      invoices.map((inv) => ({
-        ...inv,
-        downloadUrl: `/api/invoices/${inv.id}`,
+      transaction.transactionAttachments.map(({ inboxItem }) => ({
+        id: inboxItem.id,
+        fileName: inboxItem.fileName,
+        fileSize: inboxItem.size,
+        mimeType: inboxItem.contentType,
+        createdAt: inboxItem.createdAt,
+        downloadUrl: `/api/inbox/${inboxItem.id}`,
       }))
     )
   } catch (error) {

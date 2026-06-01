@@ -57,9 +57,10 @@ export async function getClientDetail(
         },
       },
     }),
-    prisma.expense.aggregate({
+    prisma.entry.aggregate({
       where: {
         organizationId: clientId,
+        direction: "expense",
         date: { gte: thirtyDaysAgo },
       },
       _sum: { amount: true },
