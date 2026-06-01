@@ -14,7 +14,7 @@
     "amount": "Amount",
     "status": "Status",
     "matchedTo": "Matched to",
-    "noDocuments": "No documents yet. Upload receipts via WhatsApp, Telegram, or the upload button.",
+    "noDocuments": "No documents yet. Upload receipts via Telegram or the upload button in any transaction.",
     "transactionFallback": "Transaction"
   },
   "filters": {
@@ -31,9 +31,31 @@
   },
   "sources": {
     "upload": "Upload",
-    "whatsapp": "WhatsApp",
     "telegram": "Telegram",
     "email": "Email"
+  },
+  "sheet": {
+    "title": "Document details",
+    "document": "Document",
+    "amount": "Amount",
+    "date": "Date",
+    "matchedTo": "Matched to",
+    "suggestedMatch": "Suggested match",
+    "confidence": "{value}% confidence",
+    "confirm": "Confirm match",
+    "reject": "Reject",
+    "findManually": "Find transaction",
+    "unlink": "Unlink",
+    "archive": "Archive",
+    "noMatch": "No matching transaction found",
+    "noMatchHint": "Search for a transaction manually or archive this document.",
+    "processing": "Processing...",
+    "processingHint": "We're analysing this document. Check back shortly.",
+    "searchPlaceholder": "Search by name or merchant...",
+    "searchNoResults": "No transactions found",
+    "searchHint": "Type to search for a transaction",
+    "actionFailed": "Action failed. Please try again.",
+    "deleteFile": "Delete file"
   },
   "pagination": {
     "total": "{count} documents",

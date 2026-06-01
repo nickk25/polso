@@ -14,7 +14,7 @@
     "amount": "Importe",
     "status": "Estado",
     "matchedTo": "Emparejado con",
-    "noDocuments": "Sin documentos aun. Sube recibos por WhatsApp, Telegram o el boton de subida.",
+    "noDocuments": "Sin documentos aun. Sube recibos por Telegram o usa el boton de subida en cualquier transaccion.",
     "transactionFallback": "Transaccion"
   },
   "filters": {
@@ -31,9 +31,31 @@
   },
   "sources": {
     "upload": "Subida",
-    "whatsapp": "WhatsApp",
     "telegram": "Telegram",
     "email": "Correo"
+  },
+  "sheet": {
+    "title": "Detalles del documento",
+    "document": "Documento",
+    "amount": "Importe",
+    "date": "Fecha",
+    "matchedTo": "Emparejado con",
+    "suggestedMatch": "Coincidencia sugerida",
+    "confidence": "{value}% de confianza",
+    "confirm": "Confirmar coincidencia",
+    "reject": "Rechazar",
+    "findManually": "Buscar transaccion",
+    "unlink": "Desvincular",
+    "archive": "Archivar",
+    "noMatch": "No se encontro transaccion coincidente",
+    "noMatchHint": "Busca una transaccion manualmente o archiva este documento.",
+    "processing": "Procesando...",
+    "processingHint": "Estamos analizando este documento. Vuelve en un momento.",
+    "searchPlaceholder": "Buscar por nombre o comercio...",
+    "searchNoResults": "No se encontraron transacciones",
+    "searchHint": "Escribe para buscar una transaccion",
+    "actionFailed": "La accion fallo. Intentalo de nuevo.",
+    "deleteFile": "Eliminar archivo"
   },
   "pagination": {
     "total": "{count} documentos",

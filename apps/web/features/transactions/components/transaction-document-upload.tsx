@@ -74,6 +74,7 @@ export function TransactionDocumentUpload({
         mimeType: doc.mimeType,
         createdAt: new Date(doc.createdAt),
         downloadUrl: doc.downloadUrl,
+        source: (doc.source as "document" | "inbox") ?? "document",
       })
 
       toast.success(t("invoices.uploaded"), { description: file.name })

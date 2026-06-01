@@ -56,40 +56,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
     }
 
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
-    const uniqueFileName = `${randomUUID()}_${sanitizedFileName}`
-    const key = `transaction-documents/${userOrg.organizationId}/${transactionId}/${uniqueFileName}`
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin"
+    const key = `inbox/${userOrg.organizationId}/${randomUUID()}.${ext}`
 
     const fileBuffer = Buffer.from(await file.arrayBuffer())
     await uploadFile(key, fileBuffer, file.type)
 
-    // Create document record and mark entry as verified
-    const [doc] = await prisma.$transaction([
-      prisma.transactionDocument.create({
+    // Create InboxItem + TransactionAttachment so the doc appears in both vault and drawer
+    const inboxItem = await prisma.$transaction(async (tx) => {
+      const item = await tx.inboxItem.create({
         data: {
           organizationId: userOrg.organizationId,
-          transactionId,
           fileName: file.name,
           filePath: key,
-          fileSize: file.size,
-          mimeType: file.type,
+          contentType: file.type,
+          size: file.size,
+          status: "done",
+          source: "upload",
+          transactionId,
         },
-      }),
-      ...(transaction.entry
-        ? [prisma.entry.update({ where: { id: transaction.entry.id }, data: { status: "verified" } })]
-        : []),
-    ])
+      })
+
+      await tx.transactionAttachment.create({
+        data: { transactionId, inboxItemId: item.id },
+      })
+
+      if (transaction.entry) {
+        await tx.entry.update({
+          where: { id: transaction.entry.id },
+          data: { status: "verified" },
+        })
+      }
+
+      return item
+    })
 
     const downloadUrl = await getSignedDownloadUrl(key, 3600)
 
     return NextResponse.json({
-      id: doc.id,
-      fileName: doc.fileName,
-      filePath: doc.filePath,
-      fileSize: doc.fileSize,
-      mimeType: doc.mimeType,
-      createdAt: doc.createdAt,
+      id: inboxItem.id,
+      fileName: inboxItem.fileName,
+      filePath: inboxItem.filePath,
+      fileSize: inboxItem.size,
+      mimeType: inboxItem.contentType,
+      createdAt: inboxItem.createdAt,
       downloadUrl,
+      source: "inbox",
     })
   } catch (error) {
     console.error("Error uploading transaction document:", error)
