@@ -4,6 +4,8 @@ import { getCurrentQuarter, getDaysToQuarterEnd } from "@polso/utils/quarters"
 export interface ClientQuarterStatus {
   clientId: string
   clientName: string
+  totalInQuarter: number
+  documentedInQuarter: number
   coverageQuarterPct: number | null
   ivaPendingCount: number
   ivaPendingAmount: number
@@ -89,6 +91,8 @@ export async function getPartnerQuarterRollup(
     return {
       clientId: link.clientId,
       clientName: link.client.name,
+      totalInQuarter: total,
+      documentedInQuarter: documented,
       coverageQuarterPct: total > 0 ? Math.round((documented / total) * 100) : null,
       ivaPendingCount: iva.count,
       ivaPendingAmount: iva.amount,

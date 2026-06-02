@@ -29,6 +29,10 @@ export interface TransactionFilters {
   to?: Date
   search?: string
   receiptStatus?: "con_recibo" | "sin_recibo"
+  ivaStatus?: "con_iva" | "sin_iva"
+  entryType?: "fixed" | "variable"
+  amountMin?: number
+  amountMax?: number
 }
 
 export interface TransactionStats {
@@ -46,7 +50,7 @@ async function verifyPartnerLink(partnerId: string, clientId: string) {
 }
 
 function buildWhere(clientId: string, filters: TransactionFilters) {
-  const { from, to, search, receiptStatus } = filters
+  const { from, to, search, receiptStatus, ivaStatus, entryType, amountMin, amountMax } = filters
 
   const conditions: Prisma.TransactionWhereInput[] = []
 
@@ -63,6 +67,25 @@ function buildWhere(clientId: string, filters: TransactionFilters) {
     conditions.push(transactionDocumentedWhere)
   } else if (receiptStatus === "sin_recibo") {
     conditions.push(transactionNotDocumentedWhere)
+  }
+
+  if (ivaStatus === "con_iva") {
+    conditions.push({ entry: { taxAmount: { not: null } } })
+  } else if (ivaStatus === "sin_iva") {
+    conditions.push({ entry: { taxAmount: null } })
+  }
+
+  if (entryType === "fixed") {
+    conditions.push({ entry: { entryType: "fixed" } })
+  } else if (entryType === "variable") {
+    conditions.push({ entry: { entryType: "variable" } })
+  }
+
+  if (amountMin && amountMin > 0) {
+    conditions.push({ OR: [{ amount: { gte: amountMin } }, { amount: { lte: -amountMin } }] })
+  }
+  if (amountMax && amountMax > 0) {
+    conditions.push({ amount: { gte: -amountMax, lte: amountMax } })
   }
 
   return {

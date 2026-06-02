@@ -67,7 +67,7 @@ export async function confirmSuggestionAction(
 
     await confirmSuggestionInternal(suggestionId, ctx.organizationId, clientId, ctx.userId)
 
-    revalidatePath(`/clients/${clientId}/conciliation`)
+    revalidatePath(`/clients/${clientId}/inbox`)
     revalidatePath(`/clients/${clientId}`)
 
     return successResponse(undefined)
@@ -102,7 +102,8 @@ export async function declineSuggestionAction(
       },
     })
 
-    revalidatePath(`/clients/${clientId}/conciliation`)
+    revalidatePath(`/clients/${clientId}/inbox`)
+    revalidatePath(`/clients/${clientId}`)
 
     return successResponse(undefined)
   } catch {

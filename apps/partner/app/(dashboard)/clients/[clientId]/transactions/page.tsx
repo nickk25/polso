@@ -22,6 +22,10 @@ interface PageProps {
     receiptStatus?: string
     dateFrom?: string
     dateTo?: string
+    ivaStatus?: string
+    entryType?: string
+    amountMin?: string
+    amountMax?: string
   }>
 }
 
@@ -38,6 +42,10 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
   const receiptStatus = (sp.receiptStatus as "con_recibo" | "sin_recibo") || undefined
   const dateFrom = sp.dateFrom || undefined
   const dateTo = sp.dateTo || undefined
+  const ivaStatus = (sp.ivaStatus as "con_iva" | "sin_iva") || undefined
+  const entryType = (sp.entryType as "fixed" | "variable") || undefined
+  const amountMin = sp.amountMin ? parseFloat(sp.amountMin) : undefined
+  const amountMax = sp.amountMax ? parseFloat(sp.amountMax) : undefined
 
   const ctx = await getPartnerAuthContext()
 
@@ -49,6 +57,10 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
       receiptStatus,
       from: dateFrom ? new Date(dateFrom) : undefined,
       to: dateTo ? new Date(dateTo) : undefined,
+      ivaStatus,
+      entryType,
+      amountMin,
+      amountMax,
     }),
     getClientTransactionStats(ctx.organizationId, clientId),
     getClientCounterparties(ctx.organizationId, clientId),
@@ -119,14 +131,15 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
         receiptStatus={receiptStatus}
         dateFrom={dateFrom}
         dateTo={dateTo}
+        ivaStatus={ivaStatus}
+        entryType={entryType}
+        amountMin={amountMin}
+        amountMax={amountMax}
       />
 
       {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Movimientos</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="pt-0 pb-0">
+        <CardContent className="p-0">
           <TransactionTable transactions={items} clientId={clientId} counterparties={counterparties} />
           <TransactionPagination
             clientId={clientId}

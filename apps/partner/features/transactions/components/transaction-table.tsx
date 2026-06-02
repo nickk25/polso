@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Badge } from "@polso/ui/badge"
@@ -26,6 +26,12 @@ import {
   SheetDescription,
 } from "@polso/ui/sheet"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@polso/ui/dropdown-menu"
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -38,7 +44,7 @@ import {
   SelectValue,
 } from "@polso/ui/select"
 import { Checkbox } from "@polso/ui/checkbox"
-import { Paperclip, Receipt, ArrowSquareOut, TelegramLogo, WhatsappLogo, DownloadSimple, Eye, PencilSimple, EnvelopeSimple } from "@phosphor-icons/react"
+import { Paperclip, Receipt, ArrowSquareOut, TelegramLogo, WhatsappLogo, DownloadSimple, Eye, PencilSimple, EnvelopeSimple, X } from "@phosphor-icons/react"
 import { toast } from "@polso/ui/sonner"
 import { SPANISH_IVA_RATES } from "@polso/utils"
 import {
@@ -48,6 +54,11 @@ import {
 import { updateClientEntryTaxAction } from "../actions/update-client-entry-tax"
 import { updateClientEntryAction } from "../actions/update-client-entry"
 import { sendReceiptRequestAction } from "../../proactive/actions/send-receipt-request"
+import {
+  bulkUpdateClientEntryStatusAction,
+  bulkUpdateClientEntryTypeAction,
+  bulkUpdateClientEntryTaxAction,
+} from "../actions/bulk-update-client-entries"
 import type { ClientTransaction } from "../queries/get-client-transactions"
 import type { ClientCounterparty } from "../queries/get-client-counterparties"
 
@@ -93,10 +104,10 @@ function VatCell({
       <PopoverTrigger asChild>
         <button
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground group"
+          className="w-full flex items-center justify-between gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded px-1.5 py-1 group transition-colors"
         >
-          {display ?? <span className="text-muted-foreground/50">—</span>}
-          <PencilSimple className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <span>{display ?? <span className="text-muted-foreground/50">—</span>}</span>
+          <PencilSimple className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-52" onClick={(e) => e.stopPropagation()}>
@@ -192,27 +203,71 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
   const [invoices, setInvoices] = useState<PartnerInvoice[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
 
-  // Bulk receipt request state
+  // Bulk selection state
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
   const [sendingRequest, setSendingRequest] = useState(false)
+  const lastClickedIndex = useRef<number | null>(null)
 
-  const needsReceiptIds = transactions
-    .filter((tx) => tx.expenseStatus !== "documented" && tx.inboxItems.length === 0)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && checkedIds.size > 0 && !selected) setCheckedIds(new Set())
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [checkedIds.size, selected])
+
+  const allSelected = transactions.length > 0 && transactions.every((tx) => checkedIds.has(tx.id))
+  const someSelected = checkedIds.size > 0 && !allSelected
+
+  const checkedTotal = transactions
+    .filter((tx) => checkedIds.has(tx.id))
+    .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
+  const checkedCurrency = transactions.find((tx) => checkedIds.has(tx.id))?.currency ?? "EUR"
+
+  const undocumentedCheckedIds = transactions
+    .filter((tx) => checkedIds.has(tx.id) && tx.expenseStatus !== "documented" && tx.inboxItems.length === 0)
     .map((tx) => tx.id)
 
-  function toggleCheck(txId: string) {
-    setCheckedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(txId)) next.delete(txId)
-      else next.add(txId)
-      return next
-    })
+  function toggleSelectAll() {
+    if (allSelected) setCheckedIds(new Set())
+    else setCheckedIds(new Set(transactions.map((tx) => tx.id)))
+  }
+
+  function toggleCheck(txId: string, index: number, shiftKey: boolean) {
+    if (shiftKey && lastClickedIndex.current !== null) {
+      const start = Math.min(lastClickedIndex.current, index)
+      const end = Math.max(lastClickedIndex.current, index)
+      setCheckedIds((prev) => {
+        const next = new Set(prev)
+        for (let i = start; i <= end; i++) {
+          const tx = transactions[i]
+          if (tx) next.add(tx.id)
+        }
+        return next
+      })
+    } else {
+      setCheckedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(txId)) next.delete(txId)
+        else next.add(txId)
+        return next
+      })
+    }
+    lastClickedIndex.current = index
+  }
+
+  const runBulk = async (fn: () => Promise<unknown>) => {
+    setBulkLoading(true)
+    await fn()
+    setBulkLoading(false)
+    setCheckedIds(new Set())
   }
 
   async function handleReceiptRequest() {
-    if (checkedIds.size === 0) return
+    if (undocumentedCheckedIds.length === 0) return
     setSendingRequest(true)
-    const result = await sendReceiptRequestAction(clientId, Array.from(checkedIds))
+    const result = await sendReceiptRequestAction(clientId, undocumentedCheckedIds)
     setSendingRequest(false)
     if (result.success) {
       toast.success("Solicitud enviada al cliente")
@@ -226,9 +281,11 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
   const [editStatus, setEditStatus] = useState<string>("pending")
   const [editCounterpartyId, setEditCounterpartyId] = useState<string | null>(null)
   const [editNotes, setEditNotes] = useState("")
+  const [editTaxRate, setEditTaxRate] = useState<string>("")
+  const [editTaxAmount, setEditTaxAmount] = useState<string>("")
   const [savingStatus, setSavingStatus] = useState(false)
   const [savingCounterparty, setSavingCounterparty] = useState(false)
-  const [savingNotes, setSavingNotes] = useState(false)
+  const [savingTax, setSavingTax] = useState(false)
 
   useEffect(() => {
     if (!selected) {
@@ -239,6 +296,8 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
     setEditStatus(selected.entryStatus ?? "pending")
     setEditCounterpartyId(selected.counterparty?.id ?? null)
     setEditNotes(selected.entryNotes ?? "")
+    setEditTaxRate(selected.taxRate !== null ? String(selected.taxRate) : "")
+    setEditTaxAmount(selected.taxAmount !== null ? String(selected.taxAmount) : "")
     getTransactionInvoicesAction(selected.id)
       .then((result) => {
         if (result.success) setInvoices(result.data)
@@ -272,13 +331,26 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
     }
   }
 
-  async function handleNotesSave() {
+  const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleNotesChange(value: string) {
+    setEditNotes(value)
+    if (!selected?.entryId) return
+    if (notesDebounceRef.current) clearTimeout(notesDebounceRef.current)
+    notesDebounceRef.current = setTimeout(async () => {
+      await updateClientEntryAction(clientId, selected.id, { notes: value || null })
+    }, 800)
+  }
+
+  async function handleTaxSave() {
     if (!selected) return
-    setSavingNotes(true)
-    const result = await updateClientEntryAction(clientId, selected.id, { notes: editNotes || null })
-    setSavingNotes(false)
+    setSavingTax(true)
+    const parsedRate = editTaxRate === "" ? null : parseFloat(editTaxRate)
+    const parsedAmount = editTaxAmount === "" ? null : parseFloat(editTaxAmount)
+    const result = await updateClientEntryTaxAction(clientId, selected.id, parsedRate, parsedAmount)
+    setSavingTax(false)
     if (result.success) {
-      toast.success("Notas guardadas")
+      toast.success("IVA actualizado")
     } else {
       toast.error(result.error ?? "Error al guardar")
     }
@@ -298,27 +370,77 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
 
   return (
     <>
-      {/* Bulk receipt-request bar */}
+      {/* Floating bulk action bar */}
       {checkedIds.size > 0 && (
-        <div className="flex items-center gap-3 mb-3 px-1">
-          <span className="text-sm text-muted-foreground">{checkedIds.size} seleccionada{checkedIds.size !== 1 ? "s" : ""}</span>
-          <Button size="sm" onClick={handleReceiptRequest} disabled={sendingRequest}>
-            <EnvelopeSimple className="mr-1.5 h-4 w-4" />
-            {sendingRequest ? "Enviando…" : "Pedir facturas"}
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg border bg-background px-4 py-2 shadow-lg">
+          <span className="text-sm font-medium">{checkedIds.size} seleccionada{checkedIds.size !== 1 ? "s" : ""}</span>
+          <span className="text-sm text-muted-foreground">
+            {checkedTotal.toLocaleString("es-ES", { style: "currency", currency: checkedCurrency, maximumFractionDigits: 0 })}
+          </span>
+          <div className="h-4 w-px bg-border" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" disabled={bulkLoading}>Estado</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryStatusAction(clientId, Array.from(checkedIds), "pending"))}>Pendiente</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryStatusAction(clientId, Array.from(checkedIds), "verified"))}>Verificado</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryStatusAction(clientId, Array.from(checkedIds), "excluded"))}>Excluido</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" disabled={bulkLoading}>Tipo</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryTypeAction(clientId, Array.from(checkedIds), "fixed"))}>Fijo</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryTypeAction(clientId, Array.from(checkedIds), "variable"))}>Variable</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" disabled={bulkLoading}>IVA</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryTaxAction(clientId, Array.from(checkedIds), null))}>Sin IVA</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryTaxAction(clientId, Array.from(checkedIds), 0.04))}>4%</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryTaxAction(clientId, Array.from(checkedIds), 0.10))}>10%</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => runBulk(() => bulkUpdateClientEntryTaxAction(clientId, Array.from(checkedIds), 0.21))}>21%</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {undocumentedCheckedIds.length > 0 && (
+            <>
+              <div className="h-4 w-px bg-border" />
+              <Button size="sm" onClick={handleReceiptRequest} disabled={sendingRequest || bulkLoading}>
+                <EnvelopeSimple className="mr-1.5 h-4 w-4" />
+                {sendingRequest ? "Enviando…" : `Pedir facturas (${undocumentedCheckedIds.length})`}
+              </Button>
+            </>
+          )}
+
+          <div className="h-4 w-px bg-border" />
+          <Button variant="ghost" size="sm" onClick={() => setCheckedIds(new Set())} disabled={bulkLoading}>
+            <X className="h-4 w-4" />
           </Button>
-          <button
-            onClick={() => setCheckedIds(new Set())}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Limpiar
-          </button>
         </div>
       )}
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-8" />
+            <TableHead className="w-8">
+              {transactions.length > 0 && (
+                <Checkbox
+                  checked={allSelected}
+                  data-indeterminate={someSelected}
+                  onCheckedChange={toggleSelectAll}
+                />
+              )}
+            </TableHead>
             <TableHead>Fecha</TableHead>
             <TableHead>Descripción</TableHead>
             <TableHead>Cuenta</TableHead>
@@ -329,7 +451,7 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map((tx) => {
+          {transactions.map((tx, txIndex) => {
             const needsReceipt = tx.expenseStatus !== "documented" && tx.inboxItems.length === 0
             return (
             <TableRow
@@ -337,13 +459,15 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => setSelected(tx)}
             >
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                {needsReceipt && (
+              <TableCell>
+                <div
+                  onClick={(e) => { e.stopPropagation(); toggleCheck(tx.id, txIndex, e.shiftKey) }}
+                >
                   <Checkbox
                     checked={checkedIds.has(tx.id)}
-                    onCheckedChange={() => toggleCheck(tx.id)}
+                    onCheckedChange={() => {}}
                   />
-                )}
+                </div>
               </TableCell>
               <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                 {format(new Date(tx.date), "d MMM yyyy", { locale: es })}
@@ -403,98 +527,124 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
           </SheetHeader>
 
           {selected && (
-            <div className="flex flex-col gap-5 p-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex flex-col gap-5 px-4 pb-4 overflow-y-auto">
+
+              {/* Read-only meta */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div>
-                  <p className="text-xs text-muted-foreground">Fecha</p>
-                  <p className="font-medium">
-                    {format(new Date(selected.date), "d MMMM yyyy", { locale: es })}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-0.5">Fecha</p>
+                  <p className="font-medium">{format(new Date(selected.date), "d MMMM yyyy", { locale: es })}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Cuenta</p>
-                  <p className="font-medium">{selected.accountName}</p>
+                  <p className="text-xs text-muted-foreground mb-0.5">Cuenta</p>
+                  <p className="font-medium truncate">{selected.accountName}</p>
                 </div>
-                {selected.expenseType && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Tipo</p>
-                    <ExpenseTypeBadge type={selected.expenseType} />
-                  </div>
-                )}
-                {selected.entryId && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Estado</p>
-                    <Select
-                      value={editStatus}
-                      onValueChange={handleStatusChange}
-                      disabled={savingStatus}
-                    >
-                      <SelectTrigger className="h-7 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="verified">Verificado</SelectItem>
-                        <SelectItem value="excluded">Excluido</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {selected.taxRate !== null && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">IVA</p>
-                    <p className="font-medium">
-                      {Math.round(selected.taxRate * 100)}%
-                      {selected.taxAmount !== null && (
-                        <span className="text-muted-foreground">
-                          {" · "}
-                          {formatCurrency(selected.taxAmount, selected.currency)}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                )}
-                {selected.entryId && counterparties.length > 0 && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-muted-foreground mb-1">Proveedor / Cliente</p>
-                    <Select
-                      value={editCounterpartyId ?? "none"}
-                      onValueChange={(v) => handleCounterpartyChange(v === "none" ? null : v)}
-                      disabled={savingCounterparty}
-                    >
-                      <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder="Sin asignar" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Sin asignar</SelectItem>
-                        {counterparties.map((cp) => (
-                          <SelectItem key={cp.id} value={cp.id}>{cp.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {selected.pending && (
-                  <div className="col-span-2">
-                    <Badge variant="secondary" className="text-xs">
-                      Pendiente de confirmación bancaria
-                    </Badge>
-                  </div>
-                )}
               </div>
 
+              {selected.pending && (
+                <Badge variant="secondary" className="text-xs w-fit">Pendiente de confirmación bancaria</Badge>
+              )}
+
               {selected.entryId && (
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Notas</Label>
-                  <Textarea
-                    value={editNotes}
-                    onChange={(e) => setEditNotes(e.target.value)}
-                    placeholder="Añade notas sobre esta transacción…"
-                    className="text-sm min-h-[60px]"
-                  />
-                  <Button size="sm" variant="outline" onClick={handleNotesSave} disabled={savingNotes}>
-                    {savingNotes ? "Guardando…" : "Guardar notas"}
-                  </Button>
+                <div className="flex flex-col gap-4">
+
+                  {/* Tipo + Estado */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1.5">Tipo</p>
+                      <ExpenseTypeBadge type={selected.expenseType} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1.5">Estado</p>
+                      <Select value={editStatus} onValueChange={handleStatusChange} disabled={savingStatus}>
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendiente</SelectItem>
+                          <SelectItem value="verified">Verificado</SelectItem>
+                          <SelectItem value="excluded">Excluido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* IVA */}
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">IVA</p>
+                    <div className="flex gap-2">
+                      <Select
+                        value={editTaxRate === "" ? "none" : editTaxRate}
+                        onValueChange={async (v) => {
+                          const newRate = v === "none" ? null : parseFloat(v)
+                          const rateStr = newRate === null ? "" : String(newRate)
+                          const gross = Math.abs(selected.amount)
+                          const newAmount = newRate ? Math.round(gross * newRate / (1 + newRate) * 100) / 100 : null
+                          const amountStr = newAmount === null ? "" : String(newAmount)
+                          setEditTaxRate(rateStr)
+                          setEditTaxAmount(amountStr)
+                          setSavingTax(true)
+                          await updateClientEntryTaxAction(clientId, selected.id, newRate, newAmount)
+                          setSavingTax(false)
+                        }}
+                        disabled={savingTax}
+                      >
+                        <SelectTrigger className="h-8 text-sm flex-1">
+                          <SelectValue placeholder="Sin IVA" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Sin IVA</SelectItem>
+                          {SPANISH_IVA_RATES.filter((r) => r > 0).map((r) => (
+                            <SelectItem key={r} value={String(r)}>{Math.round(r * 100)}%</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={editTaxAmount}
+                        onChange={(e) => setEditTaxAmount(e.target.value)}
+                        onBlur={handleTaxSave}
+                        placeholder="0.00 €"
+                        className="h-8 text-sm w-[100px]"
+                        disabled={savingTax}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Proveedor */}
+                  {counterparties.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1.5">Proveedor / Cliente</p>
+                      <Select
+                        value={editCounterpartyId ?? "none"}
+                        onValueChange={(v) => handleCounterpartyChange(v === "none" ? null : v)}
+                        disabled={savingCounterparty}
+                      >
+                        <SelectTrigger className="h-8 text-sm w-full">
+                          <SelectValue placeholder="Sin asignar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Sin asignar</SelectItem>
+                          {counterparties.map((cp) => (
+                            <SelectItem key={cp.id} value={cp.id}>{cp.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Notas */}
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">Notas</p>
+                    <Textarea
+                      value={editNotes}
+                      onChange={(e) => handleNotesChange(e.target.value)}
+                      placeholder="Añade notas sobre esta transacción…"
+                      className="text-sm min-h-[72px] shadow-none resize-none"
+                    />
+                  </div>
+
                 </div>
               )}
 

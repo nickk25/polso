@@ -1,5 +1,6 @@
 import { prisma, transactionNotDocumentedWhere } from "@polso/db"
 import { detectAnomalies } from "@polso/intelligence"
+import { getCurrentQuarter } from "@polso/utils/quarters"
 import {
   startOfWeek,
   endOfWeek,
@@ -15,7 +16,7 @@ import type { ProactiveContext } from "@polso/agent/proactive"
 export async function getUnmatchedTransactions(
   organizationId: string
 ): Promise<NonNullable<ProactiveContext["unmatchedTransactions"]>> {
-  const since = startOfMonth(new Date())
+  const since = getCurrentQuarter().start
 
   const transactions = await prisma.transaction.findMany({
     where: {

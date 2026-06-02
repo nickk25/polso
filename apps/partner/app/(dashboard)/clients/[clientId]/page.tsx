@@ -226,7 +226,7 @@ export default async function ClientDetailPage({
 
         {/* Sugerencias */}
         <Card className={overview.pendingSuggestionsCount > 0 ? "cursor-pointer hover:bg-muted/40 transition-colors" : ""}>
-          <Link href={`/clients/${clientId}/conciliation`} className="block">
+          <Link href={`/clients/${clientId}/inbox`} className="block">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Sugerencias</CardTitle>
               <Sparkle className="h-4 w-4 text-muted-foreground" />
@@ -241,139 +241,102 @@ export default async function ClientDetailPage({
         </Card>
       </div>
 
-      {/* ── Quarter pendings card ─────────────────────────────────────── */}
-      {quarterPendings.daysToClose <= 60 && (
-        <ClientPendingsCard clientId={clientId} pendings={quarterPendings} currency={currency} />
-      )}
+      {/* ── Work area ─────────────────────────────────────────────────── */}
+      <Card className="py-0">
+        {/* Three-column nav row — always visible */}
+        <div className="grid grid-cols-3 divide-x">
+          <Link
+            href={`/clients/${clientId}/inbox`}
+            className="flex flex-col gap-0.5 px-5 py-4 hover:bg-muted/50 transition-colors"
+          >
+            <span className="text-xs text-muted-foreground">Bandeja</span>
+            <span className={`text-2xl font-bold ${overview.pendingInboxCount > 0 ? "text-orange-500" : "text-green-600"}`}>
+              {overview.pendingInboxCount}
+            </span>
+            <span className="text-xs text-muted-foreground">sin conciliar</span>
+          </Link>
+          <Link
+            href={`/clients/${clientId}/inbox`}
+            className="flex flex-col gap-0.5 px-5 py-4 hover:bg-muted/50 transition-colors"
+          >
+            <span className="text-xs text-muted-foreground">Por conciliar</span>
+            <span className={`text-2xl font-bold ${overview.pendingSuggestionsCount > 0 ? "text-blue-500" : "text-green-600"}`}>
+              {overview.pendingSuggestionsCount}
+            </span>
+            <span className="text-xs text-muted-foreground">sugerencias</span>
+          </Link>
+          <Link
+            href={`/clients/${clientId}/transactions`}
+            className="flex items-center justify-between px-5 py-4 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-muted-foreground">Transacciones</span>
+              <span className="text-sm font-medium">Ver movimientos</span>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+          </Link>
+        </div>
 
-      {/* ── P&L card ──────────────────────────────────────────────────── */}
-      {pl.length > 0 && (
+        {/* Detail previews — only when items are pending */}
+        {(overview.recentPendingInbox.length > 0 || overview.topSuggestions.length > 0) && (
+          <div className="divide-y border-t">
+            {overview.recentPendingInbox.map((item) => (
+              <Link
+                key={item.id}
+                href={`/clients/${clientId}/inbox`}
+                className="flex items-center gap-3 px-6 py-3 hover:bg-muted/50 transition-colors"
+              >
+                <SourceIcon source={item.source} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{item.displayName ?? item.fileName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(item.createdAt, { locale: es, addSuffix: true })}
+                  </p>
+                </div>
+                {item.amount != null && (
+                  <span className="text-sm font-medium tabular-nums shrink-0">
+                    {formatAmount(item.amount, item.currency)}
+                  </span>
+                )}
+              </Link>
+            ))}
+            {overview.topSuggestions.map((s) => (
+              <Link
+                key={s.id}
+                href={`/clients/${clientId}/inbox`}
+                className="flex items-center gap-3 px-6 py-3 hover:bg-muted/50 transition-colors"
+              >
+                <Sparkle className="h-4 w-4 text-blue-400 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">
+                    {s.inboxItem.displayName ?? s.inboxItem.fileName}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {s.transaction.merchantName ?? s.transaction.name ?? "—"} ·{" "}
+                    {s.transaction.date.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                  </p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  {s.inboxItem.amount != null && (
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {formatAmount(s.inboxItem.amount, s.inboxItem.currency)}
+                    </span>
+                  )}
+                  <ConfidenceBadge score={s.confidenceScore} />
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              </Link>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* ── Quarter pendings + Bank accounts ──────────────────────────── */}
+      <div className={`grid gap-6 ${quarterPendings.daysToClose <= 60 ? "lg:grid-cols-2" : "grid-cols-1"}`}>
+        {quarterPendings.daysToClose <= 60 && (
+          <ClientPendingsCard clientId={clientId} pendings={quarterPendings} currency={currency} />
+        )}
         <Card>
-          <CardHeader>
-            <CardTitle>Pérdidas y ganancias — últimos 6 meses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ClientPLTable data={pl} currency={currency} />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Work area: inbox + suggestions ────────────────────────────── */}
-      <div className="grid gap-4 lg:grid-cols-2">
-
-        {/* Bandeja pendiente */}
-        <Card className="flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Bandeja pendiente</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {overview.pendingInboxCount === 0
-                  ? "Sin documentos pendientes"
-                  : `${overview.pendingInboxCount} sin conciliar`}
-              </p>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/clients/${clientId}/inbox`}>
-                Ver todos <ArrowRight className="ml-1 h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="flex-1 p-0">
-            {overview.recentPendingInbox.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                <CheckCircle className="h-10 w-10 text-green-500 mb-3" />
-                <p className="text-sm font-medium">Bandeja al día</p>
-                <p className="text-xs text-muted-foreground mt-1">No hay comprobantes pendientes.</p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {overview.recentPendingInbox.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/clients/${clientId}/inbox`}
-                    className="flex items-center gap-3 px-6 py-3 hover:bg-muted/50 transition-colors"
-                  >
-                    <SourceIcon source={item.source} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {item.displayName ?? item.fileName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(item.createdAt, { locale: es, addSuffix: true })}
-                      </p>
-                    </div>
-                    {item.amount != null && (
-                      <span className="text-sm font-medium tabular-nums shrink-0">
-                        {formatAmount(item.amount, item.currency)}
-                      </span>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Sugerencias de conciliación */}
-        <Card className="flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Sugerencias de conciliación</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {overview.pendingSuggestionsCount === 0
-                  ? "Sin matches pendientes"
-                  : `${overview.pendingSuggestionsCount} por confirmar`}
-              </p>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/clients/${clientId}/conciliation`}>
-                Ver todas <ArrowRight className="ml-1 h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="flex-1 p-0">
-            {overview.topSuggestions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                <CheckCircle className="h-10 w-10 text-green-500 mb-3" />
-                <p className="text-sm font-medium">Todo conciliado</p>
-                <p className="text-xs text-muted-foreground mt-1">No hay matches pendientes de revisión.</p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {overview.topSuggestions.map((s) => (
-                  <Link
-                    key={s.id}
-                    href={`/clients/${clientId}/conciliation`}
-                    className="flex items-center gap-3 px-6 py-3 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {s.inboxItem.displayName ?? s.inboxItem.fileName}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {s.transaction.merchantName ?? s.transaction.name ?? "—"} ·{" "}
-                        {s.transaction.date.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
-                      </p>
-                    </div>
-                    <div className="shrink-0 flex items-center gap-2">
-                      {s.inboxItem.amount != null && (
-                        <span className="text-xs text-muted-foreground tabular-nums">
-                          {formatAmount(s.inboxItem.amount, s.inboxItem.currency)}
-                        </span>
-                      )}
-                      <ConfidenceBadge score={s.confidenceScore} />
-                    </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── Bank accounts ─────────────────────────────────────────────── */}
-      <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Cuentas bancarias</CardTitle>
@@ -478,12 +441,25 @@ export default async function ClientDetailPage({
             })}
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
 
       {/* ── VAT Summary ───────────────────────────────────────────────── */}
       <Card>
         <ClientVatCard data={vatSummary} />
       </Card>
+
+      {/* ── P&L card ──────────────────────────────────────────────────── */}
+      {pl.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pérdidas y ganancias — últimos 6 meses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ClientPLTable data={pl} currency={currency} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Export ────────────────────────────────────────────────────── */}
       <Card>

@@ -9,9 +9,11 @@ import { toast } from "@polso/ui/sonner"
 export function SendReminderButton({
   clientId,
   lastContactedAt,
+  compact = false,
 }: {
   clientId: string
   lastContactedAt: string | null
+  compact?: boolean
 }) {
   const [loading, setLoading] = useState(false)
   const [lastSent, setLastSent] = useState(lastContactedAt)
@@ -35,6 +37,21 @@ export function SendReminderButton({
     } finally {
       setLoading(false)
     }
+  }
+
+  if (compact) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSend() }}
+        disabled={loading || isWithin24h}
+        title={isWithin24h ? "Ya se envió en las últimas 24h" : "Enviar recordatorio"}
+        className="h-7 w-7 shrink-0"
+      >
+        <PaperPlaneTilt className="h-3.5 w-3.5" />
+      </Button>
+    )
   }
 
   return (
