@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useTransition } from "react"
+import { useTransition, useState } from "react"
 import {
   Buildings,
   Gear,
@@ -48,14 +48,18 @@ function getInitials(name: string): string {
 
 interface AppSidebarProps {
   organizationName: string
+  organizationId: string
   userEmail: string | null
+  hasLogo?: boolean
 }
 
-export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
+export function AppSidebar({ organizationName, organizationId, userEmail, hasLogo = false }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [logoError, setLogoError] = useState(false)
   const initials = getInitials(organizationName)
+  const showLogo = hasLogo && !logoError
 
   function handleSignOut() {
     startTransition(async () => {
@@ -68,8 +72,18 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
     <Sidebar>
       <SidebarHeader className="h-12 border-b px-4 justify-center">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground font-bold text-xs">
-            P
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground font-bold text-xs overflow-hidden">
+            {showLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/api/org-logo/${organizationId}`}
+                alt=""
+                className="h-full w-full object-contain"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              "P"
+            )}
           </div>
           <span className="text-sm font-semibold">Polso Partner</span>
         </Link>
@@ -129,8 +143,13 @@ export function AppSidebar({ organizationName, userEmail }: AppSidebarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex w-full items-center gap-2 rounded-md p-1 hover:bg-sidebar-accent transition-colors">
-                <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0">
-                  {initials}
+                <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground font-semibold text-xs shrink-0 overflow-hidden">
+                  {showLogo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`/api/org-logo/${organizationId}`} alt="" className="h-full w-full object-contain" onError={() => setLogoError(true)} />
+                  ) : (
+                    initials
+                  )}
                 </div>
                 <div className="flex flex-col min-w-0 flex-1 text-left">
                   <span className="text-xs font-medium truncate">{organizationName}</span>

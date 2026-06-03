@@ -60,7 +60,12 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar organizationName={org.name} userEmail={user.email} />
+      <AppSidebar
+        organizationName={org.name}
+        organizationId={org.id}
+        userEmail={user.email}
+        hasLogo={!!org.logoFilePath}
+      />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
