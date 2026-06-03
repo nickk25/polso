@@ -2,7 +2,7 @@ import Link from "next/link"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { getClientList } from "@/features/clients/queries/get-client-list"
 import { Button } from "@polso/ui/button"
-import { Card, CardContent } from "@polso/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { UserPlus, Buildings, CheckCircle, Clock } from "@phosphor-icons/react/dist/ssr"
 import { ClientListTable } from "@/components/clients/client-list-table"
 
@@ -16,10 +16,7 @@ export default async function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {clients.length} cliente{clients.length !== 1 ? "s" : ""}
-        </p>
+      <div className="flex justify-end">
         <Button asChild size="sm">
           <Link href="/invite">
             <UserPlus className="mr-2 h-4 w-4" />
@@ -45,40 +42,34 @@ export default async function ClientsPage() {
         <>
           <div className="grid grid-cols-3 gap-4">
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl font-bold">{activeCount}</p>
-                    <p className="text-xs text-muted-foreground">activos</p>
-                  </div>
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Clientes activos</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{activeCount}</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl font-bold">{pendingCount}</p>
-                    <p className="text-xs text-muted-foreground">invitaciones pendientes</p>
-                  </div>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Invitaciones pendientes</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{pendingCount}</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-2xl font-bold ${inboxCount > 0 ? "text-orange-500" : ""}`}>
-                      {inboxCount}
-                    </p>
-                    <p className="text-xs text-muted-foreground">con bandeja pendiente</p>
-                  </div>
-                  <Buildings className="h-4 w-4 text-muted-foreground" />
-                </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Por conciliar</CardTitle>
+                <Buildings className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className={`text-2xl font-bold ${inboxCount > 0 ? "text-orange-500" : ""}`}>
+                  {inboxCount}
+                </p>
               </CardContent>
             </Card>
           </div>

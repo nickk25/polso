@@ -1,7 +1,7 @@
 import { Badge } from "@polso/ui/badge"
 
 const statusMap = {
-  active: { label: "Conectado", variant: "default" as const },
+  active: { label: "Conectado", variant: "outline" as const },
   pending: { label: "Pendiente", variant: "secondary" as const },
   disconnected: { label: "Desconectado", variant: "outline" as const },
 }

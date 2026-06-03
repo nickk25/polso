@@ -10,6 +10,7 @@ export interface PartnerClientSummary {
   clientName: string
   unmatchedInbox: number
   lastSyncedAt: Date | null
+  lastContactedAt: Date | null
 }
 
 export async function getClientList(
@@ -32,6 +33,11 @@ export async function getClientList(
             where: { status: { in: ["new", "no_match"] } },
             select: { id: true },
           },
+          proactiveMessages: {
+            select: { sentAt: true },
+            orderBy: { sentAt: "desc" },
+            take: 1,
+          },
         },
       },
     },
@@ -47,5 +53,6 @@ export async function getClientList(
     clientName: link.client.name,
     unmatchedInbox: link.client.inboxItems.length,
     lastSyncedAt: link.client.accounts[0]?.lastSyncedAt ?? null,
+    lastContactedAt: link.client.proactiveMessages[0]?.sentAt ?? null,
   }))
 }
