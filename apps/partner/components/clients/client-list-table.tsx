@@ -22,12 +22,13 @@ import {
   TableRow,
 } from "@polso/ui/table"
 import { ClientStatusBadge } from "./client-status-badge"
-import type { PartnerClientSummary } from "@/features/clients/queries/get-client-list"
+import { InvitationActionsMenu } from "./invitation-actions-menu"
+import type { PartnerClientRow } from "@/features/clients/queries/get-client-list"
 
 type InboxSort = "none" | "desc" | "asc"
 type ContactSort = "none" | "oldest" | "newest"
 
-export function ClientListTable({ clients }: { clients: PartnerClientSummary[] }) {
+export function ClientListTable({ clients }: { clients: PartnerClientRow[] }) {
   const router = useRouter()
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -38,9 +39,11 @@ export function ClientListTable({ clients }: { clients: PartnerClientSummary[] }
     let result = clients
 
     if (query.trim()) {
-      result = result.filter((c) =>
-        c.clientName.toLowerCase().includes(query.trim().toLowerCase())
-      )
+      const q = query.trim().toLowerCase()
+      result = result.filter((c) => {
+        const name = c.kind === "client" ? c.clientName : (c.clientName ?? c.email)
+        return name.toLowerCase().includes(q) || (c.kind === "invitation" && c.email.toLowerCase().includes(q))
+      })
     }
 
     if (statusFilter !== "all") {
@@ -48,15 +51,15 @@ export function ClientListTable({ clients }: { clients: PartnerClientSummary[] }
     }
 
     if (inboxSort !== "none") {
-      result = [...result].sort((a, b) =>
-        inboxSort === "desc"
-          ? b.unmatchedInbox - a.unmatchedInbox
-          : a.unmatchedInbox - b.unmatchedInbox
-      )
+      result = [...result].sort((a, b) => {
+        const av = a.kind === "client" ? a.unmatchedInbox : 0
+        const bv = b.kind === "client" ? b.unmatchedInbox : 0
+        return inboxSort === "desc" ? bv - av : av - bv
+      })
     } else if (contactSort !== "none") {
       result = [...result].sort((a, b) => {
-        const at = a.lastContactedAt?.getTime() ?? 0
-        const bt = b.lastContactedAt?.getTime() ?? 0
+        const at = a.kind === "client" ? (a.lastContactedAt?.getTime() ?? 0) : (a.invitedAt.getTime())
+        const bt = b.kind === "client" ? (b.lastContactedAt?.getTime() ?? 0) : (b.invitedAt.getTime())
         return contactSort === "oldest" ? at - bt : bt - at
       })
     }
@@ -84,7 +87,8 @@ export function ClientListTable({ clients }: { clients: PartnerClientSummary[] }
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="active">Conectado</SelectItem>
-            <SelectItem value="pending">Pendiente</SelectItem>
+            <SelectItem value="pending">Invitada</SelectItem>
+            <SelectItem value="expired">Expirada</SelectItem>
             <SelectItem value="disconnected">Desconectado</SelectItem>
           </SelectContent>
         </Select>
@@ -132,40 +136,73 @@ export function ClientListTable({ clients }: { clients: PartnerClientSummary[] }
               <TableHead className="w-32 hidden sm:table-cell">Estado</TableHead>
               <TableHead className="w-24 text-right">Por conciliar</TableHead>
               <TableHead className="w-44 hidden md:table-cell">Último contacto</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
                   {query || statusFilter !== "all" ? "Sin resultados" : "No hay clientes"}
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((client) => (
-                <TableRow
-                  key={client.id}
-                  className="cursor-pointer"
-                  onClick={() => router.push(`/clients/${client.clientId}`)}
-                >
-                  <TableCell className="font-medium">{client.clientName}</TableCell>
-                  <TableCell className="w-32 hidden sm:table-cell">
-                    <ClientStatusBadge status={client.status} />
-                  </TableCell>
-                  <TableCell className="w-24 text-right tabular-nums">
-                    {client.unmatchedInbox > 0 ? (
-                      <span className="font-medium text-orange-500">{client.unmatchedInbox}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="w-44 hidden md:table-cell text-muted-foreground">
-                    {client.lastContactedAt
-                      ? formatDistanceToNow(client.lastContactedAt, { locale: es, addSuffix: true })
-                      : "Sin contactar"}
-                  </TableCell>
-                </TableRow>
-              ))
+              filtered.map((row) => {
+                if (row.kind === "invitation") {
+                  return (
+                    <TableRow key={`inv-${row.id}`}>
+                      <TableCell className="font-medium">
+                        <div>
+                          <p>{row.clientName ?? "—"}</p>
+                          <p className="text-xs text-muted-foreground">{row.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="w-32 hidden sm:table-cell">
+                        <ClientStatusBadge status={row.status} />
+                      </TableCell>
+                      <TableCell className="w-24 text-right text-muted-foreground">—</TableCell>
+                      <TableCell className="w-44 hidden md:table-cell text-muted-foreground">
+                        {formatDistanceToNow(row.invitedAt, { locale: es, addSuffix: true })}
+                      </TableCell>
+                      <TableCell className="w-10">
+                        <InvitationActionsMenu
+                          invitationId={row.id}
+                          email={row.email}
+                          token={row.token}
+                          status={row.status}
+                          emailSentAt={row.emailSentAt}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )
+                }
+
+                return (
+                  <TableRow
+                    key={`client-${row.id}`}
+                    className="cursor-pointer"
+                    onClick={() => router.push(`/clients/${row.clientId}`)}
+                  >
+                    <TableCell className="font-medium">{row.clientName}</TableCell>
+                    <TableCell className="w-32 hidden sm:table-cell">
+                      <ClientStatusBadge status={row.status} />
+                    </TableCell>
+                    <TableCell className="w-24 text-right tabular-nums">
+                      {row.unmatchedInbox > 0 ? (
+                        <span className="font-medium text-orange-500">{row.unmatchedInbox}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="w-44 hidden md:table-cell text-muted-foreground">
+                      {row.lastContactedAt
+                        ? formatDistanceToNow(row.lastContactedAt, { locale: es, addSuffix: true })
+                        : "Sin contactar"}
+                    </TableCell>
+                    <TableCell className="w-10" />
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>

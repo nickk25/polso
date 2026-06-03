@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 
 export interface PartnerClientSummary {
+  kind: "client"
   id: string
   partnerId: string
   clientId: string
@@ -13,37 +14,65 @@ export interface PartnerClientSummary {
   lastContactedAt: Date | null
 }
 
+export interface PartnerInvitationSummary {
+  kind: "invitation"
+  id: string
+  email: string
+  clientName: string | null
+  status: "pending" | "expired" | "revoked"
+  emailStatus: string | null
+  emailSentAt: Date | null
+  invitedAt: Date
+  expiresAt: Date
+  token: string
+}
+
+export type PartnerClientRow = PartnerClientSummary | PartnerInvitationSummary
+
 export async function getClientList(
   partnerId: string
-): Promise<PartnerClientSummary[]> {
-  const links = await prisma.partnerClient.findMany({
-    where: { partnerId },
-    orderBy: { invitedAt: "desc" },
-    include: {
-      client: {
-        select: {
-          id: true,
-          name: true,
-          accounts: {
-            select: { lastSyncedAt: true },
-            orderBy: { lastSyncedAt: "desc" },
-            take: 1,
-          },
-          inboxItems: {
-            where: { status: { in: ["new", "no_match"] } },
-            select: { id: true },
-          },
-          proactiveMessages: {
-            select: { sentAt: true },
-            orderBy: { sentAt: "desc" },
-            take: 1,
+): Promise<PartnerClientRow[]> {
+  const now = new Date()
+
+  const [links, invitations] = await Promise.all([
+    prisma.partnerClient.findMany({
+      where: { partnerId },
+      orderBy: { invitedAt: "desc" },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+            accounts: {
+              select: { lastSyncedAt: true },
+              orderBy: { lastSyncedAt: "desc" },
+              take: 1,
+            },
+            inboxItems: {
+              where: { status: { in: ["new", "no_match"] } },
+              select: { id: true },
+            },
+            proactiveMessages: {
+              select: { sentAt: true },
+              orderBy: { sentAt: "desc" },
+              take: 1,
+            },
           },
         },
       },
-    },
-  })
+    }),
+    prisma.invitation.findMany({
+      where: {
+        organizationId: partnerId,
+        role: "partner_client",
+        status: { in: ["pending", "revoked"] },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ])
 
-  return links.map((link) => ({
+  const clientRows: PartnerClientSummary[] = links.map((link) => ({
+    kind: "client",
     id: link.id,
     partnerId: link.partnerId,
     clientId: link.clientId,
@@ -55,4 +84,20 @@ export async function getClientList(
     lastSyncedAt: link.client.accounts[0]?.lastSyncedAt ?? null,
     lastContactedAt: link.client.proactiveMessages[0]?.sentAt ?? null,
   }))
+
+  const invitationRows: PartnerInvitationSummary[] = invitations.map((inv) => ({
+    kind: "invitation",
+    id: inv.id,
+    email: inv.email,
+    clientName: inv.clientName ?? null,
+    status: inv.status === "revoked" ? "revoked" : inv.expiresAt < now ? "expired" : "pending",
+    emailStatus: inv.emailStatus ?? null,
+    emailSentAt: inv.emailSentAt ?? null,
+    invitedAt: inv.createdAt,
+    expiresAt: inv.expiresAt,
+    token: inv.token,
+  }))
+
+  // Invitations first (most recent), then active clients
+  return [...invitationRows, ...clientRows]
 }

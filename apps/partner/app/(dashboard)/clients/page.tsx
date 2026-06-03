@@ -8,11 +8,11 @@ import { ClientListTable } from "@/components/clients/client-list-table"
 
 export default async function ClientsPage() {
   const ctx = await getPartnerAuthContext()
-  const clients = await getClientList(ctx.organizationId)
+  const rows = await getClientList(ctx.organizationId)
 
-  const activeCount = clients.filter((c) => c.status === "active").length
-  const pendingCount = clients.filter((c) => c.status === "pending").length
-  const inboxCount = clients.filter((c) => c.unmatchedInbox > 0).length
+  const activeCount = rows.filter((r) => r.kind === "client" && r.status === "active").length
+  const pendingCount = rows.filter((r) => r.kind === "invitation" && r.status === "pending").length
+  const inboxCount = rows.filter((r) => r.kind === "client" && r.unmatchedInbox > 0).length
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -25,7 +25,7 @@ export default async function ClientsPage() {
         </Button>
       </div>
 
-      {clients.length === 0 ? (
+      {rows.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Buildings className="h-10 w-10 text-muted-foreground mb-3" />
@@ -74,7 +74,7 @@ export default async function ClientsPage() {
             </Card>
           </div>
 
-          <ClientListTable clients={clients} />
+          <ClientListTable clients={rows} />
         </>
       )}
     </div>
