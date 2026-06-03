@@ -97,41 +97,52 @@ export function AgentConnectionsCard({
         <Separator />
 
         {/* Code section */}
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Genera un código y envíaselo al bot de Telegram para vincular tu cuenta.
-            El código expira en 5 minutos y es de un solo uso.
-          </p>
-
-          {code ? (
-            <div className="space-y-2">
+        {code ? (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Paso 1 — Copia tu código</p>
               <div className="flex items-center gap-4">
                 <span className="font-mono text-3xl font-bold tracking-[0.3em]">{code}</span>
-                <span className="text-sm text-muted-foreground tabular-nums">
-                  {minutes}:{seconds}
-                </span>
+                <span className="text-sm text-muted-foreground tabular-nums">{minutes}:{seconds}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Envía este código al bot. Una vez conectado, actualiza esta página para ver el estado.
-              </p>
-              <Button variant="ghost" size="sm" onClick={handleRefreshConnections}>
-                Actualizar estado
-              </Button>
             </div>
-          ) : (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Paso 2 — Abre el bot y envíale el código</p>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <a href="https://t.me/PolsoAgentBot" target="_blank" rel="noopener noreferrer">
+                    Abrir @PolsoAgentBot
+                  </a>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleRefreshConnections}>
+                  Actualizar estado
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Cómo conectar Telegram</p>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Genera un código de conexión</li>
+                <li>Abre <a href="https://t.me/PolsoAgentBot" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">@PolsoAgentBot</a> en Telegram</li>
+                <li>Envíale el código — quedará vinculado a tu cuenta</li>
+              </ol>
+            </div>
             <Button onClick={handleGenerate} disabled={loading} variant="outline">
               {loading && <SpinnerGap className="mr-2 h-4 w-4 animate-spin" />}
               Generar código de conexión
             </Button>
-          )}
+          </div>
+        )}
 
-          {error && (
-            <p className="flex items-center gap-1 text-sm text-destructive">
-              <Warning className="h-4 w-4" />
-              {error}
-            </p>
-          )}
-        </div>
+        {error && (
+          <p className="flex items-center gap-1 text-sm text-destructive">
+            <Warning className="h-4 w-4" />
+            {error}
+          </p>
+        )}
       </CardContent>
     </Card>
   )
