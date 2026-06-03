@@ -68,12 +68,14 @@ export async function extractReceiptData(
             text: `Extract data from this Spanish business document.
 
 Rules:
-- amount: total paid including IVA (not base imponible)
+- amount: total amount paid (TOTAL a pagar / TOTAL factura), including IVA — NOT the base imponible
+- vatAmount: the IVA amount charged (cuota de IVA / importe IVA). Look for lines labeled "IVA", "Cuota IVA", "Importe IVA". If multiple IVA rates, sum them.
+- vatRate: primary IVA rate as decimal — 0.21 (general), 0.10 (reducido), 0.04 (superreducido). Use the rate with the highest vatAmount if multiple.
 - currency: EUR unless clearly stated otherwise
-- date: YYYY-MM-DD format
-- cif: Spanish tax ID — empresas use CIF (B/A/C/... + 8 digits), autónomos use NIF (8 digits + letter)
-- documentType: "invoice" only if it has a número de factura, base imponible, and explicit IVA desglose
-- vatRate: Spanish IVA rates are 0.21 (general), 0.10 (reducido), 0.04 (superreducido)
+- date: document date in YYYY-MM-DD format (fecha de factura / fecha emisión, not fecha de vencimiento)
+- cif: Spanish tax ID of the VENDOR (emisor), not the buyer — empresas: CIF (B/A/C/G/... + 8 digits), autónomos: NIF (8 digits + letter)
+- documentType: "invoice" only if it has a número de factura, base imponible, and explicit IVA breakdown. "receipt" for simple tickets/recibos. "other" for anything unrecognizable.
+- invoiceNumber: número de factura if present (e.g. "F-2024-001", "2024/123")
 - Return null for any field not clearly visible in the document`,
           },
         ],

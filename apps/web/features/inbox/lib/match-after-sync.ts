@@ -54,6 +54,8 @@ export async function matchAfterSync(
       cif: true,
       waSenderId: true,
       tgChatId: true,
+      taxAmount: true,
+      taxRate: true,
     },
   })
 

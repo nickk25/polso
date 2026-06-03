@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import { after } from "next/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@polso/db"
@@ -215,6 +216,23 @@ async function processReceipt({
   try {
     const { data, contentType } = await downloadTelegramFile(fileId)
 
+    // Dedup by file hash — same PDF sent again re-runs matching on the existing item
+    const fileHash = createHash("sha256").update(data).digest("hex")
+
+    const existing = await prisma.inboxItem.findFirst({
+      where: { organizationId, fileHash },
+      select: { id: true, status: true },
+    })
+
+    if (existing) {
+      await sendTelegramText(
+        chatId,
+        "📂 Ya tengo este documento guardado. Buscando transacción coincidente..."
+      )
+      await runMatchingForInboxItem(organizationId, existing.id)
+      return
+    }
+
     const ocrData = await extractReceiptData(data, contentType)
 
     if (ocrData.documentType === "other") {
@@ -247,6 +265,7 @@ async function processReceipt({
         source: "telegram",
         tgMessageId: dedupKey,
         tgChatId: chatId,
+        fileHash,
         meta: ocrData as object,
       },
     })

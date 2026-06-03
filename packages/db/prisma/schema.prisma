@@ -593,6 +593,8 @@ model InboxItem {
   tgMessageId String? @unique @map("tg_message_id")
   tgChatId    String? @map("tg_chat_id")
 
+  fileHash String? @map("file_hash")
+
   meta Json?
 
   transactionId String? @map("transaction_id")
@@ -608,6 +610,7 @@ model InboxItem {
   @@index([organizationId])
   @@index([status])
   @@index([transactionId])
+  @@index([organizationId, fileHash])
   @@map("inbox")
 }
 
