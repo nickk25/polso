@@ -7,7 +7,10 @@ import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
 import { Separator } from "@polso/ui/separator"
 import { SpinnerGap, CheckCircle, Warning } from "@phosphor-icons/react"
+import { QRCodeSVG } from "qrcode.react"
 import { generateAgentLinkCodeAction } from "../actions/generate-agent-link"
+
+const TELEGRAM_BOT_URL = "https://t.me/PolsoAgentBot"
 
 interface AgentConnectionsCardProps {
   whatsappPhone: string | null
@@ -121,19 +124,24 @@ export function AgentConnectionsCard({
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Cómo conectar Telegram</p>
-              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                <li>Genera un código de conexión</li>
-                <li>Abre <a href="https://t.me/PolsoAgentBot" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">@PolsoAgentBot</a> en Telegram</li>
-                <li>Envíale el código — quedará vinculado a tu cuenta</li>
-              </ol>
+          <div className="flex items-start justify-between gap-6">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Cómo conectar Telegram</p>
+                <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>Genera un código de conexión</li>
+                  <li>Abre <a href={TELEGRAM_BOT_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">@PolsoAgentBot</a> en Telegram</li>
+                  <li>Envíale el código — quedará vinculado a tu cuenta</li>
+                </ol>
+              </div>
+              <Button onClick={handleGenerate} disabled={loading} variant="outline">
+                {loading && <SpinnerGap className="mr-2 h-4 w-4 animate-spin" />}
+                Generar código de conexión
+              </Button>
             </div>
-            <Button onClick={handleGenerate} disabled={loading} variant="outline">
-              {loading && <SpinnerGap className="mr-2 h-4 w-4 animate-spin" />}
-              Generar código de conexión
-            </Button>
+            <a href={TELEGRAM_BOT_URL} target="_blank" rel="noopener noreferrer" className="shrink-0">
+              <QRCodeSVG value={TELEGRAM_BOT_URL} size={96} className="rounded" />
+            </a>
           </div>
         )}
 
