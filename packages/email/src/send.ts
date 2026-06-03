@@ -25,6 +25,7 @@ import UserAcceptedInviteEmail from "../templates/user-accepted-invite"
 import PartnerClientInvitedEmail from "../templates/partner-client-invited"
 import PartnerClientConnectedEmail from "../templates/partner-client-connected"
 import PartnerDigestEmail from "../templates/partner-digest"
+import ClientWeeklyDigestEmail from "../templates/client-weekly-digest"
 
 export async function sendWaitlistConfirmation(email: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
@@ -467,6 +468,47 @@ export async function sendPartnerDigest(
       newClients,
       receiptsUploaded,
       pendingReceipts,
+      dashboardUrl,
+      locale,
+    }),
+  })
+}
+
+export async function sendClientWeeklyDigest(
+  to: string,
+  name: string,
+  orgName: string,
+  periodLabel: string,
+  totalSpend: number,
+  priorSpend: number,
+  deltaPct: number,
+  topCategories: { name: string; amount: number }[],
+  accountBalances: { name: string; balance: number; currency: string }[],
+  unmatchedReceiptsCount: number,
+  alertsTriggered: { type: string; title: string; severity: string }[],
+  largeTransactions: { description: string; amount: number; date: Date }[],
+  currency: string,
+  dashboardUrl: string,
+  locale?: Locale
+) {
+  const t = getEmailTranslations(locale)
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: t("clientWeeklyDigest.subject", { orgName }),
+    react: ClientWeeklyDigestEmail({
+      name,
+      orgName,
+      periodLabel,
+      totalSpend,
+      priorSpend,
+      deltaPct,
+      topCategories,
+      accountBalances,
+      unmatchedReceiptsCount,
+      alertsTriggered,
+      largeTransactions,
+      currency,
       dashboardUrl,
       locale,
     }),
