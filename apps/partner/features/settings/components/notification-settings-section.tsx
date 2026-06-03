@@ -66,11 +66,11 @@ export function NotificationSettingsSection({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">Desactivado</SelectItem>
-            <SelectItem value="daily">Diario (próximamente)</SelectItem>
-            <SelectItem value="weekly">Semanal (próximamente)</SelectItem>
+            <SelectItem value="daily" disabled>Diario (próximamente)</SelectItem>
+            <SelectItem value="weekly">Semanal (lunes)</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">El envío automático de resúmenes estará disponible próximamente.</p>
+        <p className="text-xs text-muted-foreground">El resumen semanal se envía los lunes por la mañana.</p>
       </div>
     </div>
   )
