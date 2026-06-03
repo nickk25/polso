@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { Button } from "@polso/ui/button"
 import { Input } from "@polso/ui/input"
 import { Label } from "@polso/ui/label"
 import {
@@ -46,110 +45,117 @@ interface OrganizationFormProps {
   }
 }
 
+type Values = {
+  name: string
+  currency: string
+  fiscalYearStart: number
+  dateFormat: string
+}
+
 export function OrganizationForm({ organization }: OrganizationFormProps) {
   const router = useRouter()
   const t = useTranslations("settings")
-  const tc = useTranslations("common")
-  const [loading, setLoading] = useState(false)
-  const [name, setName] = useState(organization.name)
-  const [currency, setCurrency] = useState(organization.currency)
-  const [fiscalYearStart, setFiscalYearStart] = useState(organization.fiscalYearStart)
-  const [dateFormat, setDateFormat] = useState(organization.dateFormat)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+  const [values, setValues] = useState<Values>({
+    name: organization.name,
+    currency: organization.currency,
+    fiscalYearStart: organization.fiscalYearStart,
+    dateFormat: organization.dateFormat,
+  })
 
-    const result = await updateOrganizationAction({
-      name,
-      currency,
-      fiscalYearStart,
-      dateFormat,
-    })
+  const save = useCallback(async (next: Values) => {
+    setStatus("saving")
+    const result = await updateOrganizationAction(next)
+    if (result.success) router.refresh()
+    setStatus("saved")
+    setTimeout(() => setStatus("idle"), 1500)
+  }, [router])
 
-    setLoading(false)
-
-    if (result.success) {
-      router.refresh()
-    }
-  }
+  const update = useCallback((patch: Partial<Values>, debounceMs = 300) => {
+    const next = { ...values, ...patch }
+    setValues(next)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => save(next), debounceMs)
+  }, [values, save])
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("organizationForm.title")}</CardTitle>
-          <CardDescription>
-            {t("organizationForm.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">{t("organizationForm.name")}</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("organizationForm.namePlaceholder")}
-            />
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{t("organizationForm.title")}</CardTitle>
+            <CardDescription>{t("organizationForm.description")}</CardDescription>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="currency">{t("organizationForm.currency")}</Label>
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger id="currency">
-                <SelectValue placeholder={t("organizationForm.currencyPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((curr) => (
-                  <SelectItem key={curr.value} value={curr.value}>
-                    {curr.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="h-4">
+            {status === "saving" && <p className="text-xs text-muted-foreground">{t("notificationsForm.saving")}</p>}
+            {status === "saved" && <p className="text-xs text-muted-foreground">{t("notificationsForm.saved")}</p>}
           </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="name">{t("organizationForm.name")}</Label>
+          <Input
+            id="name"
+            value={values.name}
+            onChange={(e) => update({ name: e.target.value }, 800)}
+            placeholder={t("organizationForm.namePlaceholder")}
+          />
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="fiscalYearStart">{t("organizationForm.fiscalYearStart")}</Label>
-            <Select
-              value={fiscalYearStart.toString()}
-              onValueChange={(v) => setFiscalYearStart(parseInt(v))}
-            >
-              <SelectTrigger id="fiscalYearStart">
-                <SelectValue placeholder={t("organizationForm.fiscalYearStartPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((month) => (
-                  <SelectItem key={month} value={month.toString()}>
-                    {t(`organizationForm.months.${month}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="currency">{t("organizationForm.currency")}</Label>
+          <Select value={values.currency} onValueChange={(v) => update({ currency: v })}>
+            <SelectTrigger id="currency">
+              <SelectValue placeholder={t("organizationForm.currencyPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {CURRENCIES.map((curr) => (
+                <SelectItem key={curr.value} value={curr.value}>
+                  {curr.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dateFormat">{t("organizationForm.dateFormat")}</Label>
-            <Select value={dateFormat} onValueChange={setDateFormat}>
-              <SelectTrigger id="dateFormat">
-                <SelectValue placeholder={t("organizationForm.dateFormatPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {DATE_FORMATS.map((format) => (
-                  <SelectItem key={format.value} value={format.value}>
-                    {format.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="fiscalYearStart">{t("organizationForm.fiscalYearStart")}</Label>
+          <Select
+            value={values.fiscalYearStart.toString()}
+            onValueChange={(v) => update({ fiscalYearStart: parseInt(v) })}
+          >
+            <SelectTrigger id="fiscalYearStart">
+              <SelectValue placeholder={t("organizationForm.fiscalYearStartPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((month) => (
+                <SelectItem key={month} value={month.toString()}>
+                  {t(`organizationForm.months.${month}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <Button type="submit" disabled={loading}>
-            {loading ? tc("actions.saving") : tc("actions.saveChanges")}
-          </Button>
-        </CardContent>
-      </Card>
-    </form>
+        <div className="space-y-2">
+          <Label htmlFor="dateFormat">{t("organizationForm.dateFormat")}</Label>
+          <Select value={values.dateFormat} onValueChange={(v) => update({ dateFormat: v })}>
+            <SelectTrigger id="dateFormat">
+              <SelectValue placeholder={t("organizationForm.dateFormatPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {DATE_FORMATS.map((format) => (
+                <SelectItem key={format.value} value={format.value}>
+                  {format.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

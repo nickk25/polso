@@ -141,6 +141,8 @@
     "runwayThresholdDescription": "Alertar cuando el runway caiga por debajo de este numero de meses",
     "unusualMultiplier": "Multiplicador de Gasto Inusual",
     "unusualMultiplierPlaceholder": "ej., 2",
-    "unusualMultiplierDescription": "Alertar cuando un gasto sea este numero de veces el promedio de la categoria (ej., 2 = 2x promedio)"
+    "unusualMultiplierDescription": "Alertar cuando un gasto sea este numero de veces el promedio de la categoria (ej., 2 = 2x promedio)",
+    "saving": "Guardando…",
+    "saved": "Guardado"
   }
 }

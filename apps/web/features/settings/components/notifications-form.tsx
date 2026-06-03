@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useCallback, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
-import { Button } from "@polso/ui/button"
 import { Input } from "@polso/ui/input"
 import { Label } from "@polso/ui/label"
 import { Switch } from "@polso/ui/switch"
@@ -27,121 +25,130 @@ interface NotificationsFormProps {
   }
 }
 
+type Values = {
+  emailAlerts: boolean
+  emailWeeklyDigest: boolean
+  emailLowBalance: boolean
+  emailSyncErrors: boolean
+  inAppAlerts: boolean
+  lowBalanceThreshold: string
+  highExpenseThreshold: string
+  emailHighSpend: boolean
+  emailRunwayCritical: boolean
+  emailUnusualActivity: boolean
+  runwayThreshold: string
+  unusualMultiplier: string
+}
+
 export function NotificationsForm({ settings }: NotificationsFormProps) {
-  const router = useRouter()
   const t = useTranslations("settings")
-  const tc = useTranslations("common")
-  const [loading, setLoading] = useState(false)
-  const [emailAlerts, setEmailAlerts] = useState(settings.emailAlerts)
-  const [emailWeeklyDigest, setEmailWeeklyDigest] = useState(settings.emailWeeklyDigest)
-  const [emailLowBalance, setEmailLowBalance] = useState(settings.emailLowBalance)
-  const [emailSyncErrors, setEmailSyncErrors] = useState(settings.emailSyncErrors)
-  const [inAppAlerts, setInAppAlerts] = useState(settings.inAppAlerts)
-  const [lowBalanceThreshold, setLowBalanceThreshold] = useState(
-    settings.lowBalanceThreshold?.toString() ?? ""
-  )
-  const [highExpenseThreshold, setHighExpenseThreshold] = useState(
-    settings.highExpenseThreshold?.toString() ?? ""
-  )
-  const [emailHighSpend, setEmailHighSpend] = useState(settings.emailHighSpend)
-  const [emailRunwayCritical, setEmailRunwayCritical] = useState(settings.emailRunwayCritical)
-  const [emailUnusualActivity, setEmailUnusualActivity] = useState(settings.emailUnusualActivity)
-  const [runwayThreshold, setRunwayThreshold] = useState(
-    settings.runwayThreshold?.toString() ?? "3"
-  )
-  const [unusualMultiplier, setUnusualMultiplier] = useState(
-    settings.unusualMultiplier?.toString() ?? "2"
-  )
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+  const [values, setValues] = useState<Values>({
+    emailAlerts: settings.emailAlerts,
+    emailWeeklyDigest: settings.emailWeeklyDigest,
+    emailLowBalance: settings.emailLowBalance,
+    emailSyncErrors: settings.emailSyncErrors,
+    inAppAlerts: settings.inAppAlerts,
+    lowBalanceThreshold: settings.lowBalanceThreshold?.toString() ?? "",
+    highExpenseThreshold: settings.highExpenseThreshold?.toString() ?? "",
+    emailHighSpend: settings.emailHighSpend,
+    emailRunwayCritical: settings.emailRunwayCritical,
+    emailUnusualActivity: settings.emailUnusualActivity,
+    runwayThreshold: settings.runwayThreshold?.toString() ?? "3",
+    unusualMultiplier: settings.unusualMultiplier?.toString() ?? "2",
+  })
 
-    const result = await updateNotificationsAction({
-      emailAlerts,
-      emailWeeklyDigest,
-      emailLowBalance,
-      emailSyncErrors,
-      inAppAlerts,
-      lowBalanceThreshold: lowBalanceThreshold ? parseFloat(lowBalanceThreshold) : null,
-      highExpenseThreshold: highExpenseThreshold ? parseFloat(highExpenseThreshold) : null,
-      emailHighSpend,
-      emailRunwayCritical,
-      emailUnusualActivity,
-      runwayThreshold: runwayThreshold ? parseFloat(runwayThreshold) : null,
-      unusualMultiplier: unusualMultiplier ? parseFloat(unusualMultiplier) : null,
+  const save = useCallback(async (next: Values) => {
+    setStatus("saving")
+    await updateNotificationsAction({
+      emailAlerts: next.emailAlerts,
+      emailWeeklyDigest: next.emailWeeklyDigest,
+      emailLowBalance: next.emailLowBalance,
+      emailSyncErrors: next.emailSyncErrors,
+      inAppAlerts: next.inAppAlerts,
+      lowBalanceThreshold: next.lowBalanceThreshold ? parseFloat(next.lowBalanceThreshold) : null,
+      highExpenseThreshold: next.highExpenseThreshold ? parseFloat(next.highExpenseThreshold) : null,
+      emailHighSpend: next.emailHighSpend,
+      emailRunwayCritical: next.emailRunwayCritical,
+      emailUnusualActivity: next.emailUnusualActivity,
+      runwayThreshold: next.runwayThreshold ? parseFloat(next.runwayThreshold) : null,
+      unusualMultiplier: next.unusualMultiplier ? parseFloat(next.unusualMultiplier) : null,
     })
+    setStatus("saved")
+    setTimeout(() => setStatus("idle"), 1500)
+  }, [])
 
-    setLoading(false)
-
-    if (result.success) {
-      router.refresh()
-    }
-  }
+  const update = useCallback((patch: Partial<Values>, debounceMs = 300) => {
+    const next = { ...values, ...patch }
+    setValues(next)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => save(next), debounceMs)
+  }, [values, save])
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between h-5">
+        {status === "saving" && (
+          <p className="text-xs text-muted-foreground">{t("notificationsForm.saving")}</p>
+        )}
+        {status === "saved" && (
+          <p className="text-xs text-muted-foreground">{t("notificationsForm.saved")}</p>
+        )}
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>{t("notificationsForm.emailTitle")}</CardTitle>
-          <CardDescription>
-            {t("notificationsForm.emailDescription")}
-          </CardDescription>
+          <CardDescription>{t("notificationsForm.emailDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label htmlFor="emailAlerts">{t("notificationsForm.emailAlerts")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("notificationsForm.emailAlertsDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("notificationsForm.emailAlertsDescription")}</p>
             </div>
             <Switch
               id="emailAlerts"
-              checked={emailAlerts}
-              onCheckedChange={setEmailAlerts}
+              checked={values.emailAlerts}
+              onCheckedChange={(v) => update({ emailAlerts: v })}
             />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label htmlFor="emailWeeklyDigest">{t("notificationsForm.weeklyDigest")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("notificationsForm.weeklyDigestDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("notificationsForm.weeklyDigestDescription")}</p>
             </div>
             <Switch
               id="emailWeeklyDigest"
-              checked={emailWeeklyDigest}
-              onCheckedChange={setEmailWeeklyDigest}
+              checked={values.emailWeeklyDigest}
+              onCheckedChange={(v) => update({ emailWeeklyDigest: v })}
             />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label htmlFor="emailLowBalance">{t("notificationsForm.lowBalanceAlerts")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("notificationsForm.lowBalanceAlertsDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("notificationsForm.lowBalanceAlertsDescription")}</p>
             </div>
             <Switch
               id="emailLowBalance"
-              checked={emailLowBalance}
-              onCheckedChange={setEmailLowBalance}
+              checked={values.emailLowBalance}
+              onCheckedChange={(v) => update({ emailLowBalance: v })}
             />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label htmlFor="emailSyncErrors">{t("notificationsForm.syncErrorAlerts")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("notificationsForm.syncErrorAlertsDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("notificationsForm.syncErrorAlertsDescription")}</p>
             </div>
             <Switch
               id="emailSyncErrors"
-              checked={emailSyncErrors}
-              onCheckedChange={setEmailSyncErrors}
+              checked={values.emailSyncErrors}
+              onCheckedChange={(v) => update({ emailSyncErrors: v })}
             />
           </div>
         </CardContent>
@@ -150,22 +157,18 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
       <Card>
         <CardHeader>
           <CardTitle>{t("notificationsForm.inAppTitle")}</CardTitle>
-          <CardDescription>
-            {t("notificationsForm.inAppDescription")}
-          </CardDescription>
+          <CardDescription>{t("notificationsForm.inAppDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label htmlFor="inAppAlerts">{t("notificationsForm.inAppAlerts")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("notificationsForm.inAppAlertsDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("notificationsForm.inAppAlertsDescription")}</p>
             </div>
             <Switch
               id="inAppAlerts"
-              checked={inAppAlerts}
-              onCheckedChange={setInAppAlerts}
+              checked={values.inAppAlerts}
+              onCheckedChange={(v) => update({ inAppAlerts: v })}
             />
           </div>
         </CardContent>
@@ -174,9 +177,7 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
       <Card>
         <CardHeader>
           <CardTitle>{t("notificationsForm.thresholdsTitle")}</CardTitle>
-          <CardDescription>
-            {t("notificationsForm.thresholdsDescription")}
-          </CardDescription>
+          <CardDescription>{t("notificationsForm.thresholdsDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -185,12 +186,10 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
               id="lowBalanceThreshold"
               type="number"
               placeholder={t("notificationsForm.lowBalanceThresholdPlaceholder")}
-              value={lowBalanceThreshold}
-              onChange={(e) => setLowBalanceThreshold(e.target.value)}
+              value={values.lowBalanceThreshold}
+              onChange={(e) => update({ lowBalanceThreshold: e.target.value }, 800)}
             />
-            <p className="text-sm text-muted-foreground">
-              {t("notificationsForm.lowBalanceThresholdDescription")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("notificationsForm.lowBalanceThresholdDescription")}</p>
           </div>
 
           <div className="space-y-2">
@@ -199,12 +198,10 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
               id="highExpenseThreshold"
               type="number"
               placeholder={t("notificationsForm.highExpenseThresholdPlaceholder")}
-              value={highExpenseThreshold}
-              onChange={(e) => setHighExpenseThreshold(e.target.value)}
+              value={values.highExpenseThreshold}
+              onChange={(e) => update({ highExpenseThreshold: e.target.value }, 800)}
             />
-            <p className="text-sm text-muted-foreground">
-              {t("notificationsForm.highExpenseThresholdDescription")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("notificationsForm.highExpenseThresholdDescription")}</p>
           </div>
         </CardContent>
       </Card>
@@ -212,50 +209,42 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
       <Card>
         <CardHeader>
           <CardTitle>{t("notificationsForm.alertTypesTitle")}</CardTitle>
-          <CardDescription>
-            {t("notificationsForm.alertTypesDescription")}
-          </CardDescription>
+          <CardDescription>{t("notificationsForm.alertTypesDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label htmlFor="emailHighSpend">{t("notificationsForm.emailHighSpend")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("notificationsForm.emailHighSpendDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("notificationsForm.emailHighSpendDescription")}</p>
             </div>
             <Switch
               id="emailHighSpend"
-              checked={emailHighSpend}
-              onCheckedChange={setEmailHighSpend}
+              checked={values.emailHighSpend}
+              onCheckedChange={(v) => update({ emailHighSpend: v })}
             />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label htmlFor="emailRunwayCritical">{t("notificationsForm.emailRunwayCritical")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("notificationsForm.emailRunwayCriticalDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("notificationsForm.emailRunwayCriticalDescription")}</p>
             </div>
             <Switch
               id="emailRunwayCritical"
-              checked={emailRunwayCritical}
-              onCheckedChange={setEmailRunwayCritical}
+              checked={values.emailRunwayCritical}
+              onCheckedChange={(v) => update({ emailRunwayCritical: v })}
             />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <Label htmlFor="emailUnusualActivity">{t("notificationsForm.emailUnusualActivity")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("notificationsForm.emailUnusualActivityDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("notificationsForm.emailUnusualActivityDescription")}</p>
             </div>
             <Switch
               id="emailUnusualActivity"
-              checked={emailUnusualActivity}
-              onCheckedChange={setEmailUnusualActivity}
+              checked={values.emailUnusualActivity}
+              onCheckedChange={(v) => update({ emailUnusualActivity: v })}
             />
           </div>
 
@@ -265,12 +254,10 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
               id="runwayThreshold"
               type="number"
               placeholder={t("notificationsForm.runwayThresholdPlaceholder")}
-              value={runwayThreshold}
-              onChange={(e) => setRunwayThreshold(e.target.value)}
+              value={values.runwayThreshold}
+              onChange={(e) => update({ runwayThreshold: e.target.value }, 800)}
             />
-            <p className="text-sm text-muted-foreground">
-              {t("notificationsForm.runwayThresholdDescription")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("notificationsForm.runwayThresholdDescription")}</p>
           </div>
 
           <div className="space-y-2">
@@ -279,19 +266,13 @@ export function NotificationsForm({ settings }: NotificationsFormProps) {
               id="unusualMultiplier"
               type="number"
               placeholder={t("notificationsForm.unusualMultiplierPlaceholder")}
-              value={unusualMultiplier}
-              onChange={(e) => setUnusualMultiplier(e.target.value)}
+              value={values.unusualMultiplier}
+              onChange={(e) => update({ unusualMultiplier: e.target.value }, 800)}
             />
-            <p className="text-sm text-muted-foreground">
-              {t("notificationsForm.unusualMultiplierDescription")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("notificationsForm.unusualMultiplierDescription")}</p>
           </div>
         </CardContent>
       </Card>
-
-      <Button type="submit" disabled={loading}>
-        {loading ? tc("actions.saving") : tc("actions.saveChanges")}
-      </Button>
-    </form>
+    </div>
   )
 }

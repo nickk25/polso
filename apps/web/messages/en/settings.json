@@ -141,6 +141,8 @@
     "runwayThresholdDescription": "Alert when runway falls below this number of months",
     "unusualMultiplier": "Unusual Spend Multiplier",
     "unusualMultiplierPlaceholder": "e.g., 2",
-    "unusualMultiplierDescription": "Alert when an expense is this many times the category average (e.g., 2 = 2x average)"
+    "unusualMultiplierDescription": "Alert when an expense is this many times the category average (e.g., 2 = 2x average)",
+    "saving": "Saving…",
+    "saved": "Saved"
   }
 }

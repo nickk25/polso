@@ -1,121 +1,114 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Button } from "@polso/ui/button";
-import { Label } from "@polso/ui/label";
+import { useCallback, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { Label } from "@polso/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@polso/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@polso/ui/card";
-import { updatePreferencesAction } from "../actions/update-preferences";
+} from "@polso/ui/select"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@polso/ui/card"
+import { updatePreferencesAction } from "../actions/update-preferences"
 
 const THEMES = [
   { value: "system", label: "System" },
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
-];
+]
 
 const LOCALES = [
   { value: "en-US", label: "English" },
   { value: "es-ES", label: "Español" },
-];
+]
 
 interface PreferencesFormProps {
   preferences: {
-    theme: string;
-    locale: string;
-  };
+    theme: string
+    locale: string
+  }
 }
 
+type Values = { theme: string; locale: string }
+
 export function PreferencesForm({ preferences }: PreferencesFormProps) {
-  const router = useRouter();
-  const t = useTranslations("settings");
-  const tc = useTranslations("common");
-  const [loading, setLoading] = useState(false);
-  const [theme, setTheme] = useState(preferences.theme);
-  const [locale, setLocale] = useState(preferences.locale);
+  const router = useRouter()
+  const t = useTranslations("settings")
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+  const [values, setValues] = useState<Values>({
+    theme: preferences.theme,
+    locale: preferences.locale,
+  })
 
-    const result = await updatePreferencesAction({
-      theme,
-      locale,
-    });
+  const save = useCallback(async (next: Values) => {
+    setStatus("saving")
+    const result = await updatePreferencesAction(next)
+    if (result.success) router.refresh()
+    setStatus("saved")
+    setTimeout(() => setStatus("idle"), 1500)
+  }, [router])
 
-    setLoading(false);
-
-    if (result.success) {
-      router.refresh();
-    }
-  }
+  const update = useCallback((patch: Partial<Values>) => {
+    const next = { ...values, ...patch }
+    setValues(next)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => save(next), 300)
+  }, [values, save])
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("preferences.title")}</CardTitle>
-          <CardDescription>
-            {t("preferences.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="theme">{t("preferences.theme")}</Label>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger id="theme">
-                <SelectValue placeholder="Select theme" />
-              </SelectTrigger>
-              <SelectContent>
-                {THEMES.map((themeOption) => (
-                  <SelectItem key={themeOption.value} value={themeOption.value}>
-                    {themeOption.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              {t("preferences.themeDescription")}
-            </p>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{t("preferences.title")}</CardTitle>
+            <CardDescription>{t("preferences.description")}</CardDescription>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="locale">{t("preferences.language")}</Label>
-            <Select value={locale} onValueChange={setLocale}>
-              <SelectTrigger id="locale">
-                <SelectValue placeholder="Select locale" />
-              </SelectTrigger>
-              <SelectContent>
-                {LOCALES.map((l) => (
-                  <SelectItem key={l.value} value={l.value}>
-                    {l.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              {t("preferences.languageDescription")}
-            </p>
+          <div className="h-4">
+            {status === "saving" && <p className="text-xs text-muted-foreground">{t("notificationsForm.saving")}</p>}
+            {status === "saved" && <p className="text-xs text-muted-foreground">{t("notificationsForm.saved")}</p>}
           </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="theme">{t("preferences.theme")}</Label>
+          <Select value={values.theme} onValueChange={(v) => update({ theme: v })}>
+            <SelectTrigger id="theme">
+              <SelectValue placeholder="Select theme" />
+            </SelectTrigger>
+            <SelectContent>
+              {THEMES.map((themeOption) => (
+                <SelectItem key={themeOption.value} value={themeOption.value}>
+                  {themeOption.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground">{t("preferences.themeDescription")}</p>
+        </div>
 
-          <Button type="submit" disabled={loading}>
-            {loading ? tc("actions.saving") : tc("actions.saveChanges")}
-          </Button>
-        </CardContent>
-      </Card>
-    </form>
-  );
+        <div className="space-y-2">
+          <Label htmlFor="locale">{t("preferences.language")}</Label>
+          <Select value={values.locale} onValueChange={(v) => update({ locale: v })}>
+            <SelectTrigger id="locale">
+              <SelectValue placeholder="Select locale" />
+            </SelectTrigger>
+            <SelectContent>
+              {LOCALES.map((l) => (
+                <SelectItem key={l.value} value={l.value}>
+                  {l.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground">{t("preferences.languageDescription")}</p>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
