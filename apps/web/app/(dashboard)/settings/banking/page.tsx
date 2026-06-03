@@ -54,7 +54,6 @@ export default async function BankingSettingsPage() {
                 limit="maxBankConnections"
                 currentCount={connectionCount}
                 maxAllowed={maxConnections}
-                showUpgradeAt={80}
               />
             </div>
           </CardHeader>

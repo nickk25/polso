@@ -1,9 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { ArrowRight, Lock } from "@phosphor-icons/react"
-import Link from "next/link"
-import { Button } from "@polso/ui/button"
+import { Lock } from "@phosphor-icons/react"
 import {
   Card,
   CardContent,
@@ -13,7 +11,7 @@ import {
 } from "@polso/ui/card"
 import { Progress } from "@polso/ui/progress"
 import type { PlanType, LimitKey } from "@/lib/plans"
-import { getPlanDisplayName, getUpgradePlan } from "@/lib/plans"
+import { getPlanDisplayName } from "@/lib/plans"
 
 interface UpgradePromptProps {
   limit: LimitKey
@@ -33,7 +31,6 @@ export function UpgradePrompt({
   description,
 }: UpgradePromptProps) {
   const t = useTranslations("billing")
-  const upgradePlan = getUpgradePlan(currentPlan)
   const limitLabel = limit === "maxBankConnections" ? t("upgrade.bankConnections") : t("upgrade.teamMembers")
   const usagePercent = Math.min(100, (currentCount / maxAllowed) * 100)
 
@@ -64,19 +61,6 @@ export function UpgradePrompt({
           <Progress value={usagePercent} className="h-2" />
         </div>
 
-        {upgradePlan && (
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">
-              {t("upgrade.upgradeFor", { plan: getPlanDisplayName(upgradePlan) })}
-            </p>
-            <Button asChild size="sm">
-              <Link href="/settings/billing">
-                {t("upgrade.upgrade")}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
   )
@@ -86,14 +70,12 @@ interface UsageIndicatorProps {
   limit: LimitKey
   currentCount: number
   maxAllowed: number
-  showUpgradeAt?: number // Show upgrade prompt when this percentage is reached (default: 100)
 }
 
 export function UsageIndicator({
   limit,
   currentCount,
   maxAllowed,
-  showUpgradeAt = 100,
 }: UsageIndicatorProps) {
   const t = useTranslations("billing")
   const usagePercent = Math.min(100, (currentCount / maxAllowed) * 100)
@@ -112,14 +94,6 @@ export function UsageIndicator({
       <span className={statusColor}>
         {t("upgrade.usageOf", { current: currentCount, max: maxAllowed, resource: limitLabel })}
       </span>
-      {usagePercent >= showUpgradeAt && (
-        <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs px-2.5" asChild>
-          <Link href="/settings/billing">
-            <ArrowRight className="h-3 w-3" />
-            {t("upgrade.upgrade")}
-          </Link>
-        </Button>
-      )}
     </div>
   )
 }
@@ -129,22 +103,11 @@ interface InlineUpgradeProps {
   planType?: PlanType
 }
 
-export function InlineUpgrade({ message, planType }: InlineUpgradeProps) {
-  const t = useTranslations("billing")
-  const upgradePlan = planType ? getUpgradePlan(planType) : "business"
-
+export function InlineUpgrade({ message }: InlineUpgradeProps) {
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center">
       <Lock className="h-8 w-8 text-muted-foreground" />
       <p className="text-sm text-muted-foreground">{message}</p>
-      {upgradePlan && (
-        <Button asChild size="sm" variant="outline">
-          <Link href="/settings/billing">
-            {t("upgrade.upgradeTo", { plan: getPlanDisplayName(upgradePlan) })}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      )}
     </div>
   )
 }

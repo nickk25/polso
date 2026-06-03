@@ -32,7 +32,6 @@ export default async function TeamSettingsPage() {
             limit="maxUsers"
             currentCount={currentCount}
             maxAllowed={maxUsers}
-            showUpgradeAt={80}
           />
           <InviteDialog disabled={isAtLimit} currentPlan={plan} />
         </div>

@@ -87,7 +87,6 @@ export function InviteDialog({ disabled, currentPlan }: InviteDialogProps) {
             <div className="py-4">
               <InlineUpgrade
                 message={t("invite.limitReached")}
-                planType={currentPlan}
               />
             </div>
           ) : (
