@@ -15,7 +15,8 @@ interface TriggerResult {
 export async function evaluateTriggers(
   organizationId: string,
   orgName: string,
-  now: Date
+  now: Date,
+  receiptReminderHours = 48
 ): Promise<TriggerResult | null> {
   const dayOfMonth = now.getDate()
   const dayOfWeek = now.getDay() // 0=Sun, 1=Mon
@@ -61,7 +62,7 @@ export async function evaluateTriggers(
   }
 
   // Priority 4: Receipt reminder
-  const alreadySentReminder = await wasSentWithin(organizationId, "receipt_reminder", 48)
+  const alreadySentReminder = await wasSentWithin(organizationId, "receipt_reminder", receiptReminderHours)
   if (!alreadySentReminder) {
     const unmatched = await getUnmatchedTransactions(organizationId)
     if (unmatched.length > 0) {

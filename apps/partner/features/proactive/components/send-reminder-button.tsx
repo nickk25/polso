@@ -9,17 +9,19 @@ import { toast } from "@polso/ui/sonner"
 export function SendReminderButton({
   clientId,
   lastContactedAt,
+  cooldownHours = 24,
   compact = false,
 }: {
   clientId: string
   lastContactedAt: string | null
+  cooldownHours?: number
   compact?: boolean
 }) {
   const [loading, setLoading] = useState(false)
   const [lastSent, setLastSent] = useState(lastContactedAt)
 
-  const isWithin24h = lastSent
-    ? Date.now() - new Date(lastSent).getTime() < 24 * 60 * 60 * 1000
+  const isWithinCooldown = lastSent
+    ? Date.now() - new Date(lastSent).getTime() < cooldownHours * 60 * 60 * 1000
     : false
 
   async function handleSend() {
@@ -45,8 +47,8 @@ export function SendReminderButton({
         variant="ghost"
         size="icon"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSend() }}
-        disabled={loading || isWithin24h}
-        title={isWithin24h ? "Ya se envió en las últimas 24h" : "Enviar recordatorio"}
+        disabled={loading || isWithinCooldown}
+        title={isWithinCooldown ? `Ya se envió en las últimas ${cooldownHours}h` : "Enviar recordatorio"}
         className="h-7 w-7 shrink-0"
       >
         <PaperPlaneTilt className="h-3.5 w-3.5" />
@@ -67,7 +69,7 @@ export function SendReminderButton({
           })}
         </span>
       )}
-      <Button variant="outline" size="sm" onClick={handleSend} disabled={loading || isWithin24h} title={isWithin24h ? "Ya se envió un recordatorio en las últimas 24h" : undefined}>
+      <Button variant="outline" size="sm" onClick={handleSend} disabled={loading || isWithinCooldown} title={isWithinCooldown ? `Ya se envió un recordatorio en las últimas ${cooldownHours}h` : undefined}>
         <PaperPlaneTilt className="mr-1 h-4 w-4" />
         {loading ? "Enviando..." : "Enviar recordatorio"}
       </Button>

@@ -66,6 +66,18 @@ async function runProactiveAgent(): Promise<CronResult> {
       name: true,
       whatsappPhone: true,
       telegramChatId: true,
+      partnerLinks: {
+        where: { status: "active" },
+        take: 1,
+        select: {
+          partner: {
+            select: {
+              receiptReminderHours: true,
+              autoRemindersEnabled: true,
+            },
+          },
+        },
+      },
     },
   })
 
@@ -83,7 +95,13 @@ async function runProactiveAgent(): Promise<CronResult> {
 
   for (const org of orgs) {
     try {
-      const trigger = await evaluateTriggers(org.id, org.name, now)
+      const partnerSettings = org.partnerLinks[0]?.partner
+      if (partnerSettings && !partnerSettings.autoRemindersEnabled) {
+        skipped++
+        continue
+      }
+      const receiptReminderHours = partnerSettings?.receiptReminderHours ?? 48
+      const trigger = await evaluateTriggers(org.id, org.name, now, receiptReminderHours)
 
       if (!trigger) {
         skipped++

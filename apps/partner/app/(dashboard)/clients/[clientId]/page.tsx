@@ -79,7 +79,7 @@ export default async function ClientDetailPage({
     getClientExports(ctx.organizationId, clientId),
     prisma.organization.findUnique({
       where: { id: ctx.organizationId },
-      select: { csvSeparator: true },
+      select: { csvSeparator: true, defaultExportRange: true, reminderCooldownHours: true },
     }),
     getClientVATSummary(ctx.organizationId, clientId),
     getClientProfitLoss(ctx.organizationId, clientId, 6),
@@ -135,7 +135,7 @@ export default async function ClientDetailPage({
           </div>
         </div>
         {(client.telegramChatId || client.whatsappPhone) && (
-          <SendReminderButton clientId={clientId} lastContactedAt={client.lastContactedAt} />
+          <SendReminderButton clientId={clientId} lastContactedAt={client.lastContactedAt} cooldownHours={partnerOrg?.reminderCooldownHours ?? 24} />
         )}
       </div>
 
@@ -468,7 +468,7 @@ export default async function ClientDetailPage({
           <p className="text-sm text-muted-foreground">Descarga las transacciones en CSV</p>
         </CardHeader>
         <CardContent className="flex flex-col gap-8 lg:flex-row lg:gap-12">
-          <ExportForm clientId={clientId} separator={partnerOrg?.csvSeparator ?? ";"} />
+          <ExportForm clientId={clientId} separator={partnerOrg?.csvSeparator ?? ";"} defaultExportRange={partnerOrg?.defaultExportRange ?? "month"} />
 
           {recentExports.length > 0 && (
             <div className="flex-1 min-w-0">

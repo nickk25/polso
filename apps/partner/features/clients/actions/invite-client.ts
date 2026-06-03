@@ -29,7 +29,7 @@ export async function inviteClientAction(
     const [partnerOrg] = await Promise.all([
       prisma.organization.findUnique({
         where: { id: ctx.organizationId },
-        select: { name: true },
+        select: { name: true, invitationExpiryDays: true },
       }),
     ])
 
@@ -47,7 +47,7 @@ export async function inviteClientAction(
         role: "partner_client",
         token,
         clientName: input.clientName.trim(),
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * (partnerOrg.invitationExpiryDays ?? 7)),
         invitedById: ctx.userId,
       },
     })

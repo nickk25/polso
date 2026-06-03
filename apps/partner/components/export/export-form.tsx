@@ -7,25 +7,41 @@ import { Label } from "@polso/ui/label"
 import { Input } from "@polso/ui/input"
 import { DownloadSimple, Spinner } from "@phosphor-icons/react"
 
+function getDefaultDates(range: string): { from: string; to: string } {
+  const now = new Date()
+  const today = now.toISOString().split("T")[0]
+
+  if (range === "quarter") {
+    const q = Math.floor(now.getMonth() / 3)
+    const from = new Date(now.getFullYear(), q * 3, 1).toISOString().split("T")[0]
+    return { from, to: today }
+  }
+
+  if (range === "year") {
+    const from = new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0]
+    return { from, to: today }
+  }
+
+  // default: month
+  const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
+  return { from, to: today }
+}
+
 export function ExportForm({
   clientId,
   separator = ";",
+  defaultExportRange = "month",
 }: {
   clientId: string
   separator?: string
+  defaultExportRange?: string
 }) {
   const today = new Date().toISOString().split("T")[0]
-  const firstOfMonth = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth(),
-    1
-  )
-    .toISOString()
-    .split("T")[0]
+  const defaults = getDefaultDates(defaultExportRange)
 
   const router = useRouter()
-  const [from, setFrom] = useState(firstOfMonth)
-  const [to, setTo] = useState(today)
+  const [from, setFrom] = useState(defaults.from)
+  const [to, setTo] = useState(defaults.to)
   const [loading, setLoading] = useState(false)
 
   async function handleExport() {

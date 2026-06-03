@@ -30,6 +30,7 @@ async function processRow(
   ctx: { organizationId: string; userId: string },
   partnerOrgName: string,
   partnerName: string,
+  invitationExpiryDays: number,
 ): Promise<BulkInviteRowResult> {
   const token = nanoid(32)
 
@@ -42,7 +43,7 @@ async function processRow(
         role: "partner_client",
         token,
         clientName: row.clientName,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * invitationExpiryDays),
         invitedById: ctx.userId,
       },
     })
@@ -115,7 +116,7 @@ export async function bulkInviteClientsAction(input: {
     const { user } = await neonAuth()
     const partnerOrg = await prisma.organization.findUnique({
       where: { id: ctx.organizationId },
-      select: { name: true },
+      select: { name: true, invitationExpiryDays: true },
     })
 
     if (!partnerOrg) {
@@ -174,7 +175,7 @@ export async function bulkInviteClientsAction(input: {
     for (let i = 0; i < toSend.length; i += CHUNK_SIZE) {
       const chunk = toSend.slice(i, i + CHUNK_SIZE)
       const chunkResults = await Promise.allSettled(
-        chunk.map((row) => processRow(row, ctx, partnerOrgName, partnerName)),
+        chunk.map((row) => processRow(row, ctx, partnerOrgName, partnerName, partnerOrg.invitationExpiryDays ?? 7)),
       )
       for (const settled of chunkResults) {
         if (settled.status === "fulfilled") {
