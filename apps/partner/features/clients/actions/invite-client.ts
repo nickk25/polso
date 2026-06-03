@@ -21,7 +21,7 @@ export async function inviteClientAction(
     const ctx = await getPartnerAuthContext()
 
     if (ctx.orgType !== "partner") {
-      return errorResponse("FORBIDDEN", "Solo las asesorías pueden invitar clientes")
+      return errorResponse("Solo las asesorías pueden invitar clientes", "FORBIDDEN")
     }
 
     const { user } = await neonAuth()
@@ -34,7 +34,7 @@ export async function inviteClientAction(
     ])
 
     if (!partnerOrg) {
-      return errorResponse("NOT_FOUND", "No se encontró la organización")
+      return errorResponse("No se encontró la organización", "NOT_FOUND")
     }
 
     const normalizedEmail = input.email.toLowerCase().trim()
@@ -87,7 +87,7 @@ export async function inviteClientAction(
 
     return successResponse({ invitationId: invitation.id })
   } catch {
-    return errorResponse("ERROR", "No se pudo enviar la invitación")
+    return errorResponse("No se pudo enviar la invitación", "ERROR")
   }
 }
 
@@ -107,6 +107,6 @@ export async function disconnectClientAction(
 
     return successResponse(undefined)
   } catch {
-    return errorResponse("ERROR", "No se pudo desconectar el cliente")
+    return errorResponse("No se pudo desconectar el cliente", "ERROR")
   }
 }

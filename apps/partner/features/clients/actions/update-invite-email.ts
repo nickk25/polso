@@ -17,12 +17,12 @@ export async function updatePartnerInviteEmailAction(
     const ctx = await getPartnerAuthContext()
 
     if (ctx.orgType !== "partner") {
-      return errorResponse("FORBIDDEN", "Solo las asesorías pueden editar invitaciones")
+      return errorResponse("Solo las asesorías pueden editar invitaciones", "FORBIDDEN")
     }
 
     const normalizedEmail = newEmail.toLowerCase().trim()
     if (!normalizedEmail || !normalizedEmail.includes("@")) {
-      return errorResponse("VALIDATION_ERROR", "Email inválido")
+      return errorResponse("Email inválido", "VALIDATION_ERROR")
     }
 
     const invitation = await prisma.invitation.findFirst({
@@ -31,11 +31,11 @@ export async function updatePartnerInviteEmailAction(
     })
 
     if (!invitation) {
-      return errorResponse("NOT_FOUND", "Invitación no encontrada")
+      return errorResponse("Invitación no encontrada", "NOT_FOUND")
     }
 
     if (invitation.status !== "pending") {
-      return errorResponse("VALIDATION_ERROR", "Solo se pueden editar invitaciones pendientes")
+      return errorResponse("Solo se pueden editar invitaciones pendientes", "VALIDATION_ERROR")
     }
 
     // Regenerate token so old link stops working
@@ -88,6 +88,6 @@ export async function updatePartnerInviteEmailAction(
 
     return successResponse(undefined)
   } catch {
-    return errorResponse("ERROR", "No se pudo actualizar la invitación")
+    return errorResponse("No se pudo actualizar la invitación", "ERROR")
   }
 }

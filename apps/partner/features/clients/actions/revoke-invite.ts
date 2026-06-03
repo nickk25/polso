@@ -13,7 +13,7 @@ export async function revokePartnerInviteAction(
     const ctx = await getPartnerAuthContext()
 
     if (ctx.orgType !== "partner") {
-      return errorResponse("FORBIDDEN", "Solo las asesorías pueden revocar invitaciones")
+      return errorResponse("Solo las asesorías pueden revocar invitaciones", "FORBIDDEN")
     }
 
     const invitation = await prisma.invitation.findFirst({
@@ -21,11 +21,11 @@ export async function revokePartnerInviteAction(
     })
 
     if (!invitation) {
-      return errorResponse("NOT_FOUND", "Invitación no encontrada")
+      return errorResponse("Invitación no encontrada", "NOT_FOUND")
     }
 
     if (invitation.status !== "pending") {
-      return errorResponse("VALIDATION_ERROR", "Solo se pueden revocar invitaciones pendientes")
+      return errorResponse("Solo se pueden revocar invitaciones pendientes", "VALIDATION_ERROR")
     }
 
     await prisma.invitation.update({
@@ -37,6 +37,6 @@ export async function revokePartnerInviteAction(
 
     return successResponse(undefined)
   } catch {
-    return errorResponse("ERROR", "No se pudo revocar la invitación")
+    return errorResponse("No se pudo revocar la invitación", "ERROR")
   }
 }
