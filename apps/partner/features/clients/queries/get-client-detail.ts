@@ -46,8 +46,12 @@ export async function getClientDetail(
         id: true,
         name: true,
         type: true,
-        telegramChatId: true,
         whatsappPhone: true,
+        userOrganizations: {
+          where: { telegramChatId: { not: null } },
+          select: { telegramChatId: true },
+          take: 1,
+        },
         accounts: {
           select: {
             id: true,
@@ -89,7 +93,12 @@ export async function getClientDetail(
   if (!client) notFound()
 
   return {
-    ...client,
+    id: client.id,
+    name: client.name,
+    type: client.type,
+    telegramChatId: client.userOrganizations[0]?.telegramChatId ?? null,
+    whatsappPhone: client.whatsappPhone,
+    accounts: client.accounts,
     lastContactedAt: lastMessage?.sentAt.toISOString() ?? null,
     unmatchedInbox,
     totalExpenses30d: expenseAgg._sum.amount ?? 0,

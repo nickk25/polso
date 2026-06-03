@@ -22,12 +22,23 @@ export async function sendReceiptRequestAction(
 
     const org = await prisma.organization.findUnique({
       where: { id: clientId },
-      select: { id: true, name: true, telegramChatId: true, whatsappPhone: true },
+      select: {
+        id: true,
+        name: true,
+        whatsappPhone: true,
+        userOrganizations: {
+          where: { telegramChatId: { not: null } },
+          select: { telegramChatId: true },
+          take: 1,
+        },
+      },
     })
     if (!org) return errorResponse("Cliente no encontrado", "NOT_FOUND")
-    if (!org.telegramChatId && !org.whatsappPhone) {
+    const telegramChatId = org.userOrganizations[0]?.telegramChatId ?? null
+    if (!telegramChatId && !org.whatsappPhone) {
       return errorResponse("El cliente no tiene canal vinculado", "VALIDATION_ERROR")
     }
+    const orgChannel = { id: org.id, name: org.name, telegramChatId, whatsappPhone: org.whatsappPhone }
 
     const transactions = await prisma.transaction.findMany({
       where: {
@@ -55,7 +66,7 @@ export async function sendReceiptRequestAction(
     }
 
     const content = await generateProactiveMessage(context)
-    const sent = await sendProactiveMessage(org, "receipt_request_list", content, context)
+    const sent = await sendProactiveMessage(orgChannel, "receipt_request_list", content, context)
 
     if (!sent) {
       return errorResponse(

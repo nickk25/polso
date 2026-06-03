@@ -35,11 +35,12 @@ if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
     after(answerCallbackQuery(callbackId))
 
     if (callbackData?.startsWith("confirm_") || callbackData?.startsWith("decline_")) {
-      const org = await prisma.organization.findFirst({
+      const membership = await prisma.userOrganization.findFirst({
         where: { telegramChatId: chatId },
-        select: { id: true },
+        select: { organizationId: true },
       })
-      if (!org) return NextResponse.json({ ok: true })
+      if (!membership) return NextResponse.json({ ok: true })
+      const org = { id: membership.organizationId }
 
       const parts = callbackData.split("_")
       const action = parts[0]! // "confirm" | "decline"
@@ -63,13 +64,13 @@ if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
   const chatId = String(message.chat.id)
   const messageId = message.message_id
 
-  // Resolve chat ID → organization
-  const org = await prisma.organization.findFirst({
+  // Resolve chat ID → organization via per-user membership
+  const membership = await prisma.userOrganization.findFirst({
     where: { telegramChatId: chatId },
-    select: { id: true },
+    select: { organizationId: true },
   })
 
-  if (!org) {
+  if (!membership) {
     // Check if this is a link code attempt (6-digit number)
     if (message.text) {
       const text = message.text.trim()
@@ -90,7 +91,7 @@ if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
     return NextResponse.json({ ok: true })
   }
 
-  const organizationId = org.id
+  const organizationId = membership.organizationId
 
   // ── Text: /start, opt-out commands, or unrecognized ────────────────────
   if (message.text) {
@@ -280,7 +281,7 @@ async function handleLinkCode(chatId: string, code: string): Promise<void> {
         usedAt: null,
         expiresAt: { gt: new Date() },
       },
-      select: { id: true, organizationId: true },
+      select: { id: true, organizationId: true, userId: true },
     })
 
     if (!linkCode) {
@@ -297,17 +298,17 @@ async function handleLinkCode(chatId: string, code: string): Promise<void> {
       data: { usedAt: new Date() },
     })
 
-    // Unlink from any other org that already uses this chat ID (reconect scenario)
-    await prisma.organization.updateMany({
+    // Unlink this chat ID from any other membership (reconnect scenario)
+    await prisma.userOrganization.updateMany({
       where: {
         telegramChatId: chatId,
-        NOT: { id: linkCode.organizationId },
+        NOT: { userId: linkCode.userId },
       },
       data: { telegramChatId: null },
     })
 
-    await prisma.organization.update({
-      where: { id: linkCode.organizationId },
+    await prisma.userOrganization.updateMany({
+      where: { userId: linkCode.userId, organizationId: linkCode.organizationId },
       data: { telegramChatId: chatId },
     })
 

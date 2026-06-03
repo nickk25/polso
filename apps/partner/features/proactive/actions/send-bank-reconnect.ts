@@ -23,7 +23,16 @@ export async function sendBankReconnectAction(
     const [org, account] = await Promise.all([
       prisma.organization.findUnique({
         where: { id: clientId },
-        select: { id: true, name: true, telegramChatId: true, whatsappPhone: true },
+        select: {
+          id: true,
+          name: true,
+          whatsappPhone: true,
+          userOrganizations: {
+            where: { telegramChatId: { not: null } },
+            select: { telegramChatId: true },
+            take: 1,
+          },
+        },
       }),
       prisma.account.findFirst({
         where: { id: accountId, organizationId: clientId },
@@ -33,9 +42,13 @@ export async function sendBankReconnectAction(
 
     if (!org) return errorResponse("Cliente no encontrado", "NOT_FOUND")
     if (!account) return errorResponse("Cuenta no encontrada", "NOT_FOUND")
-    if (!org.telegramChatId && !org.whatsappPhone) {
+
+    const telegramChatId = org.userOrganizations[0]?.telegramChatId ?? null
+    if (!telegramChatId && !org.whatsappPhone) {
       return errorResponse("El cliente no tiene canal vinculado", "VALIDATION_ERROR")
     }
+
+    const orgChannel = { id: org.id, name: org.name, telegramChatId, whatsappPhone: org.whatsappPhone }
 
     const context = {
       orgName: org.name,
@@ -48,7 +61,7 @@ export async function sendBankReconnectAction(
     }
 
     const content = await generateProactiveMessage(context)
-    const sent = await sendProactiveMessage(org, "bank_reconnect", content, context)
+    const sent = await sendProactiveMessage(orgChannel, "bank_reconnect", content, context)
 
     if (!sent) {
       return errorResponse(

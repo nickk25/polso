@@ -10,11 +10,22 @@ export type ReminderResult = { success: boolean; error?: string; code?: string }
 export async function sendReminderInternal(clientId: string): Promise<ReminderResult> {
   const org = await prisma.organization.findUnique({
     where: { id: clientId },
-    select: { id: true, name: true, telegramChatId: true, whatsappPhone: true },
+    select: {
+      id: true,
+      name: true,
+      whatsappPhone: true,
+      userOrganizations: {
+        where: { telegramChatId: { not: null } },
+        select: { telegramChatId: true },
+        take: 1,
+      },
+    },
   })
 
   if (!org) return { success: false, error: "Cliente no encontrado", code: "not-found" }
-  if (!org.telegramChatId && !org.whatsappPhone)
+
+  const telegramChatId = org.userOrganizations[0]?.telegramChatId ?? null
+  if (!telegramChatId && !org.whatsappPhone)
     return { success: false, error: "El cliente no tiene canal vinculado", code: "no-channel" }
 
   const unmatched = await getUnmatchedTransactions(clientId)
@@ -28,11 +39,11 @@ export async function sendReminderInternal(clientId: string): Promise<ReminderRe
   }
 
   const content = await generateProactiveMessage(context)
-  const channel = org.telegramChatId ? "telegram" : "whatsapp"
+  const channel = telegramChatId ? "telegram" : "whatsapp"
 
   try {
     if (channel === "telegram") {
-      await sendTelegramText(org.telegramChatId!, content)
+      await sendTelegramText(telegramChatId!, content)
     } else {
       await sendWhatsAppText(org.whatsappPhone!, content)
     }

@@ -13,7 +13,7 @@ export async function generateAgentLinkCodeAction(): Promise<
   ActionResponse<{ code: string; expiresAt: Date }>
 > {
   try {
-    const { organizationId } = await getAuthContext()
+    const { organizationId, userId } = await getAuthContext()
 
     // Remove all previous codes for this org (one active code at a time)
     await prisma.agentLinkCode.deleteMany({
@@ -32,7 +32,7 @@ export async function generateAgentLinkCodeAction(): Promise<
     }
 
     await prisma.agentLinkCode.create({
-      data: { code, organizationId, expiresAt },
+      data: { code, organizationId, userId, expiresAt },
     })
 
     revalidatePath("/settings/agent")

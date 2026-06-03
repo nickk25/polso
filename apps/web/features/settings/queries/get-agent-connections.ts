@@ -7,13 +7,19 @@ export interface AgentConnections {
 }
 
 export async function getAgentConnections(): Promise<AgentConnections> {
-  const { organizationId } = await getAuthContext()
-  const org = await prisma.organization.findUnique({
-    where: { id: organizationId },
-    select: { whatsappPhone: true, telegramChatId: true },
-  })
+  const { organizationId, userId } = await getAuthContext()
+  const [org, membership] = await Promise.all([
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { whatsappPhone: true },
+    }),
+    prisma.userOrganization.findFirst({
+      where: { userId, organizationId },
+      select: { telegramChatId: true },
+    }),
+  ])
   return {
     whatsappPhone: org?.whatsappPhone ?? null,
-    telegramChatId: org?.telegramChatId ?? null,
+    telegramChatId: membership?.telegramChatId ?? null,
   }
 }

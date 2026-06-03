@@ -68,14 +68,18 @@ async function runProactiveAgent(): Promise<ProactiveResult> {
       agentOptOut: false,
       OR: [
         { whatsappPhone: { not: null } },
-        { telegramChatId: { not: null } },
+        { userOrganizations: { some: { telegramChatId: { not: null } } } },
       ],
     },
     select: {
       id: true,
       name: true,
       whatsappPhone: true,
-      telegramChatId: true,
+      userOrganizations: {
+        where: { telegramChatId: { not: null } },
+        select: { telegramChatId: true },
+        take: 1,
+      },
       partnerLinks: {
         where: { status: "active" },
         take: 1,
@@ -119,7 +123,11 @@ async function runProactiveAgent(): Promise<ProactiveResult> {
       }
 
       const content = await generateProactiveMessage(trigger.context)
-      const sent = await sendProactiveMessage(org, trigger.messageType, content, trigger.context)
+      const orgWithTelegram = {
+        ...org,
+        telegramChatId: org.userOrganizations[0]?.telegramChatId ?? null,
+      }
+      const sent = await sendProactiveMessage(orgWithTelegram, trigger.messageType, content, trigger.context)
 
       if (sent) {
         messagesSent++
