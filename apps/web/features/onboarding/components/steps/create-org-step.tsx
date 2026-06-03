@@ -42,7 +42,6 @@ export function CreateOrgStep({ initialName, initialCurrency, onComplete }: Crea
     await updateOrganizationAction({
       name: name.trim(),
       currency,
-      timezone: "Europe/Madrid",
       fiscalYearStart: 1,
       dateFormat: "MM/dd/yyyy",
     })

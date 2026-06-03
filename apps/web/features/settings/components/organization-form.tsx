@@ -27,20 +27,6 @@ const CURRENCIES = [
   { value: "CNY", label: "CNY - Chinese Yuan" },
 ]
 
-const TIMEZONES = [
-  { value: "UTC", label: "UTC" },
-  { value: "America/New_York", label: "Eastern Time (US)" },
-  { value: "America/Chicago", label: "Central Time (US)" },
-  { value: "America/Denver", label: "Mountain Time (US)" },
-  { value: "America/Los_Angeles", label: "Pacific Time (US)" },
-  { value: "Europe/London", label: "London" },
-  { value: "Europe/Paris", label: "Paris" },
-  { value: "Europe/Berlin", label: "Berlin" },
-  { value: "Asia/Tokyo", label: "Tokyo" },
-  { value: "Asia/Shanghai", label: "Shanghai" },
-  { value: "Australia/Sydney", label: "Sydney" },
-]
-
 const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 const DATE_FORMATS = [
@@ -55,7 +41,6 @@ interface OrganizationFormProps {
     id: string
     name: string
     currency: string
-    timezone: string
     fiscalYearStart: number
     dateFormat: string
   }
@@ -68,7 +53,6 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState(organization.name)
   const [currency, setCurrency] = useState(organization.currency)
-  const [timezone, setTimezone] = useState(organization.timezone)
   const [fiscalYearStart, setFiscalYearStart] = useState(organization.fiscalYearStart)
   const [dateFormat, setDateFormat] = useState(organization.dateFormat)
 
@@ -79,7 +63,6 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
     const result = await updateOrganizationAction({
       name,
       currency,
-      timezone,
       fiscalYearStart,
       dateFormat,
     })
@@ -121,22 +104,6 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
                 {CURRENCIES.map((curr) => (
                   <SelectItem key={curr.value} value={curr.value}>
                     {curr.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="timezone">{t("organizationForm.timezone")}</Label>
-            <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger id="timezone">
-                <SelectValue placeholder={t("organizationForm.timezonePlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.map((tz) => (
-                  <SelectItem key={tz.value} value={tz.value}>
-                    {tz.label}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -77,13 +77,6 @@ export default async function ClientTransactionsPage({ params, searchParams }: P
         </Button>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-semibold">Transacciones</h1>
-        <p className="text-sm text-muted-foreground">
-          {total > 0 ? `${total} transacciones` : "Sin transacciones registradas"}
-        </p>
-      </div>
-
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>

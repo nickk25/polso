@@ -8,7 +8,6 @@ import { successResponse, errorResponse, type ActionResponse } from "@/lib/types
 interface UpdateOrganizationInput {
   name: string
   currency: string
-  timezone: string
   fiscalYearStart: number
   dateFormat: string
 }
@@ -24,7 +23,6 @@ export async function updateOrganizationAction(
       data: {
         name: input.name,
         currency: input.currency,
-        timezone: input.timezone,
         fiscalYearStart: input.fiscalYearStart,
         dateFormat: input.dateFormat,
       },

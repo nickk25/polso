@@ -8,8 +8,10 @@ import { Button } from "@polso/ui/button"
 import { updateInvitationExpiryAction } from "../actions/update-invitation-expiry"
 
 export function InvitationExpirySection({ days }: { days: number }) {
-  const [value, setValue] = useState(String(days))
+  const initialValue = String(days)
+  const [value, setValue] = useState(initialValue)
   const [isPending, startTransition] = useTransition()
+  const hasChanges = value !== initialValue
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -40,7 +42,7 @@ export function InvitationExpirySection({ days }: { days: number }) {
         />
         <p className="text-xs text-muted-foreground">Entre 1 y 30 días</p>
       </div>
-      <Button type="submit" disabled={isPending}>
+      <Button type="submit" disabled={isPending || !hasChanges}>
         {isPending ? "Guardando..." : "Guardar"}
       </Button>
     </form>

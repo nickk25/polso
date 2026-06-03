@@ -10,7 +10,6 @@ export async function getOrganizationSettings() {
       id: true,
       name: true,
       currency: true,
-      timezone: true,
       fiscalYearStart: true,
       dateFormat: true,
     },

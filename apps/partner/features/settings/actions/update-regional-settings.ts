@@ -8,7 +8,6 @@ import type { ActionResponse } from "@polso/utils/action-response"
 
 interface UpdateRegionalSettingsInput {
   currency: string
-  timezone: string
   fiscalYearStart: number
   dateFormat: string
 }
@@ -38,15 +37,10 @@ export async function updateRegionalSettingsAction(
       return errorResponse("El mes de inicio del año fiscal debe ser entre 1 y 12", "VALIDATION_ERROR")
     }
 
-    if (!input.timezone || input.timezone.length > 100) {
-      return errorResponse("Zona horaria no válida", "VALIDATION_ERROR")
-    }
-
     await prisma.organization.update({
       where: { id: ctx.organizationId },
       data: {
         currency: input.currency,
-        timezone: input.timezone,
         fiscalYearStart: input.fiscalYearStart,
         dateFormat: input.dateFormat,
       },

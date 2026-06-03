@@ -23,17 +23,6 @@ const CURRENCIES = [
   { value: "PEN", label: "Sol peruano (PEN)" },
 ]
 
-const TIMEZONES = [
-  { value: "Europe/Madrid", label: "Madrid (CET/CEST)" },
-  { value: "Europe/London", label: "Londres (GMT/BST)" },
-  { value: "America/Mexico_City", label: "Ciudad de México (CST)" },
-  { value: "America/Bogota", label: "Bogotá (COT)" },
-  { value: "America/Buenos_Aires", label: "Buenos Aires (ART)" },
-  { value: "America/Santiago", label: "Santiago (CLT)" },
-  { value: "America/Lima", label: "Lima (PET)" },
-  { value: "UTC", label: "UTC" },
-]
-
 const DATE_FORMATS = [
   { value: "dd/MM/yyyy", label: "dd/MM/yyyy" },
   { value: "MM/dd/yyyy", label: "MM/dd/yyyy" },
@@ -47,13 +36,12 @@ const MONTHS = [
 
 interface Props {
   currency: string
-  timezone: string
   fiscalYearStart: number
   dateFormat: string
 }
 
-export function RegionalSettingsSection({ currency: c, timezone: tz, fiscalYearStart: fy, dateFormat: df }: Props) {
-  const [values, setValues] = useState({ currency: c, timezone: tz, fiscalYearStart: fy, dateFormat: df })
+export function RegionalSettingsSection({ currency: c, fiscalYearStart: fy, dateFormat: df }: Props) {
+  const [values, setValues] = useState({ currency: c, fiscalYearStart: fy, dateFormat: df })
   const [isPending, startTransition] = useTransition()
 
   function save(field: keyof typeof values, value: string | number) {
@@ -62,7 +50,6 @@ export function RegionalSettingsSection({ currency: c, timezone: tz, fiscalYearS
     startTransition(async () => {
       const res = await updateRegionalSettingsAction({
         currency: updated.currency,
-        timezone: updated.timezone,
         fiscalYearStart: updated.fiscalYearStart,
         dateFormat: updated.dateFormat,
       })
@@ -85,20 +72,6 @@ export function RegionalSettingsSection({ currency: c, timezone: tz, fiscalYearS
           <SelectContent>
             {CURRENCIES.map((c) => (
               <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Zona horaria</Label>
-        <Select value={values.timezone} onValueChange={(v) => save("timezone", v)} disabled={isPending}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TIMEZONES.map((t) => (
-              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>

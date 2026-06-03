@@ -15,8 +15,14 @@ interface Props {
 }
 
 export function OrganizationProfileSection({ name, taxId, address, contactEmail }: Props) {
-  const [values, setValues] = useState({ name, taxId: taxId ?? "", address: address ?? "", contactEmail: contactEmail ?? "" })
+  const initial = { name, taxId: taxId ?? "", address: address ?? "", contactEmail: contactEmail ?? "" }
+  const [values, setValues] = useState(initial)
   const [isPending, startTransition] = useTransition()
+  const hasChanges =
+    values.name !== initial.name ||
+    values.taxId !== initial.taxId ||
+    values.address !== initial.address ||
+    values.contactEmail !== initial.contactEmail
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -80,7 +86,7 @@ export function OrganizationProfileSection({ name, taxId, address, contactEmail 
           />
         </div>
       </div>
-      <Button type="submit" disabled={isPending || !values.name.trim()}>
+      <Button type="submit" disabled={isPending || !values.name.trim() || !hasChanges}>
         {isPending ? "Guardando..." : "Guardar"}
       </Button>
     </form>

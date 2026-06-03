@@ -23,6 +23,10 @@ export function ReminderSettingsSection({
   const [cooldown, setCooldown] = useState(String(initialCooldown))
   const [cadence, setCadence] = useState(String(initialCadence))
   const [isPending, startTransition] = useTransition()
+  const hasChanges =
+    enabled !== initialEnabled ||
+    cooldown !== String(initialCooldown) ||
+    cadence !== String(initialCadence)
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -83,7 +87,7 @@ export function ReminderSettingsSection({
         </div>
       </div>
 
-      <Button type="submit" disabled={isPending}>
+      <Button type="submit" disabled={isPending || !hasChanges}>
         {isPending ? "Guardando..." : "Guardar"}
       </Button>
     </form>
