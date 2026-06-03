@@ -37,11 +37,12 @@ export async function matchAfterSync(
 
   if (newTransactions.length === 0) return
 
-  // Fetch all pending InboxItems for this org
+  // Fetch all pending InboxItems for this org (including suggested_match — a better
+  // transaction arriving at sync time may score higher than the prior suggestion)
   const inboxItems = await prisma.inboxItem.findMany({
     where: {
       organizationId,
-      status: { in: ["processing", "no_match"] },
+      status: { in: ["processing", "no_match", "suggested_match"] },
       transactionId: null,
     },
     select: {

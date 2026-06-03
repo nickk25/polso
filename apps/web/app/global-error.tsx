@@ -1,7 +1,20 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { NextIntlClientProvider, useTranslations } from "next-intl"
 import { Button } from "@polso/ui/button"
+import enCommon from "@/messages/en/common.json"
+import esCommon from "@/messages/es/common.json"
+
+function GlobalErrorContent({ reset }: { reset: () => void }) {
+  const t = useTranslations("common")
+  return (
+    <div className="max-w-md w-full p-8 text-center">
+      <h1 className="text-2xl font-bold mb-4">{t("errors.applicationError")}</h1>
+      <p className="text-muted-foreground mb-6">{t("errors.refreshPage")}</p>
+      <Button onClick={reset}>{t("errors.tryAgain")}</Button>
+    </div>
+  )
+}
 
 export default function GlobalError({
   error,
@@ -10,17 +23,16 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const t = useTranslations("common")
+  const locale =
+    (typeof document !== "undefined" && document.documentElement.lang) || "en"
+  const messages = { common: locale === "es" ? esCommon : enCommon }
+
   return (
-    <html>
+    <html lang={locale}>
       <body className="flex items-center justify-center min-h-screen bg-background">
-        <div className="max-w-md w-full p-8 text-center">
-          <h1 className="text-2xl font-bold mb-4">{t("errors.applicationError")}</h1>
-          <p className="text-muted-foreground mb-6">
-            {t("errors.refreshPage")}
-          </p>
-          <Button onClick={reset}>{t("errors.tryAgain")}</Button>
-        </div>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <GlobalErrorContent reset={reset} />
+        </NextIntlClientProvider>
       </body>
     </html>
   )

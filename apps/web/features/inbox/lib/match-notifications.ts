@@ -105,8 +105,9 @@ export async function persistMatch(
         where: { id: inboxItem.id },
         data: { status: "done", transactionId: tx.id },
       }),
+      // Entry may not exist yet (sync creates it lazily) — only update if present
       prisma.entry.updateMany({
-        where: { transactionId: tx.id, organizationId },
+        where: { transactionId: tx.id, organizationId, status: { not: "verified" } },
         data: { status: "verified" },
       }),
     ])
