@@ -30,11 +30,21 @@ function computeScores(
     candidate.inboxCurrency
   )
 
-  const confidenceScore =
+  let confidenceScore =
     amountScore * weights.amount +
     dateScore * weights.date +
     nameScore * weights.name +
     currencyScore * weights.currency
+
+  // If both names are present but share zero similarity, the amount match is likely
+  // coincidental (e.g. IVA arithmetic). Cap to below the suggested threshold.
+  if (
+    nameScore === 0 &&
+    candidate.transactionName != null &&
+    candidate.inboxDisplayName != null
+  ) {
+    confidenceScore = Math.min(confidenceScore, 0.45)
+  }
 
   return { amountScore, dateScore, nameScore, currencyScore, confidenceScore }
 }

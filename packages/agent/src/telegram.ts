@@ -40,6 +40,11 @@ export interface TelegramMatchNotificationParams {
  * Send an inline keyboard message asking the user to confirm or decline a match.
  * Callback data encodes: confirm_{inboxItemId}_{transactionId} or decline_{...}
  */
+// Escape characters special in Telegram Markdown v1 that appear in user content
+function escapeMd(text: string): string {
+  return text.replace(/[_*[\]`]/g, "\\$&")
+}
+
 export async function sendTelegramMatchNotification({
   chatId,
   inboxItemId,
@@ -64,8 +69,8 @@ export async function sendTelegramMatchNotification({
     text: [
       `🔍 *Posible coincidencia encontrada* (${pct}% seguridad)`,
       "",
-      `📄 Recibo: ${receiptName ?? "Sin nombre"}`,
-      `💳 Transacción: ${transactionName ?? "Sin nombre"}`,
+      `📄 Recibo: ${escapeMd(receiptName ?? "Sin nombre")}`,
+      `💳 Transacción: ${escapeMd(transactionName ?? "Sin nombre")}`,
       `💶 Importe: ${formattedAmount}`,
       `📅 Fecha: ${date.toLocaleDateString("es-ES")}`,
       "",
