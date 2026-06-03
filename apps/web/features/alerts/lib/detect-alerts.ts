@@ -6,6 +6,7 @@ import {
   sendRunwayCriticalAlert,
   sendUnusualActivityAlert,
   sendMissingRecurringAlert,
+  sendSyncError,
 } from "@/lib/email/send"
 import type { Locale } from "@/lib/i18n/config"
 import { detectAnomalies } from "@polso/intelligence"
@@ -59,6 +60,8 @@ export async function detectLowBalanceAlerts(organizationId: string): Promise<nu
 
   if (alertableUsers.length === 0) return 0
 
+  const createInApp = await orgWantsInAppAlerts(organizationId)
+
   for (const account of accounts) {
     if (account.balanceCurrent === null) continue
 
@@ -86,24 +89,25 @@ export async function detectLowBalanceAlerts(organizationId: string): Promise<nu
     const severity =
       account.balanceCurrent < threshold * 0.5 ? "critical" : "warning"
 
-    const alert = await prisma.alert.create({
-      data: {
-        organizationId,
-        type: "low_balance",
-        title: `Low balance: ${account.name}`,
-        message: `${account.name} balance is ${formatAmount(account.balanceCurrent, account.currency)}, below your ${formatAmount(threshold, account.currency)} threshold.`,
-        severity,
-        accountId: account.id,
-        metadata: {
-          accountName: account.name,
-          currentBalance: account.balanceCurrent,
-          threshold,
-          currency: account.currency,
+    if (createInApp) {
+      await prisma.alert.create({
+        data: {
+          organizationId,
+          type: "low_balance",
+          title: `Low balance: ${account.name}`,
+          message: `${account.name} balance is ${formatAmount(account.balanceCurrent, account.currency)}, below your ${formatAmount(threshold, account.currency)} threshold.`,
+          severity,
+          accountId: account.id,
+          metadata: {
+            accountName: account.name,
+            currentBalance: account.balanceCurrent,
+            threshold,
+            currency: account.currency,
+          },
         },
-      },
-    })
-
-    created++
+      })
+      created++
+    }
 
     // Send email to users who have emailAlerts + emailLowBalance enabled
     for (const { userId, settings } of alertableUsers) {
@@ -138,8 +142,6 @@ export async function detectLowBalanceAlerts(organizationId: string): Promise<nu
         locale
       ).catch(console.error)
     }
-
-    void alert
   }
 
   return created
@@ -194,6 +196,8 @@ export async function detectHighSpendAlerts(organizationId: string): Promise<num
 
   if (alertableUsers.length === 0) return 0
 
+  const createInApp = await orgWantsInAppAlerts(organizationId)
+
   const maxThreshold = Math.max(
     ...alertableUsers.map((u) => u.settings!.highExpenseThreshold!)
   )
@@ -239,25 +243,26 @@ export async function detectHighSpendAlerts(organizationId: string): Promise<num
     const severity = _sum.amount > maxThreshold * 1.5 ? "critical" : "warning"
     const currency = "USD" // Will be pulled from org account if needed
 
-    await prisma.alert.create({
-      data: {
-        organizationId,
-        type: "high_expense",
-        title: `High spend: ${category.name}`,
-        message: `${category.name} spending reached ${formatAmount(_sum.amount, currency)} this month, exceeding your threshold.`,
-        severity,
-        metadata: {
-          categoryId,
-          categoryName: category.name,
-          amount: _sum.amount,
-          threshold: maxThreshold,
-          monthKey,
-          currency,
+    if (createInApp) {
+      await prisma.alert.create({
+        data: {
+          organizationId,
+          type: "high_expense",
+          title: `High spend: ${category.name}`,
+          message: `${category.name} spending reached ${formatAmount(_sum.amount, currency)} this month, exceeding your threshold.`,
+          severity,
+          metadata: {
+            categoryId,
+            categoryName: category.name,
+            amount: _sum.amount,
+            threshold: maxThreshold,
+            monthKey,
+            currency,
+          },
         },
-      },
-    })
-
-    created++
+      })
+      created++
+    }
 
     // Send emails
     for (const { userId, settings } of alertableUsers) {
@@ -361,24 +366,29 @@ export async function detectRunwayCriticalAlerts(organizationId: string): Promis
   })
   if (existing) return 0
 
+  const createInApp = await orgWantsInAppAlerts(organizationId)
   const severity = runway < 1 ? "critical" : "warning"
   const runwayRounded = Math.round(runway * 10) / 10
+  let created = 0
 
-  await prisma.alert.create({
-    data: {
-      organizationId,
-      type: "runway_warning",
-      title: `Cash runway critical: ${runwayRounded} months`,
-      message: `At your current burn rate of ${formatAmount(burnRate, currency)}/month, you have approximately ${runwayRounded} months of runway remaining.`,
-      severity,
-      metadata: {
-        runway: runwayRounded,
-        burnRate,
-        totalBalance,
-        currency,
+  if (createInApp) {
+    await prisma.alert.create({
+      data: {
+        organizationId,
+        type: "runway_warning",
+        title: `Cash runway critical: ${runwayRounded} months`,
+        message: `At your current burn rate of ${formatAmount(burnRate, currency)}/month, you have approximately ${runwayRounded} months of runway remaining.`,
+        severity,
+        metadata: {
+          runway: runwayRounded,
+          burnRate,
+          totalBalance,
+          currency,
+        },
       },
-    },
-  })
+    })
+    created = 1
+  }
 
   // Send emails
   for (const { userId, settings } of alertableUsers) {
@@ -400,7 +410,7 @@ export async function detectRunwayCriticalAlerts(organizationId: string): Promis
     ).catch(console.error)
   }
 
-  return 1
+  return created
 }
 
 // ============================================================================
@@ -456,6 +466,8 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
 
   if (recentExpenses.length === 0) return 0
 
+  const createInApp = await orgWantsInAppAlerts(organizationId)
+
   // Get already-alerted entry IDs to avoid re-alerting
   const alertedEntryIds = await prisma.alert.findMany({
     where: { organizationId, type: "unusual_activity" },
@@ -507,26 +519,27 @@ export async function detectUnusualActivityAlerts(organizationId: string): Promi
     const actualMultiplier = Math.round((anomaly.amount / anomaly.categoryAvg) * 10) / 10
     const currency = "USD"
 
-    await prisma.alert.create({
-      data: {
-        organizationId,
-        type: "unusual_activity",
-        title: `Unusual expense: ${anomaly.categoryName}`,
-        message: `An expense of ${formatAmount(anomaly.amount, currency)} in ${anomaly.categoryName} is ${actualMultiplier}x your typical average of ${formatAmount(anomaly.categoryAvg, currency)}.`,
-        severity: "warning",
-        entryId: anomaly.entryId,
-        metadata: {
-          entryDescription: expense.description,
-          amount: anomaly.amount,
-          averageAmount: anomaly.categoryAvg,
-          multiplier: actualMultiplier,
-          categoryName: anomaly.categoryName,
-          currency,
+    if (createInApp) {
+      await prisma.alert.create({
+        data: {
+          organizationId,
+          type: "unusual_activity",
+          title: `Unusual expense: ${anomaly.categoryName}`,
+          message: `An expense of ${formatAmount(anomaly.amount, currency)} in ${anomaly.categoryName} is ${actualMultiplier}x your typical average of ${formatAmount(anomaly.categoryAvg, currency)}.`,
+          severity: "warning",
+          entryId: anomaly.entryId,
+          metadata: {
+            entryDescription: expense.description,
+            amount: anomaly.amount,
+            averageAmount: anomaly.categoryAvg,
+            multiplier: actualMultiplier,
+            categoryName: anomaly.categoryName,
+            currency,
+          },
         },
-      },
-    })
-
-    created++
+      })
+      created++
+    }
 
     // Send emails
     for (const { userId, settings } of alertableUsers) {
@@ -612,6 +625,7 @@ export async function detectMissedRecurringAlerts(organizationId: string): Promi
   const alertableUsers = userSettings.filter((u) => u.settings?.emailAlerts !== false)
   if (alertableUsers.length === 0) return 0
 
+  const createInApp = await orgWantsInAppAlerts(organizationId)
   let created = 0
 
   for (const pattern of patterns) {
@@ -638,24 +652,26 @@ export async function detectMissedRecurringAlerts(organizationId: string): Promi
     const vendorName = pattern.counterparty?.name || pattern.name
     const currency = "EUR"
 
-    await prisma.alert.create({
-      data: {
-        organizationId,
-        type: "missed_recurring",
-        severity: "warning",
-        title: `Missed recurring: ${vendorName}`,
-        message: `Expected payment of ${formatAmount(pattern.expectedAmount ?? 0, currency)} from ${vendorName} is overdue.`,
-        recurringPatternId: pattern.id,
-        metadata: {
+    if (createInApp) {
+      await prisma.alert.create({
+        data: {
+          organizationId,
+          type: "missed_recurring",
+          severity: "warning",
+          title: `Missed recurring: ${vendorName}`,
+          message: `Expected payment of ${formatAmount(pattern.expectedAmount ?? 0, currency)} from ${vendorName} is overdue.`,
           recurringPatternId: pattern.id,
-          vendorName,
-          expectedAmount: pattern.expectedAmount ?? 0,
-          expectedDate: nextExpected.toISOString(),
-          frequency: pattern.frequency,
+          metadata: {
+            recurringPatternId: pattern.id,
+            vendorName,
+            expectedAmount: pattern.expectedAmount ?? 0,
+            expectedDate: nextExpected.toISOString(),
+            frequency: pattern.frequency,
+          },
         },
-      },
-    })
-    created++
+      })
+      created++
+    }
 
     for (const { userId } of alertableUsers) {
       const authUser = await getUserEmailAndLocale(userId)
@@ -676,8 +692,108 @@ export async function detectMissedRecurringAlerts(organizationId: string): Promi
 }
 
 // ============================================================================
+// Sync Error Detection
+// ============================================================================
+
+/**
+ * Detects accounts with a persisted syncError and creates one alert per
+ * account per 24h. Also emails users with emailSyncErrors enabled.
+ */
+export async function detectSyncErrorAlerts(organizationId: string): Promise<number> {
+  let created = 0
+
+  const accounts = await prisma.account.findMany({
+    where: {
+      organizationId,
+      syncError: { not: null },
+      status: { in: ["error", "expired"] },
+    },
+    select: { id: true, name: true, syncError: true },
+  })
+
+  if (accounts.length === 0) return 0
+
+  const orgUsers = await prisma.userOrganization.findMany({
+    where: { organizationId },
+    select: { userId: true },
+  })
+
+  const userSettings = await Promise.all(
+    orgUsers.map(async ({ userId }) => {
+      const settings = await prisma.notificationSetting.findUnique({ where: { userId } })
+      return { userId, settings }
+    })
+  )
+
+  const createInApp = await orgWantsInAppAlerts(organizationId)
+
+  for (const account of accounts) {
+    if (!account.syncError) continue
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const existing = await prisma.alert.findFirst({
+      where: {
+        organizationId,
+        type: "sync_error",
+        accountId: account.id,
+        isDismissed: false,
+        createdAt: { gte: since },
+      },
+    })
+    if (existing) continue
+
+    if (createInApp) {
+      await prisma.alert.create({
+        data: {
+          organizationId,
+          type: "sync_error",
+          title: `Sync error: ${account.name}`,
+          message: `${account.name} could not be synced: ${account.syncError}`,
+          severity: "warning",
+          accountId: account.id,
+          metadata: { bankName: account.name, errorMessage: account.syncError },
+        },
+      })
+      created++
+    }
+
+    for (const { userId, settings } of userSettings) {
+      if (!settings?.emailAlerts || !settings?.emailSyncErrors) continue
+
+      const authUser = await getUserEmailAndLocale(userId)
+      if (!authUser) continue
+
+      await sendSyncError(
+        authUser.email,
+        authUser.name,
+        account.name,
+        account.syncError,
+        authUser.locale
+      ).catch(console.error)
+    }
+  }
+
+  return created
+}
+
+// ============================================================================
 // Helpers
 // ============================================================================
+
+async function orgWantsInAppAlerts(organizationId: string): Promise<boolean> {
+  const memberships = await prisma.userOrganization.findMany({
+    where: { organizationId },
+    select: { userId: true },
+  })
+  if (memberships.length === 0) return false
+  const enabled = await prisma.notificationSetting.count({
+    where: {
+      userId: { in: memberships.map((m) => m.userId) },
+      inAppAlerts: true,
+    },
+  })
+  return enabled > 0
+}
 
 function formatAmount(amount: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
@@ -687,7 +803,7 @@ function formatAmount(amount: number, currency: string): string {
   }).format(amount)
 }
 
-async function getUserEmailAndLocale(
+export async function getUserEmailAndLocale(
   userId: string
 ): Promise<{ email: string; name: string; locale: Locale } | null> {
   try {
