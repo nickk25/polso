@@ -1,7 +1,8 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { useTranslations } from "next-intl"
 import { Label } from "@polso/ui/label"
 import {
@@ -36,6 +37,7 @@ type Values = { theme: string; locale: string }
 
 export function PreferencesForm({ preferences }: PreferencesFormProps) {
   const router = useRouter()
+  const { setTheme } = useTheme()
   const t = useTranslations("settings")
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
@@ -44,6 +46,11 @@ export function PreferencesForm({ preferences }: PreferencesFormProps) {
     theme: preferences.theme,
     locale: preferences.locale,
   })
+
+  // Sync DB-stored theme into next-themes on first render
+  useEffect(() => {
+    setTheme(preferences.theme)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = useCallback(async (next: Values) => {
     setStatus("saving")
@@ -56,9 +63,10 @@ export function PreferencesForm({ preferences }: PreferencesFormProps) {
   const update = useCallback((patch: Partial<Values>) => {
     const next = { ...values, ...patch }
     setValues(next)
+    if (patch.theme) setTheme(patch.theme)
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => save(next), 300)
-  }, [values, save])
+  }, [values, save, setTheme])
 
   return (
     <Card>
