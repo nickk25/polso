@@ -32,7 +32,7 @@ export async function uploadProfileImageAction(
     const buffer = Buffer.from(input.fileData, "base64")
     await uploadFile(key, buffer, input.contentType)
 
-    const base = process.env.NEXT_PUBLIC_PARTNER_URL ?? ""
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? ""
     const url = `${base}/api/profile-image/${user.id}`
 
     return successResponse({ url })
