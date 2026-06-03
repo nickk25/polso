@@ -3,21 +3,23 @@
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { neonAuth } from "@neondatabase/auth/next/server"
-import { sendUserAcceptedInvite } from "@/lib/email/send"
 import { validateInvitationToken } from "../queries/get-invitation-by-token"
+import { getUserClientOrgs } from "../queries/get-user-client-orgs"
+import { createClientOrgForUser } from "../lib/ensure-client-org"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 
-interface AcceptInviteResult {
-  organizationId: string
-  organizationName: string
-}
+type AcceptInviteResult =
+  | { kind: "joined"; organizationId: string; organizationName: string }
+  | { kind: "needs_org_selection"; availableOrgs: { id: string; name: string }[] }
 
 /**
- * Accept an invitation to join an organization
- * User must be logged in
+ * Accept an invitation.
+ * For partner_client invitations, pass chosenClientOrgId to select an existing
+ * client org to link; omit it to auto-create a new one (or when user has only one).
  */
 export async function acceptInviteAction(
-  token: string
+  token: string,
+  chosenClientOrgId?: string
 ): Promise<ActionResponse<AcceptInviteResult>> {
   try {
     const { user } = await neonAuth()
@@ -26,7 +28,6 @@ export async function acceptInviteAction(
       return errorResponse("You must be logged in to accept an invitation", "UNAUTHORIZED")
     }
 
-    // Validate the token
     const validation = await validateInvitationToken(token)
 
     if (!validation.valid) {
@@ -41,7 +42,7 @@ export async function acceptInviteAction(
 
     const { invitation } = validation
 
-    // Check if email matches (case-insensitive)
+    // Check email match (case-insensitive)
     const userEmail = user.email?.toLowerCase()
     if (userEmail && userEmail !== invitation.email.toLowerCase()) {
       return errorResponse(
@@ -50,55 +51,100 @@ export async function acceptInviteAction(
       )
     }
 
-    // Check if user is already a member of this organization
+    // ─── Partner-client invitation branch ──────────────────────────────────
+    if (invitation.role === "partner_client") {
+      const clientOrgs = await getUserClientOrgs(user.id)
+
+      if (clientOrgs.length === 0) {
+        // No existing client org — create one inside the transaction
+        const newOrg = await prisma.$transaction(async (tx) => {
+          const org = await createClientOrgForUser(tx, {
+            userId: user.id,
+            userEmail: user.email ?? null,
+            name: invitation.clientName,
+          })
+
+          await tx.partnerClient.upsert({
+            where: { partnerId_clientId: { partnerId: invitation.organizationId, clientId: org.id } },
+            create: { partnerId: invitation.organizationId, clientId: org.id, status: "active", connectedAt: new Date() },
+            update: { status: "active", connectedAt: new Date() },
+          })
+
+          await tx.invitation.update({
+            where: { id: invitation.id },
+            data: { status: "accepted", acceptedAt: new Date() },
+          })
+
+          return org
+        })
+
+        revalidatePath("/dashboard")
+        return successResponse({ kind: "joined", organizationId: newOrg.id, organizationName: newOrg.name })
+      }
+
+      // One or more orgs exist — pick one
+      const validChosen = chosenClientOrgId && clientOrgs.some((o) => o.id === chosenClientOrgId)
+        ? chosenClientOrgId
+        : clientOrgs.length === 1
+          ? clientOrgs[0].id
+          : null
+
+      if (!validChosen) {
+        // Multiple orgs, no selection yet — tell the UI to show a picker
+        return successResponse({ kind: "needs_org_selection", availableOrgs: clientOrgs })
+      }
+
+      const chosenOrg = clientOrgs.find((o) => o.id === validChosen)!
+
+      await prisma.$transaction(async (tx) => {
+        await tx.partnerClient.upsert({
+          where: { partnerId_clientId: { partnerId: invitation.organizationId, clientId: validChosen } },
+          create: { partnerId: invitation.organizationId, clientId: validChosen, status: "active", connectedAt: new Date() },
+          update: { status: "active", connectedAt: new Date() },
+        })
+
+        await tx.invitation.update({
+          where: { id: invitation.id },
+          data: { status: "accepted", acceptedAt: new Date() },
+        })
+      })
+
+      revalidatePath("/dashboard")
+      return successResponse({ kind: "joined", organizationId: validChosen, organizationName: chosenOrg.name })
+    }
+    // ─── End partner-client branch ─────────────────────────────────────────
+
+    // Team invite — check existing membership
     const existingMembership = await prisma.userOrganization.findFirst({
-      where: {
-        userId: user.id,
-        organizationId: invitation.organizationId,
-      },
+      where: { userId: user.id, organizationId: invitation.organizationId },
     })
 
     if (existingMembership) {
-      // Mark invitation as accepted even though user is already a member
       await prisma.invitation.update({
         where: { id: invitation.id },
-        data: {
-          status: "accepted",
-          acceptedAt: new Date(),
-        },
+        data: { status: "accepted", acceptedAt: new Date() },
       })
-
       return errorResponse("You are already a member of this organization", "ALREADY_MEMBER")
     }
 
-    // Create the user organization membership
+    // Create membership
     await prisma.$transaction(async (tx) => {
-      // Create membership
       await tx.userOrganization.create({
-        data: {
-          userId: user.id,
-          organizationId: invitation.organizationId,
-          role: invitation.role,
-        },
+        data: { userId: user.id, organizationId: invitation.organizationId, role: invitation.role },
       })
-
-      // Mark invitation as accepted
       await tx.invitation.update({
         where: { id: invitation.id },
-        data: {
-          status: "accepted",
-          acceptedAt: new Date(),
-        },
+        data: { status: "accepted", acceptedAt: new Date() },
       })
     })
 
-    // Log the join event (notification system would require storing user emails)
     console.log(`User ${user.email} joined ${invitation.organizationName}`)
 
     revalidatePath("/settings/team")
     revalidatePath("/dashboard")
 
     return successResponse({
+      kind: "joined",
       organizationId: invitation.organizationId,
       organizationName: invitation.organizationName,
     })

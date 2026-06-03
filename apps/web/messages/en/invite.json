@@ -21,6 +21,9 @@
   "noAccount": "Don't have an account?",
   "signUp": "Sign up",
   "acceptInvitation": "Accept Invitation",
+  "acceptAndLink": "Accept and link to {orgName}",
+  "selectOrgToLink": "Choose which company to link with this advisor:",
+  "linkAndAccept": "Link and accept",
   "accepting": "Accepting...",
   "welcomeToTeam": "Welcome to the team!",
   "redirecting": "Redirecting to dashboard..."

@@ -21,6 +21,9 @@
   "noAccount": "No tienes una cuenta?",
   "signUp": "Registrate",
   "acceptInvitation": "Aceptar Invitacion",
+  "acceptAndLink": "Aceptar y vincular a {orgName}",
+  "selectOrgToLink": "Elige cual empresa vincular con esta asesoria:",
+  "linkAndAccept": "Vincular y aceptar",
   "accepting": "Aceptando...",
   "welcomeToTeam": "Bienvenido al equipo!",
   "redirecting": "Redirigiendo al panel..."

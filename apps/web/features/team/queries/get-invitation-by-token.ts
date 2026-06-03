@@ -9,6 +9,7 @@ export interface InvitationDetails {
   createdAt: Date
   organizationId: string
   organizationName: string
+  clientName: string | null
 }
 
 /**
@@ -43,6 +44,7 @@ export async function getInvitationByToken(
     createdAt: invitation.createdAt,
     organizationId: invitation.organization.id,
     organizationName: invitation.organization.name,
+    clientName: invitation.clientName ?? null,
   }
 }
 
