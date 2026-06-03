@@ -67,25 +67,15 @@ export function AgentConnectionsCard({
       <CardHeader>
         <CardTitle>Agente de Recibos</CardTitle>
         <CardDescription>
-          Conecta WhatsApp o Telegram para enviar recibos y facturas directamente desde tu móvil.
+          Conecta Telegram para enviar recibos y facturas directamente desde tu móvil.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* WhatsApp */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">WhatsApp</span>
-            {whatsappPhone ? (
-              <Badge variant="default">
-                <CheckCircle className="mr-1 h-3 w-3" />
-                Conectado
-              </Badge>
-            ) : (
-              <Badge variant="outline">Sin conectar</Badge>
-            )}
-            {whatsappPhone && (
-              <span className="text-xs text-muted-foreground">{whatsappPhone}</span>
-            )}
+            <span className="text-sm font-medium text-muted-foreground">WhatsApp</span>
+            <Badge variant="secondary">Próximamente</Badge>
           </div>
         </div>
 
@@ -109,7 +99,7 @@ export function AgentConnectionsCard({
         {/* Code section */}
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Genera un código y envíaselo al bot desde WhatsApp o Telegram para vincular tu cuenta.
+            Genera un código y envíaselo al bot de Telegram para vincular tu cuenta.
             El código expira en 5 minutos y es de un solo uso.
           </p>
 
