@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "@polso/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@polso/ui/avatar"
-import { changeMemberRoleAction, removeMemberAction } from "../actions/manage-member"
+import { removeMemberAction } from "../actions/manage-member"
 import type { TeamMember } from "../queries/get-team-members"
 
 interface TeamMembersTableProps {
@@ -85,7 +85,6 @@ function MemberActions({
 }) {
   const t = useTranslations("team")
   const tc = useTranslations("common")
-  const [isChangingRole, startChangeRole] = useTransition()
   const [isRemoving, startRemove] = useTransition()
   const [showRemoveDialog, setShowRemoveDialog] = useState(false)
 
@@ -95,12 +94,6 @@ function MemberActions({
 
   if (!canManage) {
     return null
-  }
-
-  const handleChangeRole = (newRole: "admin" | "member") => {
-    startChangeRole(async () => {
-      await changeMemberRoleAction(member.userId, newRole)
-    })
   }
 
   const handleRemove = () => {
@@ -117,25 +110,12 @@ function MemberActions({
           <Button
             variant="ghost"
             size="icon-sm"
-            disabled={isChangingRole || isRemoving}
+            disabled={isRemoving}
           >
             <DotsThree className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {member.role === "member" && (
-            <DropdownMenuItem onClick={() => handleChangeRole("admin")}>
-              <ShieldCheck className="h-4 w-4 mr-2" />
-              {t("members.makeAdmin")}
-            </DropdownMenuItem>
-          )}
-          {member.role === "admin" && (
-            <DropdownMenuItem onClick={() => handleChangeRole("member")}>
-              <User className="h-4 w-4 mr-2" />
-              {t("members.makeMember")}
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onClick={() => setShowRemoveDialog(true)}
