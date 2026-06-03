@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { successResponse, errorResponse } from "@polso/utils/action-response"
 import type { ActionResponse } from "@polso/utils/action-response"
+import { neonAuth } from "@neondatabase/auth/next/server"
+import { sendPartnerClientInvited } from "@polso/email/send"
 
 interface InviteClientInput {
   clientName: string
@@ -22,20 +24,63 @@ export async function inviteClientAction(
       return errorResponse("FORBIDDEN", "Solo las asesorías pueden invitar clientes")
     }
 
-    // Check if a client org with this name already exists and is linked
+    const { user } = await neonAuth()
+
+    const [partnerOrg] = await Promise.all([
+      prisma.organization.findUnique({
+        where: { id: ctx.organizationId },
+        select: { name: true },
+      }),
+    ])
+
+    if (!partnerOrg) {
+      return errorResponse("NOT_FOUND", "No se encontró la organización")
+    }
+
+    const normalizedEmail = input.email.toLowerCase().trim()
     const token = nanoid(32)
 
-    // Create invitation record
     const invitation = await prisma.invitation.create({
       data: {
         organizationId: ctx.organizationId,
-        email: input.email,
+        email: normalizedEmail,
         role: "partner_client",
         token,
+        clientName: input.clientName.trim(),
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
         invitedById: ctx.userId,
       },
     })
+
+    // Send invitation email (keep invitation even if email fails)
+    try {
+      const partnerName = user?.name ?? user?.email ?? "Tu asesoría"
+      const result = await sendPartnerClientInvited(
+        normalizedEmail,
+        partnerName,
+        partnerOrg.name,
+        input.clientName.trim(),
+        token,
+      )
+
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: {
+          emailStatus: "sent",
+          emailSentAt: new Date(),
+          resendEmailId: result?.data?.id,
+        },
+      })
+    } catch (emailError) {
+      console.error("Failed to send partner client invitation email:", emailError)
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: {
+          emailStatus: "failed",
+          emailError: emailError instanceof Error ? emailError.message : "Unknown error",
+        },
+      })
+    }
 
     revalidatePath("/clients")
     revalidatePath("/")
