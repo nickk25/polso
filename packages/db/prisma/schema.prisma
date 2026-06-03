@@ -504,6 +504,8 @@ model Invitation {
   createdAt      DateTime  @default(now()) @map("created_at")
   acceptedAt     DateTime? @map("accepted_at")
 
+  clientName    String?   @map("client_name")
+
   emailStatus   String?   @map("email_status")
   emailSentAt   DateTime? @map("email_sent_at")
   emailError    String?   @map("email_error")
