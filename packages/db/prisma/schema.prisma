@@ -37,9 +37,8 @@ model Organization {
   creemSubscriptionId String? @map("creem_subscription_id")
 
   // Agent channels
-  whatsappPhone  String? @unique @map("whatsapp_phone")
-  telegramChatId String? @unique @map("telegram_chat_id")
-  agentOptOut    Boolean @default(false) @map("agent_opt_out")
+  whatsappPhone String? @unique @map("whatsapp_phone")
+  agentOptOut   Boolean @default(false) @map("agent_opt_out")
 
   // Onboarding
   onboardingCompletedAt DateTime? @map("onboarding_completed_at")
@@ -106,6 +105,7 @@ model UserOrganization {
   memberName     String?  @map("member_name")
   memberEmail    String?  @map("member_email")
   memberImage    String?  @map("member_image")
+  telegramChatId String?  @unique @map("telegram_chat_id")
   createdAt      DateTime @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -680,6 +680,7 @@ model AgentLinkCode {
   id             String    @id @default(cuid())
   code           String    @unique
   organizationId String    @map("organization_id")
+  userId         String    @map("user_id")
   expiresAt      DateTime  @map("expires_at")
   usedAt         DateTime? @map("used_at")
   createdAt      DateTime  @default(now()) @map("created_at")
