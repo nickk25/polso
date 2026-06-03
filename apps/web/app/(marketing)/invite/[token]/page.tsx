@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@polso/ui/card"
 import { validateInvitationToken } from "@/features/team/queries/get-invitation-by-token"
+import { getUserClientOrgs } from "@/features/team/queries/get-user-client-orgs"
 import { AcceptInviteButton } from "./accept-invite-button"
 import { SignOutButton } from "./sign-out-button"
 
@@ -26,7 +27,10 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const t = await getTranslations("invite")
   const locale = await getLocale()
 
-  const validation = await validateInvitationToken(token)
+  const [validation, existingClientOrgs] = await Promise.all([
+    validateInvitationToken(token),
+    user ? getUserClientOrgs(user.id) : Promise.resolve([]),
+  ])
 
   // Handle invalid invitations
   if (!validation.valid) {
@@ -144,7 +148,19 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
         <CardFooter className="flex-col gap-3">
           {user ? (
-            <AcceptInviteButton token={token} />
+            <AcceptInviteButton
+              token={token}
+              singleClientOrgId={
+                invitation.role === "partner_client" && existingClientOrgs.length === 1
+                  ? existingClientOrgs[0].id
+                  : undefined
+              }
+              singleClientOrgName={
+                invitation.role === "partner_client" && existingClientOrgs.length === 1
+                  ? existingClientOrgs[0].name
+                  : undefined
+              }
+            />
           ) : (
             <>
               <Button asChild className="w-full">
