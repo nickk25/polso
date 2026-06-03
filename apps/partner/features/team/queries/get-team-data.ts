@@ -59,9 +59,9 @@ export async function getTeamData(): Promise<TeamData> {
   // Lazy backfill: persist current user's session data into their row if missing.
   const me = members.find((m) => m.userId === currentUser?.id)
   if (currentUser && me) {
-    const needsName  = me.memberName  == null && currentUser.name  != null
-    const needsEmail = me.memberEmail == null && currentUser.email != null
-    const needsImage = me.memberImage == null && currentUser.image != null
+    const needsName  = !me.memberName  && !!currentUser.name
+    const needsEmail = !me.memberEmail && !!currentUser.email
+    const needsImage = !me.memberImage && !!currentUser.image
     if (needsName || needsEmail || needsImage) {
       const patch = {
         ...(needsName  && { memberName:  currentUser.name }),
@@ -78,9 +78,9 @@ export async function getTeamData(): Promise<TeamData> {
     userId: m.userId,
     role: m.role,
     createdAt: m.createdAt,
-    name: m.memberName,
-    email: m.memberEmail,
-    image: m.memberImage,
+    name: m.memberName || null,
+    email: m.memberEmail || null,
+    image: m.memberImage || null,
   }))
 
   return { members: resolvedMembers, invitations }
