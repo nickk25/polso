@@ -62,6 +62,8 @@ export async function acceptInviteAction(
           const org = await createClientOrgForUser(tx, {
             userId: user.id,
             userEmail: user.email ?? null,
+            userName: user.name ?? null,
+            userImage: user.image ?? null,
             name: invitation.clientName,
           })
 
@@ -133,7 +135,14 @@ export async function acceptInviteAction(
     // Create membership
     await prisma.$transaction(async (tx) => {
       await tx.userOrganization.create({
-        data: { userId: user.id, organizationId: invitation.organizationId, role: invitation.role },
+        data: {
+          userId: user.id,
+          organizationId: invitation.organizationId,
+          role: invitation.role,
+          memberName: user.name ?? null,
+          memberEmail: user.email ?? null,
+          memberImage: user.image ?? null,
+        },
       })
       await tx.invitation.update({
         where: { id: invitation.id },

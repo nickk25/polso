@@ -4,7 +4,7 @@ type Tx = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0]
 
 export async function createClientOrgForUser(
   tx: Tx,
-  args: { userId: string; userEmail: string | null; name?: string | null }
+  args: { userId: string; userEmail: string | null; userName?: string | null; userImage?: string | null; name?: string | null }
 ): Promise<{ id: string; name: string }> {
   const orgName =
     args.name?.trim() ||
@@ -18,6 +18,9 @@ export async function createClientOrgForUser(
         create: {
           userId: args.userId,
           role: "owner",
+          memberName: args.userName ?? null,
+          memberEmail: args.userEmail ?? null,
+          memberImage: args.userImage ?? null,
         },
       },
     },

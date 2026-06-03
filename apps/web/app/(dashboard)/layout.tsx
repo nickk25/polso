@@ -6,7 +6,7 @@ import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
 import { SyncMonitor } from "@/features/banking/components/sync-monitor";
 
-async function getOrganization(userId: string, userEmail: string | null) {
+async function getOrganization(userId: string, userEmail: string | null, userName?: string | null, userImage?: string | null) {
   // Check if user has an organization
   const existingOrg = await prisma.userOrganization.findFirst({
     where: { userId },
@@ -41,6 +41,9 @@ async function getOrganization(userId: string, userEmail: string | null) {
             create: {
               userId,
               role: "owner",
+              memberName: userName ?? null,
+              memberEmail: userEmail ?? null,
+              memberImage: userImage ?? null,
             },
           },
         },
@@ -75,7 +78,7 @@ export default async function DashboardLayout({
   }
 
   // Get or create user's organization
-  const organization = await getOrganization(user.id, user.email);
+  const organization = await getOrganization(user.id, user.email, user.name, user.image);
 
   if (!organization.onboardingCompletedAt) {
     redirect("/onboarding");

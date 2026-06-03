@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db"
 import { AppSidebar } from "@/components/layout/sidebar"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
 
-async function getOrCreatePartnerOrg(userId: string, userEmail: string | null) {
+async function getOrCreatePartnerOrg(userId: string, userEmail: string | null, userName?: string | null, userImage?: string | null) {
   const existing = await prisma.userOrganization.findFirst({
     where: { userId },
     include: { organization: true },
@@ -28,7 +28,13 @@ async function getOrCreatePartnerOrg(userId: string, userEmail: string | null) {
             : "Mi Asesoría",
           type: "partner",
           userOrganizations: {
-            create: { userId, role: "owner" },
+            create: {
+              userId,
+              role: "owner",
+              memberName: userName ?? null,
+              memberEmail: userEmail ?? null,
+              memberImage: userImage ?? null,
+            },
           },
         },
       })
@@ -52,7 +58,7 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/auth/sign-in")
 
-  const org = await getOrCreatePartnerOrg(user.id, user.email)
+  const org = await getOrCreatePartnerOrg(user.id, user.email, user.name, user.image)
 
   if (org.type !== "partner") redirect("/not-partner")
 
