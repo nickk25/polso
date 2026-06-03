@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Buildings, CheckCircle, Clock } from "@phosphor-icons/react/dist/ssr"
 import { ClientListTable } from "@/components/clients/client-list-table"
 import { InviteClientDialog } from "@/components/clients/invite-client-dialog"
+import { BulkInviteClientsDialog } from "@/components/clients/bulk-invite-clients-dialog"
 
 export default async function ClientsPage() {
   const ctx = await getPartnerAuthContext()
@@ -15,7 +16,8 @@ export default async function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <BulkInviteClientsDialog />
         <InviteClientDialog />
       </div>
 
@@ -27,7 +29,8 @@ export default async function ClientsPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               Invita a tus clientes para que conecten su banco y ver sus datos aquí.
             </p>
-            <div className="mt-4">
+            <div className="mt-4 flex gap-2">
+              <BulkInviteClientsDialog />
               <InviteClientDialog />
             </div>
           </CardContent>
