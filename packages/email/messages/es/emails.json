@@ -256,5 +256,15 @@
     "accessNote": "Ahora tiene acceso a tu dashboard financiero e informes.",
     "button": "Gestionar equipo",
     "footer": "Ajusta los permisos de los miembros en Ajustes → Organización."
+  },
+  "partnerClientInvited": {
+    "subject": "{partnerOrgName} te invita a conectar Polso",
+    "preview": "{partnerName} de {partnerOrgName} te ha invitado a Polso",
+    "badge": "Invitación de asesoría",
+    "heading": "Tu asesoría te invita a conectar Polso",
+    "intro": "{partnerName} de {partnerOrgName} te ha invitado a sincronizar tus cuentas y compartir tus recibos en Polso.",
+    "description": "Polso conecta tu banco automáticamente y ayuda a tu asesoría a tener toda la documentación al día para el cierre trimestral.",
+    "button": "Aceptar invitación",
+    "footer": "Esta invitación expira en 7 días."
   }
 }

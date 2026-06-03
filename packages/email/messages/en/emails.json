@@ -256,5 +256,15 @@
     "accessNote": "They now have access to your financial dashboard and reports.",
     "button": "Manage Team",
     "footer": "Adjust team member permissions in Settings → Organization."
+  },
+  "partnerClientInvited": {
+    "subject": "{partnerOrgName} invited you to connect Polso",
+    "preview": "{partnerName} from {partnerOrgName} invited you to Polso",
+    "badge": "Advisor invitation",
+    "heading": "Your advisor invites you to connect Polso",
+    "intro": "{partnerName} from {partnerOrgName} has invited you to sync your bank accounts and share receipts on Polso.",
+    "description": "Polso connects your bank automatically and helps your advisor keep all documentation up to date for quarterly close.",
+    "button": "Accept Invitation",
+    "footer": "This invitation expires in 7 days."
   }
 }

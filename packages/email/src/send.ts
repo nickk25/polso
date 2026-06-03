@@ -22,6 +22,7 @@ import UnusualActivityAlertEmail from "../templates/alert-unusual-activity"
 import RunwayCriticalAlertEmail from "../templates/alert-runway-critical"
 import UserInvitedEmail from "../templates/user-invited"
 import UserAcceptedInviteEmail from "../templates/user-accepted-invite"
+import PartnerClientInvitedEmail from "../templates/partner-client-invited"
 
 export async function sendWaitlistConfirmation(email: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
@@ -387,6 +388,29 @@ export async function sendUserInvited(
     react: UserInvitedEmail({
       inviterName,
       organizationName,
+      inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/invite/${inviteToken}`,
+      locale,
+    }),
+  })
+}
+
+export async function sendPartnerClientInvited(
+  to: string,
+  partnerName: string,
+  partnerOrgName: string,
+  clientName: string | null,
+  inviteToken: string,
+  locale?: Locale
+) {
+  const t = getEmailTranslations(locale)
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: t("partnerClientInvited.subject", { partnerOrgName }),
+    react: PartnerClientInvitedEmail({
+      partnerName,
+      partnerOrgName,
+      clientName,
       inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/invite/${inviteToken}`,
       locale,
     }),
