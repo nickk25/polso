@@ -6,9 +6,11 @@ import {
   detectRunwayCriticalAlerts,
   detectUnusualActivityAlerts,
   detectMissedRecurringAlerts,
+  detectSyncErrorAlerts,
 } from "@/features/alerts/lib/detect-alerts"
 import { syncTransactionsCore } from "@/features/banking/lib/sync-core"
 import { detectPatternsForOrg } from "@/features/intelligence/lib/detect-patterns-core"
+import { runClientWeeklyDigests } from "@/features/notifications/lib/run-client-digests"
 
 const CRON_SECRET = process.env.CRON_SECRET
 const STALE_THRESHOLD_HOURS = 20
@@ -47,6 +49,7 @@ interface CronSyncResult {
   patternsDetected: number
   alertsCreated: number
   alertErrors: number
+  digestsSent: number
   duration: number
 }
 
@@ -75,6 +78,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
       patternsDetected: 0,
       alertsCreated: 0,
       alertErrors: 0,
+      digestsSent: 0,
       duration: Date.now() - startTime,
     }
   }
@@ -116,23 +120,37 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
     }
 
     try {
-      const [low, high, runway, unusual, missed] = await Promise.all([
+      const [low, high, runway, unusual, missed, syncErr] = await Promise.all([
         detectLowBalanceAlerts(orgId),
         detectHighSpendAlerts(orgId),
         detectRunwayCriticalAlerts(orgId),
         detectUnusualActivityAlerts(orgId),
         detectMissedRecurringAlerts(orgId),
+        detectSyncErrorAlerts(orgId),
       ])
-      alertsCreated += low + high + runway + unusual + missed
+      alertsCreated += low + high + runway + unusual + missed + syncErr
     } catch (error) {
       console.error(`[Cron] detect-alerts error for org ${orgId}:`, error)
       alertErrors++
     }
   }
 
+  // Weekly digest — only on Mondays UTC
+  let digestsSent = 0
+  const now = new Date()
+  if (now.getUTCDay() === 1) {
+    try {
+      const digestResult = await runClientWeeklyDigests(now)
+      digestsSent = digestResult.digestsSent
+      console.log(`[Cron] Weekly digests: ${digestsSent} sent, ${digestResult.digestErrors} errors`)
+    } catch (err) {
+      console.error("[Cron] Weekly digest run failed:", err)
+    }
+  }
+
   const duration = Date.now() - startTime
   console.log(
-    `[Cron] Done in ${duration}ms: ${accountsSynced} synced, ${totalImported} new txns, ${totalPatterns} patterns, ${alertsCreated} alerts`
+    `[Cron] Done in ${duration}ms: ${accountsSynced} synced, ${totalImported} new txns, ${totalPatterns} patterns, ${alertsCreated} alerts, ${digestsSent} digests`
   )
 
   return {
@@ -144,6 +162,7 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
     patternsDetected: totalPatterns,
     alertsCreated,
     alertErrors,
+    digestsSent,
     duration,
   }
 }
