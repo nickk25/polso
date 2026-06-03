@@ -12,11 +12,6 @@ export interface TeamMember {
   image: string | null
 }
 
-/**
- * Get all team members for the current organization.
- * Resolves name/email/image for the current user via neonAuth;
- * other members show null until a proper user directory is available.
- */
 export async function getTeamMembers(): Promise<TeamMember[]> {
   const { organizationId } = await getAuthContext()
   const { user: currentUser } = await neonAuth()
@@ -28,26 +23,42 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
       userId: true,
       role: true,
       createdAt: true,
+      memberName: true,
+      memberEmail: true,
+      memberImage: true,
     },
     orderBy: { createdAt: "asc" },
   })
 
-  return members.map((m) => {
-    if (m.userId === currentUser?.id) {
-      return {
-        ...m,
-        name: currentUser.name ?? null,
-        email: currentUser.email ?? null,
-        image: currentUser.image ?? null,
+  // Lazy backfill: if the current user's row is missing fields that the session has,
+  // persist them now so other members see them too on next load.
+  const me = members.find((m) => m.userId === currentUser?.id)
+  if (currentUser && me) {
+    const needsName  = me.memberName  == null && currentUser.name  != null
+    const needsEmail = me.memberEmail == null && currentUser.email != null
+    const needsImage = me.memberImage == null && currentUser.image != null
+    if (needsName || needsEmail || needsImage) {
+      const patch = {
+        ...(needsName  && { memberName:  currentUser.name }),
+        ...(needsEmail && { memberEmail: currentUser.email }),
+        ...(needsImage && { memberImage: currentUser.image }),
       }
+      await prisma.userOrganization.update({ where: { id: me.id }, data: patch })
+      Object.assign(me, patch)
     }
-    return { ...m, name: null, email: null, image: null }
-  })
+  }
+
+  return members.map((m) => ({
+    id: m.id,
+    userId: m.userId,
+    role: m.role,
+    createdAt: m.createdAt,
+    name: m.memberName,
+    email: m.memberEmail,
+    image: m.memberImage,
+  }))
 }
 
-/**
- * Get team member count for the current organization
- */
 export async function getTeamMemberCount(): Promise<number> {
   const { organizationId } = await getAuthContext()
 
@@ -56,9 +67,6 @@ export async function getTeamMemberCount(): Promise<number> {
   })
 }
 
-/**
- * Check if a user has admin or owner role in the organization
- */
 export async function isUserAdmin(userId: string): Promise<boolean> {
   const { organizationId } = await getAuthContext()
 
@@ -73,9 +81,6 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
   return !!membership
 }
 
-/**
- * Get a specific team member's role
- */
 export async function getTeamMemberRole(
   userId: string
 ): Promise<string | null> {

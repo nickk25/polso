@@ -34,7 +34,15 @@ export async function getTeamData(): Promise<TeamData> {
   const [members, invitations] = await Promise.all([
     prisma.userOrganization.findMany({
       where: { organizationId: ctx.organizationId },
-      select: { id: true, userId: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        userId: true,
+        role: true,
+        createdAt: true,
+        memberName: true,
+        memberEmail: true,
+        memberImage: true,
+      },
       orderBy: { createdAt: "asc" },
     }),
     prisma.invitation.findMany({
@@ -48,19 +56,32 @@ export async function getTeamData(): Promise<TeamData> {
     }),
   ])
 
-  // Resolve names/emails/images: for the current user we have data from neonAuth,
-  // others show truncated userId
-  const resolvedMembers: TeamMember[] = members.map((m) => {
-    if (m.userId === currentUser?.id) {
-      return {
-        ...m,
-        email: currentUser.email ?? null,
-        name: currentUser.name ?? null,
-        image: currentUser.image ?? null,
+  // Lazy backfill: persist current user's session data into their row if missing.
+  const me = members.find((m) => m.userId === currentUser?.id)
+  if (currentUser && me) {
+    const needsName  = me.memberName  == null && currentUser.name  != null
+    const needsEmail = me.memberEmail == null && currentUser.email != null
+    const needsImage = me.memberImage == null && currentUser.image != null
+    if (needsName || needsEmail || needsImage) {
+      const patch = {
+        ...(needsName  && { memberName:  currentUser.name }),
+        ...(needsEmail && { memberEmail: currentUser.email }),
+        ...(needsImage && { memberImage: currentUser.image }),
       }
+      await prisma.userOrganization.update({ where: { id: me.id }, data: patch })
+      Object.assign(me, patch)
     }
-    return { ...m, email: null, name: null, image: null }
-  })
+  }
+
+  const resolvedMembers: TeamMember[] = members.map((m) => ({
+    id: m.id,
+    userId: m.userId,
+    role: m.role,
+    createdAt: m.createdAt,
+    name: m.memberName,
+    email: m.memberEmail,
+    image: m.memberImage,
+  }))
 
   return { members: resolvedMembers, invitations }
 }
