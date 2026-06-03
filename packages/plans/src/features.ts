@@ -2,11 +2,11 @@ import type { PlanType, PlanLimits, PlanPricing, PlanInfo } from "./types"
 
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
   starter: {
-    maxBankConnections: 3,
+    maxBankConnections: 1,
     maxUsers: 2,
   },
   business: {
-    maxBankConnections: 8,
+    maxBankConnections: 3,
     maxUsers: 5,
   },
 }
@@ -35,7 +35,7 @@ export const PLAN_INFO: Record<PlanType, PlanInfo> = {
 
 export const PLAN_FEATURES: Record<PlanType, string[]> = {
   starter: [
-    "Up to 3 bank connections",
+    "Up to 1 bank connection",
     "Up to 2 team members",
     "Automatic transaction sync",
     "Expense categorization",
@@ -43,7 +43,7 @@ export const PLAN_FEATURES: Record<PlanType, string[]> = {
     "CSV/PDF exports",
   ],
   business: [
-    "Up to 8 bank connections",
+    "Up to 3 bank connections",
     "Up to 5 team members",
     "Automatic transaction sync",
     "Expense categorization",
