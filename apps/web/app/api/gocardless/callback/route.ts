@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse, after } from "next/server"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { selectPrimaryBalance, getAvailableBalance, mapCashAccountType } from "@polso/banking"
-import { prisma } from "@/lib/db"
+import { prisma, getPartnerNotificationEmail } from "@polso/db"
 import { addDays } from "date-fns"
 import { syncTransactionsCore } from "@/features/banking/lib/sync-core"
 import { getGoCardlessClient } from "@/features/banking/lib/gocardless-client"
+import { sendPartnerClientConnected } from "@polso/email/send"
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? ""
 
@@ -84,6 +85,10 @@ export async function GET(request: NextRequest) {
     // Default expiry: 90 days from now (conservative)
     const requisitionExpiresAt = addDays(new Date(), 90)
 
+    // Check if this is the first bank connection for this org
+    const existingAccountCount = await prisma.account.count({ where: { organizationId } })
+    const isFirstConnection = existingAccountCount === 0
+
     // Create or update an Account record for each account in the requisition
     await Promise.all(
       requisition.accounts.map(async (accountId) => {
@@ -148,6 +153,38 @@ export async function GET(request: NextRequest) {
       where: { organizationId, externalAccountId: { in: requisition.accounts } },
       data: { lastSyncedAt: null },
     })
+
+    // Notify partner if this is the client's first bank connection
+    if (isFirstConnection) {
+      void (async () => {
+        try {
+          const partnerLink = await prisma.partnerClient.findFirst({
+            where: { clientId: organizationId, status: "active" },
+            select: { partner: { select: { id: true, notifyOnClientConnected: true } } },
+          })
+          if (partnerLink?.partner.notifyOnClientConnected) {
+            const recipient = await getPartnerNotificationEmail(partnerLink.partner.id)
+            if (recipient) {
+              const clientOrg = await prisma.organization.findUnique({
+                where: { id: organizationId },
+                select: { name: true },
+              })
+              const partnerAppUrl = process.env.NEXT_PUBLIC_PARTNER_APP_URL ?? ""
+              await sendPartnerClientConnected(
+                recipient.email,
+                recipient.name,
+                clientOrg?.name ?? organizationId,
+                "first_bank",
+                `${partnerAppUrl}/clients/${organizationId}`,
+                "es"
+              )
+            }
+          }
+        } catch (err) {
+          console.error("[GoCardless callback] partner notify failed:", err)
+        }
+      })()
+    }
 
     // Full-history sync runs after the redirect so the user isn't blocked waiting.
     // initial=true disables the 7-day window and fetches all available history.

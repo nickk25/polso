@@ -1,12 +1,13 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { prisma } from "@/lib/db"
+import { prisma, getPartnerNotificationEmail } from "@polso/db"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { validateInvitationToken } from "../queries/get-invitation-by-token"
 import { getUserClientOrgs } from "../queries/get-user-client-orgs"
 import { createClientOrgForUser } from "../lib/ensure-client-org"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
+import { sendPartnerClientConnected } from "@polso/email/send"
 
 type AcceptInviteResult =
   | { kind: "joined"; organizationId: string; organizationName: string }
@@ -79,6 +80,7 @@ export async function acceptInviteAction(
         })
 
         revalidatePath("/dashboard")
+        void notifyPartnerClientConnected(invitation.organizationId, newOrg.id, newOrg.name)
         return successResponse({ kind: "joined", organizationId: newOrg.id, organizationName: newOrg.name })
       }
 
@@ -110,6 +112,7 @@ export async function acceptInviteAction(
       })
 
       revalidatePath("/dashboard")
+      void notifyPartnerClientConnected(invitation.organizationId, validChosen, chosenOrg.name)
       return successResponse({ kind: "joined", organizationId: validChosen, organizationName: chosenOrg.name })
     }
     // ─── End partner-client branch ─────────────────────────────────────────
@@ -154,5 +157,34 @@ export async function acceptInviteAction(
       error instanceof Error ? error.message : "Failed to accept invitation",
       "ERROR"
     )
+  }
+}
+
+async function notifyPartnerClientConnected(
+  partnerOrgId: string,
+  clientOrgId: string,
+  clientOrgName: string
+) {
+  try {
+    const partnerOrg = await prisma.organization.findUnique({
+      where: { id: partnerOrgId },
+      select: { notifyOnClientConnected: true },
+    })
+    if (!partnerOrg?.notifyOnClientConnected) return
+
+    const recipient = await getPartnerNotificationEmail(partnerOrgId)
+    if (!recipient) return
+
+    const partnerAppUrl = process.env.NEXT_PUBLIC_PARTNER_APP_URL ?? ""
+    await sendPartnerClientConnected(
+      recipient.email,
+      recipient.name,
+      clientOrgName,
+      "joined",
+      `${partnerAppUrl}/clients/${clientOrgId}`,
+      "es"
+    )
+  } catch (err) {
+    console.error("[accept-invite] partner notify failed:", err)
   }
 }

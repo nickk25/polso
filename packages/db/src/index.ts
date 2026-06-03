@@ -1,5 +1,7 @@
 export { prisma } from "./client"
 export { transactionDocumentedWhere, transactionNotDocumentedWhere } from "./helpers"
+export { getPartnerNotificationEmail } from "./partner-notification"
+export type { PartnerRecipient } from "./partner-notification"
 export type { PrismaClient } from "./generated/prisma/client"
 export { Prisma } from "./generated/prisma/client"
 
