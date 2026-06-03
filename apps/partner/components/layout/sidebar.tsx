@@ -6,7 +6,6 @@ import { useTransition } from "react"
 import {
   Buildings,
   Gear,
-  UserPlus,
   House,
   SignOut,
   DotsThree,
@@ -38,7 +37,6 @@ const mainNavItems = [
 ]
 
 const toolsNavItems = [
-  { label: "Invitar cliente", href: "/invite", icon: UserPlus },
   { label: "Configuración", href: "/settings", icon: Gear },
 ]
 

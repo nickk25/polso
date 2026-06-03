@@ -1,10 +1,9 @@
-import Link from "next/link"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { getClientList } from "@/features/clients/queries/get-client-list"
-import { Button } from "@polso/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
-import { UserPlus, Buildings, CheckCircle, Clock } from "@phosphor-icons/react/dist/ssr"
+import { Buildings, CheckCircle, Clock } from "@phosphor-icons/react/dist/ssr"
 import { ClientListTable } from "@/components/clients/client-list-table"
+import { InviteClientDialog } from "@/components/clients/invite-client-dialog"
 
 export default async function ClientsPage() {
   const ctx = await getPartnerAuthContext()
@@ -17,12 +16,7 @@ export default async function ClientsPage() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex justify-end">
-        <Button asChild size="sm">
-          <Link href="/invite">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Invitar cliente
-          </Link>
-        </Button>
+        <InviteClientDialog />
       </div>
 
       {rows.length === 0 ? (
@@ -33,9 +27,9 @@ export default async function ClientsPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               Invita a tus clientes para que conecten su banco y ver sus datos aquí.
             </p>
-            <Button asChild className="mt-4" size="sm">
-              <Link href="/invite">Invitar primer cliente</Link>
-            </Button>
+            <div className="mt-4">
+              <InviteClientDialog />
+            </div>
           </CardContent>
         </Card>
       ) : (
