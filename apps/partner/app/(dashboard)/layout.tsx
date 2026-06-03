@@ -1,10 +1,8 @@
 import { redirect } from "next/navigation"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { prisma } from "@/lib/db"
-import { getPartnerAuthContext } from "@/lib/auth"
 import { AppSidebar } from "@/components/layout/sidebar"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@polso/ui/sidebar"
-import { Separator } from "@polso/ui/separator"
+import { DashboardHeader } from "@/components/layout/dashboard-header"
 
 async function getOrCreatePartnerOrg(userId: string, userEmail: string | null) {
   const existing = await prisma.userOrganization.findFirst({
@@ -59,21 +57,23 @@ export default async function DashboardLayout({
   if (org.type !== "partner") redirect("/not-partner")
 
   return (
-    <SidebarProvider>
+    <div className="relative">
       <AppSidebar
         organizationName={org.name}
         organizationId={org.id}
         userEmail={user.email}
         hasLogo={!!org.logoFilePath}
       />
-      <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4 my-auto" />
-          <div className="flex-1" />
+      <div className="md:ml-[70px] min-h-screen flex flex-col">
+        <header className="h-14 shrink-0 border-b flex items-center px-4 md:px-0">
+          <DashboardHeader
+            organizationName={org.name}
+            userEmail={user.email}
+            userImage={user.image ?? null}
+          />
         </header>
         <main className="flex-1 overflow-auto">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </div>
   )
 }
