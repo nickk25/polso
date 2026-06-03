@@ -47,7 +47,7 @@ async function confirmSuggestionInternal(
       data: { status: "done", transactionId },
     }),
     prisma.entry.updateMany({
-      where: { transactionId, organizationId: clientId },
+      where: { transactionId, organizationId: clientId, status: { not: "verified" } },
       data: { status: "verified", ...taxData },
     }),
   ])

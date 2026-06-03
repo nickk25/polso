@@ -50,7 +50,7 @@ export async function confirmMatchAction(
         data: { status: "done", transactionId },
       }),
       prisma.entry.updateMany({
-        where: { transactionId, organizationId },
+        where: { transactionId, organizationId, status: { not: "verified" } },
         data: { status: "verified", ...taxData },
       }),
     ])
@@ -151,7 +151,7 @@ export async function manualMatchAction(
         data: { status: "done", transactionId },
       }),
       prisma.entry.updateMany({
-        where: { transactionId, organizationId },
+        where: { transactionId, organizationId, status: { not: "verified" } },
         data: { status: "verified", ...taxData },
       }),
     ])

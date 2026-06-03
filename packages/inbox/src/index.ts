@@ -124,6 +124,60 @@ export async function persistMatchResult(
   }
 }
 
+// ─── Manual confirm path (user presses ✅ button) ────────────────────────────
+
+/**
+ * Confirm a pending MatchSuggestion after user approval.
+ * Verifies org ownership, propagates IVA, and runs the DB transaction.
+ * Returns false if the suggestion is not found (safe to ignore stale callbacks).
+ */
+export async function confirmMatchInDb(
+  organizationId: string,
+  inboxItemId: string,
+  transactionId: string
+): Promise<boolean> {
+  const suggestion = await prisma.matchSuggestion.findFirst({
+    where: { organizationId, inboxItemId, transactionId },
+    select: { id: true },
+  })
+  if (!suggestion) return false
+
+  const [inboxItemTax, existingEntry] = await Promise.all([
+    prisma.inboxItem.findUnique({ where: { id: inboxItemId }, select: { taxAmount: true, taxRate: true } }),
+    prisma.entry.findFirst({ where: { transactionId, organizationId }, select: { taxAmount: true, taxRate: true } }),
+  ])
+
+  const taxData: { taxAmount?: number; taxRate?: number } = {}
+  if (inboxItemTax?.taxAmount != null && existingEntry?.taxAmount == null) {
+    taxData.taxAmount = Number(inboxItemTax.taxAmount)
+  }
+  if (inboxItemTax?.taxRate != null && existingEntry?.taxRate == null) {
+    taxData.taxRate = inboxItemTax.taxRate
+  }
+
+  await prisma.$transaction([
+    prisma.transactionAttachment.upsert({
+      where: { transactionId_inboxItemId: { transactionId, inboxItemId } },
+      update: {},
+      create: { transactionId, inboxItemId },
+    }),
+    prisma.inboxItem.update({
+      where: { id: inboxItemId },
+      data: { status: "done", transactionId },
+    }),
+    prisma.matchSuggestion.updateMany({
+      where: { inboxItemId, transactionId },
+      data: { status: "confirmed", userActionAt: new Date() },
+    }),
+    prisma.entry.updateMany({
+      where: { transactionId, organizationId, status: { not: "verified" } },
+      data: { status: "verified", ...taxData },
+    }),
+  ])
+
+  return true
+}
+
 // ─── Canonical single-item matching pipeline ──────────────────────────────────
 
 /**
