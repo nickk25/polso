@@ -45,7 +45,26 @@ model Organization {
   onboardingCompletedAt DateTime? @map("onboarding_completed_at")
 
   // Export preferences
-  csvSeparator String? @default(";") @map("csv_separator")
+  csvSeparator       String? @default(";") @map("csv_separator")
+  defaultExportRange String  @default("month") @map("default_export_range") // "month" | "quarter" | "year"
+
+  // Partner profile
+  logoFilePath   String? @map("logo_file_path")
+  taxId          String? @map("tax_id")
+  address        String?
+  contactEmail   String? @map("contact_email")
+
+  // Partner reminder settings
+  reminderCooldownHours  Int     @default(24) @map("reminder_cooldown_hours")
+  receiptReminderHours   Int     @default(48) @map("receipt_reminder_hours")
+  autoRemindersEnabled   Boolean @default(true) @map("auto_reminders_enabled")
+
+  // Partner invitation settings
+  invitationExpiryDays Int @default(7) @map("invitation_expiry_days")
+
+  // Partner notification settings
+  digestCadence           String  @default("daily") @map("digest_cadence") // "none" | "daily" | "weekly"
+  notifyOnClientConnected Boolean @default(true) @map("notify_on_client_connected")
 
   // Scheduled plan changes (for downgrades)
   scheduledPlanType     String?   @map("scheduled_plan_type")
