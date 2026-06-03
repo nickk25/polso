@@ -3,5 +3,33 @@
   "chatError": "Algo salió mal. Inténtalo de nuevo.",
   "newChat": "Nuevo chat",
   "chatTitle": "Polso AI",
-  "disclaimer": "Polso AI puede cometer errores. Verifica siempre los datos financieros importantes."
+  "disclaimer": "Polso AI puede cometer errores. Verifica siempre los datos financieros importantes.",
+  "connections": {
+    "cardTitle": "Agente de Recibos",
+    "cardDescription": "Conecta tu cuenta de Telegram para poder enviar fotos de tickets y facturas directamente desde el móvil. El agente los procesará automáticamente y los asociará a tus transacciones.",
+    "telegram": {
+      "title": "Telegram",
+      "connected": "Conectado",
+      "notConnected": "Sin conectar",
+      "step1Label": "Paso 1",
+      "step1Title": "Copia este código",
+      "step2Label": "Paso 2",
+      "step2Title": "Abre Telegram, busca @PolsoAgentBot y envíale ese código",
+      "step2Hint": "También puedes escanear el QR con la cámara de tu móvil para abrir el bot directamente.",
+      "openBot": "Abrir @PolsoAgentBot",
+      "refreshStatus": "Actualizar estado",
+      "howToStep1": "Pulsa el botón <strong>\"Generar código de conexión\"</strong> aquí abajo.",
+      "howToStep2": "Abre la app de Telegram en tu móvil y busca el bot <link>@PolsoAgentBot</link>, o escanea el código QR con la cámara de tu teléfono.",
+      "howToStep3": "Escríbele el código de 6 dígitos al bot. Listo — tu cuenta quedará vinculada y podrás enviar recibos por Telegram.",
+      "generateCode": "Generar código de conexión",
+      "qrScanLabel": "ESCANEAR PARA ABRIR"
+    },
+    "whatsapp": {
+      "title": "WhatsApp",
+      "comingSoon": "Próximamente",
+      "connectTitle": "Conectar por WhatsApp",
+      "connectDescription": "Próximamente podrás enviar recibos también por WhatsApp, sin necesidad de instalar Telegram.",
+      "comingSoonButton": "Disponible próximamente"
+    }
+  }
 }

@@ -3,5 +3,33 @@
   "chatError": "Something went wrong. Please try again.",
   "newChat": "New chat",
   "chatTitle": "Polso AI",
-  "disclaimer": "Polso AI can make mistakes. Always verify important financial data."
+  "disclaimer": "Polso AI can make mistakes. Always verify important financial data.",
+  "connections": {
+    "cardTitle": "Receipt Agent",
+    "cardDescription": "Connect your Telegram account to send photos of receipts and invoices directly from your phone. The agent will process them automatically and match them to your transactions.",
+    "telegram": {
+      "title": "Telegram",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "step1Label": "Step 1",
+      "step1Title": "Copy this code",
+      "step2Label": "Step 2",
+      "step2Title": "Open Telegram, find @PolsoAgentBot and send it the code",
+      "step2Hint": "You can also scan the QR code with your phone camera to open the bot directly.",
+      "openBot": "Open @PolsoAgentBot",
+      "refreshStatus": "Refresh status",
+      "howToStep1": "Tap the <strong>\"Generate connection code\"</strong> button below.",
+      "howToStep2": "Open the Telegram app on your phone and find the bot <link>@PolsoAgentBot</link>, or scan the QR code with your phone camera.",
+      "howToStep3": "Send the 6-digit code to the bot. Done — your account will be linked and you can start sending receipts via Telegram.",
+      "generateCode": "Generate connection code",
+      "qrScanLabel": "SCAN TO OPEN"
+    },
+    "whatsapp": {
+      "title": "WhatsApp",
+      "comingSoon": "Coming soon",
+      "connectTitle": "Connect via WhatsApp",
+      "connectDescription": "Soon you'll be able to send receipts via WhatsApp too, without needing to install Telegram.",
+      "comingSoonButton": "Available soon"
+    }
+  }
 }
