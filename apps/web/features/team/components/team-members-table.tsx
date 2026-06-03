@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@polso/ui/alert-dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@polso/ui/avatar"
 import { changeMemberRoleAction, removeMemberAction } from "../actions/manage-member"
 import type { TeamMember } from "../queries/get-team-members"
 
@@ -193,15 +194,25 @@ export function TeamMembersTable({
             <TableRow key={member.id}>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                  </div>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={member.image ?? undefined} />
+                    <AvatarFallback delayMs={0} className="text-xs bg-muted text-muted-foreground">
+                      {member.name
+                        ? member.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
+                        : member.email
+                          ? member.email[0].toUpperCase()
+                          : "?"}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">
-                      User {member.userId.slice(0, 8)}...
+                      {member.name ?? member.email ?? member.userId.slice(0, 12) + "…"}
+                      {member.userId === currentUserId && (
+                        <span className="ml-1.5 text-xs font-normal text-muted-foreground">({t("members.you")})</span>
+                      )}
                     </span>
-                    {member.userId === currentUserId && (
-                      <span className="text-xs text-muted-foreground">{t("members.you")}</span>
+                    {member.name && member.email && (
+                      <span className="text-xs text-muted-foreground">{member.email}</span>
                     )}
                   </div>
                 </div>

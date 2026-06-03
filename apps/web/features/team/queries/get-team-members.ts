@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db"
+import { neonAuth } from "@neondatabase/auth/next/server"
 import { getAuthContext } from "@polso/auth/get-session"
 
 export interface TeamMember {
@@ -6,13 +7,19 @@ export interface TeamMember {
   userId: string
   role: string
   createdAt: Date
+  name: string | null
+  email: string | null
+  image: string | null
 }
 
 /**
- * Get all team members for the current organization
+ * Get all team members for the current organization.
+ * Resolves name/email/image for the current user via neonAuth;
+ * other members show null until a proper user directory is available.
  */
 export async function getTeamMembers(): Promise<TeamMember[]> {
   const { organizationId } = await getAuthContext()
+  const { user: currentUser } = await neonAuth()
 
   const members = await prisma.userOrganization.findMany({
     where: { organizationId },
@@ -25,7 +32,17 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
     orderBy: { createdAt: "asc" },
   })
 
-  return members
+  return members.map((m) => {
+    if (m.userId === currentUser?.id) {
+      return {
+        ...m,
+        name: currentUser.name ?? null,
+        email: currentUser.email ?? null,
+        image: currentUser.image ?? null,
+      }
+    }
+    return { ...m, name: null, email: null, image: null }
+  })
 }
 
 /**
