@@ -266,5 +266,32 @@
     "description": "Polso connects your bank automatically and helps your advisor keep all documentation up to date for quarterly close.",
     "button": "Accept Invitation",
     "footer": "This invitation expires in 7 days."
+  },
+  "partnerClientConnected": {
+    "subjectJoined": "{clientName} joined Polso",
+    "subjectFirstBank": "{clientName} connected their first bank",
+    "badgeJoined": "New client",
+    "badgeFirstBank": "Bank connected",
+    "headingJoined": "{clientName} is now on Polso",
+    "headingFirstBank": "{clientName} connected their bank",
+    "introJoined": "Hi {partnerName}, {clientName} just accepted your invitation and is now connected to Polso.",
+    "introFirstBank": "Hi {partnerName}, {clientName} just connected their first bank account. Transactions will start syncing in minutes.",
+    "button": "View client"
+  },
+  "partnerDigest": {
+    "subjectDaily": "Daily digest — {partnerOrgName}",
+    "subjectWeekly": "Weekly digest — {partnerOrgName}",
+    "badgeDaily": "Daily digest",
+    "badgeWeekly": "Weekly digest",
+    "headingDaily": "Yesterday's summary",
+    "headingWeekly": "This week's summary",
+    "newClientsTitle": "New clients connected",
+    "receiptsUploadedTitle": "Receipts uploaded {periodLabel}",
+    "pendingReceiptsTitle": "Receipts pending now",
+    "noActivity": "No new activity this period.",
+    "clientColumn": "Client",
+    "countColumn": "Receipts",
+    "button": "Go to dashboard",
+    "footer": "You receive this digest because it's enabled in Settings → Notifications."
   }
 }

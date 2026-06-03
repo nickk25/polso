@@ -266,5 +266,32 @@
     "description": "Polso conecta tu banco automáticamente y ayuda a tu asesoría a tener toda la documentación al día para el cierre trimestral.",
     "button": "Aceptar invitación",
     "footer": "Esta invitación expira en 7 días."
+  },
+  "partnerClientConnected": {
+    "subjectJoined": "{clientName} se unió a Polso",
+    "subjectFirstBank": "{clientName} conectó su primer banco",
+    "badgeJoined": "Nuevo cliente",
+    "badgeFirstBank": "Banco conectado",
+    "headingJoined": "{clientName} ya está en Polso",
+    "headingFirstBank": "{clientName} conectó su banco",
+    "introJoined": "Hola {partnerName}, {clientName} acaba de aceptar tu invitación y ya está conectado a Polso.",
+    "introFirstBank": "Hola {partnerName}, {clientName} acaba de conectar su primer banco. Las transacciones empezarán a sincronizarse en minutos.",
+    "button": "Ver cliente"
+  },
+  "partnerDigest": {
+    "subjectDaily": "Resumen diario — {partnerOrgName}",
+    "subjectWeekly": "Resumen semanal — {partnerOrgName}",
+    "badgeDaily": "Resumen diario",
+    "badgeWeekly": "Resumen semanal",
+    "headingDaily": "Resumen de ayer",
+    "headingWeekly": "Resumen de esta semana",
+    "newClientsTitle": "Nuevos clientes conectados",
+    "receiptsUploadedTitle": "Recibos subidos {periodLabel}",
+    "pendingReceiptsTitle": "Recibos pendientes ahora",
+    "noActivity": "Sin actividad nueva en este periodo.",
+    "clientColumn": "Cliente",
+    "countColumn": "Recibos",
+    "button": "Ir al panel",
+    "footer": "Recibes este resumen porque lo tienes activado en Ajustes → Notificaciones."
   }
 }

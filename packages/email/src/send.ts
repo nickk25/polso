@@ -23,6 +23,8 @@ import RunwayCriticalAlertEmail from "../templates/alert-runway-critical"
 import UserInvitedEmail from "../templates/user-invited"
 import UserAcceptedInviteEmail from "../templates/user-accepted-invite"
 import PartnerClientInvitedEmail from "../templates/partner-client-invited"
+import PartnerClientConnectedEmail from "../templates/partner-client-connected"
+import PartnerDigestEmail from "../templates/partner-digest"
 
 export async function sendWaitlistConfirmation(email: string, locale?: Locale) {
   const t = getEmailTranslations(locale)
@@ -412,6 +414,60 @@ export async function sendPartnerClientInvited(
       partnerOrgName,
       clientName,
       inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/invite/${inviteToken}`,
+      locale,
+    }),
+  })
+}
+
+export async function sendPartnerClientConnected(
+  to: string,
+  partnerName: string,
+  clientName: string,
+  triggerEvent: "joined" | "first_bank",
+  dashboardUrl: string,
+  locale?: Locale
+) {
+  const t = getEmailTranslations(locale)
+  const subject = triggerEvent === "joined"
+    ? t("partnerClientConnected.subjectJoined", { clientName })
+    : t("partnerClientConnected.subjectFirstBank", { clientName })
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    react: PartnerClientConnectedEmail({ partnerName, clientName, triggerEvent, dashboardUrl, locale }),
+  })
+}
+
+export async function sendPartnerDigest(
+  to: string,
+  partnerName: string,
+  partnerOrgName: string,
+  cadence: "daily" | "weekly",
+  periodLabel: string,
+  newClients: { id: string; name: string; connectedAt: Date }[],
+  receiptsUploaded: { clientId: string; clientName: string; count: number }[],
+  pendingReceipts: { clientId: string; clientName: string; count: number }[],
+  dashboardUrl: string,
+  locale?: Locale
+) {
+  const t = getEmailTranslations(locale)
+  const subject = cadence === "daily"
+    ? t("partnerDigest.subjectDaily", { partnerOrgName })
+    : t("partnerDigest.subjectWeekly", { partnerOrgName })
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    react: PartnerDigestEmail({
+      partnerName,
+      partnerOrgName,
+      cadence,
+      periodLabel,
+      newClients,
+      receiptsUploaded,
+      pendingReceipts,
+      dashboardUrl,
       locale,
     }),
   })
