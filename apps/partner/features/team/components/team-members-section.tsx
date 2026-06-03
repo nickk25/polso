@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useTransition } from "react"
 import { toast } from "@polso/ui/sonner"
 import { Trash } from "@phosphor-icons/react"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@polso/ui/avatar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ import {
 import { removeTeammateAction } from "../actions/remove-teammate"
 import { revokeTeammateInvitationAction } from "../actions/revoke-teammate-invitation"
 import type { TeamMember, TeamInvitation } from "../queries/get-team-data"
+import { getInitials } from "@/lib/format"
 
 export function TeamMembersSection({
   members,
@@ -69,7 +71,6 @@ export function TeamMembersSection({
         <TableHeader>
           <TableRow>
             <TableHead>Usuario</TableHead>
-            <TableHead>Rol</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="w-12" />
           </TableRow>
@@ -77,14 +78,26 @@ export function TeamMembersSection({
         <TableBody>
           {members.map((member) => (
             <TableRow key={member.id}>
-              <TableCell className="font-mono text-sm">
-                {member.email ?? member.name ?? member.userId.slice(0, 16) + "…"}
-                {member.userId === currentUserId && (
-                  <span className="ml-2 text-xs text-muted-foreground">(tú)</span>
-                )}
-              </TableCell>
               <TableCell>
-                <Badge variant="secondary">Admin</Badge>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={member.image ?? undefined} alt={member.name ?? member.email ?? "Usuario"} />
+                    <AvatarFallback delayMs={0} className="text-xs">
+                      {getInitials(member.name, member.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {member.name || member.email?.split("@")[0] || member.userId.slice(0, 12) + "…"}
+                      {member.userId === currentUserId && (
+                        <span className="ml-1.5 text-xs font-normal text-muted-foreground">(tú)</span>
+                      )}
+                    </p>
+                    {member.email && (
+                      <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                    )}
+                  </div>
+                </div>
               </TableCell>
               <TableCell>
                 <Badge variant="default">Activo</Badge>
@@ -118,9 +131,18 @@ export function TeamMembersSection({
           ))}
           {invitations.map((inv) => (
             <TableRow key={inv.id}>
-              <TableCell className="font-mono text-sm">{inv.email}</TableCell>
               <TableCell>
-                <Badge variant="secondary">Admin</Badge>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-7 w-7">
+                    <AvatarFallback delayMs={0} className="text-xs">
+                      {getInitials(null, inv.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{inv.email.split("@")[0]}</p>
+                    <p className="text-xs text-muted-foreground truncate">{inv.email}</p>
+                  </div>
+                </div>
               </TableCell>
               <TableCell>
                 <Badge variant="outline">Pendiente</Badge>
@@ -141,7 +163,7 @@ export function TeamMembersSection({
           ))}
           {!hasRows && (
             <TableRow>
-              <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-6">
+              <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
                 Sin miembros ni invitaciones pendientes
               </TableCell>
             </TableRow>

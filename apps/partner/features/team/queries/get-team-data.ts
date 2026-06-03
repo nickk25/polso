@@ -8,6 +8,7 @@ export interface TeamMember {
   role: string
   email: string | null
   name: string | null
+  image: string | null
   createdAt: Date
 }
 
@@ -47,13 +48,18 @@ export async function getTeamData(): Promise<TeamData> {
     }),
   ])
 
-  // Resolve names/emails: for the current user we have data from neonAuth,
+  // Resolve names/emails/images: for the current user we have data from neonAuth,
   // others show truncated userId
   const resolvedMembers: TeamMember[] = members.map((m) => {
     if (m.userId === currentUser?.id) {
-      return { ...m, email: currentUser.email ?? null, name: currentUser.name ?? null }
+      return {
+        ...m,
+        email: currentUser.email ?? null,
+        name: currentUser.name ?? null,
+        image: currentUser.image ?? null,
+      }
     }
-    return { ...m, email: null, name: null }
+    return { ...m, email: null, name: null, image: null }
   })
 
   return { members: resolvedMembers, invitations }
