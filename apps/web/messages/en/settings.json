@@ -31,7 +31,20 @@
     "profile": "Profile",
     "organization": "Organization",
     "notifications": "Notifications",
-    "agent": "Agent"
+    "agent": "Agent",
+    "partnerAccess": "Advisors"
+  },
+  "partnerAccess": {
+    "title": "Advisors with access",
+    "description": "These organizations can view your financial data. This is shown for transparency in compliance with GDPR.",
+    "empty": "No advisors have access to your data.",
+    "connectedOn": "Connected on {date}",
+    "invitedOn": "Invited on {date}",
+    "statuses": {
+      "pending": "Pending",
+      "active": "Active",
+      "disconnected": "Disconnected"
+    }
   },
   "general": {
     "title": "General Settings",

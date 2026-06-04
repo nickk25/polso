@@ -31,7 +31,20 @@
     "profile": "Perfil",
     "organization": "Organizacion",
     "notifications": "Notificaciones",
-    "agent": "Agente"
+    "agent": "Agente",
+    "partnerAccess": "Asesorías"
+  },
+  "partnerAccess": {
+    "title": "Asesorías con acceso",
+    "description": "Estas organizaciones pueden ver tus datos financieros. Se muestra por transparencia conforme al RGPD.",
+    "empty": "Ninguna asesoría tiene acceso a tus datos.",
+    "connectedOn": "Conectada el {date}",
+    "invitedOn": "Invitada el {date}",
+    "statuses": {
+      "pending": "Pendiente",
+      "active": "Activa",
+      "disconnected": "Desconectada"
+    }
   },
   "general": {
     "title": "Configuracion General",

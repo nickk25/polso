@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { User, Buildings, Bank, Bell, Gear, UsersThree, Robot } from "@phosphor-icons/react"
+import { User, Buildings, Bank, Bell, Gear, UsersThree, Robot, Handshake } from "@phosphor-icons/react"
 
 const TABS = [
   { key: "profile", href: "/settings/profile", Icon: User },
@@ -13,6 +13,7 @@ const TABS = [
   { key: "notifications", href: "/settings/notifications", Icon: Bell },
   { key: "preferences", href: "/settings/preferences", Icon: Gear },
   { key: "agent", href: "/settings/agent", Icon: Robot },
+  { key: "partnerAccess", href: "/settings/partner-access", Icon: Handshake },
 ] as const
 
 export function SettingsTabs() {
