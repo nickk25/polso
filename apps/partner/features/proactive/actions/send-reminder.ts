@@ -11,6 +11,11 @@ export async function sendReminderAction(clientId: string): Promise<{
 }> {
   const ctx = await getPartnerAuthContext()
 
+  const link = await prisma.partnerClient.findFirst({
+    where: { partnerId: ctx.organizationId, clientId, status: "active" },
+  })
+  if (!link) return { success: false, error: "Cliente no encontrado", code: "FORBIDDEN" }
+
   const partner = await prisma.organization.findUnique({
     where: { id: ctx.organizationId },
     select: { autoRemindersEnabled: true, reminderCooldownHours: true },
