@@ -134,3 +134,22 @@
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(300%); }
 }
+
+/* OTP form auto-submits on last digit — verify button is redundant */
+:has([data-input-otp-container]) button[type="submit"] {
+  display: none;
+}
+
+/* OTP boxes: centered, large */
+[data-input-otp-container] {
+  justify-content: center !important;
+}
+
+/* Each cell rendered by input-otp uses data-active */
+[data-input-otp-container] [data-active] {
+  flex: none !important;
+  width: 3.25rem !important;
+  height: 4rem !important;
+  font-size: 1.25rem !important;
+  text-align: center !important;
+}

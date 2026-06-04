@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./server": "./src/server.ts",
-    "./get-session": "./src/get-session.ts"
+    "./get-session": "./src/get-session.ts",
+    "./ui": "./src/ui/email-otp-form.tsx"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -16,13 +17,16 @@
   },
   "dependencies": {
     "@neondatabase/auth": "0.1.0-beta.21",
-    "@polso/db": "workspace:*"
+    "@polso/db": "workspace:*",
+    "@polso/ui": "workspace:*"
   },
   "devDependencies": {
     "@polso/tsconfig": "workspace:*",
+    "@types/react": "^19",
     "typescript": "^5"
   },
   "peerDependencies": {
-    "next": ">=15"
+    "next": ">=15",
+    "react": ">=18"
   }
 }

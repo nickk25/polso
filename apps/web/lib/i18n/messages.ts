@@ -20,6 +20,7 @@ import enTransactions from "@/messages/en/transactions.json"
 import enVault from "@/messages/en/vault.json"
 import enAgent from "@/messages/en/agent.json"
 import enOnboarding from "@/messages/en/onboarding.json"
+import enAuth from "@/messages/en/auth.json"
 
 import esCommon from "@/messages/es/common.json"
 import esDashboard from "@/messages/es/dashboard.json"
@@ -41,6 +42,7 @@ import esTransactions from "@/messages/es/transactions.json"
 import esVault from "@/messages/es/vault.json"
 import esAgent from "@/messages/es/agent.json"
 import esOnboarding from "@/messages/es/onboarding.json"
+import esAuth from "@/messages/es/auth.json"
 
 const messages = {
   en: {
@@ -64,6 +66,7 @@ const messages = {
     vault: enVault,
     agent: enAgent,
     onboarding: enOnboarding,
+    auth: enAuth,
   },
   es: {
     common: esCommon,
@@ -86,6 +89,7 @@ const messages = {
     vault: esVault,
     agent: esAgent,
     onboarding: esOnboarding,
+    auth: esAuth,
   },
 } as const
 
