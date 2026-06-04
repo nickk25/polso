@@ -159,6 +159,7 @@ RESEND_API_KEY            # Resend email
 CREEM_API_KEY             # Creem billing
 ANTHROPIC_API_KEY_CHAT    # Claude API — used by /api/chat (dashboard assistant)
 NEXT_PUBLIC_APP_URL       # App URL
+PUBLIC_SIGNUP_ENABLED     # "true" to allow self-registration; omit/false for invite-only (default)
 ```
 
 ## Configuration

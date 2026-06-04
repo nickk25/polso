@@ -158,6 +158,7 @@ TELEGRAM_BOT_TOKEN        # Telegram reminder bot
 TELEGRAM_WEBHOOK_SECRET_TOKEN
 ANTHROPIC_API_KEY_OCR     # AI matching / OCR
 CRON_SECRET               # Cron job auth header
+PUBLIC_SIGNUP_ENABLED     # "true" to allow self-registration; omit/false for invite-only (default)
 ```
 
 ## Configuration
