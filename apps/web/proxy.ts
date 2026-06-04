@@ -69,6 +69,7 @@ export const config = {
   matcher: [
     // Protected routes
     "/dashboard/:path*",
+    "/transactions/:path*",
     "/analytics/:path*",
     "/recurring/:path*",
     "/categories/:path*",
@@ -76,6 +77,9 @@ export const config = {
     "/export/:path*",
     "/settings/:path*",
     "/account/:path*",
+    "/vault/:path*",
+    "/reports/:path*",
+    "/alerts/:path*",
     // Public routes for locale detection
     "/",
     "/auth/:path*",

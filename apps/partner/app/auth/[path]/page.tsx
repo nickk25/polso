@@ -1,10 +1,21 @@
 "use client"
 
-import { useParams } from "next/navigation"
+import { useEffect } from "react"
+import { useParams, useSearchParams } from "next/navigation"
 import { AuthView } from "@neondatabase/auth/react"
+
+const AUTH_CALLBACK_KEY = "authCallbackUrl"
 
 export default function AuthPage() {
   const params = useParams<{ path: string }>()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const callbackUrl = searchParams.get("callbackUrl")
+    if (callbackUrl) {
+      sessionStorage.setItem(AUTH_CALLBACK_KEY, callbackUrl)
+    }
+  }, [searchParams])
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">

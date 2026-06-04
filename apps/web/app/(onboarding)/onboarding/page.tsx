@@ -16,7 +16,7 @@ export default async function OnboardingPage({
     include: { organization: true },
   })
 
-  if (!userOrg) redirect("/auth/sign-in")
+  if (!userOrg) redirect("/")
 
   const { organization } = userOrg
 

@@ -48,7 +48,7 @@ export async function getAuthContextWithType(): Promise<PartnerAuthContext> {
   }
 
   const userOrg = await prisma.userOrganization.findFirst({
-    where: { userId: user.id },
+    where: { userId: user.id, organization: { type: "partner" } },
     select: {
       organizationId: true,
       organization: { select: { type: true } },

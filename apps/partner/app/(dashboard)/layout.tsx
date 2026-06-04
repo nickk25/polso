@@ -3,10 +3,11 @@ import { neonAuth } from "@neondatabase/auth/next/server"
 import { prisma } from "@/lib/db"
 import { AppSidebar } from "@/components/layout/sidebar"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
+import { AuthCallbackRedirect } from "@/components/auth-callback-redirect"
 
 async function getOrCreatePartnerOrg(userId: string, userEmail: string | null, userName?: string | null, userImage?: string | null) {
   const existing = await prisma.userOrganization.findFirst({
-    where: { userId },
+    where: { userId, organization: { type: "partner" } },
     include: { organization: true },
   })
 
@@ -15,7 +16,7 @@ async function getOrCreatePartnerOrg(userId: string, userEmail: string | null, u
   try {
     return await prisma.$transaction(async (tx) => {
       const doubleCheck = await tx.userOrganization.findFirst({
-        where: { userId },
+        where: { userId, organization: { type: "partner" } },
         include: { organization: true },
       })
 
@@ -41,7 +42,7 @@ async function getOrCreatePartnerOrg(userId: string, userEmail: string | null, u
     })
   } catch {
     const created = await prisma.userOrganization.findFirst({
-      where: { userId },
+      where: { userId, organization: { type: "partner" } },
       include: { organization: true },
     })
     if (created) return created.organization
@@ -64,6 +65,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="relative">
+      <AuthCallbackRedirect />
       <AppSidebar
         organizationName={org.name}
         organizationId={org.id}

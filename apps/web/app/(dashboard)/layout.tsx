@@ -9,7 +9,7 @@ import { SyncMonitor } from "@/features/banking/components/sync-monitor";
 async function getOrganization(userId: string, userEmail: string | null, userName?: string | null, userImage?: string | null) {
   // Check if user has an organization
   const existingOrg = await prisma.userOrganization.findFirst({
-    where: { userId },
+    where: { userId, organization: { type: "client" } },
     include: { organization: true },
   });
 
@@ -23,7 +23,7 @@ async function getOrganization(userId: string, userEmail: string | null, userNam
     const org = await prisma.$transaction(async (tx) => {
       // Double-check inside transaction
       const existing = await tx.userOrganization.findFirst({
-        where: { userId },
+        where: { userId, organization: { type: "client" } },
         include: { organization: true },
       });
 
@@ -54,7 +54,7 @@ async function getOrganization(userId: string, userEmail: string | null, userNam
   } catch {
     // If transaction failed due to race condition, fetch the org that was created
     const created = await prisma.userOrganization.findFirst({
-      where: { userId },
+      where: { userId, organization: { type: "client" } },
       include: { organization: true },
     });
 
