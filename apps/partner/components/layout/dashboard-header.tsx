@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation"
 import { useTransition } from "react"
+import { useTheme } from "next-themes"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,10 +13,16 @@ import {
 } from "@polso/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@polso/ui/avatar"
 import Link from "next/link"
-import { UserCircle, UsersThree, Bell, SignOut } from "@phosphor-icons/react"
+import { UserCircle, UsersThree, Bell, Sun, Moon, Monitor, SignOut } from "@phosphor-icons/react"
 import { authClient } from "@polso/auth/client"
 import { MobileNav } from "./mobile-nav"
 import { getInitials } from "@/lib/format"
+
+const THEME_CYCLE: Record<string, { next: string; Icon: React.ElementType; label: string }> = {
+  light:  { next: "dark",   Icon: Moon,    label: "Oscuro" },
+  dark:   { next: "system", Icon: Monitor, label: "Sistema" },
+  system: { next: "light",  Icon: Sun,     label: "Claro" },
+}
 
 const PATH_MAP: Record<string, string> = {
   "/": "Resumen",
@@ -43,6 +50,8 @@ export function DashboardHeader({ organizationName, userEmail, userImage }: Dash
   const pathname = usePathname()
   const router = useRouter()
   const [, startTransition] = useTransition()
+  const { theme, setTheme } = useTheme()
+  const { next: nextTheme, Icon: ThemeIcon, label: themeLabel } = THEME_CYCLE[theme ?? "system"]
   const title = getTitle(pathname)
   const initials = getInitials(userEmail?.split("@")[0] ?? organizationName)
 
@@ -102,6 +111,10 @@ export function DashboardHeader({ organizationName, userEmail, userImage }: Dash
                 <Bell className="h-4 w-4" />
                 Notificaciones
               </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme(nextTheme)} className="flex items-center gap-2">
+              <ThemeIcon className="h-4 w-4" />
+              {themeLabel}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
