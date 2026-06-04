@@ -2,7 +2,7 @@
 
 import { useTransition } from "react"
 import { toast } from "@polso/ui/sonner"
-import { Trash } from "@phosphor-icons/react"
+import { Trash, Crown, User } from "@phosphor-icons/react"
 import { Button } from "@polso/ui/button"
 import { Badge } from "@polso/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@polso/ui/avatar"
@@ -29,6 +29,16 @@ import { removeTeammateAction } from "../actions/remove-teammate"
 import { revokeTeammateInvitationAction } from "../actions/revoke-teammate-invitation"
 import type { TeamMember, TeamInvitation } from "../queries/get-team-data"
 import { getInitials } from "@/lib/format"
+
+function RoleBadge({ role }: { role: string }) {
+  const isOwner = role === "owner"
+  return (
+    <Badge variant={isOwner ? "default" : "outline"} className="gap-1">
+      {isOwner ? <Crown className="h-3 w-3" /> : <User className="h-3 w-3" />}
+      {isOwner ? "Propietario" : "Miembro"}
+    </Badge>
+  )
+}
 
 export function TeamMembersSection({
   members,
@@ -71,6 +81,7 @@ export function TeamMembersSection({
         <TableHeader>
           <TableRow>
             <TableHead>Usuario</TableHead>
+            <TableHead>Rol</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="w-12" />
           </TableRow>
@@ -98,6 +109,9 @@ export function TeamMembersSection({
                     )}
                   </div>
                 </div>
+              </TableCell>
+              <TableCell>
+                <RoleBadge role={member.role} />
               </TableCell>
               <TableCell>
                 <Badge variant="default">Activo</Badge>
@@ -145,6 +159,9 @@ export function TeamMembersSection({
                 </div>
               </TableCell>
               <TableCell>
+                <RoleBadge role="member" />
+              </TableCell>
+              <TableCell>
                 <Badge variant="outline">Pendiente</Badge>
               </TableCell>
               <TableCell>
@@ -163,7 +180,7 @@ export function TeamMembersSection({
           ))}
           {!hasRows && (
             <TableRow>
-              <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
+              <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-6">
                 Sin miembros ni invitaciones pendientes
               </TableCell>
             </TableRow>
