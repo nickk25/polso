@@ -49,7 +49,12 @@ export function AcceptInviteButton({ token, singleClientOrgId, singleClientOrgNa
       }
 
       setSuccess(true)
-      setTimeout(() => router.push("/dashboard"), 1500)
+      const partnerUrl = process.env.NEXT_PUBLIC_PARTNER_APP_URL
+      const destination =
+        result.data.orgType === "partner" && partnerUrl
+          ? `${partnerUrl}/dashboard`
+          : "/dashboard"
+      setTimeout(() => router.push(destination), 1500)
     })
   }
 

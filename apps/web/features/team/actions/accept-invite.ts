@@ -10,7 +10,7 @@ import { successResponse, errorResponse, type ActionResponse } from "@/lib/types
 import { sendPartnerClientConnected } from "@polso/email/send"
 
 type AcceptInviteResult =
-  | { kind: "joined"; organizationId: string; organizationName: string }
+  | { kind: "joined"; organizationId: string; organizationName: string; orgType?: string }
   | { kind: "needs_org_selection"; availableOrgs: { id: string; name: string }[] }
 
 /**
@@ -133,22 +133,28 @@ export async function acceptInviteAction(
     }
 
     // Create membership
-    await prisma.$transaction(async (tx) => {
-      await tx.userOrganization.create({
-        data: {
-          userId: user.id,
-          organizationId: invitation.organizationId,
-          role: invitation.role,
-          memberName: user.name ?? null,
-          memberEmail: user.email ?? null,
-          memberImage: user.image ?? null,
-        },
-      })
-      await tx.invitation.update({
-        where: { id: invitation.id },
-        data: { status: "accepted", acceptedAt: new Date() },
-      })
-    })
+    const [org] = await Promise.all([
+      prisma.organization.findUnique({
+        where: { id: invitation.organizationId },
+        select: { type: true },
+      }),
+      prisma.$transaction(async (tx) => {
+        await tx.userOrganization.create({
+          data: {
+            userId: user.id,
+            organizationId: invitation.organizationId,
+            role: invitation.role,
+            memberName: user.name ?? null,
+            memberEmail: user.email ?? null,
+            memberImage: user.image ?? null,
+          },
+        })
+        await tx.invitation.update({
+          where: { id: invitation.id },
+          data: { status: "accepted", acceptedAt: new Date() },
+        })
+      }),
+    ])
 
     console.log(`User ${user.email} joined ${invitation.organizationName}`)
 
@@ -159,6 +165,7 @@ export async function acceptInviteAction(
       kind: "joined",
       organizationId: invitation.organizationId,
       organizationName: invitation.organizationName,
+      orgType: org?.type,
     })
   } catch (error) {
     console.error("Error accepting invitation:", error)
