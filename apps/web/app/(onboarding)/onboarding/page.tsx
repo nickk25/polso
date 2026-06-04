@@ -12,7 +12,7 @@ export default async function OnboardingPage({
   if (!user) redirect("/auth/sign-in")
 
   const userOrg = await prisma.userOrganization.findFirst({
-    where: { userId: user.id },
+    where: { userId: user.id, organization: { type: "client" } },
     include: { organization: true },
   })
 
