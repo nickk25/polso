@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useParams, useSearchParams } from "next/navigation"
-import { AuthView } from "@neondatabase/auth/react"
+import { useParams, useSearchParams, useRouter } from "next/navigation"
 import { CheckCircle } from "@phosphor-icons/react"
 import { EmailOtpForm } from "@polso/auth/ui"
 
@@ -19,6 +18,7 @@ const SIGN_IN_PATHS = new Set(["sign-in", "magic-link"])
 export default function AuthPage() {
   const params = useParams<{ path: string }>()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const path = params.path
 
   useEffect(() => {
@@ -27,6 +27,12 @@ export default function AuthPage() {
       sessionStorage.setItem(AUTH_CALLBACK_KEY, callbackUrl)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    if (!SIGN_IN_PATHS.has(path)) {
+      router.replace("/auth/sign-in")
+    }
+  }, [path, router])
 
   return (
     <div className="flex min-h-screen">
@@ -60,24 +66,11 @@ export default function AuthPage() {
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm space-y-8">
           <div className="text-xl font-semibold tracking-tight lg:hidden">Polso Partner</div>
-          {SIGN_IN_PATHS.has(path) ? (
+          {SIGN_IN_PATHS.has(path) && (
             <EmailOtpForm
               heading="Bienvenido a Polso"
               subheading="Panel de asesoría"
               redirectTo="/"
-            />
-          ) : (
-            <AuthView
-              path={path}
-              className="!bg-transparent shadow-none border-0"
-              classNames={{
-                header: "text-center",
-                title: "text-center",
-                description: "text-center",
-                form: {
-                  label: "!text-center !block",
-                },
-              }}
             />
           )}
         </div>
