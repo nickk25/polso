@@ -6,8 +6,16 @@ import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
 import { SyncMonitor } from "@/features/banking/components/sync-monitor";
 
-async function getOrganization(userId: string, userEmail: string | null, userName?: string | null, userImage?: string | null) {
-  // Check if user has an organization
+async function getExistingOrganization(userId: string) {
+  const found = await prisma.userOrganization.findFirst({
+    where: { userId, organization: { type: "client" } },
+    include: { organization: true },
+  });
+  return found?.organization ?? null;
+}
+
+// Kept for when PUBLIC_SIGNUP_ENABLED="true" — do not remove
+async function getOrCreateOrganization(userId: string, userEmail: string | null, userName?: string | null, userImage?: string | null) {
   const existingOrg = await prisma.userOrganization.findFirst({
     where: { userId, organization: { type: "client" } },
     include: { organization: true },
@@ -17,11 +25,8 @@ async function getOrganization(userId: string, userEmail: string | null, userNam
     return existingOrg.organization;
   }
 
-  // Use transaction to prevent race condition on first login
-  // Multiple parallel requests might try to create an org simultaneously
   try {
     const org = await prisma.$transaction(async (tx) => {
-      // Double-check inside transaction
       const existing = await tx.userOrganization.findFirst({
         where: { userId, organization: { type: "client" } },
         include: { organization: true },
@@ -31,7 +36,6 @@ async function getOrganization(userId: string, userEmail: string | null, userNam
         return existing.organization;
       }
 
-      // Create new organization
       return tx.organization.create({
         data: {
           name: userEmail
@@ -52,7 +56,6 @@ async function getOrganization(userId: string, userEmail: string | null, userNam
 
     return org;
   } catch {
-    // If transaction failed due to race condition, fetch the org that was created
     const created = await prisma.userOrganization.findFirst({
       where: { userId, organization: { type: "client" } },
       include: { organization: true },
@@ -77,8 +80,13 @@ export default async function DashboardLayout({
     redirect("/auth/sign-in");
   }
 
-  // Get or create user's organization
-  const organization = await getOrganization(user.id, user.email, user.name, user.image);
+  const organization = process.env.PUBLIC_SIGNUP_ENABLED === "true"
+    ? await getOrCreateOrganization(user.id, user.email, user.name, user.image)
+    : await getExistingOrganization(user.id);
+
+  if (!organization) {
+    redirect("/auth/no-access");
+  }
 
   if (!organization.onboardingCompletedAt) {
     redirect("/onboarding");

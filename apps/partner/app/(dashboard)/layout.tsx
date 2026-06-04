@@ -5,6 +5,15 @@ import { AppSidebar } from "@/components/layout/sidebar"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect"
 
+async function getExistingPartnerOrg(userId: string) {
+  const found = await prisma.userOrganization.findFirst({
+    where: { userId, organization: { type: "partner" } },
+    include: { organization: true },
+  })
+  return found?.organization ?? null
+}
+
+// Kept for when PUBLIC_SIGNUP_ENABLED="true" — do not remove
 async function getOrCreatePartnerOrg(userId: string, userEmail: string | null, userName?: string | null, userImage?: string | null) {
   const existing = await prisma.userOrganization.findFirst({
     where: { userId, organization: { type: "partner" } },
@@ -59,9 +68,11 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/auth/sign-in")
 
-  const org = await getOrCreatePartnerOrg(user.id, user.email, user.name, user.image)
+  const org = process.env.PUBLIC_SIGNUP_ENABLED === "true"
+    ? await getOrCreatePartnerOrg(user.id, user.email, user.name, user.image)
+    : await getExistingPartnerOrg(user.id)
 
-  if (org.type !== "partner") redirect("/not-partner")
+  if (!org) redirect("/not-partner")
 
   return (
     <div className="relative">
