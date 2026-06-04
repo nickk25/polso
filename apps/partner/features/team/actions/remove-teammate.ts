@@ -16,9 +16,19 @@ export async function removeTeammateAction(
       return errorResponse("Solo las asesorías pueden gestionar miembros", "FORBIDDEN")
     }
 
+    // Verify caller has permission to remove members
+    const callerMembership = await prisma.userOrganization.findFirst({
+      where: { userId: ctx.userId, organizationId: ctx.organizationId },
+      select: { role: true },
+    })
+
+    if (!callerMembership || !["owner", "admin"].includes(callerMembership.role)) {
+      return errorResponse("No tienes permisos para eliminar miembros", "FORBIDDEN")
+    }
+
     const membership = await prisma.userOrganization.findFirst({
       where: { id: userOrgId, organizationId: ctx.organizationId },
-      select: { userId: true },
+      select: { userId: true, role: true },
     })
 
     if (!membership) {
@@ -29,12 +39,8 @@ export async function removeTeammateAction(
       return errorResponse("No puedes eliminarte a ti mismo", "FORBIDDEN")
     }
 
-    const adminCount = await prisma.userOrganization.count({
-      where: { organizationId: ctx.organizationId, role: "admin" },
-    })
-
-    if (adminCount <= 1) {
-      return errorResponse("No puedes eliminar al último administrador", "LAST_ADMIN")
+    if (membership.role === "owner") {
+      return errorResponse("No se puede eliminar al propietario", "FORBIDDEN")
     }
 
     await prisma.userOrganization.delete({ where: { id: userOrgId } })

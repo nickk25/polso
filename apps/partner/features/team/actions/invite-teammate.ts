@@ -24,10 +24,14 @@ export async function inviteTeammateAction(
       return errorResponse("Email inválido", "VALIDATION_ERROR")
     }
 
-    const [org, existingPending] = await Promise.all([
+    const [org, existingAccepted, existingPending] = await Promise.all([
       prisma.organization.findUnique({
         where: { id: ctx.organizationId },
         select: { name: true, invitationExpiryDays: true },
+      }),
+      prisma.invitation.findFirst({
+        where: { organizationId: ctx.organizationId, email: normalizedEmail, status: "accepted" },
+        select: { id: true },
       }),
       prisma.invitation.findFirst({
         where: {
@@ -43,6 +47,10 @@ export async function inviteTeammateAction(
 
     if (!org) {
       return errorResponse("No se encontró la organización", "NOT_FOUND")
+    }
+
+    if (existingAccepted) {
+      return errorResponse("Este usuario ya es miembro del equipo", "DUPLICATE_ERROR")
     }
 
     if (existingPending) {
