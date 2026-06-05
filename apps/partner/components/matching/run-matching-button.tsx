@@ -44,7 +44,7 @@ export function RunMatchingButton({ clientId }: RunMatchingButtonProps) {
       ) : (
         <ArrowsClockwise className="mr-2 h-4 w-4" />
       )}
-      {loading ? "Ejecutando..." : "Ejecutar matching"}
+      {loading ? "Ejecutando..." : "Re-intentar matching y OCR"}
     </Button>
   )
 }

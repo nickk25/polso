@@ -15,6 +15,7 @@ const statusLabel: Record<string, string> = {
   analyzing: "Analizando",
   suggested_match: "Match sugerido",
   no_match: "Sin match",
+  ocr_failed: "Error de lectura",
   done: "Conciliado",
   archived: "Archivado",
 }
@@ -24,6 +25,7 @@ const statusVariant: Record<string, "default" | "secondary" | "outline" | "destr
   suggested_match: "secondary",
   new: "outline",
   no_match: "destructive",
+  ocr_failed: "destructive",
 }
 
 export default async function ClientInboxPage({
