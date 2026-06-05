@@ -43,17 +43,15 @@ export async function extractReceiptData(
       ? fileData
       : fileData.toString("base64")
 
-  // AI SDK uses "file" type for all media — works for images and PDFs
-  const filePart = {
-    type: "file" as const,
-    data: base64,
-    mimeType: contentType as
-      | "image/jpeg"
-      | "image/png"
-      | "image/webp"
-      | "image/gif"
-      | "application/pdf",
-  }
+  // AI SDK uses "image" for raster images and "file" for PDFs
+  const isPdf = contentType === "application/pdf"
+  const filePart = isPdf
+    ? ({ type: "file" as const, data: base64, mimeType: "application/pdf" as const })
+    : ({
+        type: "image" as const,
+        image: base64,
+        mimeType: contentType as "image/jpeg" | "image/png" | "image/webp" | "image/gif",
+      })
 
   const { object } = await generateObject({
     model: anthropic("claude-haiku-4-5-20251001"),
