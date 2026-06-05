@@ -1,10 +1,43 @@
 import type { ChatContext } from "./context"
+import type { ProcessedAttachment } from "./process-chat-attachment"
 
-export function buildSystemPrompt(ctx: ChatContext): string {
+function formatAttachmentLine(a: ProcessedAttachment, isSpanish: boolean): string {
+  if (a.status === "rejected") {
+    return isSpanish
+      ? `- ⚠️ ${a.fileName} — No se pudo identificar como recibo o factura (documento no reconocido).`
+      : `- ⚠️ ${a.fileName} — Could not be identified as a receipt or invoice (unrecognised document).`
+  }
+  if (a.status === "ocr_failed") {
+    return isSpanish
+      ? `- ❌ ${a.fileName} — Error leyendo el documento. Pide al usuario que lo reenvíe o lo suba desde el Vault.`
+      : `- ❌ ${a.fileName} — Error reading the document. Ask the user to resend it or upload from Vault.`
+  }
+  const ocr = a.ocr
+  if (!ocr) return `- ✅ ${a.fileName}`
+  const parts: string[] = [`- ✅ ${a.fileName}`]
+  if (ocr.displayName) parts.push(ocr.displayName)
+  if (ocr.amount != null) {
+    parts.push(`${ocr.amount.toFixed(2)} ${ocr.currency ?? "EUR"}`)
+  }
+  if (ocr.date) {
+    parts.push(
+      isSpanish
+        ? new Date(ocr.date).toLocaleDateString("es-ES")
+        : new Date(ocr.date).toLocaleDateString("en-GB")
+    )
+  }
+  if (ocr.cif) parts.push(`CIF ${ocr.cif}`)
+  if (a.status === "duplicate") {
+    parts.push(isSpanish ? "(ya existía, re-evaluando match)" : "(already existed, re-matching)")
+  }
+  return parts.join(" — ")
+}
+
+export function buildSystemPrompt(ctx: ChatContext, attachments?: ProcessedAttachment[]): string {
   const isSpanish = ctx.locale.startsWith("es")
 
-  if (isSpanish) {
-    return `Eres el asistente financiero de ${ctx.orgName}. Ayudas a ${ctx.firstName} a entender las finanzas de su empresa de forma clara y directa.
+  const base = isSpanish
+    ? `Eres el asistente financiero de ${ctx.orgName}. Ayudas a ${ctx.firstName} a entender las finanzas de su empresa de forma clara y directa.
 
 Fecha de hoy: ${ctx.today}
 Moneda principal: ${ctx.currency}
@@ -36,9 +69,7 @@ Puedes consultar y explicar:
 - Usa negrita para resaltar cifras importantes.
 - Sé conciso: una respuesta directa vale más que párrafos largos.
 - Tutea siempre al usuario.`
-  }
-
-  return `You are the financial assistant for ${ctx.orgName}. You help ${ctx.firstName} understand their company's finances clearly and directly.
+    : `You are the financial assistant for ${ctx.orgName}. You help ${ctx.firstName} understand their company's finances clearly and directly.
 
 Today's date: ${ctx.today}
 Base currency: ${ctx.currency}
@@ -70,4 +101,13 @@ You can query and explain:
 - Use **bold** for important figures.
 - Be concise: a direct answer is better than long paragraphs.
 - Address the user informally.`
+
+  if (!attachments?.length) return base
+
+  const lines = attachments.map((a) => formatAttachmentLine(a, isSpanish))
+  const header = isSpanish
+    ? `\n\n## Adjuntos procesados en este mensaje\n\nEl usuario ha adjuntado los siguientes documentos. Ya están guardados y el sistema está buscando transacciones coincidentes en segundo plano. Confirma al usuario que están guardados y resume los datos extraídos. Si alguno fue rechazado o tuvo un error, explícalo brevemente.\n\n`
+    : `\n\n## Attachments processed in this message\n\nThe user attached the following documents. They are already saved and matching is running in the background. Acknowledge the receipt and summarise the extracted data. If any were rejected or errored, explain briefly.\n\n`
+
+  return base + header + lines.join("\n")
 }
