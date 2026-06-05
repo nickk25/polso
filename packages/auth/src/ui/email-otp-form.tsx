@@ -38,6 +38,7 @@ interface EmailOtpFormTranslations {
 interface EmailOtpFormProps {
   heading?: string
   subheading?: string
+  badge?: string
   redirectTo?: string
   translations?: EmailOtpFormTranslations
 }
@@ -45,6 +46,7 @@ interface EmailOtpFormProps {
 export function EmailOtpForm({
   heading = "Bienvenido a Polso",
   subheading = "Inicia sesión o crea una cuenta",
+  badge,
   redirectTo = "/dashboard",
   translations = {},
 }: EmailOtpFormProps) {
@@ -167,9 +169,12 @@ export function EmailOtpForm({
   if (step === "email") {
     return (
       <div className="space-y-8">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">{heading}</h1>
-          <p className="text-sm text-muted-foreground">{subheading}</p>
+        <div className="space-y-2">
+          {badge && (
+            <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">{badge}</p>
+          )}
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-900">{heading}</h1>
+          <p className="text-sm text-zinc-500">{subheading}</p>
         </div>
         <form onSubmit={handleEmailSubmit} className="space-y-4" noValidate>
           <Input
@@ -194,11 +199,14 @@ export function EmailOtpForm({
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">{heading}</h1>
-        <p className="text-sm text-muted-foreground">
+      <div className="space-y-2">
+        {badge && (
+          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">{badge}</p>
+        )}
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">{heading}</h1>
+        <p className="text-sm text-zinc-500">
           {tr.codeSentPrefix}{" "}
-          <span className="font-medium text-foreground">{email}</span>
+          <span className="font-medium text-zinc-900">{email}</span>
         </p>
       </div>
       <div className="space-y-8">

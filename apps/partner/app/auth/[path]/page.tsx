@@ -2,17 +2,9 @@
 
 import { useEffect } from "react"
 import { useParams, useSearchParams, useRouter } from "next/navigation"
-import { CheckCircle } from "@phosphor-icons/react"
 import { EmailOtpForm } from "@polso/auth/ui"
 
 const AUTH_CALLBACK_KEY = "authCallbackUrl"
-
-const FEATURES = [
-  "Visibilidad total de todos tus clientes en un solo lugar",
-  "Conciliación automática de recibos y transacciones",
-  "Alertas proactivas cuando un cliente necesita atención",
-]
-
 const SIGN_IN_PATHS = new Set(["sign-in", "magic-link"])
 
 export default function AuthPage() {
@@ -35,44 +27,39 @@ export default function AuthPage() {
   }, [path, router])
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-primary p-12 text-primary-foreground">
-        <div className="text-xl font-semibold tracking-tight">Polso Partner</div>
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-bold leading-tight">
-              Tus clientes,<br />siempre al día.
-            </h2>
-            <p className="text-primary-foreground/70">
-              Gestiona las finanzas de todos tus clientes desde un panel unificado — con sincronización bancaria automática y conciliación inteligente.
-            </p>
+    <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-[480px]">
+        <div className="bg-white p-10">
+          {/* Logo */}
+          <div className="flex items-center gap-2 mb-6">
+            <div className="bg-zinc-900 size-7 flex items-center justify-center shrink-0">
+              <span className="text-[#FAFAFA] text-sm font-bold font-mono leading-none">P</span>
+            </div>
+            <span className="text-sm font-semibold text-zinc-900 tracking-tight">Polso Partner</span>
           </div>
-          <ul className="space-y-3">
-            {FEATURES.map((f) => (
-              <li key={f} className="flex items-center gap-3 text-sm text-primary-foreground/90">
-                <CheckCircle weight="fill" className="h-4 w-4 shrink-0" />
-                {f}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="text-xs text-primary-foreground/40">
-          © {new Date().getFullYear()} Polso. Todos los derechos reservados.
-        </p>
-      </div>
 
-      {/* Right panel */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm space-y-8">
-          <div className="text-xl font-semibold tracking-tight lg:hidden">Polso Partner</div>
+          <hr className="border-zinc-200 mb-8" />
+
           {SIGN_IN_PATHS.has(path) && (
             <EmailOtpForm
-              heading="Bienvenido a Polso"
-              subheading="Panel de asesoría"
+              badge="Asesoría"
+              heading="Panel de asesores"
+              subheading="Accede para gestionar tus clientes."
               redirectTo="/"
             />
           )}
+
+          <hr className="border-zinc-200 mt-10 mb-6" />
+
+          <div className="flex items-center gap-4">
+            <a href="/privacy" className="text-[11px] uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors">
+              Privacidad
+            </a>
+            <span className="text-zinc-300 text-xs">·</span>
+            <a href="/terms" className="text-[11px] uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors">
+              Términos
+            </a>
+          </div>
         </div>
       </div>
     </div>
