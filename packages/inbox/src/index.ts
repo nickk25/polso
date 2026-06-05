@@ -3,6 +3,7 @@ import { extractReceiptData } from "@polso/agent/ocr"
 import { sendWhatsAppText, sendMatchNotification } from "@polso/agent/whatsapp"
 import { sendTelegramText, sendTelegramMatchNotification } from "@polso/agent/telegram"
 import { findBestMatches } from "@polso/matching"
+import { getFile } from "@polso/storage"
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -206,14 +207,10 @@ export async function runMatchingForItem(
 
   if (!inboxItem) return
 
-  const since = new Date()
-  since.setDate(since.getDate() - 90)
-
   const transactions = await prisma.transaction.findMany({
     where: {
       organizationId,
       amount: { gt: 0 },
-      date: { gte: since },
       transactionAttachments: { none: {} },
     },
     select: {
@@ -294,28 +291,75 @@ export async function processInboxItem(
   buffer: Buffer,
   contentType: string
 ): Promise<void> {
+  let ocrData
   try {
-    const ocrData = await extractReceiptData(buffer, contentType)
-
-    await prisma.inboxItem.update({
-      where: { id: inboxItemId },
-      data: {
-        displayName: ocrData.displayName,
-        amount: ocrData.amount,
-        currency: ocrData.currency ?? "EUR",
-        date: ocrData.date ? new Date(ocrData.date) : null,
-        cif: ocrData.cif,
-        taxAmount: ocrData.vatAmount,
-        taxRate: ocrData.vatRate,
-        meta: ocrData as object,
-      },
-    })
-
-    await runMatchingForItem(organizationId, inboxItemId)
+    ocrData = await extractReceiptData(buffer, contentType)
   } catch (err) {
-    console.error("[processInboxItem] error:", err)
+    console.error("[processInboxItem] OCR error:", err)
     await prisma.inboxItem
-      .update({ where: { id: inboxItemId }, data: { status: "no_match" } })
+      .update({
+        where: { id: inboxItemId },
+        data: {
+          status: "ocr_failed",
+          meta: { ocrError: err instanceof Error ? err.message : String(err) },
+        },
+      })
       .catch(() => {})
+    return
   }
+
+  await prisma.inboxItem.update({
+    where: { id: inboxItemId },
+    data: {
+      displayName: ocrData.displayName,
+      amount: ocrData.amount,
+      currency: ocrData.currency ?? "EUR",
+      date: ocrData.date ? new Date(ocrData.date) : null,
+      cif: ocrData.cif,
+      taxAmount: ocrData.vatAmount,
+      taxRate: ocrData.vatRate,
+      meta: ocrData as object,
+    },
+  })
+
+  // Matching errors leave status as "processing" — the cron watchdog recovers them.
+  await runMatchingForItem(organizationId, inboxItemId)
+}
+
+// ─── Stuck-item recovery ──────────────────────────────────────────────────────
+
+/**
+ * Re-processes InboxItems stuck in "processing" for more than 15 minutes.
+ * Called by the partner daily cron. Items are processed sequentially to avoid
+ * saturating Anthropic rate limits after an outage.
+ */
+export async function recoverStuckInboxItems(
+  organizationId: string
+): Promise<{ recovered: number }> {
+  const cutoff = new Date(Date.now() - 15 * 60 * 1000)
+  const stuck = await prisma.inboxItem.findMany({
+    where: { organizationId, status: "processing", updatedAt: { lt: cutoff } },
+    select: { id: true, filePath: true, contentType: true },
+  })
+
+  for (const item of stuck) {
+    try {
+      const { body, contentType } = await getFile(item.filePath)
+      await processInboxItem(
+        organizationId,
+        item.id,
+        Buffer.from(body),
+        item.contentType ?? contentType ?? "application/pdf"
+      )
+    } catch (err) {
+      await prisma.inboxItem
+        .update({
+          where: { id: item.id },
+          data: { status: "ocr_failed", meta: { recoveryError: String(err) } },
+        })
+        .catch(() => {})
+    }
+  }
+
+  return { recovered: stuck.length }
 }

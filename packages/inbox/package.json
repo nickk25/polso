@@ -14,7 +14,8 @@
   "dependencies": {
     "@polso/agent": "workspace:*",
     "@polso/db": "workspace:*",
-    "@polso/matching": "workspace:*"
+    "@polso/matching": "workspace:*",
+    "@polso/storage": "workspace:*"
   },
   "devDependencies": {
     "@polso/tsconfig": "workspace:*",

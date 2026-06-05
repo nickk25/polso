@@ -19,18 +19,45 @@ confirmMatchInDb(organizationId, inboxItemId, transactionId) → Promise<boolean
 
 // Single-item matching pipeline
 runMatchingForItem(organizationId, inboxItemId)
-// Fetches inboxItem + open transactions (last 90 days, amount > 0, no attachment),
+// Fetches inboxItem + all open transactions (amount > 0, no attachment — no date filter),
 // calls findBestMatches, calls persistMatchResult. Sends "saved for later"
 // notification when no match exists.
 
 // Full OCR + matching pipeline for upload flows
 processInboxItem(organizationId, inboxItemId, buffer, contentType)
-// extractReceiptData → update inboxItem fields → runMatchingForItem.
-// On error: sets status "no_match" silently.
+// Two-phase: OCR catch → "ocr_failed" (with meta.ocrError); matching errors leave
+// status as "processing" so the watchdog cron picks them up.
+
+// Watchdog for stuck items
+recoverStuckInboxItems(organizationId) → Promise<{ recovered: number }>
+// Finds InboxItems stuck in "processing" for >15 min, re-runs processInboxItem.
+// Called by the partner daily cron (apps/partner/app/api/cron/daily/route.ts).
 
 // Types
 TxForMatch, InboxItemForMatch, MatchScoresResult
 ```
+
+## InboxItem status values
+
+| Status | Set by | Meaning |
+|--------|--------|---------|
+| `processing` | upload action | file saved, OCR in flight |
+| `ocr_failed` | `processInboxItem` on Claude error | extraction failed; can be retried |
+| `no_match` | `runMatchingForItem` when score < 0.50 | OCR ok, no transaction found |
+| `suggested_match` | `persistMatchResult` for score 0.50–0.95 | waiting for partner confirmation |
+| `done` | `persistMatchResult` auto_matched or manual confirm | fully matched |
+| `archived` | web vault action | user archived |
+
+## no_match lifecycle
+
+When `runMatchingForItem` finds no candidate above 0.50, the InboxItem is set to `status: "no_match"` and a "saved for later" channel notification is sent. Two automatic retry paths:
+
+1. **`matchAfterSync()`** (`apps/web/features/inbox/lib/match-after-sync.ts`) — runs after every GoCardless sync. Re-evaluates all `processing`, `no_match`, `suggested_match` items against newly arrived transactions.
+2. **Partner cron watchdog** — daily at 07:30 UTC, calls `recoverStuckInboxItems` for each client org. Re-processes items stuck in `processing` for >15 min (covers after() callback crashes).
+
+Both retry paths have no date filter — can match receipts of any age.
+
+Full flow diagram: `docs/RECEIPT_MATCHING_FLOW.md`.
 
 ## Match paths — who calls what
 
@@ -79,3 +106,4 @@ Notification helpers are imported from `@polso/agent/whatsapp` and `@polso/agent
 - `@polso/agent/whatsapp` — notification helpers
 - `@polso/agent/telegram` — notification helpers
 - `@polso/matching` — `findBestMatches`
+- `@polso/storage` — `getFile` (used by `recoverStuckInboxItems`)
