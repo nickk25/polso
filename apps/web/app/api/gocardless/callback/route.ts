@@ -175,8 +175,7 @@ export async function GET(request: NextRequest) {
                 recipient.name,
                 clientOrg?.name ?? organizationId,
                 "first_bank",
-                `${partnerAppUrl}/clients/${organizationId}`,
-                "es"
+                `${partnerAppUrl}/clients/${organizationId}`
               )
             }
           }

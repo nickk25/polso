@@ -188,8 +188,7 @@ async function runPartnerDigests(now: Date): Promise<DigestResult> {
         digest.newClients,
         digest.receiptsUploaded,
         digest.pendingReceipts,
-        process.env.NEXT_PUBLIC_APP_URL ?? "",
-        "es"
+        process.env.NEXT_PUBLIC_APP_URL ?? ""
       )
 
       digestsSent++
