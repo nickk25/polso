@@ -3,19 +3,6 @@
     "privacy": "Privacy",
     "terms": "Terms"
   },
-  "waitlistConfirmation": {
-    "preview": "You're on the Polso waitlist!",
-    "badge": "Waitlist",
-    "heading": "You're on the list.",
-    "intro": "Thanks for joining. We're building something special for founders and small teams who want real-time financial clarity.",
-    "notifyAt": "We'll notify you at {email} as soon as we launch.",
-    "whatYouGet": "What you'll get",
-    "feature1": "Connect your bank securely via Open Banking",
-    "feature2": "Auto-categorize expenses with 95% accuracy",
-    "feature3": "Track your runway and burn rate daily",
-    "feature4": "Export everything for your accountant in one click",
-    "closing": "See you soon."
-  },
   "waitlistFounder": {
     "preview": "A personal note from Nicolas",
     "greeting": "Hey {name},",
@@ -316,5 +303,29 @@
     "countColumn": "Receipts",
     "button": "Go to dashboard",
     "footer": "You receive this digest because it's enabled in Settings → Notifications."
+  },
+  "otpSignIn": {
+    "preview": "Your Polso sign-in code",
+    "badge": "Access",
+    "heading": "Your verification code",
+    "intro": "Use this code to sign in to Polso. It's only valid for 10 minutes.",
+    "expiry": "This code expires in 10 minutes.",
+    "footer": "If you didn't try to sign in, you can safely ignore this email."
+  },
+  "otpEmailVerification": {
+    "preview": "Verify your Polso email address",
+    "badge": "Verification",
+    "heading": "Verify your email",
+    "intro": "Use this code to verify your email address on Polso.",
+    "expiry": "This code expires in 10 minutes.",
+    "footer": "If you didn't request this, you can safely ignore this email."
+  },
+  "otpResetPassword": {
+    "preview": "Reset your Polso password",
+    "badge": "Security",
+    "heading": "Reset your password",
+    "intro": "Use this code to reset your password. If you didn't request this, ignore this email.",
+    "expiry": "This code expires in 10 minutes.",
+    "footer": "If you didn't request this, change your password immediately."
   }
 }

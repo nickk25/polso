@@ -3,19 +3,6 @@
     "privacy": "Privacidad",
     "terms": "Términos"
   },
-  "waitlistConfirmation": {
-    "preview": "¡Estás en la lista de espera de Polso!",
-    "badge": "Lista de espera",
-    "heading": "Estás en la lista.",
-    "intro": "Gracias por unirte. Estamos construyendo algo especial para fundadores y equipos pequeños que quieren claridad financiera en tiempo real.",
-    "notifyAt": "Te notificaremos en {email} tan pronto como lancemos.",
-    "whatYouGet": "Lo que obtendrás",
-    "feature1": "Conecta tu banco de forma segura via Open Banking",
-    "feature2": "Categorización automática de gastos con 95% de precisión",
-    "feature3": "Controla tu runway y burn rate diariamente",
-    "feature4": "Exporta todo para tu contable en un clic",
-    "closing": "Nos vemos pronto."
-  },
   "waitlistFounder": {
     "preview": "Una nota personal de Nicolas",
     "greeting": "Hola {name},",
@@ -316,5 +303,29 @@
     "countColumn": "Recibos",
     "button": "Ir al panel",
     "footer": "Recibes este resumen porque lo tienes activado en Ajustes → Notificaciones."
+  },
+  "otpSignIn": {
+    "preview": "Tu código de acceso a Polso",
+    "badge": "Acceso",
+    "heading": "Tu código de verificación",
+    "intro": "Usa este código para iniciar sesión en Polso. Solo es válido durante 10 minutos.",
+    "expiry": "Este código expira en 10 minutos.",
+    "footer": "Si no has intentado iniciar sesión, puedes ignorar este correo."
+  },
+  "otpEmailVerification": {
+    "preview": "Verifica tu correo electrónico en Polso",
+    "badge": "Verificación",
+    "heading": "Verifica tu correo",
+    "intro": "Usa este código para verificar tu dirección de correo electrónico en Polso.",
+    "expiry": "Este código expira en 10 minutos.",
+    "footer": "Si no has solicitado esto, puedes ignorar este correo."
+  },
+  "otpResetPassword": {
+    "preview": "Restablece tu contraseña de Polso",
+    "badge": "Seguridad",
+    "heading": "Restablece tu contraseña",
+    "intro": "Usa este código para restablecer tu contraseña. Si no lo has solicitado, ignora este correo.",
+    "expiry": "Este código expira en 10 minutos.",
+    "footer": "Si no has solicitado esto, cambia tu contraseña inmediatamente."
   }
 }

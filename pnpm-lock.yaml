@@ -429,6 +429,9 @@ importers:
       '@types/react':
         specifier: ^19
         version: 19.2.8
+      react-email:
+        specifier: 5.2.5
+        version: 5.2.5
       typescript:
         specifier: ^5
         version: 5.9.3

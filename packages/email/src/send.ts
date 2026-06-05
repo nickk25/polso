@@ -1,8 +1,11 @@
 import { getResend, FROM_EMAIL, FROM_FOUNDER } from "./resend"
 import type { Locale } from "./locale"
+import { defaultLocale } from "./locale"
 import { getEmailTranslations } from "./email-translations"
 
-import WaitlistConfirmationEmail from "../templates/waitlist-confirmation"
+import OtpSignInEmail from "../templates/otp-sign-in"
+import OtpEmailVerification from "../templates/otp-email-verification"
+import OtpResetPassword from "../templates/otp-reset-password"
 import WaitlistFounderEmail from "../templates/waitlist-founder"
 import WelcomeEmail from "../templates/welcome"
 import WelcomeFounderEmail from "../templates/welcome-founder"
@@ -27,18 +30,9 @@ import PartnerClientConnectedEmail from "../templates/partner-client-connected"
 import PartnerDigestEmail from "../templates/partner-digest"
 import ClientWeeklyDigestEmail from "../templates/client-weekly-digest"
 
-export async function sendWaitlistConfirmation(email: string, locale?: Locale) {
-  const t = getEmailTranslations(locale)
-  return getResend().emails.send({
-    from: FROM_EMAIL,
-    to: email,
-    subject: t("waitlistConfirmation.preview"),
-    react: WaitlistConfirmationEmail({ email, locale }),
-  })
-}
-
 export async function sendWelcome(to: string, name: string, locale?: Locale) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -46,28 +40,30 @@ export async function sendWelcome(to: string, name: string, locale?: Locale) {
     react: WelcomeEmail({
       name,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      locale,
+      locale: l,
     }),
   })
 }
 
 export async function sendWelcomeFounder(to: string, name: string, locale?: Locale) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_FOUNDER,
     to,
     subject: t("welcomeFounder.preview"),
-    react: WelcomeFounderEmail({ name, locale }),
+    react: WelcomeFounderEmail({ name, locale: l }),
   })
 }
 
 export async function sendWaitlistFounder(to: string, name: string, locale?: Locale) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_FOUNDER,
     to,
     subject: t("waitlistFounder.preview"),
-    react: WaitlistFounderEmail({ name, locale }),
+    react: WaitlistFounderEmail({ name, locale: l }),
   })
 }
 
@@ -77,7 +73,8 @@ export async function sendTrialStarted(
   trialEndDate: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -86,7 +83,7 @@ export async function sendTrialStarted(
       name,
       trialEndDate,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -98,7 +95,8 @@ export async function sendTrialEnding(
   trialEndDate: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -108,13 +106,14 @@ export async function sendTrialEnding(
       daysLeft,
       trialEndDate,
       upgradeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
-      locale,
+      locale: l,
     }),
   })
 }
 
 export async function sendTrialEnded(to: string, name: string, locale?: Locale) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -122,7 +121,7 @@ export async function sendTrialEnded(to: string, name: string, locale?: Locale) 
     react: TrialEndedEmail({
       name,
       upgradeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -135,7 +134,8 @@ export async function sendSubscriptionConfirmed(
   nextBillingDate: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -146,13 +146,14 @@ export async function sendSubscriptionConfirmed(
       amount,
       nextBillingDate,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      locale,
+      locale: l,
     }),
   })
 }
 
 export async function sendPaymentFailed(to: string, name: string, amount: string, locale?: Locale) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -161,7 +162,7 @@ export async function sendPaymentFailed(to: string, name: string, amount: string
       name,
       amount,
       updatePaymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -172,7 +173,8 @@ export async function sendSubscriptionCancelled(
   accessEndDate: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -181,7 +183,7 @@ export async function sendSubscriptionCancelled(
       name,
       accessEndDate,
       resubscribeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -193,7 +195,8 @@ export async function sendBankConnected(
   accountCount: number,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -203,7 +206,7 @@ export async function sendBankConnected(
       bankName,
       accountCount,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -214,7 +217,8 @@ export async function sendBankDisconnected(
   bankName: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -223,7 +227,7 @@ export async function sendBankDisconnected(
       name,
       bankName,
       reconnectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/banking`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -235,7 +239,8 @@ export async function sendSyncError(
   errorMessage: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -245,7 +250,7 @@ export async function sendSyncError(
       bankName,
       errorMessage,
       settingsUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/banking`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -258,7 +263,8 @@ export async function sendLowBalanceAlert(
   threshold: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -269,7 +275,7 @@ export async function sendLowBalanceAlert(
       currentBalance,
       threshold,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -283,7 +289,8 @@ export async function sendHighSpendAlert(
   period: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -295,7 +302,7 @@ export async function sendHighSpendAlert(
       threshold,
       period,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/expenses`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -308,7 +315,8 @@ export async function sendMissingRecurringAlert(
   expectedDate: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -319,7 +327,7 @@ export async function sendMissingRecurringAlert(
       expectedAmount,
       expectedDate,
       recurringUrl: `${process.env.NEXT_PUBLIC_APP_URL}/recurring`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -333,7 +341,8 @@ export async function sendUnusualActivityAlert(
   multiplier: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -345,7 +354,7 @@ export async function sendUnusualActivityAlert(
       averageAmount,
       multiplier,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/expenses`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -359,7 +368,8 @@ export async function sendRunwayCriticalAlert(
   monthlyBurn: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -371,7 +381,7 @@ export async function sendRunwayCriticalAlert(
       currentBalance,
       monthlyBurn,
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/analytics`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -383,7 +393,8 @@ export async function sendUserInvited(
   inviteToken: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -392,7 +403,7 @@ export async function sendUserInvited(
       inviterName,
       organizationName,
       inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/invite/${inviteToken}`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -405,7 +416,8 @@ export async function sendPartnerClientInvited(
   inviteToken: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -415,7 +427,7 @@ export async function sendPartnerClientInvited(
       partnerOrgName,
       clientName,
       inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL}/invite/${inviteToken}`,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -428,7 +440,8 @@ export async function sendPartnerClientConnected(
   dashboardUrl: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   const subject = triggerEvent === "joined"
     ? t("partnerClientConnected.subjectJoined", { clientName })
     : t("partnerClientConnected.subjectFirstBank", { clientName })
@@ -436,7 +449,7 @@ export async function sendPartnerClientConnected(
     from: FROM_EMAIL,
     to,
     subject,
-    react: PartnerClientConnectedEmail({ partnerName, clientName, triggerEvent, dashboardUrl, locale }),
+    react: PartnerClientConnectedEmail({ partnerName, clientName, triggerEvent, dashboardUrl, locale: l }),
   })
 }
 
@@ -452,7 +465,8 @@ export async function sendPartnerDigest(
   dashboardUrl: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   const subject = cadence === "daily"
     ? t("partnerDigest.subjectDaily", { partnerOrgName })
     : t("partnerDigest.subjectWeekly", { partnerOrgName })
@@ -469,7 +483,7 @@ export async function sendPartnerDigest(
       receiptsUploaded,
       pendingReceipts,
       dashboardUrl,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -491,7 +505,8 @@ export async function sendClientWeeklyDigest(
   dashboardUrl: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -510,7 +525,7 @@ export async function sendClientWeeklyDigest(
       largeTransactions,
       currency,
       dashboardUrl,
-      locale,
+      locale: l,
     }),
   })
 }
@@ -523,7 +538,8 @@ export async function sendUserAcceptedInvite(
   organizationName: string,
   locale?: Locale
 ) {
-  const t = getEmailTranslations(locale)
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
@@ -534,7 +550,40 @@ export async function sendUserAcceptedInvite(
       newMemberEmail,
       organizationName,
       teamUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/organization`,
-      locale,
+      locale: l,
     }),
+  })
+}
+
+export async function sendOtpSignIn(to: string, code: string, locale?: Locale) {
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: t("otpSignIn.preview"),
+    react: OtpSignInEmail({ code, locale: l }),
+  })
+}
+
+export async function sendOtpEmailVerification(to: string, code: string, locale?: Locale) {
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: t("otpEmailVerification.preview"),
+    react: OtpEmailVerification({ code, locale: l }),
+  })
+}
+
+export async function sendOtpResetPassword(to: string, code: string, locale?: Locale) {
+  const l = locale ?? defaultLocale
+  const t = getEmailTranslations(l)
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: t("otpResetPassword.preview"),
+    react: OtpResetPassword({ code, locale: l }),
   })
 }
