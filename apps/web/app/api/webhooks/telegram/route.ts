@@ -165,7 +165,7 @@ if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
     if (!mime_type || !supportedMimes.includes(mime_type)) {
       await sendTelegramText(
         chatId,
-        "Solo puedo procesar imágenes (JPG, PNG, WebP) y PDFs. Por favor envía el recibo en uno de esos formatos."
+        "Este tipo de archivo no está soportado. Para guardar un recibo envíame una foto del ticket, una imagen (JPG, PNG) o un PDF de la factura."
       )
       return NextResponse.json({ ok: true })
     }
@@ -190,10 +190,39 @@ if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
     return NextResponse.json({ ok: true })
   }
 
-  // Unsupported message type (text, sticker, etc.)
+  // Specific messages for common unsupported types
+  if (message.video || message.video_note || message.animation) {
+    await sendTelegramText(
+      chatId,
+      "Los vídeos no se pueden procesar. Para guardar un recibo, envíame una foto del ticket o el PDF de la factura."
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  if (message.voice || message.audio) {
+    await sendTelegramText(
+      chatId,
+      "Los audios no se pueden procesar. Para guardar un recibo, envíame una foto del ticket o el PDF de la factura."
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  if (message.sticker) {
+    await sendTelegramText(
+      chatId,
+      "Para guardar un recibo, envíame una foto del ticket o el PDF de la factura."
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  // Catch-all: text without a command, or any other message type
+  if (message.text) {
+    return NextResponse.json({ ok: true })
+  }
+
   await sendTelegramText(
     chatId,
-    "Para registrar un recibo, envíame una foto o un PDF del documento."
+    "Para guardar un recibo, envíame una foto del ticket o el PDF de la factura."
   )
 
   return NextResponse.json({ ok: true })
@@ -284,9 +313,16 @@ async function processReceipt({
     await runMatchingForInboxItem(organizationId, item.id)
   } catch (err) {
     console.error("[telegram/webhook] processReceipt error:", err)
+    const errMsg = err instanceof Error ? err.message : ""
+    const isImageQuality =
+      errMsg.includes("UnsupportedFunctionality") ||
+      errMsg.includes("image") ||
+      errMsg.includes("file")
     await sendTelegramText(
       chatId,
-      "Ha ocurrido un error procesando tu recibo. Por favor, inténtalo de nuevo."
+      isImageQuality
+        ? "No he podido leer el documento. Intenta enviarlo como PDF, o toma la foto con más luz y asegúrate de que el texto sea legible."
+        : "Ha habido un problema guardando el recibo. Por favor, inténtalo de nuevo en unos segundos."
     ).catch(() => {})
   }
 }
@@ -406,6 +442,12 @@ interface TelegramMessage {
   text?: string
   photo?: TelegramPhotoSize[]
   document?: TelegramDocument
+  video?: { file_id: string }
+  video_note?: { file_id: string }
+  animation?: { file_id: string }
+  voice?: { file_id: string }
+  audio?: { file_id: string }
+  sticker?: { file_id: string }
   caption?: string
 }
 
