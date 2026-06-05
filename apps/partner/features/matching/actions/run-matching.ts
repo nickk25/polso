@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { findBestMatches } from "@polso/matching"
+import { processInboxItem, recoverStuckInboxItems } from "@polso/inbox"
+import { getFile } from "@polso/storage"
 import { successResponse, errorResponse } from "@polso/utils/action-response"
 import type { ActionResponse } from "@polso/utils/action-response"
-import { subDays } from "date-fns"
 
 export interface RunMatchingResult {
   created: number
@@ -24,11 +25,30 @@ export async function runMatchingAction(
     })
     if (!link) return errorResponse("Client not found", "NOT_FOUND")
 
-    // Fetch unmatched inbox items
+    // Re-run full OCR + matching for items that failed extraction
+    const ocrFailed = await prisma.inboxItem.findMany({
+      where: { organizationId: clientId, status: "ocr_failed" },
+      select: { id: true, filePath: true, contentType: true },
+    })
+    for (const item of ocrFailed) {
+      try {
+        const { body, contentType } = await getFile(item.filePath)
+        await processInboxItem(
+          clientId,
+          item.id,
+          Buffer.from(body),
+          item.contentType ?? contentType ?? "application/pdf"
+        )
+      } catch {
+        // leave as ocr_failed, partner can retry again later
+      }
+    }
+
+    // Fetch unmatched inbox items (processing + no_match) for scoring-only path
     const inboxItems = await prisma.inboxItem.findMany({
       where: {
         organizationId: clientId,
-        status: { in: ["pending", "processing"] },
+        status: { in: ["processing", "no_match"] },
         transactionId: null,
       },
       select: {
@@ -41,17 +61,22 @@ export async function runMatchingAction(
       },
     })
 
-    if (inboxItems.length === 0) {
+    if (inboxItems.length === 0 && ocrFailed.length === 0) {
       return successResponse({ created: 0, skipped: 0 })
     }
 
-    // Fetch recent transactions (90-day window for date scoring)
-    const cutoff = subDays(new Date(), 90)
+    if (inboxItems.length === 0) {
+      revalidatePath(`/clients/${clientId}/conciliation`)
+      revalidatePath(`/clients/${clientId}/inbox`)
+      return successResponse({ created: 0, skipped: 0 })
+    }
+
+    // Fetch all unattached expenses (no date filter — aligns with matchAfterSync)
     const transactions = await prisma.transaction.findMany({
       where: {
         organizationId: clientId,
-        date: { gte: cutoff },
         amount: { gt: 0 }, // expenses only (Tink: positive = money out)
+        transactionAttachments: { none: {} },
       },
       select: {
         id: true,
@@ -121,6 +146,7 @@ export async function runMatchingAction(
     }
 
     revalidatePath(`/clients/${clientId}/conciliation`)
+    revalidatePath(`/clients/${clientId}/inbox`)
 
     return successResponse({ created, skipped })
   } catch (error) {
