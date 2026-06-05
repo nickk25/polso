@@ -1,11 +1,31 @@
+// Bank statement name rewrites applied before general normalization.
+// Entries with a replacement string do a substitution; entries with "" strip the prefix.
+// Order matters: more-specific patterns first.
+const BANK_NAME_REWRITES: Array<[RegExp, string]> = [
+  [/^amzn\s+mktp\b.*/i, "amazon"],                                     // AMZN MKTP ES*XK7 → amazon
+  [/^paypal\s*\*\s*/i, ""],                                             // PAYPAL *Netflix → Netflix
+  [/^bizum\s+(?:de|a)\s+/i, ""],                                        // BIZUM DE Juan Perez → Juan Perez
+  [/^(?:compra|cargo|pago|trf|transf(?:erencia)?)\s+(?:en\s+|inmediata\s+)?/i, ""],
+  [/^recibo\s+(?:de\s+)?/i, ""],
+]
+
 /**
  * Normalize a merchant/vendor name for comparison.
- * Strips Spanish legal suffixes, punctuation, and lowercases.
+ * Strips bank transaction prefixes, Spanish legal suffixes, punctuation, and lowercases.
  */
 export function normalizeName(name: string | null | undefined): string {
   if (!name) return ""
 
-  return name
+  let n = name
+  for (const [pattern, replacement] of BANK_NAME_REWRITES) {
+    const rewritten = n.replace(pattern, replacement)
+    if (rewritten !== n) {
+      n = rewritten
+      break // apply at most one rewrite per name
+    }
+  }
+
+  return n
     .toLowerCase()
     // Remove Spanish legal suffixes
     .replace(/\bs\.l\.u?\b/g, "")
@@ -20,7 +40,7 @@ export function normalizeName(name: string | null | undefined): string {
     .replace(/\bllc\b/g, "")
     .replace(/\bltd\b/g, "")
     .replace(/\bcorp\b/g, "")
-    // Strip punctuation
+    // Strip punctuation (including * from remaining bank codes)
     .replace(/[.,;:\-_\/\\()*&%$#@!]/g, " ")
     // Collapse whitespace
     .replace(/\s+/g, " ")

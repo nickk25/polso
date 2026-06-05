@@ -11,7 +11,7 @@ findBestMatches(candidates, weights?, thresholds?) // → MatchResult[]
 calibrateThresholds(samples, current?)             // → CalibrationResult
 
 // Normalizers
-normalizeName(name)       // strip S.L., S.A., punctuation, lowercase
+normalizeName(name)       // strip bank prefixes, S.L., S.A., punctuation, lowercase
 tokenize(name)            // → string[] tokens
 jaccardSimilarity(a, b)   // token set overlap 0–1
 normalizeCif(cif)         // strip non-alphanum, uppercase
@@ -47,6 +47,15 @@ DEFAULT_THRESHOLDS  // { autoMatch: 0.95, highConfidence: 0.75, suggested: 0.50 
 - IVA rates: 21% (general), 10% (reducido), 4% (superreducido) — prioritized over generic EU rates
 - Legal suffixes: S.L., S.A., S.L.U., S.C. stripped during normalization
 - CIF matching: exact CIF/NIF match scores 1.0 on name — overrides all other name logic
+- Bank transaction name rewrites (applied before general normalization):
+  - `AMZN MKTP ES*...` → `amazon`
+  - `PAYPAL *Vendor` → `Vendor`
+  - `BIZUM DE/A Name` → `Name`
+  - `COMPRA EN/CARGO/TRF INMEDIATA/RECIBO DE ...` → strips the prefix
+
+## Date window
+
+`runMatchingForItem` in `@polso/inbox` queries **all** open transactions (no date filter). The date score decays to 0.0 beyond 90 days, so old transactions score low but are not excluded. Both `matchAfterSync` and the manual `runMatchingAction` in the partner app use the same approach.
 
 ## Calibration
 
