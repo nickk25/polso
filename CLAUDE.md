@@ -12,6 +12,7 @@ Polso is a financial management and expense intelligence SaaS for businesses. Co
 
 - Architecture & schema: `docs/ARCHITECTURE.md`
 - Code templates: `docs/CODE_PATTERNS.md`
+- Receipt matching lifecycle (no_match, deferred reconciliation, gaps): `docs/RECEIPT_MATCHING_FLOW.md`
 
 ## Monorepo Structure
 

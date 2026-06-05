@@ -447,6 +447,9 @@ importers:
       '@polso/matching':
         specifier: workspace:*
         version: link:../matching
+      '@polso/storage':
+        specifier: workspace:*
+        version: link:../storage
     devDependencies:
       '@polso/tsconfig':
         specifier: workspace:*
