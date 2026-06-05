@@ -1,4 +1,7 @@
 {
+  "attach": {
+    "defaultMessage": "Save this receipt"
+  },
   "closeChat": "Close chat",
   "chatError": "Something went wrong. Please try again.",
   "newChat": "New chat",

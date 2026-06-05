@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import { useChat } from "ai/react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
@@ -55,18 +55,99 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
   const t = useTranslations("dashboard")
   const ta = useTranslations("agent")
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [isUploading, setIsUploading] = useState(false)
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, error } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, setInput, append, error } = useChat({
     api: "/api/chat",
   })
 
   const isActive = messages.length > 0
+  const isBusy = isLoading || isUploading
 
   useEffect(() => {
     if (isActive) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
   }, [messages, isActive])
+
+  async function handleSubmitWithFiles(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!input.trim() && pendingFiles.length === 0) return
+
+    if (pendingFiles.length === 0) {
+      handleSubmit(e)
+      return
+    }
+
+    // Multipart path: pre-process files with Haiku, then stream Sonnet response
+    const userMessage = {
+      id: crypto.randomUUID(),
+      role: "user" as const,
+      content: input.trim() || ta("attach.defaultMessage"),
+      parts: [{ type: "text" as const, text: input.trim() || ta("attach.defaultMessage") }],
+    }
+    const nextMessages = [...messages, userMessage]
+    setMessages(nextMessages)
+    setInput("")
+    const filesToUpload = pendingFiles
+    setPendingFiles([])
+
+    setIsUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("messages", JSON.stringify(nextMessages))
+      for (const f of filesToUpload) fd.append("file", f)
+
+      // Use append to stream the response back into useChat state
+      const res = await fetch("/api/chat", { method: "POST", body: fd })
+      if (!res.ok || !res.body) throw new Error("Upload failed")
+
+      // Read the data stream and append each chunk as an assistant message
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let assistantText = ""
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        // Parse Vercel AI data stream format: lines starting with "0:"
+        for (const line of chunk.split("\n")) {
+          if (line.startsWith("0:")) {
+            try {
+              assistantText += JSON.parse(line.slice(2))
+            } catch {
+              // skip malformed chunks
+            }
+          }
+        }
+      }
+      if (assistantText) {
+        setMessages([
+          ...nextMessages,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: assistantText,
+            parts: [{ type: "text" as const, text: assistantText }],
+          },
+        ])
+      }
+    } catch {
+      // Fall back: show generic error in chat
+      setMessages([
+        ...nextMessages,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: ta("chatError"),
+          parts: [{ type: "text" as const, text: ta("chatError") }],
+        },
+      ])
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   const handleClose = () => setMessages([])
 
@@ -91,7 +172,7 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
           {/* Messages — scrollable */}
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-2xl mx-auto px-6 py-6">
-              <MessageList messages={messages} isLoading={isLoading} />
+              <MessageList messages={messages} isLoading={isBusy} />
               <div ref={messagesEndRef} />
               {error && (
                 <p className="text-xs text-red-500 text-center mt-4">{ta("chatError")}</p>
@@ -105,8 +186,10 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
               <ChatInput
                 value={input}
                 onChange={handleInputChange}
-                onSubmit={handleSubmit}
-                disabled={isLoading}
+                onSubmit={handleSubmitWithFiles}
+                files={pendingFiles}
+                onFilesChange={setPendingFiles}
+                disabled={isBusy}
                 placeholder={t("chatPlaceholder")}
               />
               <p className="text-[11px] text-center text-muted-foreground/50">
@@ -132,8 +215,10 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
             <ChatInput
               value={input}
               onChange={handleInputChange}
-              onSubmit={handleSubmit}
-              disabled={isLoading}
+              onSubmit={handleSubmitWithFiles}
+              files={pendingFiles}
+              onFilesChange={setPendingFiles}
+              disabled={isBusy}
               placeholder={t("chatPlaceholder")}
             />
 
