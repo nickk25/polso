@@ -66,13 +66,18 @@ export async function uploadInboxItemAction(
       })
     )
 
-    for (const { id, buffer, contentType } of items) {
-      after(async () => {
-        await processInboxItem(input.clientId, id, buffer, contentType)
-        revalidatePath(`/clients/${input.clientId}/inbox`)
-        revalidatePath(`/clients/${input.clientId}/conciliation`)
-      })
-    }
+    after(async () => {
+      // Process max 3 OCR calls concurrently to avoid Anthropic rate limits on bulk uploads
+      for (let i = 0; i < items.length; i += 3) {
+        await Promise.all(
+          items.slice(i, i + 3).map(({ id, buffer, contentType }) =>
+            processInboxItem(input.clientId, id, buffer, contentType)
+          )
+        )
+      }
+      revalidatePath(`/clients/${input.clientId}/inbox`)
+      revalidatePath(`/clients/${input.clientId}/conciliation`)
+    })
 
     revalidatePath(`/clients/${input.clientId}/inbox`)
     return successResponse({ ids: items.map((i) => i.id) })
