@@ -6,6 +6,7 @@ import { generateProactiveMessage } from "@polso/agent/proactive"
 import { sendProactiveMessage } from "@/features/proactive/lib/send-proactive-message"
 import { buildPartnerDigest } from "@/features/notifications/lib/build-partner-digest"
 import { sendPartnerDigest } from "@polso/email/send"
+import { recoverStuckInboxItems } from "@polso/inbox"
 
 const CRON_SECRET = process.env.CRON_SECRET
 
@@ -32,8 +33,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const now = new Date()
-    const [proactive, digest] = await Promise.all([runProactiveAgent(), runPartnerDigests(now)])
-    const result = { ...proactive, ...digest }
+    const [proactive, digest, recovery] = await Promise.all([
+      runProactiveAgent(),
+      runPartnerDigests(now),
+      runStuckItemRecovery(),
+    ])
+    const result = { ...proactive, ...digest, ...recovery }
     return NextResponse.json({ ...result, duration: Date.now() - startTime })
   } catch (error) {
     console.error("[Cron] daily error:", error)
@@ -46,6 +51,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   return GET(request)
+}
+
+interface RecoveryResult {
+  stuckRecovered: number
 }
 
 interface ProactiveResult {
@@ -200,4 +209,28 @@ async function runPartnerDigests(now: Date): Promise<DigestResult> {
   }
 
   return { digestsSent, digestErrors }
+}
+
+async function runStuckItemRecovery(): Promise<RecoveryResult> {
+  const orgs = await prisma.organization.findMany({
+    where: { type: "client" },
+    select: { id: true },
+  })
+
+  let stuckRecovered = 0
+
+  // Process 2 orgs at a time to avoid saturating Anthropic after a mass outage
+  for (let i = 0; i < orgs.length; i += 2) {
+    const batch = orgs.slice(i, i + 2)
+    const results = await Promise.all(
+      batch.map((o) => recoverStuckInboxItems(o.id).catch(() => ({ recovered: 0 })))
+    )
+    stuckRecovered += results.reduce((sum, r) => sum + r.recovered, 0)
+  }
+
+  if (stuckRecovered > 0) {
+    console.log(`[Cron] daily: recovered ${stuckRecovered} stuck inbox items`)
+  }
+
+  return { stuckRecovered }
 }
