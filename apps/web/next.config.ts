@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
     "@polso/intelligence",
     "@polso/matching",
     "@polso/inbox",
+    "@polso/accounting",
     "react-markdown",
     "remark-gfm",
   ],
