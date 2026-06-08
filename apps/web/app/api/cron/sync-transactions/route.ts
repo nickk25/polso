@@ -11,14 +11,13 @@ import {
 import { syncTransactionsCore } from "@/features/banking/lib/sync-core"
 import { detectPatternsForOrg } from "@/features/intelligence/lib/detect-patterns-core"
 import { runClientWeeklyDigests } from "@/features/notifications/lib/run-client-digests"
+import { getGoCardlessClient } from "@/features/banking/lib/gocardless-client"
 
 const CRON_SECRET = process.env.CRON_SECRET
 const STALE_THRESHOLD_HOURS = 20
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization")
-  const secretParam = request.nextUrl.searchParams.get("secret")
-  const providedSecret = authHeader?.replace("Bearer ", "") || secretParam
+  const providedSecret = request.headers.get("authorization")?.replace("Bearer ", "")
 
   if (!CRON_SECRET || providedSecret !== CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -135,9 +134,18 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
     }
   }
 
+  // Monthly requisition cleanup — day 28 UTC, before GoCardless billing cutoff
+  const now = new Date()
+  if (now.getUTCDate() === 28) {
+    try {
+      await cleanupExpiredRequisitions()
+    } catch (err) {
+      console.error("[Cron] cleanupExpiredRequisitions failed:", err)
+    }
+  }
+
   // Weekly digest — only on Mondays UTC
   let digestsSent = 0
-  const now = new Date()
   if (now.getUTCDay() === 1) {
     try {
       const digestResult = await runClientWeeklyDigests(now)
@@ -164,5 +172,58 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
     alertErrors,
     digestsSent,
     duration,
+  }
+}
+
+async function cleanupExpiredRequisitions(): Promise<void> {
+  const gc = getGoCardlessClient()
+
+  // 1. Find all unique requisitionIds that are disconnected/expired/error but not yet cleaned
+  const accounts = await prisma.account.findMany({
+    where: {
+      status: { in: ["disconnected", "expired", "error"] },
+      requisitionId: { not: null },
+    },
+    select: { requisitionId: true, organizationId: true },
+    distinct: ["requisitionId"],
+  })
+
+  // 2. Drain pending retry queue (max 5 attempts)
+  const retryQueue = await prisma.requisitionCleanupQueue.findMany({
+    where: { attempts: { lt: 5 } },
+  })
+
+  const allToDelete = [
+    ...accounts.map((a) => ({ requisitionId: a.requisitionId!, organizationId: a.organizationId, fromQueue: false })),
+    ...retryQueue.map((r) => ({ requisitionId: r.requisitionId, organizationId: r.organizationId, fromQueue: true })),
+  ]
+
+  if (allToDelete.length === 0) {
+    console.log("[Cron] cleanup: no requisitions to clean up")
+    return
+  }
+
+  console.log(`[Cron] cleanup: deleting ${allToDelete.length} GoCardless requisitions`)
+
+  for (const { requisitionId, organizationId, fromQueue } of allToDelete) {
+    try {
+      await gc.deleteRequisition(requisitionId)
+      // Clear requisitionId so we don't retry next month
+      await prisma.account.updateMany({
+        where: { requisitionId, organizationId },
+        data: { requisitionId: null },
+      })
+      if (fromQueue) {
+        await prisma.requisitionCleanupQueue.delete({ where: { requisitionId } }).catch(() => {})
+      }
+      console.log(`[Cron] cleanup: deleted requisition ${requisitionId}`)
+    } catch (err) {
+      console.error(`[Cron] cleanup: failed to delete ${requisitionId}:`, err)
+      await prisma.requisitionCleanupQueue.upsert({
+        where: { requisitionId },
+        create: { requisitionId, organizationId, attempts: 1, lastAttemptAt: new Date(), lastError: String(err) },
+        update: { attempts: { increment: 1 }, lastAttemptAt: new Date(), lastError: String(err) },
+      }).catch(() => {})
+    }
   }
 }

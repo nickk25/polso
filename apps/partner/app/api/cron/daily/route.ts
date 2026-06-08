@@ -21,9 +21,7 @@ const CRON_SECRET = process.env.CRON_SECRET
  * Rate limit: max 1 message/day/org (enforced in sendProactiveMessage).
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization")
-  const secretParam = request.nextUrl.searchParams.get("secret")
-  const providedSecret = authHeader?.replace("Bearer ", "") || secretParam
+  const providedSecret = request.headers.get("authorization")?.replace("Bearer ", "")
 
   if (!CRON_SECRET || providedSecret !== CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -38,6 +36,7 @@ export async function GET(request: NextRequest) {
       runPartnerDigests(now),
       runStuckItemRecovery(),
     ])
+    await pruneProactiveMessageContext()
     const result = { ...proactive, ...digest, ...recovery }
     return NextResponse.json({ ...result, duration: Date.now() - startTime })
   } catch (error) {
@@ -209,6 +208,20 @@ async function runPartnerDigests(now: Date): Promise<DigestResult> {
   }
 
   return { digestsSent, digestErrors }
+}
+
+async function pruneProactiveMessageContext(): Promise<void> {
+  try {
+    const cutoff = new Date(Date.now() - 90 * 86400_000)
+    // Prisma JSON field: use raw SQL to set null — updateMany doesn't support JsonNull cleanly
+    await prisma.$executeRaw`
+      UPDATE proactive_messages
+      SET context = NULL
+      WHERE sent_at < ${cutoff} AND context IS NOT NULL
+    `
+  } catch (err) {
+    console.error("[Cron] pruneProactiveMessageContext error:", err)
+  }
 }
 
 async function runStuckItemRecovery(): Promise<RecoveryResult> {
