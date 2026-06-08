@@ -9,6 +9,8 @@ import { buildTools } from "@/features/agent/tools"
 import { processChatAttachment, type ProcessedAttachment } from "@/features/agent/lib/process-chat-attachment"
 import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
 import { UPLOAD_ACCEPTED_TYPES, UPLOAD_MAX_FILE_SIZE } from "@/lib/upload"
+import { prisma } from "@/lib/db"
+import { getAuthContext } from "@polso/auth/get-session"
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY_CHAT })
 
@@ -40,7 +42,12 @@ export async function POST(request: NextRequest) {
       messages = (await request.json()).messages
     }
 
-    const ctx = await getChatContext()
+    const [ctx, { userId }] = await Promise.all([getChatContext(), getAuthContext()])
+    const startedAt = Date.now()
+    const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user")
+    const userMessageText: string = typeof lastUserMessage?.content === "string"
+      ? lastUserMessage.content
+      : JSON.stringify(lastUserMessage?.content ?? "")
 
     // Process each attachment with Haiku before streaming Sonnet
     const processed: ProcessedAttachment[] = []
@@ -70,6 +77,27 @@ export async function POST(request: NextRequest) {
       messages,
       tools,
       maxSteps: 8,
+      onFinish: async ({ text, toolCalls, finishReason }) => {
+        after(async () => {
+          try {
+            await prisma.chatLog.create({
+              data: {
+                organizationId: ctx.organizationId,
+                userId,
+                userMessage: userMessageText.slice(0, 4000),
+                assistantText: text.slice(0, 2000),
+                toolNames: toolCalls?.map((c) => c.toolName) ?? [],
+                toolCount: toolCalls?.length ?? 0,
+                durationMs: Date.now() - startedAt,
+                hadError: finishReason === "error",
+                source: "dashboard",
+              },
+            })
+          } catch (err) {
+            console.error("[ChatLog] failed to persist:", err)
+          }
+        })
+      },
     })
 
     return result.toDataStreamResponse()

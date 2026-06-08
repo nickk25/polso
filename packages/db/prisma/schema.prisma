@@ -94,6 +94,8 @@ model Organization {
   partnerLinks PartnerClient[] @relation("AsClient")
   clientLinks  PartnerClient[] @relation("AsPartner")
 
+  chatLogs     ChatLog[]
+
   @@map("organizations")
 }
 
@@ -752,5 +754,32 @@ model ProactiveMessage {
 
   @@index([organizationId, messageType, sentAt])
   @@map("proactive_messages")
+}
+
+// ============================================
+// Chat Tracking
+// ============================================
+
+model ChatLog {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  userId         String?  @map("user_id")
+
+  userMessage    String   @db.Text @map("user_message")
+  assistantText  String?  @db.Text @map("assistant_text")
+  toolNames      String[] @map("tool_names")
+  toolCount      Int      @default(0) @map("tool_count")
+
+  durationMs     Int?     @map("duration_ms")
+  hadError       Boolean  @default(false) @map("had_error")
+  source         String   @default("dashboard") @map("source")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([createdAt])
+  @@map("chat_log")
 }
 

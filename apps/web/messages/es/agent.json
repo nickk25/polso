@@ -7,6 +7,15 @@
   "newChat": "Nuevo chat",
   "chatTitle": "Polso AI",
   "disclaimer": "Polso AI puede cometer errores. Verifica siempre los datos financieros importantes.",
+  "faqChips": {
+    "label": "Preguntas frecuentes",
+    "vat": { "chip": "¿Cuánto IVA debo?", "prompt": "¿Cuánto IVA debo declarar este trimestre?" },
+    "categories": { "chip": "Top categorías de gasto", "prompt": "¿En qué categorías he gastado más este mes?" },
+    "runway": { "chip": "¿Cuál es mi runway?", "prompt": "¿Cuánto runway me queda al ritmo actual?" },
+    "cashflow": { "chip": "Cash flow 6 meses", "prompt": "Muéstrame el cash flow de los últimos 6 meses" },
+    "vendors": { "chip": "Top proveedores", "prompt": "¿Qué proveedores me cobran más este mes?" },
+    "alerts": { "chip": "Alertas pendientes", "prompt": "¿Qué alertas financieras tengo pendientes?" }
+  },
   "connections": {
     "cardTitle": "Agente de Recibos",
     "cardDescription": "Conecta tu cuenta de Telegram para poder enviar fotos de tickets y facturas directamente desde el móvil. El agente los procesará automáticamente y los asociará a tus transacciones.",

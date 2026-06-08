@@ -7,6 +7,15 @@
   "newChat": "New chat",
   "chatTitle": "Polso AI",
   "disclaimer": "Polso AI can make mistakes. Always verify important financial data.",
+  "faqChips": {
+    "label": "Suggested questions",
+    "vat": { "chip": "How much VAT do I owe?", "prompt": "How much VAT do I owe this quarter?" },
+    "categories": { "chip": "Top spending categories", "prompt": "What categories am I spending the most on this month?" },
+    "runway": { "chip": "What's my runway?", "prompt": "How much runway do I have left at the current burn rate?" },
+    "cashflow": { "chip": "Cash flow last 6 months", "prompt": "Show me the cash flow for the last 6 months" },
+    "vendors": { "chip": "Top vendors this month", "prompt": "Which vendors am I paying the most this month?" },
+    "alerts": { "chip": "Pending alerts", "prompt": "What financial alerts do I have pending?" }
+  },
   "connections": {
     "cardTitle": "Receipt Agent",
     "cardDescription": "Connect your Telegram account to send photos of receipts and invoices directly from your phone. The agent will process them automatically and match them to your transactions.",

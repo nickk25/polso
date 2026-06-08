@@ -224,6 +224,23 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
               placeholder={t("chatPlaceholder")}
             />
 
+            <div className="flex flex-col items-center gap-2 w-full">
+              <span className="text-xs text-muted-foreground/60">{ta("faqChips.label")}</span>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {(["vat", "categories", "runway", "cashflow", "vendors", "alerts"] as const).map((key) => (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    size="sm"
+                    disabled={isBusy}
+                    onClick={() => append({ role: "user", content: ta(`faqChips.${key}.prompt`) })}
+                  >
+                    {ta(`faqChips.${key}.chip`)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button variant="outline" size="sm" asChild>
                 <Link href="/transactions">
