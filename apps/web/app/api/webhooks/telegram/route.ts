@@ -12,6 +12,7 @@ import {
 } from "@polso/agent/telegram"
 import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
 import { confirmMatchInDb } from "@polso/inbox"
+import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
 
 const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET_TOKEN?.trim()
 
@@ -264,6 +265,12 @@ async function processReceipt({
         "📂 Ya tengo este documento guardado. Buscando transacción coincidente..."
       )
       await runMatchingForInboxItem(organizationId, existing.id)
+      return
+    }
+
+    const rl = await checkAiRateLimit(organizationId, "haiku")
+    if (!rl.allowed) {
+      await sendTelegramText(chatId, "Has alcanzado el límite diario de procesamiento de documentos. Inténtalo mañana.")
       return
     }
 

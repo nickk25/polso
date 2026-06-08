@@ -6,6 +6,7 @@ import { extractReceiptData } from "@polso/agent/ocr"
 import { downloadWhatsAppMedia, sendWhatsAppText } from "@polso/agent/whatsapp"
 import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
 import { confirmMatchInDb } from "@polso/inbox"
+import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
 
 const VERIFY_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET
@@ -174,6 +175,12 @@ async function processReceipt({
   caption: string | null
 }): Promise<void> {
   try {
+    const rl = await checkAiRateLimit(organizationId, "haiku")
+    if (!rl.allowed) {
+      await sendWhatsAppText(from, "Has alcanzado el límite diario de procesamiento de documentos. Inténtalo mañana.")
+      return
+    }
+
     const { data, contentType: resolvedType } = await downloadWhatsAppMedia(mediaId)
 
     const ocrData = await extractReceiptData(data, resolvedType)
