@@ -80,13 +80,11 @@ Implementado rate limiting basado en base de datos (`AgentLinkAttempt`): máximo
 
 Los mensajes proactivos incluyen nombre de la organización, importes de transacciones, nombres de comercios y categorías. Bajo GDPR Art. 28, enviar datos personales a un procesador externo requiere contrato escrito.
 
-**Guía para completar (acción del usuario):**
+**Acción requerida (3 pasos):**
 
 1. Ir a [anthropic.com/legal/data-processing-addendum](https://www.anthropic.com/legal/data-processing-addendum) y aceptar el DPA con la cuenta organizacional de Anthropic (el email asociado a las API keys).
-2. Solicitar **Zero Data Retention (ZDR)** escribiendo a privacy@anthropic.com — incluir: nombre de la organización, que se procesan datos de empresas españolas bajo RGPD, y los IDs de las dos API keys (`ANTHROPIC_API_KEY_OCR`, `ANTHROPIC_API_KEY_CHAT`). ZDR garantiza que los datos no se almacenan ni usan para entrenar modelos.
-3. Confirmar por email que ZDR está activo para ambas keys.
-4. Guardar el PDF del DPA firmado en el drive del equipo.
-5. Cuando esté completado, marcar esta entrada como ✅ RESUELTO con la fecha.
+2. Escribir a privacy@anthropic.com solicitando **Zero Data Retention (ZDR)** para ambas keys (`ANTHROPIC_API_KEY_OCR`, `ANTHROPIC_API_KEY_CHAT`) — mencionar que se procesan datos de empresas españolas bajo RGPD. ZDR garantiza que los datos no se almacenan ni usan para entrenar modelos.
+3. Cuando esté confirmado, marcar esta entrada como ✅ RESUELTO con la fecha y guardar el PDF del DPA en el drive del equipo.
 
 #### ~~A2 — Anthropic no está en la política de privacidad~~ ✅ RESUELTO
 
