@@ -72,5 +72,12 @@
   "empty": {
     "noResults": "No results found",
     "noData": "No data available"
+  },
+  "cookies": {
+    "title": "We use cookies",
+    "description": "We use analytics cookies to understand how you use Polso and improve the service. You can accept or decline non-essential cookies.",
+    "accept": "Accept",
+    "reject": "Reject",
+    "learnMore": "Privacy policy"
   }
 }

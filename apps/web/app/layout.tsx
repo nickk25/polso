@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { JetBrains_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/react"
 import { NextIntlClientProvider } from "next-intl"
 import { ThemeProvider } from "next-themes"
 import "./globals.css"
@@ -8,6 +7,8 @@ import { AuthProvider } from "@/components/providers/auth-provider"
 import { Toaster } from "@polso/ui/sonner"
 import { getLocale } from "@/lib/i18n/get-locale"
 import { getMessages } from "@/lib/i18n/messages"
+import { ConditionalAnalytics } from "@/components/conditional-analytics"
+import { CookieConsent } from "@/components/cookie-consent"
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -82,7 +83,8 @@ export default async function RootLayout({
           </NextIntlClientProvider>
         </ThemeProvider>
         <Toaster />
-        <Analytics />
+        <CookieConsent />
+        <ConditionalAnalytics />
       </body>
     </html>
   )
