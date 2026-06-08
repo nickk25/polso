@@ -31,7 +31,12 @@ export async function disconnectBankAction(
         const gc = getGoCardlessClient()
         await gc.deleteRequisition(account.requisitionId)
       } catch (error) {
-        console.warn("[disconnect] Failed to delete GoCardless requisition:", error)
+        console.warn("[disconnect] Failed to delete GoCardless requisition — queued for retry:", error)
+        await prisma.requisitionCleanupQueue.upsert({
+          where: { requisitionId: account.requisitionId },
+          create: { requisitionId: account.requisitionId, organizationId, lastError: String(error) },
+          update: { lastError: String(error) },
+        }).catch(() => {})
       }
 
       // Mark all accounts sharing the same requisition as disconnected
@@ -56,6 +61,55 @@ export async function disconnectBankAction(
     console.error("Error disconnecting bank:", error)
     return errorResponse(
       error instanceof Error ? error.message : "Failed to disconnect bank",
+      "ERROR"
+    )
+  }
+}
+
+/**
+ * Reconnect an expired bank account: delete the old GoCardless requisition
+ * before the user starts a new connection, avoiding double-billing.
+ * Returns the create-link URL to redirect the user to their bank.
+ */
+export async function reconnectBankAction(
+  accountId: string
+): Promise<ActionResponse<{ link: string }>> {
+  try {
+    const { organizationId } = await getAuthContext()
+
+    const account = await prisma.account.findFirst({
+      where: { id: accountId, organizationId },
+      select: { requisitionId: true, institutionId: true },
+    })
+
+    if (!account) return errorResponse("Account not found", "NOT_FOUND")
+
+    // Delete old requisition from GoCardless BEFORE creating a new one
+    if (account.requisitionId) {
+      try {
+        const gc = getGoCardlessClient()
+        await gc.deleteRequisition(account.requisitionId)
+      } catch (error) {
+        console.warn("[reconnect] Failed to delete old requisition — queued for retry:", error)
+        await prisma.requisitionCleanupQueue.upsert({
+          where: { requisitionId: account.requisitionId },
+          create: { requisitionId: account.requisitionId, organizationId, lastError: String(error) },
+          update: { lastError: String(error) },
+        }).catch(() => {})
+      }
+
+      await prisma.account.updateMany({
+        where: { requisitionId: account.requisitionId, organizationId },
+        data: { status: "disconnected", syncError: null, syncErrorRetries: 0, requisitionId: null },
+      })
+    }
+
+    revalidatePath("/settings/banking")
+    return successResponse({ link: `/settings/banking/connect?institutionId=${account.institutionId}` })
+  } catch (error) {
+    console.error("Error reconnecting bank:", error)
+    return errorResponse(
+      error instanceof Error ? error.message : "Failed to reconnect bank",
       "ERROR"
     )
   }

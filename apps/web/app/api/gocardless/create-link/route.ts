@@ -63,6 +63,27 @@ export async function POST(request: Request) {
       )
     }
 
+    // Prevent duplicate requisitions for the same bank — each active connection costs money
+    const duplicateAccount = await prisma.account.findFirst({
+      where: {
+        organizationId: userOrg.organizationId,
+        institutionId,
+        status: { notIn: ["disconnected"] },
+      },
+      select: { id: true, requisitionId: true },
+    })
+
+    if (duplicateAccount) {
+      return NextResponse.json(
+        {
+          error: "DUPLICATE_BANK",
+          message: "Ya tienes una conexión activa con este banco. Desconecta la anterior antes de reconectar.",
+          existingAccountId: duplicateAccount.id,
+        },
+        { status: 409 }
+      )
+    }
+
     const gc = getGoCardlessClient()
 
     // Create end-user agreement (controls how long we can access the account)
