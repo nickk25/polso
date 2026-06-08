@@ -81,17 +81,19 @@ export function AgentSurface({ greeting, hasActivityThisMonth, kpi, unreadAlerts
     }
 
     // Multipart path: pre-process files with Haiku, then stream Sonnet response
+    const filesToUpload = pendingFiles
+    setPendingFiles([])
+    setInput("")
+    const fileNames = filesToUpload.map((f) => `📎 ${f.name}`).join("\n")
+    const userContent = [input.trim(), fileNames].filter(Boolean).join("\n")
     const userMessage = {
       id: crypto.randomUUID(),
       role: "user" as const,
-      content: input.trim() || ta("attach.defaultMessage"),
-      parts: [{ type: "text" as const, text: input.trim() || ta("attach.defaultMessage") }],
+      content: userContent,
+      parts: [{ type: "text" as const, text: userContent }],
     }
     const nextMessages = [...messages, userMessage]
     setMessages(nextMessages)
-    setInput("")
-    const filesToUpload = pendingFiles
-    setPendingFiles([])
 
     setIsUploading(true)
     try {
