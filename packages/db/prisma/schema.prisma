@@ -324,6 +324,7 @@ model Category {
   color          String  @default("#6366f1")
   isSystem       Boolean @default(false) @map("is_system")
   entryType      String? @map("entry_type") // fixed, variable, income, transfer
+  accountCode    String? @map("account_code")
   createdAt      DateTime @default(now()) @map("created_at")
 
   organization      Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -438,6 +439,7 @@ model Export {
   includesPdf      Boolean   @default(true) @map("includes_pdf")
   includesDocuments Boolean  @default(true) @map("includes_documents")
   status           String    @default("pending") // pending, processing, completed, failed
+  format           String    @default("standard") // standard, a3, sage
   errorMessage     String?   @map("error_message")
   generatedByOrgId String?   @map("generated_by_org_id")
   createdAt        DateTime  @default(now()) @map("created_at")
