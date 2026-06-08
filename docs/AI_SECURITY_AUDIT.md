@@ -76,23 +76,29 @@ Implementado rate limiting basado en base de datos (`AgentLinkAttempt`): máximo
 
 ### Altos
 
-#### A1 — Datos financieros reales enviados a Anthropic sin DPA
+#### A1 — Datos financieros reales enviados a Anthropic sin DPA ⏳ PENDIENTE ACCIÓN MANUAL
 
-Los mensajes proactivos incluyen nombre de la organización, importes de transacciones, nombres de comercios y categorías. No hay Data Processing Agreement (DPA) documentado con Anthropic. Bajo GDPR Art. 28, enviar datos personales a un procesador externo requiere contrato escrito.
+Los mensajes proactivos incluyen nombre de la organización, importes de transacciones, nombres de comercios y categorías. Bajo GDPR Art. 28, enviar datos personales a un procesador externo requiere contrato escrito.
 
-**Fix:** Firmar el DPA de Anthropic. Evaluar activar Zero Data Retention en la API.
+**Guía para completar (acción del usuario):**
 
-#### A2 — Anthropic no está en la política de privacidad
+1. Ir a [anthropic.com/legal/data-processing-addendum](https://www.anthropic.com/legal/data-processing-addendum) y aceptar el DPA con la cuenta organizacional de Anthropic (el email asociado a las API keys).
+2. Solicitar **Zero Data Retention (ZDR)** escribiendo a privacy@anthropic.com — incluir: nombre de la organización, que se procesan datos de empresas españolas bajo RGPD, y los IDs de las dos API keys (`ANTHROPIC_API_KEY_OCR`, `ANTHROPIC_API_KEY_CHAT`). ZDR garantiza que los datos no se almacenan ni usan para entrenar modelos.
+3. Confirmar por email que ZDR está activo para ambas keys.
+4. Guardar el PDF del DPA firmado en el drive del equipo.
+5. Cuando esté completado, marcar esta entrada como ✅ RESUELTO con la fecha.
 
-La privacy policy lista GoCardless, Neon, Cloudflare, Vercel — pero no menciona Anthropic, Creem, Resend, Telegram ni WhatsApp. Los usuarios desconocen que sus datos financieros llegan a un modelo de IA de una empresa estadounidense. Incumple GDPR Art. 13.
+#### ~~A2 — Anthropic no está en la política de privacidad~~ ✅ RESUELTO
 
-**Fix:** Actualizar `apps/web/app/(marketing)/privacy/page.tsx` con todos los sub-procesadores.
+**Archivo:** `apps/web/app/(marketing)/privacy/page.tsx`, `messages/{en,es}/legal.json`
 
-#### A3 — Sin consentimiento explícito en el registro
+La política de privacidad ahora incluye una tabla detallada con los 9 sub-procesadores (Anthropic, Creem, Resend, Meta/WhatsApp, Telegram, GoCardless, Neon, Cloudflare, Vercel), con país de procesamiento, base de la transferencia (SCCs/adequacy) y enlace a su política. También se añadió la sección de transferencias internacionales y la sección de toma de decisiones automatizadas (GDPR Art. 22).
 
-El formulario de sign-up no tiene checkbox de aceptación de términos/política. GDPR Art. 4(11) requiere consentimiento afirmativo inequívoco.
+#### ~~A3 — Sin consentimiento explícito en el registro~~ ✅ RESUELTO
 
-**Fix:** Checkbox en `EmailOtpForm` o en el primer paso del onboarding. Guardar timestamp + versión aceptada en base de datos.
+**Archivos:** `packages/auth/src/ui/email-otp-form.tsx`, `apps/web/app/auth/[path]/page.tsx`, `apps/web/features/auth/actions/record-consent.ts`, `packages/db/prisma/schema.prisma`
+
+Checkbox obligatorio añadido al formulario de registro. Nuevo modelo `UserConsent` en la base de datos almacena: userId, versión de términos, versión de política, fecha de aceptación, IP y user agent. El server action `recordConsentAction` hace upsert en cada inicio de sesión exitoso (idempotente).
 
 #### ~~A4 — Telegram: verificación no es timing-safe~~ ✅ RESUELTO
 
@@ -228,12 +234,12 @@ GoCardless gestiona el acceso Open Banking y cumple PSD2 como proveedor autoriza
 - [x] **S1-2** Rate limiting en link codes: tabla `AgentLinkAttempt` + máximo 5 intentos fallidos por identificador en 30 minutos
 - [x] **S1-3** Telegram verification timing-safe: `timingSafeEqual` de `node:crypto` reemplaza la comparación directa
 
-### Sprint 2 — Legal urgente (este mes)
+### Sprint 2 — Legal urgente ✅ COMPLETADO (excepto S2-1 acción manual)
 
-- [ ] **S2-1** DPA con Anthropic: aceptar el Data Processing Addendum de Anthropic. Evaluar Zero Data Retention para OCR
-- [ ] **S2-2** Actualizar política de privacidad: añadir Anthropic, Creem, Resend, Meta/WhatsApp, Telegram como sub-procesadores. Añadir sección de transferencias internacionales con SCCs. Añadir disclosure de decisiones automatizadas con derecho a revisión humana. Mencionar AEPD como autoridad supervisora
-- [ ] **S2-3** Consent en el registro: checkbox obligatorio en onboarding. Guardar timestamp + versión aceptada
-- [ ] **S2-4** Cookie consent banner: bloquear Vercel Analytics hasta aceptación
+- [x] **S2-2** Política de privacidad: tabla de 9 sub-procesadores con país, base de transferencia (SCCs) y link. Sección GDPR Art. 22 (decisiones automatizadas). Referencia a AEPD
+- [x] **S2-3** Consent en el registro: checkbox obligatorio en `EmailOtpForm` + modelo `UserConsent` en DB con versión, IP y user agent
+- [x] **S2-4** Cookie consent banner: bloquea Vercel Analytics hasta aceptación. Hook `useCookieConsent` + `localStorage`
+- [ ] **S2-1** ⏳ DPA con Anthropic + Zero Data Retention — **acción manual pendiente** (ver guía en la sección A1 de este documento)
 
 ### Sprint 3 — Hardening técnico (próximo mes)
 
@@ -256,5 +262,5 @@ GoCardless gestiona el acceso Open Banking y cumple PSD2 como proveedor autoriza
 La implementación técnica tiene buen aislamiento multi-tenant y minimización de datos en OCR. Los riesgos más urgentes son:
 
 1. ~~**Dos vulnerabilidades críticas** explotables hoy: webhook bypass y brute force en link codes.~~ **✅ Resueltas en Sprint 1.**
-2. **Vacío legal claro**: Anthropic recibe datos financieros reales sin DPA firmado y sin aparecer en la política de privacidad — mayor riesgo de compliance bajo RGPD. **(Sprint 2 pendiente)**
-3. **Cuatro sub-procesadores invisibles** para el usuario (Anthropic, Creem, Resend, Meta/Telegram). **(Sprint 2 pendiente)**
+2. ~~**Vacío legal claro**: Anthropic recibe datos financieros reales sin DPA firmado y sin aparecer en la política de privacidad.~~ **Sub-procesadores y consent resueltos en Sprint 2. DPA con Anthropic pendiente acción manual (ver guía en A1).**
+3. ~~**Cuatro sub-procesadores invisibles** para el usuario (Anthropic, Creem, Resend, Meta/Telegram).~~ **✅ Resuelto en Sprint 2 — tabla completa en política de privacidad.**

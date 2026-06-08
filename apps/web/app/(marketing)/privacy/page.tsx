@@ -116,26 +116,60 @@ export default async function PrivacyPolicyPage() {
             <p className="mt-4 text-muted-foreground">
               {t("privacy.thirdPartyIntro")}
             </p>
-            <ul className="mt-4 space-y-3 text-muted-foreground">
-              <li>
-                <strong className="text-foreground">GoCardless</strong> —{" "}
-                {t("privacy.thirdPartyGoCardless")}
-              </li>
-              <li>
-                <strong className="text-foreground">Neon</strong> —{" "}
-                {t("privacy.thirdPartyNeon")}
-              </li>
-              <li>
-                <strong className="text-foreground">Cloudflare</strong> —{" "}
-                {t("privacy.thirdPartyCloudflare")}
-              </li>
-              <li>
-                <strong className="text-foreground">Vercel</strong> —{" "}
-                {t("privacy.thirdPartyVercel")}
-              </li>
-            </ul>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm text-muted-foreground">
+                <thead>
+                  <tr className="border-b text-left text-foreground">
+                    <th className="pb-2 pr-4 font-medium">{t("privacy.thirdPartyTableService")}</th>
+                    <th className="pb-2 pr-4 font-medium">{t("privacy.thirdPartyTablePurpose")}</th>
+                    <th className="pb-2 pr-4 font-medium">{t("privacy.thirdPartyTableData")}</th>
+                    <th className="pb-2 pr-4 font-medium">{t("privacy.thirdPartyTableCountry")}</th>
+                    <th className="pb-2 pr-4 font-medium">{t("privacy.thirdPartyTableTransfer")}</th>
+                    <th className="pb-2 font-medium">{t("privacy.thirdPartyTablePolicy")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(t.raw("privacy.thirdPartyProcessors") as Array<{name: string; purpose: string; data: string; country: string; transfer: string; policy: string}>).map((p) => (
+                    <tr key={p.name} className="border-b last:border-0">
+                      <td className="py-2 pr-4 font-medium text-foreground whitespace-nowrap">{p.name}</td>
+                      <td className="py-2 pr-4">{p.purpose}</td>
+                      <td className="py-2 pr-4">{p.data}</td>
+                      <td className="py-2 pr-4 whitespace-nowrap">{p.country}</td>
+                      <td className="py-2 pr-4">{p.transfer}</td>
+                      <td className="py-2">
+                        <a href={p.policy} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">
+                          {t("privacy.thirdPartyTablePolicy")}
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <p className="mt-4 text-muted-foreground">
               {t("privacy.thirdPartyNote")}
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold">{t("privacy.automatedTitle")}</h2>
+            <p className="mt-4 text-muted-foreground">
+              {t("privacy.automatedIntro")}
+            </p>
+            <ul className="mt-4 space-y-2 text-muted-foreground">
+              {(t.raw("privacy.automatedItems") as string[]).map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+            <p className="mt-4 text-muted-foreground">
+              {t("privacy.automatedContact")}
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold">{t("privacy.supervisoryTitle")}</h2>
+            <p className="mt-4 text-muted-foreground">
+              {t("privacy.supervisoryDesc")}
             </p>
           </section>
 
