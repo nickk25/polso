@@ -4,17 +4,31 @@ How Polso handles the lifecycle of an uploaded receipt — including what happen
 
 ---
 
+## Receipt sources
+
+| Source | Entry point | `source` field |
+|--------|------------|----------------|
+| Web vault upload | `POST /api/vault/upload` | `"upload"` |
+| Chat attachment | `POST /api/chat` (multipart) | `"chat"` |
+| Telegram bot | `POST /api/webhooks/telegram` | `"telegram"` |
+| WhatsApp bot | `POST /api/webhooks/whatsapp` | `"whatsapp"` |
+| Partner bulk upload | `apps/partner` upload action | `"upload"` |
+
+The **chat path** pre-processes attachments with Haiku OCR *before* streaming Sonnet, so the language model only receives structured JSON — never the image binary. Sonnet acknowledges the result and the user sees a summary in the conversation.
+
+---
+
 ## Happy path (transaction already exists)
 
 ```
-User uploads receipt (web / partner / WhatsApp / Telegram)
+User uploads receipt (web / partner / WhatsApp / Telegram / chat)
   → R2 storage
   → InboxItem created  status: "processing"
   → processInboxItem()
       → extractReceiptData()   (Claude Haiku OCR)
         → amount, date, displayName, cif, taxAmount, taxRate
       → runMatchingForItem()
-          → fetch transactions: last 90 days, amount > 0, no attachment
+          → fetch ALL open transactions (amount > 0, no attachment, no date filter)
           → findBestMatches()  (packages/matching)
           → persistMatchResult()
               ≥ 0.95 → auto_matched  → InboxItem "done",  TransactionAttachment created,
@@ -77,9 +91,10 @@ This is the only automatic retry path. It covers:
 
 ```
 new
- └─ processing  (OCR in flight)
-     ├─ no_match        (no transaction candidate above threshold)
-     │    └─ → suggested_match or done  (when matchAfterSync fires)
+ └─ processing       (OCR in flight)
+     ├─ ocr_failed   (Haiku threw or returned "other"; file saved, re-OCR on next retry)
+     ├─ no_match     (no transaction candidate above threshold)
+     │    └─ → suggested_match or done  (when matchAfterSync fires or manual re-run)
      ├─ suggested_match (awaiting user confirmation)
      │    ├─ done       (confirmed)
      │    └─ no_match   (user rejected, or superseded with better match)
@@ -87,6 +102,8 @@ new
 
 Any state → archived  (user manually archives)
 ```
+
+**`ocr_failed`** is set when `extractReceiptData()` throws or returns `documentType: "other"`. The file is already on R2. The partner daily cron (`recoverStuckInboxItems`) re-attempts OCR automatically within 15 min.
 
 ---
 
@@ -106,7 +123,7 @@ Any state → archived  (user manually archives)
 | `suggested` | ≥ 0.50 | Show for review |
 | (no match) | < 0.50 | `no_match`, saved for later |
 
-**90-day window:** `runMatchingForItem()` only considers transactions from the last 90 days. Older receipts (e.g. retroactive uploads of older invoices) will not find a match even if the transaction exists. `matchAfterSync()` is not constrained by this window — it fetches all pending InboxItems regardless of age.
+**No date window:** `runMatchingForItem()` fetches all open transactions with no date filter. The `scoreDate` function in `@polso/matching` decays to 0.0 beyond 90 days, so old transactions score low but are not excluded outright.
 
 ---
 
@@ -136,7 +153,6 @@ Files that duplicate this logic and must stay in sync:
 | No scheduled retry for `no_match` items | Only retried passively on each GoCardless sync. If sync is infrequent, receipts sit unmatched silently. |
 | No auto-archival after N days | `no_match` items accumulate indefinitely in the inbox. |
 | No proactive stale-receipt alert | User is not notified if a receipt remains unmatched after, say, 7 days. (Partner receives a general receipt-reminder cron, but not item-specific.) |
-| 90-day cutoff in `runMatchingForItem` | Receipts uploaded for older transactions miss the window on first-try. Works on `matchAfterSync` because that path has no date filter. |
 | No retry counter / backoff | There is no `matchAttempts` field. Matching is retried on every sync regardless of how many times it has already failed. |
 
 ### What a deferred-reconciliation cron would look like
