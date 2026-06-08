@@ -7,6 +7,7 @@ export interface CategoryWithCount {
   slug: string
   color: string
   entryType: string | null
+  accountCode: string | null
   isSystem: boolean
   createdAt: Date
   isHidden: boolean

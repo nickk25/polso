@@ -63,6 +63,7 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
   const [name, setName] = useState("")
   const [color, setColor] = useState("#6366f1")
   const [entryType, setEntryType] = useState<string>(NONE_VALUE)
+  const [accountCode, setAccountCode] = useState("")
 
   const isEditing = !!category
 
@@ -73,10 +74,12 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
         setName(category.name)
         setColor(category.color)
         setEntryType(category.entryType || NONE_VALUE)
+        setAccountCode(category.accountCode || "")
       } else {
         setName("")
         setColor("#6366f1")
         setEntryType(NONE_VALUE)
+        setAccountCode("")
       }
       setError(null)
     }
@@ -94,11 +97,13 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
           name,
           color,
           entryType: entryTypeValue,
+          accountCode: accountCode || null,
         })
       : await createCategoryAction({
           name,
           color,
           entryType: entryTypeValue,
+          accountCode: accountCode || null,
         })
 
     if (!result.success) {
@@ -186,6 +191,21 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
             </Select>
             <p className="text-xs text-muted-foreground">
               {t("form.entryTypeDescription")}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="accountCode">{t("form.accountCode")}</Label>
+            <Input
+              id="accountCode"
+              value={accountCode}
+              onChange={(e) => setAccountCode(e.target.value)}
+              placeholder={t("form.accountCodePlaceholder")}
+              pattern="^\d{3,12}$|^$"
+              className="font-mono"
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("form.accountCodeDescription")}
             </p>
           </div>
 

@@ -33,7 +33,10 @@
     "none": "None",
     "fixed": "Fixed",
     "variable": "Variable",
-    "entryTypeDescription": "Transactions with this category will default to this type."
+    "entryTypeDescription": "Transactions with this category will default to this type.",
+    "accountCode": "Account code",
+    "accountCodePlaceholder": "e.g., 629",
+    "accountCodeDescription": "Used when exporting to accounting software (A3, Sage, etc.). Leave empty to use the default code."
   },
   "select": {
     "noCategory": "No category",

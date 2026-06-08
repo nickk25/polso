@@ -33,7 +33,10 @@
     "none": "Ninguno",
     "fixed": "Fijo",
     "variable": "Variable",
-    "entryTypeDescription": "Las transacciones con esta categoria usaran este tipo de forma predeterminada."
+    "entryTypeDescription": "Las transacciones con esta categoria usaran este tipo de forma predeterminada.",
+    "accountCode": "Código contable",
+    "accountCodePlaceholder": "ej., 629",
+    "accountCodeDescription": "Se usa al exportar a software contable (A3, Sage, etc.). Déjalo vacío para usar el código por defecto."
   },
   "select": {
     "noCategory": "Sin categoria",

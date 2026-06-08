@@ -6,16 +6,20 @@ import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
 import { HEX_COLOR_RE } from "../lib/constants"
 
+const ACCOUNT_CODE_RE = /^\d{3,12}$/
+
 interface CreateCategoryInput {
   name: string
   color: string
   entryType?: string | null
+  accountCode?: string | null
 }
 
 interface UpdateCategoryInput {
   name?: string
   color?: string
   entryType?: string | null
+  accountCode?: string | null
 }
 
 interface CategoryResult {
@@ -76,6 +80,11 @@ export async function createCategoryAction(
       return errorResponse("Invalid color format. Use hex format (e.g., #6366f1)", "VALIDATION_ERROR")
     }
 
+    const accountCode = input.accountCode?.trim() || null
+    if (accountCode && !ACCOUNT_CODE_RE.test(accountCode)) {
+      return errorResponse("Account code must be 3–12 digits", "VALIDATION_ERROR")
+    }
+
     const slug = await ensureUniqueSlug(organizationId, generateSlug(input.name.trim()))
 
     const category = await prisma.category.create({
@@ -85,6 +94,7 @@ export async function createCategoryAction(
         slug,
         color: input.color,
         entryType: input.entryType || null,
+        accountCode,
         isSystem: false,
       },
     })
@@ -130,10 +140,22 @@ export async function updateCategoryAction(
       return errorResponse("Invalid color format. Use hex format (e.g., #6366f1)", "VALIDATION_ERROR")
     }
 
+    if (input.accountCode !== undefined && input.accountCode !== null) {
+      const code = input.accountCode.trim()
+      if (code !== "" && !ACCOUNT_CODE_RE.test(code)) {
+        return errorResponse("Account code must be 3–12 digits", "VALIDATION_ERROR")
+      }
+    }
+
     let newSlug = category.slug
     if (input.name && input.name.trim() !== category.name) {
       newSlug = await ensureUniqueSlug(organizationId, generateSlug(input.name.trim()), categoryId)
     }
+
+    const accountCode =
+      input.accountCode !== undefined
+        ? input.accountCode?.trim() || null
+        : category.accountCode
 
     const updated = await prisma.category.update({
       where: { id: categoryId },
@@ -142,6 +164,7 @@ export async function updateCategoryAction(
         slug: newSlug,
         color: input.color ?? category.color,
         entryType: input.entryType !== undefined ? input.entryType : category.entryType,
+        accountCode,
       },
     })
 

@@ -66,6 +66,9 @@ export function CategoryCard({ category, onEdit }: CategoryCardProps) {
       <TableCell>
         <div className="flex items-center gap-2">
           <span className="font-medium">{category.name}</span>
+          {category.accountCode && (
+            <span className="font-mono text-xs text-muted-foreground">{category.accountCode}</span>
+          )}
           {isHidden && (
             <Badge variant="outline" className="text-xs text-muted-foreground">
               {t("hiddenBadge")}
