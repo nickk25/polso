@@ -25,14 +25,13 @@ import type {
 } from "./types"
 import { transformTransaction, transformAccount } from "./transform"
 import { getMaxHistoricalDays } from "./utils"
+import { getOrSet } from "@polso/cache"
 
 const GC_BASE = "https://bankaccountdata.gocardless.com"
+const GC_TOKEN_CACHE_KEY = "gocardless:access-token"
 
-// ============================================
-// In-memory token cache (valid within one process/invocation)
-// ============================================
-
-let _cachedAccessToken: { value: string; expiresAt: number } | null = null
+// In-memory fallback for when Redis is unavailable
+let _memToken: { value: string; expiresAt: number } | null = null
 
 // ============================================
 // Typed API error
@@ -87,23 +86,28 @@ export function createGoCardlessClient(config: BankingConfig) {
   // ============================================
 
   async function getAccessToken(): Promise<string> {
-    const buffer = 60_000 // 1-min buffer before expiry
-
-    if (_cachedAccessToken && Date.now() < _cachedAccessToken.expiresAt - buffer) {
-      return _cachedAccessToken.value
+    // In-memory fast path (same invocation)
+    const buffer = 60_000
+    if (_memToken && Date.now() < _memToken.expiresAt - buffer) {
+      return _memToken.value
     }
 
-    const data = await gcRequest<GCTokenResponse>("/api/v2/token/new/", {
-      method: "POST",
-      body: JSON.stringify({ secret_id: secretId, secret_key: secretKey }),
-    })
-
-    _cachedAccessToken = {
-      value: data.access,
-      expiresAt: Date.now() + data.access_expires * 1000,
+    // Redis cache — persists across cold starts (~24h TTL)
+    const fetchFresh = async (): Promise<string> => {
+      const data = await gcRequest<GCTokenResponse>("/api/v2/token/new/", {
+        method: "POST",
+        body: JSON.stringify({ secret_id: secretId, secret_key: secretKey }),
+      })
+      _memToken = { value: data.access, expiresAt: Date.now() + data.access_expires * 1000 }
+      return data.access
     }
 
-    return data.access
+    try {
+      // GC access tokens last 24h — cache for 23.5h (84600s) to stay safe
+      return await getOrSet<string>(GC_TOKEN_CACHE_KEY, 84600, fetchFresh)
+    } catch {
+      return fetchFresh()
+    }
   }
 
   // ============================================

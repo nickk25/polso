@@ -11,6 +11,7 @@ import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching
 import { UPLOAD_ACCEPTED_TYPES, UPLOAD_MAX_FILE_SIZE } from "@/lib/upload"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
+import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY_CHAT })
 
@@ -48,6 +49,21 @@ export async function POST(request: NextRequest) {
     const userMessageText: string = typeof lastUserMessage?.content === "string"
       ? lastUserMessage.content
       : JSON.stringify(lastUserMessage?.content ?? "")
+
+    const rl = await checkAiRateLimit(ctx.organizationId, "sonnet")
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Has alcanzado el límite diario del asistente. Inténtalo mañana." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": String(rl.limit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(rl.reset),
+          },
+        }
+      )
+    }
 
     // Process each attachment with Haiku before streaming Sonnet
     const processed: ProcessedAttachment[] = []

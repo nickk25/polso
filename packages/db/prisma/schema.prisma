@@ -783,3 +783,16 @@ model ChatLog {
   @@map("chat_log")
 }
 
+model RequisitionCleanupQueue {
+  id             String    @id @default(cuid())
+  requisitionId  String    @unique @map("requisition_id")
+  organizationId String    @map("organization_id")
+  attempts       Int       @default(0)
+  lastAttemptAt  DateTime? @map("last_attempt_at")
+  lastError      String?   @map("last_error")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([attempts])
+  @@map("requisition_cleanup_queue")
+}
+

@@ -4,6 +4,7 @@ import { sendWhatsAppText, sendMatchNotification } from "@polso/agent/whatsapp"
 import { sendTelegramText, sendTelegramMatchNotification } from "@polso/agent/telegram"
 import { findBestMatches } from "@polso/matching"
 import { getFile } from "@polso/storage"
+import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -291,6 +292,15 @@ export async function processInboxItem(
   buffer: Buffer,
   contentType: string
 ): Promise<void> {
+  const rl = await checkAiRateLimit(organizationId, "haiku")
+  if (!rl.allowed) {
+    await prisma.inboxItem.update({
+      where: { id: inboxItemId },
+      data: { status: "ocr_failed", meta: { ocrError: "rate_limit" } },
+    }).catch(() => {})
+    return
+  }
+
   let ocrData
   try {
     ocrData = await extractReceiptData(buffer, contentType)

@@ -5,6 +5,7 @@ import { prisma } from "@polso/db"
 import { uploadFile } from "@polso/storage"
 import { extractReceiptData, type ReceiptData } from "@polso/agent/ocr"
 import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
+import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
 
 export interface ProcessedAttachment {
   status: "saved" | "duplicate" | "rejected" | "ocr_failed"
@@ -39,7 +40,12 @@ export async function processChatAttachment(
     }
   }
 
-  // OCR with Haiku
+  // OCR with Haiku — check rate limit first
+  const rl = await checkAiRateLimit(organizationId, "haiku")
+  if (!rl.allowed) {
+    return { status: "ocr_failed", fileName, errorMessage: "Límite diario de procesamiento alcanzado. Inténtalo mañana." }
+  }
+
   let ocrData: ReceiptData
   try {
     ocrData = await extractReceiptData(buffer, contentType)
