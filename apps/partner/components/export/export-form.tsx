@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation"
 import { Button } from "@polso/ui/button"
 import { Label } from "@polso/ui/label"
 import { Input } from "@polso/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@polso/ui/select"
 import { DownloadSimple, Spinner } from "@phosphor-icons/react"
+import type { ExportFormat } from "@/features/export/lib/csv-generator"
 
 function getDefaultDates(range: string): { from: string; to: string } {
   const now = new Date()
@@ -22,7 +30,6 @@ function getDefaultDates(range: string): { from: string; to: string } {
     return { from, to: today }
   }
 
-  // default: month
   const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
   return { from, to: today }
 }
@@ -42,11 +49,12 @@ export function ExportForm({
   const router = useRouter()
   const [from, setFrom] = useState(defaults.from)
   const [to, setTo] = useState(defaults.to)
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("standard")
   const [loading, setLoading] = useState(false)
 
   async function handleExport() {
     setLoading(true)
-    const params = new URLSearchParams({ clientId, from, to })
+    const params = new URLSearchParams({ clientId, from, to, format: exportFormat })
     const url = `/api/export?${params}`
 
     const a = document.createElement("a")
@@ -54,7 +62,6 @@ export function ExportForm({
     a.download = `polso-export-${from}-${to}.zip`
     a.click()
 
-    // Wait for the server to write the export record, then refresh history
     await new Promise((r) => setTimeout(r, 1500))
     router.refresh()
     setLoading(false)
@@ -83,13 +90,33 @@ export function ExportForm({
           />
         </div>
       </div>
+
+      <div className="space-y-2">
+        <Label>Formato contable</Label>
+        <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="standard">Estándar (Polso)</SelectItem>
+            <SelectItem value="a3">A3con (Wolters Kluwer)</SelectItem>
+            <SelectItem value="sage">Sage 50</SelectItem>
+          </SelectContent>
+        </Select>
+        {exportFormat !== "standard" && (
+          <p className="text-xs text-muted-foreground">
+            Genera asientos con códigos PGC, listos para importar directamente.
+          </p>
+        )}
+      </div>
+
       <Button onClick={handleExport} disabled={loading}>
         {loading ? (
           <Spinner className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           <DownloadSimple className="mr-2 h-4 w-4" />
         )}
-        {loading ? "Generando..." : "Descargar CSV"}
+        {loading ? "Generando..." : "Descargar export"}
       </Button>
     </div>
   )
