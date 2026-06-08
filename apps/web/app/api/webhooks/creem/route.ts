@@ -45,8 +45,7 @@ async function verifyWebhookSignature(
   const secret = process.env.CREEM_WEBHOOK_SECRET
 
   if (!secret) {
-    console.warn("CREEM_WEBHOOK_SECRET not configured, skipping verification")
-    return true // Allow in development
+    return false
   }
 
   if (!signature) {

@@ -60,25 +60,17 @@ Las herramientas dan acceso completo a:
 
 ### Críticos
 
-#### C1 — Webhook signature bypass si falta env var
+#### ~~C1 — Webhook signature bypass si falta env var~~ ✅ RESUELTO
+
+**Archivos:** `apps/web/app/api/webhooks/whatsapp/route.ts`, `apps/web/app/api/webhooks/telegram/route.ts`, `apps/web/app/api/webhooks/creem/route.ts`
+
+Los tres webhooks devolvían `true` cuando la env var del secret no estaba configurada. Ahora devuelven `false` — petición rechazada si falta el secret, sin excepción.
+
+#### ~~C2 — Brute force en códigos de vinculación del bot~~ ✅ RESUELTO
 
 **Archivos:** `apps/web/app/api/webhooks/whatsapp/route.ts`, `apps/web/app/api/webhooks/telegram/route.ts`
 
-- WhatsApp: si `WHATSAPP_APP_SECRET` no está configurado, `verifySignature()` devuelve `true` siempre.
-- Telegram: si `TELEGRAM_WEBHOOK_SECRET_TOKEN` no está, la verificación se salta completamente.
-- Un atacante puede enviar requests falsas, triggerar OCR, hacer matching de transacciones, enviar respuestas a usuarios.
-
-**Fix:** Fail-fast en startup si la env var no existe. Que la función devuelva `false` (no `true`) cuando falta el secret.
-
-#### C2 — Brute force en códigos de vinculación del bot
-
-**Archivos:** `packages/agent/src/` (link code handling)
-
-- Los link codes son 6 dígitos (1M posibilidades).
-- No hay rate limiting, lockout, ni backoff exponencial.
-- Un atacante con el número de teléfono o chat ID puede probar códigos hasta vincular su canal al dashboard de otra empresa.
-
-**Fix:** Máximo 5 intentos fallidos por IP/teléfono en 30 minutos, luego lockout temporal.
+Implementado rate limiting basado en base de datos (`AgentLinkAttempt`): máximo 5 intentos fallidos por identificador (teléfono/chat ID) en una ventana de 30 minutos. El intento 6 recibe un mensaje de bloqueo sin revelar si el código es válido.
 
 ---
 
@@ -102,14 +94,11 @@ El formulario de sign-up no tiene checkbox de aceptación de términos/política
 
 **Fix:** Checkbox en `EmailOtpForm` o en el primer paso del onboarding. Guardar timestamp + versión aceptada en base de datos.
 
-#### A4 — Telegram: verificación no es timing-safe
+#### ~~A4 — Telegram: verificación no es timing-safe~~ ✅ RESUELTO
 
-`incomingToken !== SECRET_TOKEN` es comparación directa, vulnerable a timing attacks.
+**Archivo:** `apps/web/app/api/webhooks/telegram/route.ts`
 
-**Fix:**
-```typescript
-crypto.timingSafeEqual(Buffer.from(incomingToken), Buffer.from(SECRET_TOKEN))
-```
+Reemplazada la comparación directa de strings por `timingSafeEqual` de `node:crypto`. Además ahora rechaza si el secret no está configurado en lugar de permitir la petición.
 
 ---
 
@@ -233,11 +222,11 @@ GoCardless gestiona el acceso Open Banking y cumple PSD2 como proveedor autoriza
 
 ## 5. Plan de acción
 
-### Sprint 1 — Crítico (esta semana)
+### Sprint 1 — Crítico ✅ COMPLETADO
 
-- [ ] **S1-1** Fail-fast en env vars de webhooks: si falta `WHATSAPP_APP_SECRET` o `TELEGRAM_WEBHOOK_SECRET_TOKEN`, el servidor no arranca o devuelve `false` (nunca `true`)
-- [ ] **S1-2** Rate limiting en link codes: máximo 5 intentos fallidos por IP/teléfono en 30 minutos
-- [ ] **S1-3** Telegram verification timing-safe: reemplazar comparación directa por `crypto.timingSafeEqual`
+- [x] **S1-1** Fail-fast en env vars de webhooks: los tres webhooks (WhatsApp, Telegram, Creem) devuelven `false` si falta el secret — nunca `true`
+- [x] **S1-2** Rate limiting en link codes: tabla `AgentLinkAttempt` + máximo 5 intentos fallidos por identificador en 30 minutos
+- [x] **S1-3** Telegram verification timing-safe: `timingSafeEqual` de `node:crypto` reemplaza la comparación directa
 
 ### Sprint 2 — Legal urgente (este mes)
 
@@ -266,6 +255,6 @@ GoCardless gestiona el acceso Open Banking y cumple PSD2 como proveedor autoriza
 
 La implementación técnica tiene buen aislamiento multi-tenant y minimización de datos en OCR. Los riesgos más urgentes son:
 
-1. **Dos vulnerabilidades críticas** explotables hoy: webhook bypass y brute force en link codes.
-2. **Vacío legal claro**: Anthropic recibe datos financieros reales sin DPA firmado y sin aparecer en la política de privacidad — mayor riesgo de compliance bajo RGPD.
-3. **Cuatro sub-procesadores invisibles** para el usuario (Anthropic, Creem, Resend, Meta/Telegram).
+1. ~~**Dos vulnerabilidades críticas** explotables hoy: webhook bypass y brute force en link codes.~~ **✅ Resueltas en Sprint 1.**
+2. **Vacío legal claro**: Anthropic recibe datos financieros reales sin DPA firmado y sin aparecer en la política de privacidad — mayor riesgo de compliance bajo RGPD. **(Sprint 2 pendiente)**
+3. **Cuatro sub-procesadores invisibles** para el usuario (Anthropic, Creem, Resend, Meta/Telegram). **(Sprint 2 pendiente)**

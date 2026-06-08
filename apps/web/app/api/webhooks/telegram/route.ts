@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto"
+import { createHash, timingSafeEqual } from "node:crypto"
 import { after } from "next/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@polso/db"
@@ -22,7 +22,11 @@ export async function POST(req: NextRequest) {
   // Verify that the request comes from Telegram
   const incomingToken = req.headers.get("x-telegram-bot-api-secret-token")
 
-if (SECRET_TOKEN && incomingToken !== SECRET_TOKEN) {
+  if (
+    !SECRET_TOKEN ||
+    !incomingToken ||
+    !timingSafeEqual(Buffer.from(incomingToken), Buffer.from(SECRET_TOKEN))
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -331,6 +335,19 @@ async function processReceipt({
 
 async function handleLinkCode(chatId: string, code: string): Promise<void> {
   try {
+    // Rate limit: 5 failed attempts per chat ID per 30 minutes
+    const since = new Date(Date.now() - 30 * 60 * 1000)
+    const failCount = await prisma.agentLinkAttempt.count({
+      where: { identifier: chatId, createdAt: { gte: since } },
+    })
+    if (failCount >= 5) {
+      await sendTelegramText(
+        chatId,
+        "Demasiados intentos fallidos. Por favor espera 30 minutos e inténtalo de nuevo."
+      )
+      return
+    }
+
     const linkCode = await prisma.agentLinkCode.findFirst({
       where: {
         code,
@@ -341,6 +358,7 @@ async function handleLinkCode(chatId: string, code: string): Promise<void> {
     })
 
     if (!linkCode) {
+      await prisma.agentLinkAttempt.create({ data: { identifier: chatId } })
       // Generic message — don't reveal whether code exists or which org it belongs to
       await sendTelegramText(
         chatId,

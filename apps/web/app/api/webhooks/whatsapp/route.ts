@@ -289,6 +289,19 @@ async function declineMatch(
 
 async function handleLinkCode(from: string, code: string, channel: "whatsapp"): Promise<void> {
   try {
+    // Rate limit: 5 failed attempts per phone per 30 minutes
+    const since = new Date(Date.now() - 30 * 60 * 1000)
+    const failCount = await prisma.agentLinkAttempt.count({
+      where: { identifier: from, createdAt: { gte: since } },
+    })
+    if (failCount >= 5) {
+      await sendWhatsAppText(
+        from,
+        "Demasiados intentos fallidos. Por favor espera 30 minutos e inténtalo de nuevo."
+      )
+      return
+    }
+
     const linkCode = await prisma.agentLinkCode.findFirst({
       where: {
         code,
@@ -299,6 +312,7 @@ async function handleLinkCode(from: string, code: string, channel: "whatsapp"): 
     })
 
     if (!linkCode) {
+      await prisma.agentLinkAttempt.create({ data: { identifier: from } })
       // Generic message — don't reveal whether code exists or which org it belongs to
       await sendWhatsAppText(
         from,
@@ -382,8 +396,7 @@ function normalizePhone(phone: string): string {
 
 async function verifySignature(body: string, signature: string | null): Promise<boolean> {
   if (!APP_SECRET) {
-    // Allow in development without a configured secret
-    return true
+    return false
   }
   if (!signature) return false
 

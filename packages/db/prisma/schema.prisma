@@ -695,6 +695,15 @@ model AgentLinkCode {
   @@map("agent_link_codes")
 }
 
+model AgentLinkAttempt {
+  id         String   @id @default(cuid())
+  identifier String   // phone number (WhatsApp) or chat ID (Telegram)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([identifier, createdAt])
+  @@map("agent_link_attempts")
+}
+
 // ============================================
 // Transaction Attachments - Confirmed receipt links
 // ============================================
