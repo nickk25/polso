@@ -2,7 +2,7 @@
 
 import type { Message } from "ai"
 import { MessageMarkdown } from "./message-markdown"
-import { ToolCallBadge } from "./tool-call-badge"
+import { ToolCallResult } from "./tool-call-result"
 
 interface MessageListProps {
   messages: Message[]
@@ -21,9 +21,9 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                 : "max-w-[90%] text-sm"
             }
           >
-            {message.role === "assistant" && message.toolInvocations && message.toolInvocations.length > 0 && (
-              <ToolCallBadge invocations={message.toolInvocations} />
-            )}
+            {message.role === "assistant" && message.toolInvocations?.map((inv) => (
+              <ToolCallResult key={inv.toolCallId} invocation={inv} />
+            ))}
             {message.content && (
               message.role === "user" ? (
                 <span className="whitespace-pre-wrap">{message.content}</span>

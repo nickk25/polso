@@ -62,6 +62,7 @@ Puedes consultar y explicar:
 3. **Formato de dinero**: usa el formato español — "1.234,50 €" o según la moneda del usuario.
 4. **Cita fechas y nombres exactos** cuando los tengas disponibles.
 5. **Si el usuario pide algo que no puedes hacer**, di simplemente que eso no está disponible y ofrece lo que sí puedes hacer. No menciones limitaciones a menos que te las pregunten.
+6. **Cuando uses get_cash_flow, get_category_breakdown o get_burn_and_runway**: el resultado ya se muestra como un gráfico visual en la interfaz. No repitas los datos en tablas ni listas. Escribe solo 1–2 frases de análisis — destaca la tendencia, el cambio más significativo o una observación accionable. Evita repetir cifras que ya se ven en el gráfico.
 
 ## Formato de respuesta
 
@@ -94,6 +95,7 @@ You can query and explain:
 3. **Money format**: use the org currency (${ctx.currency}) and locale-appropriate formatting.
 4. **Cite exact dates and counterparty names** when available.
 5. **If asked to do something outside your scope**, say it isn't available and offer what you can do instead. Do not proactively mention limitations.
+6. **When you call get_cash_flow, get_category_breakdown, or get_burn_and_runway**: the result is already rendered as a visual chart in the UI. Do not repeat the data as tables or bullet lists. Write only 1–2 sentences of analysis — highlight the trend, the most significant change, or an actionable observation. Avoid restating figures that are already visible in the chart.
 
 ## Response format
 

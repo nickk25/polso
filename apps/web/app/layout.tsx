@@ -80,10 +80,10 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <AuthProvider>{children}</AuthProvider>
+            <CookieConsent />
           </NextIntlClientProvider>
         </ThemeProvider>
         <Toaster />
-        <CookieConsent />
         <ConditionalAnalytics />
       </body>
     </html>
