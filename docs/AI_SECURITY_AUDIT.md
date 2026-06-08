@@ -239,13 +239,18 @@ GoCardless gestiona el acceso Open Banking y cumple PSD2 como proveedor autoriza
 - [x] **S2-4** Cookie consent banner: bloquea Vercel Analytics hasta aceptación. Hook `useCookieConsent` + `localStorage`
 - [ ] **S2-1** ⏳ DPA con Anthropic + Zero Data Retention — **acción manual pendiente** (ver guía en la sección A1 de este documento)
 
-### Sprint 3 — Hardening técnico (próximo mes)
+### Sprint 3 — Hardening técnico ✅ COMPLETADO (excepto S3-1 acción manual)
 
-- [ ] **S3-1** Lifecycle policy en Cloudflare R2: TTL 365 días para `inbox/`, 90 días para `exports/`
-- [ ] **S3-2** Eliminar secret de query param en crons: solo `Authorization: Bearer ...`
-- [ ] **S3-3** Security headers en `next.config.ts`: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`
-- [ ] **S3-4** Rate limiting en `/api/chat`: límite por usuario para evitar coste descontrolado de API
-- [ ] **S3-5** TTL en logs de mensajes proactivos: no almacenar el campo `context` después de 90 días
+- [ ] **S3-1** ⏳ Lifecycle policy en Cloudflare R2 — **acción manual pendiente**
+  - Ir a Cloudflare dashboard → R2 → bucket → Settings → Object Lifecycle Rules
+  - Regla 1: prefix `inbox/` → expire after **365 days**
+  - Regla 2: prefix `exports/` → expire after **90 days**
+  - Cuando esté hecho, marcar ✅ con la fecha
+- [x] **S3-2** Eliminar secret de query param en crons: solo `Authorization: Bearer ...` (`apps/web` y `apps/partner`)
+- [x] **S3-3** Security headers en ambos `next.config.ts`: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Strict-Transport-Security`, `Permissions-Policy`
+- [x] **S3-4** Rate limiting AI por organización: 100 req/24h Sonnet (chat dashboard), 500 req/24h Haiku (OCR en todos los puntos de entrada — Telegram, WhatsApp, inbox, chat attachments, partner cron). Paquete `@polso/cache` con Upstash Redis sliding window
+- [x] **S3-5** TTL en mensajes proactivos: `ProactiveMessage.context` se pone a `NULL` después de 90 días en el cron diario del partner
+- [x] **S3-6** Optimización billing de GoCardless: prevención de bancos duplicados (409 en create-link), retry queue para deletes fallidos (tabla `RequisitionCleanupQueue`), limpieza mensual el día 28 UTC en el cron de sync-transactions, access token cacheado en Redis (23.5h TTL)
 
 ### Sprint 4 — EU AI Act (antes de agosto 2026)
 
