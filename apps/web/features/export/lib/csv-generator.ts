@@ -1,23 +1,16 @@
 import { format } from "date-fns"
 import { generateInvoiceFileName, escapeCsv } from "@polso/utils/export"
+import {
+  convertToJournalLines,
+  a3Provider,
+  sageProvider,
+  type MappedTransaction,
+} from "@polso/accounting"
+import type { EntryForExport } from "../queries/get-exports"
 
 export { generateInvoiceFileName }
 
-export interface ExpenseForCSV {
-  date: Date
-  amount: number
-  currency: string
-  description: string | null
-  entryType: "fixed" | "variable" | null
-  status: string
-  counterparty: {
-    name: string
-  } | null
-  category: {
-    name: string
-  } | null
-  documents: { id: string }[]
-}
+export type ExportFormat = "standard" | "a3" | "sage"
 
 const CSV_HEADERS = [
   "Fecha",
@@ -37,9 +30,42 @@ function formatSpanishNumber(value: number): string {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
 }
 
-export function generateCSV(expenses: ExpenseForCSV[], separator = ";"): string {
-  const rows: string[] = []
+function toMappedTransaction(expense: EntryForExport): MappedTransaction {
+  return {
+    id: expense.id,
+    amount: expense.amount,
+    direction: "expense",
+    currency: expense.currency,
+    date: new Date(expense.date),
+    description: expense.description ?? "",
+    counterpartyName: expense.counterparty?.name ?? null,
+    counterpartyTaxId: expense.counterparty?.taxId ?? null,
+    categoryAccountCode: expense.category?.accountCode ?? null,
+    taxRate: expense.taxRate ?? null,
+    taxAmount: expense.taxAmount ?? null,
+    documentRef: expense.documents[0]?.id ?? null,
+  }
+}
 
+export function generateCSV(
+  expenses: EntryForExport[],
+  separator = ";",
+  exportFormat: ExportFormat = "standard"
+): string {
+  if (exportFormat === "a3") {
+    const mapped = expenses.map(toMappedTransaction)
+    const lines = convertToJournalLines(mapped)
+    return a3Provider.generate(lines, { separator })
+  }
+
+  if (exportFormat === "sage") {
+    const mapped = expenses.map(toMappedTransaction)
+    const lines = convertToJournalLines(mapped)
+    return sageProvider.generate(lines, { separator: "," })
+  }
+
+  // Standard format
+  const rows: string[] = []
   rows.push(CSV_HEADERS.join(separator))
 
   for (const expense of expenses) {
@@ -56,7 +82,6 @@ export function generateCSV(expenses: ExpenseForCSV[], separator = ";"): string 
     rows.push(row.join(separator))
   }
 
-  // BOM for Excel UTF-8 recognition
   return "﻿" + rows.join("\n")
 }
 

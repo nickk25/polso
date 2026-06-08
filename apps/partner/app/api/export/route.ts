@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { nanoid } from "nanoid"
 import { getPartnerAuthContext } from "@/lib/auth"
 import { getExportableData } from "@/features/export/queries/get-exportable-data"
-import { generateCsv, generateInvoiceFileName } from "@/features/export/lib/csv-generator"
+import { generateCsv, generateInvoiceFileName, type ExportFormat } from "@/features/export/lib/csv-generator"
 import { generateZip, type ZipFile } from "@/features/export/lib/zip-generator"
 import { getFile, uploadExport } from "@polso/storage"
 import { prisma } from "@/lib/db"
@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
       return new NextResponse("Missing required params", { status: 400 })
     }
 
+    const exportFormat = (searchParams.get("format") ?? "standard") as ExportFormat
+
     // Read CSV separator from org preference
     let sep = searchParams.get("sep")
     if (!sep) {
@@ -42,8 +44,9 @@ export async function GET(request: NextRequest) {
     )
 
     // Build ZIP: CSV at root + fetched attachments in facturas/
+    const csvName = exportFormat === "standard" ? "transacciones.csv" : `transacciones-${exportFormat}.csv`
     const zipFiles: ZipFile[] = [
-      { name: "transacciones.csv", content: "\uFEFF" + generateCsv(rows, sep) },
+      { name: csvName, content: generateCsv(rows, sep, exportFormat) },
     ]
 
     await Promise.all(
@@ -81,6 +84,7 @@ export async function GET(request: NextRequest) {
             entryCount: rows.length,
             documentCount: zipFiles.length - 1,
             status: "completed",
+            format: exportFormat,
             completedAt: new Date(),
             generatedByOrgId: ctx.organizationId,
             includesPdf: false,

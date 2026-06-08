@@ -1,7 +1,15 @@
 import { generateInvoiceFileName, escapeCsv } from "@polso/utils/export"
+import {
+  convertToJournalLines,
+  a3Provider,
+  sageProvider,
+  type MappedTransaction,
+} from "@polso/accounting"
 import type { ExportableTransaction } from "../queries/get-exportable-data"
 
 export { generateInvoiceFileName }
+
+export type ExportFormat = "standard" | "a3" | "sage"
 
 const HEADERS = [
   "Fecha",
@@ -32,18 +40,45 @@ function formatAmount(amount: number): string {
   return amount.toFixed(2).replace(".", ",")
 }
 
+function toMappedTransaction(row: ExportableTransaction): MappedTransaction {
+  return {
+    id: row.id,
+    amount: row.amount,
+    direction: "expense",
+    currency: row.currency,
+    date: new Date(row.date),
+    description: row.description ?? "",
+    counterpartyName: row.vendorName ?? row.merchantName ?? null,
+    counterpartyTaxId: row.vendorTaxId ?? null,
+    categoryAccountCode: row.categoryAccountCode ?? null,
+    taxRate: row.taxRate ?? null,
+    taxAmount: row.taxAmount ?? null,
+    documentRef: row.attachmentFilePath ?? null,
+  }
+}
 
 export function generateCsv(
   rows: ExportableTransaction[],
-  separator = ";"
+  separator = ";",
+  exportFormat: ExportFormat = "standard"
 ): string {
-  const lines: string[] = []
+  if (exportFormat === "a3") {
+    const mapped = rows.map(toMappedTransaction)
+    const lines = convertToJournalLines(mapped)
+    return a3Provider.generate(lines, { separator })
+  }
 
-  // BOM for Excel UTF-8 recognition on macOS
+  if (exportFormat === "sage") {
+    const mapped = rows.map(toMappedTransaction)
+    const lines = convertToJournalLines(mapped)
+    return sageProvider.generate(lines, { separator: "," })
+  }
+
+  // Standard format
+  const lines: string[] = []
   lines.push("﻿" + HEADERS.map((h) => escapeCsv(h, separator)).join(separator))
 
   for (const row of rows) {
-    // Use the renamed filename so accountants can cross-reference with facturas/ folder
     const attachmentDisplay = row.attachmentFilePath
       ? generateInvoiceFileName(
           row.date,

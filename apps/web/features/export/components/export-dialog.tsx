@@ -24,6 +24,7 @@ import {
 import { CalendarBlank, FileZip, Spinner, CheckCircle, DownloadSimple } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { createExportAction, getExportPreviewAction } from "../actions/create-export"
+import type { ExportFormat } from "../lib/csv-generator"
 
 type PeriodType = "quarter" | "month" | "custom"
 
@@ -55,6 +56,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
   const [month, setMonth] = useState<string>("1")
   const [year, setYear] = useState<string>(String(currentYear))
   const [csvSeparator, setCsvSeparator] = useState<";" | ",">(";")
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("standard")
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>()
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>()
 
@@ -167,6 +169,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
         startDate: range.start,
         endDate: range.end,
         csvSeparator,
+        format: exportFormat,
       })
 
       if (response.success) {
@@ -361,7 +364,28 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
               </div>
             )}
 
+            {/* Export Format */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Formato contable</label>
+              <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Estándar (Polso)</SelectItem>
+                  <SelectItem value="a3">A3con (Wolters Kluwer)</SelectItem>
+                  <SelectItem value="sage">Sage 50</SelectItem>
+                </SelectContent>
+              </Select>
+              {exportFormat !== "standard" && (
+                <p className="text-xs text-muted-foreground">
+                  Genera asientos contables con códigos PGC, listo para importar.
+                </p>
+              )}
+            </div>
+
             {/* CSV Separator */}
+            {exportFormat === "standard" && (
             <div className="space-y-2">
               <label className="text-sm font-medium">{t("dialog.separator")}</label>
               <div className="flex gap-2">
@@ -385,6 +409,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
                 </Button>
               </div>
             </div>
+            )}
 
             {/* Preview */}
             {range && (

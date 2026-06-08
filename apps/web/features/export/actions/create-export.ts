@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import { uploadExport, getFile } from "@/lib/storage/r2"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
-import { generateCSV, generateExportFileName, generateInvoiceFileName } from "../lib/csv-generator"
+import { generateCSV, generateExportFileName, generateInvoiceFileName, type ExportFormat } from "../lib/csv-generator"
 import { generatePDF } from "../lib/pdf-generator"
 import { generateZip, type ZipFile } from "../lib/zip-generator"
 import { getExpensesForExport, getExportPreview, type EntryForExport } from "../queries/get-exports"
@@ -26,6 +26,7 @@ export interface CreateExportInput {
   includesPdf?: boolean
   includesInvoices?: boolean
   csvSeparator?: string
+  format?: ExportFormat
 }
 
 export interface CreateExportResult {
@@ -48,6 +49,7 @@ export async function createExportAction(
     const includesPdf = input.includesPdf !== false
     const includesInvoices = input.includesInvoices !== false
     const csvSeparator = input.csvSeparator || ";"
+    const exportFormat: ExportFormat = input.format ?? "standard"
 
     const startDate = toUtcDayStart(new Date(input.startDate))
     const endDate = toUtcDayEnd(new Date(input.endDate))
@@ -64,6 +66,7 @@ export async function createExportAction(
         includesPdf,
         includesDocuments: includesInvoices,
         status: "processing",
+        format: exportFormat,
       },
     })
 
@@ -85,7 +88,8 @@ export async function createExportAction(
     const zipFiles: ZipFile[] = []
 
     if (includesCsv) {
-      zipFiles.push({ name: "gastos.csv", content: generateCSV(expenses, csvSeparator) })
+      const csvName = exportFormat === "standard" ? "gastos.csv" : `gastos-${exportFormat}.csv`
+      zipFiles.push({ name: csvName, content: generateCSV(expenses, csvSeparator, exportFormat) })
     }
 
     if (includesPdf) {

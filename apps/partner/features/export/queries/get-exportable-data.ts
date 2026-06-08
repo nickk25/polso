@@ -2,14 +2,17 @@ import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
 
 export interface ExportableTransaction {
+  id: string
   date: Date
   description: string | null
   merchantName: string | null
   amount: number
   currency: string
   categoryName: string | null
+  categoryAccountCode: string | null
   expenseType: string | null
   vendorName: string | null
+  vendorTaxId: string | null
   accountName: string
   attachmentFileName: string | null
   attachmentFilePath: string | null
@@ -39,6 +42,7 @@ export async function getExportableData(
     },
     orderBy: { date: "asc" },
     select: {
+      id: true,
       date: true,
       name: true,
       merchantName: true,
@@ -52,8 +56,8 @@ export async function getExportableData(
           status: true,
           taxAmount: true,
           taxRate: true,
-          category: { select: { name: true } },
-          counterparty: { select: { name: true } },
+          category: { select: { name: true, accountCode: true } },
+          counterparty: { select: { name: true, taxId: true } },
         },
       },
       transactionAttachments: {
@@ -66,14 +70,17 @@ export async function getExportableData(
   })
 
   return transactions.map((t) => ({
+    id: t.id,
     date: t.date,
     description: t.name,
     merchantName: t.merchantName,
     amount: t.amount,
     currency: t.currency,
     categoryName: t.entry?.category?.name ?? null,
+    categoryAccountCode: t.entry?.category?.accountCode ?? null,
     expenseType: t.entry?.entryType ?? null,
     vendorName: t.entry?.counterparty?.name ?? null,
+    vendorTaxId: t.entry?.counterparty?.taxId ?? null,
     accountName: t.account.name,
     attachmentFileName: t.transactionAttachments[0]?.inboxItem?.fileName ?? null,
     attachmentFilePath: t.transactionAttachments[0]?.inboxItem?.filePath ?? null,

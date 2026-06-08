@@ -49,14 +49,18 @@ export interface EntryForExport {
   description: string | null
   entryType: "fixed" | "variable" | null
   status: string
+  taxRate: number | null
+  taxAmount: number | null
   counterparty: {
     id: string
     name: string
+    taxId: string | null
   } | null
   category: {
     id: string
     name: string
     color: string
+    accountCode: string | null
   } | null
   documents: {
     id: string
@@ -81,10 +85,10 @@ export async function getExpensesForExport(
     },
     include: {
       counterparty: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, taxId: true },
       },
       category: {
-        select: { id: true, name: true, color: true },
+        select: { id: true, name: true, color: true, accountCode: true },
       },
       transaction: {
         select: {
@@ -106,6 +110,8 @@ export async function getExpensesForExport(
     entryType: e.entryType as "fixed" | "variable" | null,
     status: e.status,
     counterparty: e.counterparty,
+    taxRate: e.taxRate,
+    taxAmount: e.taxAmount,
     category: e.category,
     documents: e.transaction?.documents ?? [],
   }))
