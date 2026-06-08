@@ -1,22 +1,21 @@
 {
-  "name": "@polso/inbox",
+  "name": "@polso/cache",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./redis": "./src/redis-client.ts",
+    "./ai-rate-limit": "./src/ai-rate-limit.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@polso/agent": "workspace:*",
-    "@polso/cache": "workspace:^",
-    "@polso/db": "workspace:*",
-    "@polso/matching": "workspace:*",
-    "@polso/storage": "workspace:*"
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0"
   },
   "devDependencies": {
     "@polso/tsconfig": "workspace:*",

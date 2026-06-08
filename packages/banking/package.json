@@ -13,6 +13,10 @@
   },
   "devDependencies": {
     "@polso/tsconfig": "workspace:*",
+    "@types/node": "^25.9.2",
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@polso/cache": "workspace:^"
   }
 }
