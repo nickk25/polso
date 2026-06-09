@@ -20,6 +20,7 @@
     "@polso/auth": "workspace:*",
     "@polso/banking": "workspace:*",
     "@polso/billing": "workspace:*",
+    "@polso/cache": "workspace:*",
     "@polso/db": "workspace:*",
     "@polso/email": "workspace:*",
     "@polso/inbox": "workspace:^",

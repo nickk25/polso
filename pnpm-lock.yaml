@@ -165,6 +165,9 @@ importers:
       '@polso/billing':
         specifier: workspace:*
         version: link:../../packages/billing
+      '@polso/cache':
+        specifier: workspace:*
+        version: link:../../packages/cache
       '@polso/db':
         specifier: workspace:*
         version: link:../../packages/db
