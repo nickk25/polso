@@ -7,7 +7,6 @@ import { getChatContext } from "@/features/agent/lib/context"
 import { buildSystemPrompt } from "@/features/agent/lib/system-prompt"
 import { buildTools } from "@/features/agent/tools"
 import { processChatAttachment, type ProcessedAttachment } from "@/features/agent/lib/process-chat-attachment"
-import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
 import { UPLOAD_ACCEPTED_TYPES, UPLOAD_MAX_FILE_SIZE } from "@/lib/upload"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
@@ -86,14 +85,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Trigger matching in background for saved/duplicate items
+    // Revalidate vault path for any saved items (matching already ran synchronously in processChatAttachment)
     for (const p of processed) {
       if ((p.status === "saved" || p.status === "duplicate") && p.inboxItemId) {
-        const itemId = p.inboxItemId
-        after(async () => {
-          await runMatchingForInboxItem(ctx.organizationId, itemId)
-          revalidatePath("/vault")
-        })
+        revalidatePath("/vault")
       }
     }
 

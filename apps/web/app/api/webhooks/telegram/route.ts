@@ -7,12 +7,17 @@ import { extractReceiptData } from "@polso/agent/ocr"
 import {
   sendTelegramText,
   sendTelegramMatchNotification,
+  sendTelegramTypingAction,
   answerCallbackQuery,
   downloadTelegramFile,
 } from "@polso/agent/telegram"
 import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
 import { confirmMatchInDb } from "@polso/inbox"
 import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
+import { runAgent } from "@/features/agent/lib/run-agent"
+
+export const runtime = "nodejs"
+export const maxDuration = 60
 
 const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET_TOKEN?.trim()
 
@@ -74,7 +79,7 @@ export async function POST(req: NextRequest) {
   // Resolve chat ID → organization via per-user membership
   const membership = await prisma.userOrganization.findFirst({
     where: { telegramChatId: chatId },
-    select: { organizationId: true },
+    select: { organizationId: true, userId: true },
   })
 
   if (!membership) {
@@ -129,6 +134,47 @@ export async function POST(req: NextRequest) {
       await sendTelegramText(chatId, "Notificaciones proactivas reactivadas. ✓")
       return NextResponse.json({ ok: true })
     }
+
+    // ── Free-text Q&A via runAgent ────────────────────────────────────────
+    // Check plan expiry
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { planExpiresAt: true },
+    })
+    if (org?.planExpiresAt && org.planExpiresAt < new Date()) {
+      await sendTelegramText(chatId, "Tu suscripción ha expirado. Renueva tu plan para usar el asistente.")
+      return NextResponse.json({ ok: true })
+    }
+
+    // Check AI rate limit
+    const rl = await checkAiRateLimit(organizationId, "sonnet")
+    if (!rl.allowed) {
+      await sendTelegramText(chatId, "Has alcanzado el límite diario del asistente. Inténtalo mañana.")
+      return NextResponse.json({ ok: true })
+    }
+
+    // Defer the agent call — it can take 10–30s. ACK Telegram immediately.
+    const capturedUserId = membership.userId
+    after(async () => {
+      try {
+        await sendTelegramTypingAction(chatId).catch(() => {})
+        const result = await runAgent({
+          organizationId,
+          userId: capturedUserId,
+          messages: [{ role: "user", content: text }],
+          channel: "telegram",
+          locale: "es",
+        })
+        await sendTelegramText(chatId, result.text)
+      } catch (error) {
+        console.error("[telegram/webhook] Q&A error:", error)
+        await sendTelegramText(
+          chatId,
+          "Lo siento, no pude procesar tu mensaje en este momento. Intenta de nuevo."
+        ).catch(() => {})
+      }
+    })
+
     return NextResponse.json({ ok: true })
   }
 
