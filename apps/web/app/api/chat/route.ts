@@ -13,6 +13,8 @@ import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
 
+if (!process.env.ANTHROPIC_API_KEY_CHAT) throw new Error("ANTHROPIC_API_KEY_CHAT is not set")
+
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY_CHAT })
 
 export const runtime = "nodejs"
@@ -50,6 +52,17 @@ export async function POST(request: NextRequest) {
       ? lastUserMessage.content
       : JSON.stringify(lastUserMessage?.content ?? "")
 
+    const org = await prisma.organization.findUnique({
+      where: { id: ctx.organizationId },
+      select: { planExpiresAt: true },
+    })
+    if (org?.planExpiresAt && org.planExpiresAt < new Date()) {
+      return NextResponse.json(
+        { error: "Tu suscripción ha expirado. Renueva tu plan para usar el asistente." },
+        { status: 402 }
+      )
+    }
+
     const rl = await checkAiRateLimit(ctx.organizationId, "sonnet")
     if (!rl.allowed) {
       return NextResponse.json(
@@ -84,16 +97,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const cappedMessages = messages.slice(-20)
+    if (JSON.stringify(cappedMessages).length > 50_000) {
+      return NextResponse.json({ error: "Mensaje demasiado largo." }, { status: 413 })
+    }
+
     const system = buildSystemPrompt(ctx, processed.length > 0 ? processed : undefined)
     const tools = buildTools()
 
     const result = streamText({
       model: anthropic("claude-sonnet-4-5"),
       system,
-      messages,
+      messages: cappedMessages,
       tools,
-      maxSteps: 8,
-      onFinish: async ({ text, toolCalls, finishReason }) => {
+      maxSteps: 3,
+      onFinish: async ({ text, toolCalls, finishReason, usage }) => {
         after(async () => {
           try {
             await prisma.chatLog.create({
@@ -104,6 +122,8 @@ export async function POST(request: NextRequest) {
                 assistantText: text.slice(0, 2000),
                 toolNames: toolCalls?.map((c) => c.toolName) ?? [],
                 toolCount: toolCalls?.length ?? 0,
+                inputTokens: usage?.promptTokens ?? null,
+                outputTokens: usage?.completionTokens ?? null,
                 durationMs: Date.now() - startedAt,
                 hadError: finishReason === "error",
                 source: "dashboard",
