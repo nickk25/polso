@@ -10,12 +10,14 @@ const CashFlowWidget = dynamic(() => import("../widgets/cash-flow-widget").then(
 const CategoryBreakdownWidget = dynamic(() => import("../widgets/category-breakdown-widget").then((m) => m.CategoryBreakdownWidget), { ssr: false })
 const BurnRunwayWidget = dynamic(() => import("../widgets/burn-runway-widget").then((m) => m.BurnRunwayWidget), { ssr: false })
 const VatWidget = dynamic(() => import("../widgets/vat-widget").then((m) => m.VatWidget), { ssr: false })
+const MatchSuggestionWidget = dynamic(() => import("../widgets/match-suggestion-widget").then((m) => m.MatchSuggestionWidget), { ssr: false })
 
 const widgetComponents: Record<string, React.ComponentType<{ data: unknown }>> = {
   get_cash_flow: CashFlowWidget as React.ComponentType<{ data: unknown }>,
   get_category_breakdown: CategoryBreakdownWidget as React.ComponentType<{ data: unknown }>,
   get_burn_and_runway: BurnRunwayWidget as React.ComponentType<{ data: unknown }>,
   get_vat_summary: VatWidget as React.ComponentType<{ data: unknown }>,
+  show_match_suggestion: MatchSuggestionWidget as React.ComponentType<{ data: unknown }>,
 }
 
 const WIDGET_SKELETON_HEIGHT: Record<string, number> = {
@@ -23,6 +25,7 @@ const WIDGET_SKELETON_HEIGHT: Record<string, number> = {
   get_category_breakdown: 168,
   get_burn_and_runway: 116,
   get_vat_summary: 180,
+  show_match_suggestion: 160,
 }
 
 interface ToolCallResultProps {

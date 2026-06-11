@@ -44,14 +44,26 @@ export const vatSummarySchema = z.object({
   ytdNet: z.number(),
 })
 
+export const matchSuggestionSchema = z.object({
+  suggestionId: z.string(),
+  transactionId: z.string(),
+  confidence: z.number().min(0).max(1),
+  transactionName: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  date: z.string(),
+})
+
 export type CashFlowResult = z.infer<typeof cashFlowSchema>
 export type CategoryBreakdownResult = z.infer<typeof categoryBreakdownSchema>
 export type BurnRunwayResult = z.infer<typeof burnRunwaySchema>
 export type VatSummaryResult = z.infer<typeof vatSummarySchema>
+export type MatchSuggestionResult = z.infer<typeof matchSuggestionSchema>
 
 export const widgetSchemas = {
   get_cash_flow: cashFlowSchema,
   get_category_breakdown: categoryBreakdownSchema,
   get_burn_and_runway: burnRunwaySchema,
   get_vat_summary: vatSummarySchema,
+  show_match_suggestion: matchSuggestionSchema,
 } as const satisfies Record<string, z.ZodTypeAny>
