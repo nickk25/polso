@@ -11,6 +11,10 @@ const CategoryBreakdownWidget = dynamic(() => import("../widgets/category-breakd
 const BurnRunwayWidget = dynamic(() => import("../widgets/burn-runway-widget").then((m) => m.BurnRunwayWidget), { ssr: false })
 const VatWidget = dynamic(() => import("../widgets/vat-widget").then((m) => m.VatWidget), { ssr: false })
 const MatchSuggestionWidget = dynamic(() => import("../widgets/match-suggestion-widget").then((m) => m.MatchSuggestionWidget), { ssr: false })
+const CashFlowForecastWidget = dynamic(() => import("../widgets/cash-flow-forecast-widget").then((m) => m.CashFlowForecastWidget), { ssr: false })
+const TopCounterpartiesWidget = dynamic(() => import("../widgets/top-counterparties-widget").then((m) => m.TopCounterpartiesWidget), { ssr: false })
+const ExpenseForecastWidget = dynamic(() => import("../widgets/expense-forecast-widget").then((m) => m.ExpenseForecastWidget), { ssr: false })
+const RevenueForecastWidget = dynamic(() => import("../widgets/revenue-forecast-widget").then((m) => m.RevenueForecastWidget), { ssr: false })
 
 const widgetComponents: Record<string, React.ComponentType<{ data: unknown }>> = {
   get_cash_flow: CashFlowWidget as React.ComponentType<{ data: unknown }>,
@@ -18,6 +22,10 @@ const widgetComponents: Record<string, React.ComponentType<{ data: unknown }>> =
   get_burn_and_runway: BurnRunwayWidget as React.ComponentType<{ data: unknown }>,
   get_vat_summary: VatWidget as React.ComponentType<{ data: unknown }>,
   show_match_suggestion: MatchSuggestionWidget as React.ComponentType<{ data: unknown }>,
+  get_cash_flow_forecast: CashFlowForecastWidget as React.ComponentType<{ data: unknown }>,
+  get_top_counterparties: TopCounterpartiesWidget as React.ComponentType<{ data: unknown }>,
+  get_expense_forecast: ExpenseForecastWidget as React.ComponentType<{ data: unknown }>,
+  get_revenue_forecast: RevenueForecastWidget as React.ComponentType<{ data: unknown }>,
 }
 
 const WIDGET_SKELETON_HEIGHT: Record<string, number> = {
@@ -26,6 +34,10 @@ const WIDGET_SKELETON_HEIGHT: Record<string, number> = {
   get_burn_and_runway: 116,
   get_vat_summary: 180,
   show_match_suggestion: 160,
+  get_cash_flow_forecast: 240,
+  get_top_counterparties: 200,
+  get_expense_forecast: 240,
+  get_revenue_forecast: 240,
 }
 
 interface ToolCallResultProps {
