@@ -770,6 +770,9 @@ model ChatLog {
   toolNames      String[] @map("tool_names")
   toolCount      Int      @default(0) @map("tool_count")
 
+  inputTokens    Int?     @map("input_tokens")
+  outputTokens   Int?     @map("output_tokens")
+
   durationMs     Int?     @map("duration_ms")
   hadError       Boolean  @default(false) @map("had_error")
   source         String   @default("dashboard") @map("source")
