@@ -252,11 +252,11 @@ GoCardless gestiona el acceso Open Banking y cumple PSD2 como proveedor autoriza
 - [x] **S3-5** TTL en mensajes proactivos: `ProactiveMessage.context` se pone a `NULL` después de 90 días en el cron diario del partner
 - [x] **S3-6** Optimización billing de GoCardless: prevención de bancos duplicados (409 en create-link), retry queue para deletes fallidos (tabla `RequisitionCleanupQueue`), limpieza mensual el día 28 UTC en el cron de sync-transactions, access token cacheado en Redis (23.5h TTL)
 
-### Sprint 4 — EU AI Act (antes de agosto 2026)
+### Sprint 4 — EU AI Act ✅ COMPLETADO (excepto S2-1 acción manual que cubre también S4)
 
-- [ ] **S4-1** Disclosure de IA en la UI: badge "Asistente IA" visible en el chat del dashboard y en el primer mensaje del bot
-- [ ] **S4-2** Derecho a revisión humana de categorizaciones: flujo de impugnación o marcado de categorización incorrecta
-- [ ] **S4-3** Documentación técnica del sistema de IA: documento interno describiendo modelos, datos procesados y lógica de categorización (requerido por EU AI Act Art. 11)
+- [x] **S4-1** Disclosure de IA en la UI: badge "Polso AI" con icono sparkle en cada respuesta del chat dashboard. Disclaimer permanente en el input.
+- [x] **S4-2** Derecho a revisión humana de categorizaciones: nota "Categoría asignada automáticamente por IA. Puedes cambiarla." visible en el sheet de edición cuando `categorySource !== "manual"`
+- [x] **S4-3** Documentación técnica del sistema de IA: `docs/AI_SYSTEM.md` — modelos, datos procesados, prioridades de categorización, derechos del usuario (EU AI Act Art. 11)
 
 ---
 
