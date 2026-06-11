@@ -41,12 +41,12 @@ export interface PatternsGrouped {
   currency: string
 }
 
-export async function getAllPatternsGrouped(): Promise<PatternsGrouped> {
-  const { organizationId } = await getAuthContext()
+export async function getAllPatternsGrouped(organizationId?: string): Promise<PatternsGrouped> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const [patterns, org] = await Promise.all([
     prisma.recurringPattern.findMany({
-      where: { organizationId },
+      where: { organizationId: orgId },
       include: {
         counterparty: { select: { id: true, name: true, logoUrl: true } },
         category: { select: { id: true, name: true, color: true } },
@@ -54,7 +54,7 @@ export async function getAllPatternsGrouped(): Promise<PatternsGrouped> {
       },
     }),
     prisma.organization.findUnique({
-      where: { id: organizationId },
+      where: { id: orgId },
       select: { currency: true },
     }),
   ])

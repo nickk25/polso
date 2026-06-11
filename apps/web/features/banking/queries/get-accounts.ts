@@ -38,12 +38,12 @@ export async function getAccount(id: string) {
   })
 }
 
-export async function getAccountsWithBalance() {
-  const { organizationId } = await getAuthContext()
+export async function getAccountsWithBalance(organizationId?: string) {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const accounts = await prisma.account.findMany({
     where: {
-      organizationId,
+      organizationId: orgId,
       status: "active",
     },
     orderBy: { createdAt: "desc" },

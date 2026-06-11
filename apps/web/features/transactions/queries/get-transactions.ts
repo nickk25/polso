@@ -41,9 +41,10 @@ export interface TransactionStats {
 export async function getTransactions(
   filters: TransactionFilters = {},
   page = 1,
-  pageSize = 50
+  pageSize = 50,
+  organizationId?: string
 ): Promise<{ transactions: TransactionRow[]; total: number; pages: number }> {
-  const { organizationId } = await getAuthContext()
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const dateFilter =
     filters.dateFrom || filters.dateTo
@@ -79,7 +80,7 @@ export async function getTransactions(
   const noVatFilter = filters.noVat ? { taxRate: null } : {}
 
   const where = {
-    organizationId,
+    organizationId: orgId,
     ...(dateFilter && { date: dateFilter }),
     ...directionFilter,
     ...statusFilter,

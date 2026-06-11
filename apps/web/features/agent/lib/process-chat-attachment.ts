@@ -6,6 +6,18 @@ import { uploadFile } from "@polso/storage"
 import { extractReceiptData, type ReceiptData } from "@polso/agent/ocr"
 import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
 import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
+import { DEFAULT_THRESHOLDS } from "@polso/matching"
+
+export interface MatchResult {
+  type: "auto_matched" | "high_confidence" | "suggested_match" | "no_match"
+  suggestionId?: string
+  transactionId?: string
+  confidence?: number
+  transactionName?: string
+  amount?: number
+  currency?: string
+  date?: string
+}
 
 export interface ProcessedAttachment {
   status: "saved" | "duplicate" | "rejected" | "ocr_failed"
@@ -13,6 +25,7 @@ export interface ProcessedAttachment {
   ocr?: ReceiptData
   fileName: string
   errorMessage?: string
+  matchResult?: MatchResult
 }
 
 export async function processChatAttachment(
@@ -88,5 +101,42 @@ export async function processChatAttachment(
     },
   })
 
-  return { status: "saved", inboxItemId: item.id, ocr: ocrData, fileName }
+  // Run matching synchronously so we can show the result in chat
+  await runMatchingForInboxItem(organizationId, item.id)
+
+  // Query the best suggestion that was just created
+  const suggestion = await prisma.matchSuggestion.findFirst({
+    where: { inboxItemId: item.id, status: { not: "rejected" } },
+    orderBy: { confidenceScore: "desc" },
+    include: { transaction: true },
+  })
+
+  let matchResult: MatchResult
+  if (!suggestion) {
+    matchResult = { type: "no_match" }
+  } else {
+    const confidence = suggestion.confidenceScore
+    const tx = suggestion.transaction
+    const transactionName = tx.merchantName ?? tx.name ?? undefined
+    let type: MatchResult["type"]
+    if (confidence >= DEFAULT_THRESHOLDS.autoMatchThreshold) {
+      type = "auto_matched"
+    } else if (confidence >= DEFAULT_THRESHOLDS.highConfidenceThreshold) {
+      type = "high_confidence"
+    } else {
+      type = "suggested_match"
+    }
+    matchResult = {
+      type,
+      suggestionId: suggestion.id,
+      transactionId: suggestion.transactionId,
+      confidence,
+      transactionName: transactionName ?? undefined,
+      amount: tx.amount,
+      currency: tx.currency,
+      date: tx.date.toISOString(),
+    }
+  }
+
+  return { status: "saved", inboxItemId: item.id, ocr: ocrData, fileName, matchResult }
 }

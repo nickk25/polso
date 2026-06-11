@@ -30,12 +30,13 @@ export interface AlertStats {
 export async function getAlerts(
   filters: AlertFilters = {},
   page = 1,
-  pageSize = 25
+  pageSize = 25,
+  organizationId?: string
 ): Promise<{ alerts: AlertWithRelations[]; total: number; pages: number }> {
-  const { organizationId } = await getAuthContext()
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const where: Record<string, unknown> = {
-    organizationId,
+    organizationId: orgId,
     isDismissed: false,
   }
 

@@ -47,15 +47,15 @@ export interface CashFlowForecast {
   }
 }
 
-export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowForecast> {
-  const { organizationId } = await getAuthContext()
+export async function getCashFlowForecast(forecastMonths = 3, organizationId?: string): Promise<CashFlowForecast> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const now = new Date()
   const historicalMonths = 3
 
   // Get current balance
   const accounts = await prisma.account.findMany({
-    where: { organizationId, status: "active" },
+    where: { organizationId: orgId, status: "active" },
     select: { balanceCurrent: true, currency: true },
   })
 
@@ -69,7 +69,7 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
   const [expenses, incomes, recurringPatterns] = await Promise.all([
     prisma.entry.findMany({
       where: {
-        organizationId,
+        organizationId: orgId,
         direction: "expense",
         date: { gte: startDate, lte: endDate },
         status: { not: "excluded" },
@@ -78,7 +78,7 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
     }),
     prisma.entry.findMany({
       where: {
-        organizationId,
+        organizationId: orgId,
         direction: "income",
         date: { gte: startDate, lte: endDate },
         status: { not: "excluded" },
@@ -87,7 +87,7 @@ export async function getCashFlowForecast(forecastMonths = 3): Promise<CashFlowF
     }),
     prisma.recurringPattern.findMany({
       where: {
-        organizationId,
+        organizationId: orgId,
         isActive: true,
       },
       select: {
@@ -255,8 +255,8 @@ export interface RevenueForecast {
   byCategory: CategoryRevenueForecast[]
 }
 
-export async function getRevenueForecast(): Promise<RevenueForecast> {
-  const { organizationId } = await getAuthContext()
+export async function getRevenueForecast(organizationId?: string): Promise<RevenueForecast> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const now = new Date()
   const threeMonthsAgo = startOfMonth(subMonths(now, 3))
@@ -264,7 +264,7 @@ export async function getRevenueForecast(): Promise<RevenueForecast> {
   // Get income data with counterparty and category info
   const incomes = await prisma.entry.findMany({
     where: {
-      organizationId,
+      organizationId: orgId,
       direction: "income",
       date: { gte: threeMonthsAgo },
       status: { not: "excluded" },
@@ -471,8 +471,8 @@ export interface ExpenseForecast {
   monthOverMonthChange: number
 }
 
-export async function getExpenseForecast(): Promise<ExpenseForecast> {
-  const { organizationId } = await getAuthContext()
+export async function getExpenseForecast(organizationId?: string): Promise<ExpenseForecast> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const now = new Date()
   const threeMonthsAgo = startOfMonth(subMonths(now, 3))
@@ -483,7 +483,7 @@ export async function getExpenseForecast(): Promise<ExpenseForecast> {
   const [expenses, recurringPatterns] = await Promise.all([
     prisma.entry.findMany({
       where: {
-        organizationId,
+        organizationId: orgId,
         direction: "expense",
         date: { gte: threeMonthsAgo },
         status: { not: "excluded" },
@@ -498,7 +498,7 @@ export async function getExpenseForecast(): Promise<ExpenseForecast> {
     }),
     prisma.recurringPattern.findMany({
       where: {
-        organizationId,
+        organizationId: orgId,
         isActive: true,
       },
       select: {

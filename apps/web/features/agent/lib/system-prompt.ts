@@ -1,6 +1,28 @@
 import type { ChatContext } from "./context"
 import type { ProcessedAttachment } from "./process-chat-attachment"
 
+function formatMatchLine(a: ProcessedAttachment, isSpanish: boolean): string {
+  const mr = a.matchResult
+  if (!mr) return ""
+  if (mr.type === "auto_matched") {
+    return isSpanish
+      ? " El recibo fue conciliado automáticamente con una transacción. Informa al usuario que quedó emparejado de forma automática."
+      : " The receipt was automatically matched to a transaction. Inform the user it was matched automatically."
+  }
+  if (mr.type === "high_confidence" || mr.type === "suggested_match") {
+    const pct = mr.confidence != null ? `${Math.round(mr.confidence * 100)}%` : ""
+    return isSpanish
+      ? ` Se encontró una transacción coincidente (confianza: ${pct}). DEBES llamar a la herramienta show_match_suggestion inmediatamente para mostrar la tarjeta de confirmación al usuario.`
+      : ` A matching transaction was found (confidence: ${pct}). You MUST call the show_match_suggestion tool immediately to display the confirmation card to the user.`
+  }
+  if (mr.type === "no_match") {
+    return isSpanish
+      ? " No se encontró ninguna transacción coincidente para este recibo. Informa al usuario que ha sido guardado para conciliación futura."
+      : " No matching transaction was found for this receipt. Inform the user it has been saved for later matching."
+  }
+  return ""
+}
+
 function formatAttachmentLine(a: ProcessedAttachment, isSpanish: boolean): string {
   if (a.status === "rejected") {
     return isSpanish
@@ -30,10 +52,34 @@ function formatAttachmentLine(a: ProcessedAttachment, isSpanish: boolean): strin
   if (a.status === "duplicate") {
     parts.push(isSpanish ? "(ya existía, re-evaluando match)" : "(already existed, re-matching)")
   }
-  return parts.join(" — ")
+  const matchLine = formatMatchLine(a, isSpanish)
+  return parts.join(" — ") + matchLine
 }
 
-export function buildSystemPrompt(ctx: ChatContext, attachments?: ProcessedAttachment[]): string {
+export interface BuildSystemPromptOptions {
+  attachments?: ProcessedAttachment[]
+  channel?: "web" | "telegram" | "whatsapp"
+}
+
+export function buildSystemPrompt(
+  ctx: ChatContext,
+  attachmentsOrOptions?: ProcessedAttachment[] | BuildSystemPromptOptions,
+  legacyOptions?: BuildSystemPromptOptions,
+): string {
+  // Support both old signature buildSystemPrompt(ctx, attachments[]) and
+  // new signature buildSystemPrompt(ctx, { attachments, channel })
+  let attachments: ProcessedAttachment[] | undefined
+  let channel: "web" | "telegram" | "whatsapp" = "web"
+
+  if (Array.isArray(attachmentsOrOptions)) {
+    attachments = attachmentsOrOptions
+    channel = legacyOptions?.channel ?? "web"
+  } else if (attachmentsOrOptions != null) {
+    attachments = attachmentsOrOptions.attachments
+    channel = attachmentsOrOptions.channel ?? "web"
+  }
+
+  const isMessaging = channel === "telegram" || channel === "whatsapp"
   const isSpanish = ctx.locale.startsWith("es")
 
   const base = isSpanish
@@ -62,7 +108,10 @@ Puedes consultar y explicar:
 3. **Formato de dinero**: usa el formato español — "1.234,50 €" o según la moneda del usuario.
 4. **Cita fechas y nombres exactos** cuando los tengas disponibles.
 5. **Si el usuario pide algo que no puedes hacer**, di simplemente que eso no está disponible y ofrece lo que sí puedes hacer. No menciones limitaciones a menos que te las pregunten.
-6. **Cuando uses get_cash_flow, get_category_breakdown, get_burn_and_runway o get_vat_summary**: el resultado ya se muestra como un gráfico visual en la interfaz. No repitas los datos en tablas ni listas. Escribe solo 1–2 frases de análisis — destaca la tendencia, el cambio más significativo o una observación accionable. Evita repetir cifras que ya se ven en el gráfico.
+${isMessaging
+      ? "6. **Cuando uses get_cash_flow, get_category_breakdown, get_burn_and_runway o get_vat_summary**: presenta los datos como un resumen breve en texto plano con las cifras clave. Usa viñetas. Sé conciso."
+      : "6. **Cuando uses get_cash_flow, get_category_breakdown, get_burn_and_runway o get_vat_summary**: el resultado ya se muestra como un gráfico visual en la interfaz. No repitas los datos en tablas ni listas. Escribe solo 1–2 frases de análisis — destaca la tendencia, el cambio más significativo o una observación accionable. Evita repetir cifras que ya se ven en el gráfico."
+    }
 
 ## Formato de respuesta
 
@@ -95,7 +144,10 @@ You can query and explain:
 3. **Money format**: use the org currency (${ctx.currency}) and locale-appropriate formatting.
 4. **Cite exact dates and counterparty names** when available.
 5. **If asked to do something outside your scope**, say it isn't available and offer what you can do instead. Do not proactively mention limitations.
-6. **When you call get_cash_flow, get_category_breakdown, get_burn_and_runway, or get_vat_summary**: the result is already rendered as a visual chart in the UI. Do not repeat the data as tables or bullet lists. Write only 1–2 sentences of analysis — highlight the trend, the most significant change, or an actionable observation. Avoid restating figures that are already visible in the chart.
+${isMessaging
+      ? "6. **When you call get_cash_flow, get_category_breakdown, get_burn_and_runway, or get_vat_summary**: present the data as a brief plain-text summary with key figures. Use bullet points. Keep responses concise."
+      : "6. **When you call get_cash_flow, get_category_breakdown, get_burn_and_runway, or get_vat_summary**: the result is already rendered as a visual chart in the UI. Do not repeat the data as tables or bullet lists. Write only 1–2 sentences of analysis — highlight the trend, the most significant change, or an actionable observation. Avoid restating figures that are already visible in the chart."
+    }
 
 ## Response format
 
@@ -104,12 +156,19 @@ You can query and explain:
 - Be concise: a direct answer is better than long paragraphs.
 - Address the user informally.`
 
-  if (!attachments?.length) return base
+  // Append channel-specific footer for messaging channels
+  const channelFooter = isMessaging
+    ? isSpanish
+      ? `\n\nIMPORTANTE — Canal: ${channel === "telegram" ? "Telegram" : "WhatsApp"}. Responde en texto plano. No hagas referencia a gráficos, dashboards, ni elementos visuales de la interfaz. Presenta los datos de forma concisa con viñetas. Máximo 2-3 párrafos cortos por respuesta.`
+      : `\n\nIMPORTANT — Channel: ${channel === "telegram" ? "Telegram" : "WhatsApp"}. Respond in plain text only. Do not reference charts, dashboards, or visual UI elements. Present data concisely with bullet points. Maximum 2-3 short paragraphs per response.`
+    : ""
+
+  if (!attachments?.length) return base + channelFooter
 
   const lines = attachments.map((a) => formatAttachmentLine(a, isSpanish))
   const header = isSpanish
-    ? `\n\n## Adjuntos procesados en este mensaje\n\nEl usuario ha adjuntado los siguientes documentos. Ya están guardados y el sistema está buscando transacciones coincidentes en segundo plano. Confirma al usuario que están guardados y resume los datos extraídos. Si alguno fue rechazado o tuvo un error, explícalo brevemente.\n\n`
-    : `\n\n## Attachments processed in this message\n\nThe user attached the following documents. They are already saved and matching is running in the background. Acknowledge the receipt and summarise the extracted data. If any were rejected or errored, explain briefly.\n\n`
+    ? `\n\n## Adjuntos procesados en este mensaje\n\nEl usuario ha adjuntado los siguientes documentos. Ya están guardados y el sistema ha buscado transacciones coincidentes. Confirma al usuario que están guardados y resume los datos extraídos. Si alguno fue rechazado o tuvo un error, explícalo brevemente. Sigue las instrucciones de cada documento sobre herramientas a llamar.\n\n`
+    : `\n\n## Attachments processed in this message\n\nThe user attached the following documents. They are already saved and matching has completed. Acknowledge the receipt and summarise the extracted data. If any were rejected or errored, explain briefly. Follow the per-document instructions about which tools to call.\n\n`
 
-  return base + header + lines.join("\n")
+  return base + channelFooter + header + lines.join("\n")
 }

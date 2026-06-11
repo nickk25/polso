@@ -60,25 +60,25 @@ export async function getCustomCategories(): Promise<CategoryWithCount[]> {
   return attachHiddenState(categories, organizationId)
 }
 
-export async function getAllCategories(): Promise<CategoryWithCount[]> {
-  const { organizationId } = await getAuthContext()
+export async function getAllCategories(organizationId?: string): Promise<CategoryWithCount[]> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const categories = await prisma.category.findMany({
-    where: { OR: [{ isSystem: true }, { organizationId }] },
+    where: { OR: [{ isSystem: true }, { organizationId: orgId }] },
     include: { _count: { select: { entries: true } } },
     orderBy: [{ isSystem: "desc" }, { name: "asc" }],
   })
 
-  return attachHiddenState(categories, organizationId)
+  return attachHiddenState(categories, orgId)
 }
 
-export async function getActiveCategories(): Promise<CategoryWithCount[]> {
-  const { organizationId } = await getAuthContext()
+export async function getActiveCategories(organizationId?: string): Promise<CategoryWithCount[]> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const categories = await prisma.category.findMany({
     where: {
-      OR: [{ isSystem: true }, { organizationId }],
-      NOT: { preferences: { some: { organizationId, isHidden: true } } },
+      OR: [{ isSystem: true }, { organizationId: orgId }],
+      NOT: { preferences: { some: { organizationId: orgId, isHidden: true } } },
     },
     include: { _count: { select: { entries: true } } },
     orderBy: [{ isSystem: "desc" }, { name: "asc" }],

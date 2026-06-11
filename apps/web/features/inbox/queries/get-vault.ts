@@ -40,12 +40,13 @@ export interface VaultStats {
 export async function getVaultItems(
   statusFilter?: string,
   page = 1,
-  pageSize = 50
+  pageSize = 50,
+  organizationId?: string
 ): Promise<{ items: VaultItem[]; total: number; pages: number }> {
-  const { organizationId } = await getAuthContext()
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const inboxWhere: Record<string, unknown> = {
-    organizationId,
+    organizationId: orgId,
     status: { not: "archived" },
   }
 
@@ -91,7 +92,7 @@ export async function getVaultItems(
     }),
     includeLegacy
       ? prisma.transactionDocument.findMany({
-          where: { organizationId },
+          where: { organizationId: orgId },
           select: {
             id: true,
             fileName: true,

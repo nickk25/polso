@@ -94,6 +94,17 @@ export async function sendTelegramMatchNotification({
 }
 
 /**
+ * Send a typing indicator to show the bot is processing.
+ */
+export async function sendTelegramTypingAction(chatId: string | number): Promise<void> {
+  await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendChatAction`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, action: "typing" }),
+  })
+}
+
+/**
  * Answer a callback query to remove the loading spinner on the button.
  */
 export async function answerCallbackQuery(

@@ -10,11 +10,11 @@ export interface BurnRateData {
   currency: string
 }
 
-export async function getBurnRateAndRunway(): Promise<BurnRateData> {
-  const { organizationId } = await getAuthContext()
+export async function getBurnRateAndRunway(organizationId?: string): Promise<BurnRateData> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const accounts = await prisma.account.findMany({
-    where: { organizationId, status: "active" },
+    where: { organizationId: orgId, status: "active" },
     select: { balanceCurrent: true, currency: true },
   })
 
@@ -28,7 +28,7 @@ export async function getBurnRateAndRunway(): Promise<BurnRateData> {
   const monthlyExpenses = await prisma.entry.groupBy({
     by: ["date"],
     where: {
-      organizationId,
+      organizationId: orgId,
       direction: "expense",
       date: { gte: threeMonthsAgo, lte: lastMonthEnd },
       status: { not: "excluded" },
@@ -145,14 +145,14 @@ async function getCategoryBreakdownForDirection(
     .sort((a, b) => b.total - a.total)
 }
 
-export async function getCategoryBreakdown(date = new Date()): Promise<CategoryBreakdown[]> {
-  const { organizationId } = await getAuthContext()
-  return getCategoryBreakdownForDirection(organizationId, "expense", date)
+export async function getCategoryBreakdown(date = new Date(), organizationId?: string): Promise<CategoryBreakdown[]> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
+  return getCategoryBreakdownForDirection(orgId, "expense", date)
 }
 
-export async function getIncomeCategoryBreakdown(date = new Date()): Promise<CategoryBreakdown[]> {
-  const { organizationId } = await getAuthContext()
-  return getCategoryBreakdownForDirection(organizationId, "income", date)
+export async function getIncomeCategoryBreakdown(date = new Date(), organizationId?: string): Promise<CategoryBreakdown[]> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
+  return getCategoryBreakdownForDirection(orgId, "income", date)
 }
 
 export interface TopCounterparty {
@@ -163,15 +163,15 @@ export interface TopCounterparty {
   percentage: number
 }
 
-export async function getTopCounterparties(limit = 10, date = new Date()): Promise<TopCounterparty[]> {
-  const { organizationId } = await getAuthContext()
+export async function getTopCounterparties(limit = 10, date = new Date(), organizationId?: string): Promise<TopCounterparty[]> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const monthStart = startOfMonth(date)
   const monthEnd = endOfMonth(date)
 
   const grouped = await prisma.entry.groupBy({
     by: ["counterpartyId"],
-    where: { organizationId, direction: "expense", date: { gte: monthStart, lte: monthEnd }, status: { not: "excluded" } },
+    where: { organizationId: orgId, direction: "expense", date: { gte: monthStart, lte: monthEnd }, status: { not: "excluded" } },
     _sum: { amount: true },
     _count: { _all: true },
     orderBy: { _sum: { amount: "desc" } },
@@ -237,8 +237,8 @@ export async function getExpenseStatsForMonth(date = new Date()): Promise<Expens
   return { total, lastMonthTotal, monthOverMonthChange }
 }
 
-export async function getCashFlow(months = 6, endMonth = new Date()): Promise<CashFlowData[]> {
-  const { organizationId } = await getAuthContext()
+export async function getCashFlow(months = 6, endMonth = new Date(), organizationId?: string): Promise<CashFlowData[]> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const now = endMonth
   const startDate = startOfMonth(subMonths(now, months - 1))
@@ -246,7 +246,7 @@ export async function getCashFlow(months = 6, endMonth = new Date()): Promise<Ca
 
   const entries = await prisma.entry.findMany({
     where: {
-      organizationId,
+      organizationId: orgId,
       date: { gte: startDate, lte: endDate },
       status: { not: "excluded" },
     },
@@ -337,8 +337,8 @@ export interface VATSummary {
   ytdNet: number
 }
 
-export async function getVATSummary(year = new Date().getFullYear()): Promise<VATSummary> {
-  const { organizationId } = await getAuthContext()
+export async function getVATSummary(year = new Date().getFullYear(), organizationId?: string): Promise<VATSummary> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const fiscalQuarters = getFiscalQuarters(year)
   const yearStart = fiscalQuarters[0].start
@@ -347,14 +347,14 @@ export async function getVATSummary(year = new Date().getFullYear()): Promise<VA
   const [entries, account] = await Promise.all([
     prisma.entry.findMany({
       where: {
-        organizationId,
+        organizationId: orgId,
         taxAmount: { not: null },
         status: { not: "excluded" },
         date: { gte: yearStart, lte: yearEnd },
       },
       select: { taxAmount: true, date: true, direction: true },
     }),
-    prisma.account.findFirst({ where: { organizationId, status: "active" }, select: { currency: true } }),
+    prisma.account.findFirst({ where: { organizationId: orgId, status: "active" }, select: { currency: true } }),
   ])
 
   const totals = new Map<number, { collected: number; paid: number }>()

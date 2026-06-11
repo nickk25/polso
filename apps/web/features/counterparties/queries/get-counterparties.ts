@@ -33,11 +33,11 @@ function toCounterpartyWithStats(
   return { ...cp, totalSpent, lastEntryDate }
 }
 
-export async function getCounterparties(): Promise<CounterpartyWithStats[]> {
-  const { organizationId } = await getAuthContext()
+export async function getCounterparties(organizationId?: string): Promise<CounterpartyWithStats[]> {
+  const orgId = organizationId ?? (await getAuthContext()).organizationId
 
   const counterparties = await prisma.counterparty.findMany({
-    where: { organizationId },
+    where: { organizationId: orgId },
     include: {
       defaultCategory: {
         select: { id: true, name: true, color: true },
