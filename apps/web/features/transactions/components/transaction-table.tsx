@@ -244,6 +244,9 @@ export function TransactionTable({
                   categories={categories}
                   className="w-full"
                 />
+                {selected.categorySource && selected.categorySource !== "manual" && (
+                  <p className="text-[11px] text-muted-foreground">{t("editSheet.autoCategory")}</p>
+                )}
               </div>
 
               {selected.direction === "expense" && (

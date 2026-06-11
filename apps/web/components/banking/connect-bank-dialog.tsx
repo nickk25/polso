@@ -77,6 +77,8 @@ export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps
       if (!res.ok) {
         if (data.code === "LIMIT_EXCEEDED") {
           toast.error(t("connect.limitExceeded"))
+        } else if (data.code === "DUPLICATE_BANK") {
+          toast.error(t("connect.duplicateBank"))
         } else {
           throw new Error(data.error ?? "Failed to create bank connection link")
         }

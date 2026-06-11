@@ -1,6 +1,7 @@
 "use client"
 
 import type { Message } from "ai"
+import { Sparkle } from "@phosphor-icons/react"
 import { MessageMarkdown } from "./message-markdown"
 import { ToolCallResult } from "./tool-call-result"
 
@@ -21,6 +22,12 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                 : "max-w-[90%] text-sm"
             }
           >
+            {message.role === "assistant" && (
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1.5">
+                <Sparkle className="h-3 w-3" weight="fill" />
+                Polso AI
+              </span>
+            )}
             {message.role === "assistant" && message.toolInvocations?.map((inv) => (
               <ToolCallResult key={inv.toolCallId} invocation={inv} />
             ))}

@@ -28,6 +28,7 @@ export interface TransactionRow {
   entryType: string | null
   taxRate: number | null
   taxAmount: number | null
+  categorySource: string | null
 }
 
 export interface TransactionStats {
@@ -102,6 +103,7 @@ export async function getTransactions(
         entryType: true,
         taxRate: true,
         taxAmount: true,
+        categorySource: true,
         category: { select: { id: true, name: true, color: true } },
         counterparty: { select: { id: true, name: true } },
         transaction: { select: { merchantName: true, name: true } },
@@ -127,6 +129,7 @@ export async function getTransactions(
     entryType: e.entryType,
     taxRate: e.taxRate,
     taxAmount: e.taxAmount,
+    categorySource: e.categorySource ?? null,
   }))
 
   return { transactions, total, pages: Math.ceil(total / pageSize) }

@@ -17,9 +17,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@polso/ui/alert-dialog"
-import { ArrowsClockwise, Trash, Warning, CheckCircle, Clock } from "@phosphor-icons/react"
+import { ArrowsClockwise, Trash, Warning, CheckCircle, Clock, ArrowCounterClockwise } from "@phosphor-icons/react"
 import { startManualSyncAction } from "@/features/banking/actions/sync-transactions"
-import { disconnectBankAction } from "@/features/banking/actions/connect-bank"
+import { disconnectBankAction, reconnectBankAction } from "@/features/banking/actions/connect-bank"
 import type { Account } from "@/lib/types"
 
 interface AccountWithCount extends Account {
@@ -63,10 +63,12 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
   const tc = useTranslations("common")
   const [syncing, setSyncing] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [reconnecting, setReconnecting] = useState(false)
 
   const { accounts, institutionName, institutionLogo } = connection
   const firstAccount = accounts[0]
   const isDisconnected = accounts.every((a) => a.status === "disconnected")
+  const hasExpiredOrError = accounts.some((a) => a.status === "expired" || a.status === "error")
   const hasError = accounts.some((a) => a.syncError)
   const totalTransactions = accounts.reduce((sum, a) => sum + a._count.transactions, 0)
 
@@ -82,6 +84,15 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
     await disconnectBankAction(firstAccount.id)
     setDisconnecting(false)
     router.refresh()
+  }
+
+  async function handleReconnect() {
+    setReconnecting(true)
+    const result = await reconnectBankAction(firstAccount.id)
+    setReconnecting(false)
+    if (result.success) {
+      router.push(result.data.link)
+    }
   }
 
   return (
@@ -121,51 +132,61 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {hasExpiredOrError && !isDisconnected && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleReconnect}
+                disabled={reconnecting}
+                title={t("accountCard.reconnectBank")}
+              >
+                <ArrowCounterClockwise className={`h-4 w-4 ${reconnecting ? "animate-spin" : ""}`} />
+              </Button>
+            )}
+            {!hasExpiredOrError && !isDisconnected && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSync}
+                disabled={syncing}
+                title={t("accountCard.syncTransactions")}
+              >
+                <ArrowsClockwise className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              </Button>
+            )}
             {!isDisconnected && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleSync}
-                  disabled={syncing || isDisconnected}
-                  title={t("accountCard.syncTransactions")}
-                >
-                  <ArrowsClockwise className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                </Button>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={disconnecting}
-                      title={t("accountCard.disconnectBank")}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={disconnecting}
+                    title={t("accountCard.disconnectBank")}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("accountCard.disconnectTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("connection.disconnectDescription", {
+                        bank: institutionName || t("accountCard.bank"),
+                        count: accounts.length,
+                      })}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDisconnect}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t("accountCard.disconnectTitle")}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t("connection.disconnectDescription", {
-                          bank: institutionName || t("accountCard.bank"),
-                          count: accounts.length,
-                        })}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDisconnect}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {t("accountCard.disconnect")}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </>
+                      {t("accountCard.disconnect")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>

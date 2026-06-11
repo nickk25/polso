@@ -46,7 +46,9 @@
     "statusPending": "Pending",
     "statusExpired": "Expired",
     "statusError": "Error",
-    "statusDisconnected": "Disconnected"
+    "statusDisconnected": "Disconnected",
+    "reconnectBank": "Reconnect",
+    "reconnecting": "Reconnecting..."
   },
   "connection": {
     "accountCount": "{count, plural, one {# account} other {# accounts}}",
@@ -65,6 +67,7 @@
     "noBanks": "No banks available.",
     "errorLoadingBanks": "Failed to load banks. Please try again.",
     "limitExceeded": "Bank connection limit reached. Upgrade your plan to connect more accounts.",
-    "errorCreatingLink": "Failed to start bank connection. Please try again."
+    "errorCreatingLink": "Failed to start bank connection. Please try again.",
+    "duplicateBank": "This bank is already connected. To reconnect it, go to Settings > Banks and tap Reconnect."
   }
 }

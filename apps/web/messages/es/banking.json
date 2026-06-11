@@ -46,7 +46,9 @@
     "statusPending": "Pendiente",
     "statusExpired": "Expirado",
     "statusError": "Error",
-    "statusDisconnected": "Desconectado"
+    "statusDisconnected": "Desconectado",
+    "reconnectBank": "Reconectar",
+    "reconnecting": "Reconectando..."
   },
   "connection": {
     "accountCount": "{count, plural, one {# cuenta} other {# cuentas}}",
@@ -65,6 +67,7 @@
     "noBanks": "No hay bancos disponibles.",
     "errorLoadingBanks": "Error al cargar los bancos. Por favor, intentalo de nuevo.",
     "limitExceeded": "Limite de conexiones bancarias alcanzado. Mejora tu plan para conectar mas cuentas.",
-    "errorCreatingLink": "Error al iniciar la conexion bancaria. Por favor, intentalo de nuevo."
+    "errorCreatingLink": "Error al iniciar la conexion bancaria. Por favor, intentalo de nuevo.",
+    "duplicateBank": "Este banco ya esta conectado. Para reconectarlo, ve a Ajustes > Bancos y pulsa Reconectar."
   }
 }
