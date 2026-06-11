@@ -4,6 +4,7 @@ import { getPartnerNotificationEmail } from "@polso/db"
 import { evaluateTriggers } from "@/features/proactive/lib/evaluate-triggers"
 import { generateProactiveMessage } from "@polso/agent/proactive"
 import { sendProactiveMessage } from "@/features/proactive/lib/send-proactive-message"
+import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
 import { buildPartnerDigest } from "@/features/notifications/lib/build-partner-digest"
 import { sendPartnerDigest } from "@polso/email/send"
 import { recoverStuckInboxItems } from "@polso/inbox"
@@ -126,6 +127,12 @@ async function runProactiveAgent(): Promise<ProactiveResult> {
       const trigger = await evaluateTriggers(org.id, org.name, now, receiptReminderHours)
 
       if (!trigger) {
+        skipped++
+        continue
+      }
+
+      const rl = await checkAiRateLimit(org.id, "haiku")
+      if (!rl.allowed) {
         skipped++
         continue
       }
