@@ -7,6 +7,10 @@ import { downloadWhatsAppMedia, sendWhatsAppText } from "@polso/agent/whatsapp"
 import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
 import { confirmMatchInDb } from "@polso/inbox"
 import { checkAiRateLimit } from "@polso/cache/ai-rate-limit"
+import { runAgent } from "@/features/agent/lib/run-agent"
+
+export const runtime = "nodejs"
+export const maxDuration = 60
 
 const VERIFY_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET
@@ -50,7 +54,11 @@ export async function POST(req: NextRequest) {
   const phone = normalizePhone(from)
   const org = await prisma.organization.findFirst({
     where: { whatsappPhone: phone },
-    select: { id: true },
+    select: {
+      id: true,
+      planExpiresAt: true,
+      userOrganizations: { select: { userId: true }, take: 1 },
+    },
   })
 
   if (!org) {
@@ -70,6 +78,7 @@ export async function POST(req: NextRequest) {
   }
 
   const organizationId = org.id
+  const userId = org.userOrganizations[0]?.userId ?? ""
 
   // ── Text: /start, opt-out commands, or unrecognized ────────────────────
   if (type === "text") {
@@ -100,6 +109,39 @@ export async function POST(req: NextRequest) {
       await sendWhatsAppText(from, "Notificaciones proactivas reactivadas. ✓")
       return NextResponse.json({ received: true })
     }
+
+    // ── Free-text Q&A via runAgent ──────────────────────────────────────────
+    if (org.planExpiresAt && org.planExpiresAt < new Date()) {
+      await sendWhatsAppText(from, "Tu suscripción ha expirado. Renueva tu plan para usar el asistente.")
+      return NextResponse.json({ received: true })
+    }
+
+    const rl = await checkAiRateLimit(organizationId, "sonnet")
+    if (!rl.allowed) {
+      await sendWhatsAppText(from, "Has alcanzado el límite diario del asistente. Inténtalo mañana.")
+      return NextResponse.json({ received: true })
+    }
+
+    const capturedUserId = userId
+    after(async () => {
+      try {
+        const result = await runAgent({
+          organizationId,
+          userId: capturedUserId,
+          messages: [{ role: "user", content: text }],
+          channel: "whatsapp",
+          locale: "es",
+        })
+        await sendWhatsAppText(from, result.text)
+      } catch (error) {
+        console.error("[whatsapp/webhook] Q&A error:", error)
+        await sendWhatsAppText(
+          from,
+          "Lo siento, no pude procesar tu mensaje en este momento. Intenta de nuevo."
+        ).catch(() => {})
+      }
+    })
+
     return NextResponse.json({ received: true })
   }
 

@@ -25,10 +25,7 @@ export interface AgentRunResult {
 export async function runAgent(opts: AgentRunOptions): Promise<AgentRunResult> {
   const { organizationId, userId, messages, channel, locale = "es" } = opts
 
-  // Build a ChatContext without relying on getAuthContext() or request headers.
-  // Note: user name/email are managed by Neon Auth (not in Prisma), so we use
-  // a generic greeting for non-web channels.
-  const [org, account] = await Promise.all([
+  const [org, account, userOrg] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, planExpiresAt: true },
@@ -37,9 +34,16 @@ export async function runAgent(opts: AgentRunOptions): Promise<AgentRunResult> {
       where: { organizationId, status: "active" },
       select: { currency: true },
     }),
+    prisma.userOrganization.findUnique({
+      where: { userId_organizationId: { userId, organizationId } },
+      select: { memberName: true, memberEmail: true },
+    }),
   ])
 
-  const firstName = "there"
+  const firstName =
+    userOrg?.memberName?.split(" ")[0] ??
+    userOrg?.memberEmail?.split("@")[0] ??
+    "there"
   const today = new Date().toLocaleDateString(locale === "es" ? "es-ES" : "en-GB", {
     weekday: "long",
     year: "numeric",
