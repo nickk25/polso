@@ -1,6 +1,6 @@
 # packages/agent — @polso/agent
 
-WhatsApp + OCR infrastructure for the Polso AI agent.
+WhatsApp + Telegram + OCR + proactive messaging infrastructure for the Polso AI agent.
 
 ## What it exports
 
@@ -9,6 +9,7 @@ WhatsApp + OCR infrastructure for the Polso AI agent.
 extractReceiptData(fileData, contentType)  // → ReceiptData — Claude Haiku extraction
 ReceiptSchema    // Zod schema — Spanish CIF, IVA rates, receipt vs invoice
 ReceiptData      // z.infer<typeof ReceiptSchema>
+FileTooLargeError // thrown when file exceeds limits (images 5MB, PDFs 25MB)
 
 // WhatsApp Cloud API
 sendWhatsAppText(to, text)                 // plain text message
@@ -19,9 +20,16 @@ MatchNotificationParams                    // type
 // Telegram Bot API
 sendTelegramText(chatId, text)                    // plain text (Markdown supported)
 sendTelegramMatchNotification(params)             // inline keyboard (confirm/decline)
+sendTelegramTypingAction(chatId)                  // "typing…" chat action while processing
 downloadTelegramFile(fileId)                      // → { data: Buffer, contentType: string }
 answerCallbackQuery(callbackQueryId, text?)       // ACK inline button press
 TelegramMatchNotificationParams                   // type
+
+// Proactive messaging
+generateProactiveMessage(context)  // → string — Claude Haiku, Spanish, ≤400 chars
+ProactiveContext                   // type — orgName + messageType + per-type payload
+MessageType                        // "receipt_reminder" | "weekly_summary" | "monthly_summary"
+                                   // | "anomaly_alert" | "receipt_request_list" | "bank_reconnect"
 ```
 
 ## Environment variables
@@ -36,10 +44,12 @@ TELEGRAM_BOT_TOKEN               # Bot token from @BotFather
 TELEGRAM_WEBHOOK_SECRET_TOKEN    # Secret sent in X-Telegram-Bot-Api-Secret-Token header
 ```
 
+This package itself only reads `ANTHROPIC_API_KEY_OCR`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, and `TELEGRAM_BOT_TOKEN` — the webhook vars are consumed by the webhook routes in `apps/web/app/api/webhooks/`. Missing WhatsApp/Telegram credentials throw a clear error at call time (not import time).
+
 ## OCR notes
 
 - Model: `claude-haiku-4-5-20251001` via Vercel AI SDK `generateObject()`
-- Accepts both images (JPEG, PNG, WebP) and PDFs via the `file` content part
+- Accepts images (JPEG, PNG, WebP, GIF) via the `image` content part and PDFs via the `file` content part
 - Spanish-specific: CIF/NIF tax ID, IVA rates (21%/10%/4%), receipt vs factura distinction
 - Returns `documentType: "other"` for unrecognizable documents — caller should reject these
 

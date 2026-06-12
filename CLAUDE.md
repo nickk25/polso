@@ -6,13 +6,14 @@ Each app and package also has its own `CLAUDE.md` with scoped instructions — C
 
 ## Project Overview
 
-Polso is a financial management and expense intelligence SaaS for businesses. Connects to banks via Tink (Open Banking), syncs transactions, auto-categorizes spending, detects recurring expenses, and provides analytics.
+Polso is a financial management and expense intelligence SaaS for businesses. Connects to banks via GoCardless Bank Account Data (Open Banking), syncs transactions, auto-categorizes spending, detects recurring expenses, and provides analytics.
 
-**pnpm + Turborepo monorepo.** Two apps, thirteen shared packages.
+**pnpm + Turborepo monorepo.** Two apps, sixteen shared packages.
 
 - Architecture & schema: `docs/ARCHITECTURE.md`
 - Code templates: `docs/CODE_PATTERNS.md`
 - Receipt matching lifecycle (no_match, deferred reconciliation, gaps): `docs/RECEIPT_MATCHING_FLOW.md`
+- Production-readiness audit & pending debt: `docs/TECH_DEBT.md`
 
 ## Monorepo Structure
 
@@ -21,11 +22,15 @@ apps/
   web/           @polso/web      Next.js 16 client dashboard (see apps/web/CLAUDE.md)
   partner/       @polso/partner  Next.js 16 advisor dashboard (see apps/partner/CLAUDE.md)
 packages/
-  agent/         @polso/agent    WhatsApp + Telegram bot + OCR extraction
-  banking/       @polso/banking  Tink Open Banking client
+  accounting/    @polso/accounting  Spanish PGC double-entry journal lines, A3/Sage export formats
+  agent/         @polso/agent    WhatsApp + Telegram bot + OCR extraction + proactive messages
+  auth/          @polso/auth     Neon Auth helpers (getAuthContext, server/client, consent)
+  banking/       @polso/banking  GoCardless Bank Account Data client
   billing/       @polso/billing  Creem payment integration
+  cache/         @polso/cache    Upstash Redis client, cache helpers, AI rate limiting
   db/            @polso/db       Prisma schema, client, generated types
   email/         @polso/email    Resend + email templates
+  inbox/         @polso/inbox    Shared receipt processing core (OCR pipeline, stuck-item recovery)
   intelligence/  @polso/intelligence  Auto-categorization, recurring detection
   matching/      @polso/matching Receipt↔transaction matching algorithm
   plans/         @polso/plans    Plan limits, pricing, feature flags

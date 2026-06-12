@@ -15,8 +15,8 @@ deleteFile(key)                             // delete single object
 deleteFiles(prefix)                         // delete all objects matching prefix
 
 // Also exported (advanced use)
-r2Client        // S3Client instance
-BUCKET_NAME     // string from env
+getR2Client()    // lazy S3Client — throws a clear error if R2_* env vars are missing
+getBucketName()  // string from env (validated)
 ```
 
 ## Environment variables

@@ -6,18 +6,18 @@ Shared TypeScript configuration. No runtime code — only `tsconfig.json` base f
 
 | File | Used by |
 |------|---------|
-| `base.json` | All packages (`packages/*/tsconfig.json`) |
-| `next.json` | Next.js apps (`apps/web`, `apps/partner`) |
-| `library.json` | Shared packages that need stricter settings |
+| `base.json` | Root base (strict, noEmit, bundler resolution) — extended directly by node-only packages (`agent`, `inbox`) |
+| `library.json` | Extends `base.json`, adds `lib: ["ES2022", "DOM"]` — most shared packages |
+| `next.json` | Extends `base.json` with Next.js settings — apps (`apps/web`, `apps/partner`) plus JSX packages (`ui`, `email`) |
 
 ## Usage
 
-In any package's `tsconfig.json`:
+In most packages' `tsconfig.json`:
 ```json
-{ "extends": "@polso/tsconfig/base.json" }
+{ "extends": "@polso/tsconfig/library.json" }
 ```
 
-In Next.js apps:
+In Next.js apps (and JSX packages):
 ```json
 { "extends": "@polso/tsconfig/next.json" }
 ```

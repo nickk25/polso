@@ -25,8 +25,9 @@ runMatchingForItem(organizationId, inboxItemId)
 
 // Full OCR + matching pipeline for upload flows
 processInboxItem(organizationId, inboxItemId, buffer, contentType)
-// Two-phase: OCR catch → "ocr_failed" (with meta.ocrError); matching errors leave
-// status as "processing" so the watchdog cron picks them up.
+// Gate first: checkAiRateLimit (@polso/cache) → "ocr_failed" with meta.ocrError
+// "rate_limit" if exceeded. Two-phase: OCR catch → "ocr_failed" (with meta.ocrError);
+// matching errors leave status as "processing" so the watchdog cron picks them up.
 
 // Watchdog for stuck items
 recoverStuckInboxItems(organizationId) → Promise<{ recovered: number }>
@@ -103,6 +104,7 @@ Notification helpers are imported from `@polso/agent/whatsapp` and `@polso/agent
 
 - `@polso/db` — Prisma client
 - `@polso/agent/ocr` — `extractReceiptData`
+- `@polso/cache` — `checkAiRateLimit` (AI rate-limit gate in `processInboxItem`)
 - `@polso/agent/whatsapp` — notification helpers
 - `@polso/agent/telegram` — notification helpers
 - `@polso/matching` — `findBestMatches`

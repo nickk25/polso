@@ -5,26 +5,29 @@ Shared Neon Auth wrapper used by both `apps/web` and `apps/partner`.
 ## What it exports
 
 ```typescript
-// from "@polso/auth"
+// from "@polso/auth" (server-side only — no authClient here)
 getAuthContext()          // → { userId, organizationId } — throws if not authenticated
-getAuthContextWithType()  // → { userId, organizationId, orgType } — includes org type
+getAuthContextWithType()  // → { userId, organizationId, orgType } — partner org only; throws if user has no partner org
 getAuthContextOptional()  // → AuthContext | null — safe version
-authClient                // Neon Auth browser client (use in "use client" components)
+getUserProfile()          // → { id, name, email } — profile info without org context
 authServer                // Neon Auth server instance
 AuthContext               // type — { userId, organizationId }
 PartnerAuthContext        // type — extends AuthContext with orgType
 
 // from "@polso/auth/client" (use in client components)
-authClient
+authClient                // Neon Auth browser client
 
 // from "@polso/auth/server"
 authServer
 
 // from "@polso/auth/get-session"
-getAuthContext, getAuthContextWithType, getAuthContextOptional
+getAuthContext, getAuthContextWithType, getAuthContextOptional, getUserProfile
 
 // from "@polso/auth/ui" (use in auth pages — "use client")
 EmailOtpForm              // 2-step email OTP sign-in form (email → 6-digit code)
+
+// from "@polso/auth/consent"
+TERMS_VERSION, PRIVACY_VERSION   // current consent document versions (date strings)
 ```
 
 ## Auth provider
@@ -44,7 +47,8 @@ Uses `@neondatabase/auth` (Neon Auth, based on Better Auth). Auth state is manag
 interface EmailOtpFormProps {
   heading?: string           // default: "Bienvenido a Polso"
   subheading?: string        // default: "Inicia sesión o crea una cuenta"
-  redirectTo?: string        // default: "/dashboard" — where to push after sign-in
+  badge?: string             // optional small uppercase label above the heading
+  redirectTo?: string        // default: "/dashboard" — where to navigate after sign-in
   translations?: {           // override all internal strings (for i18n in apps/web)
     emailPlaceholder?: string
     emailRequired?: string
@@ -66,9 +70,9 @@ Defaults for all `translations` fields are Spanish — suitable for `apps/partne
 
 ### Behaviour guarantees
 
-- Open redirect protection: `redirectTo` and sessionStorage `callbackUrl` are validated with `isSafeRedirect()` before `router.push()`
+- Open redirect protection: sessionStorage `authCallbackUrl` is validated with `isSafeRedirect()` before navigating (falls back to `redirectTo`)
 - Email normalization: trimmed + lowercased before sending and storing in state
-- `router.refresh()` is called after redirect to force Next.js middleware to re-evaluate the new session cookie
+- Hard navigation via `window.location.href` after verify — ensures the fresh session cookie is sent with the next request (avoids the `router.push` + `router.refresh` race)
 - `sessionStorage` access is wrapped in try/catch (Safari private mode compatibility)
 - `loading` guard on OTP inputs — prevents double-submission during async verify
 - `autoComplete="one-time-code"` on the first OTP input — enables SMS autofill on mobile
@@ -115,13 +119,13 @@ import { EmailOtpForm } from "@polso/auth/ui"
 // Server component / action
 import { getAuthContextWithType } from "@polso/auth/get-session"
 
+// Only matches partner orgs — throws "Organization not found"
+// if the user does not belong to one
 const ctx = await getAuthContextWithType()
-if (ctx.orgType !== "partner") redirect("/")
 ```
 
 ## Environment variables
 
 ```env
 NEON_AUTH_BASE_URL   # required — set by Neon
-NEON_PROJECT_ID      # required — set by Neon
 ```

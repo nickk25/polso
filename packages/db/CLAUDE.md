@@ -7,23 +7,35 @@ Prisma 7 schema, client singleton, and generated types. Database: Neon PostgreSQ
 ```typescript
 prisma           // PrismaClient singleton — use this everywhere
 PrismaClient     // type only
-Prisma           // namespace — Prisma.ExpenseWhereInput, Prisma.SortOrder, etc.
+Prisma           // namespace — Prisma.TransactionWhereInput, Prisma.SortOrder, etc.
 
-// All 22 model types (re-exported from generated client)
-Organization, UserOrganization, Account, Transaction, Category,
-CategoryPreference, Vendor, Client, Expense, Income, ExpenseInvoice,
-RecurringPattern, Alert, Export, UserPreference, NotificationSetting,
-DismissedPattern, Invitation,
-PartnerClient, InboxItem, MatchSuggestion, TransactionAttachment
+// Query helpers
+transactionDocumentedWhere      // Prisma where: entry verified OR has an inbox item
+transactionNotDocumentedWhere   // inverse — transactions still needing a receipt
+getPartnerNotificationEmail(partnerOrgId)  // → PartnerRecipient | null
+PartnerRecipient                // type — { email, name }
+
+// 16 model types re-exported from the generated client
+Organization, UserOrganization, Account, Transaction, TransactionDocument,
+Category, CategoryPreference, Counterparty, Entry, RecurringPattern,
+Alert, Export, UserPreference, NotificationSetting, DismissedPattern, Invitation
 ```
+
+Other model types (`PartnerClient`, `InboxItem`, `MatchSuggestion`, `TransactionAttachment`, etc.) exist in the schema but are not re-exported — add them to `src/index.ts` if an app needs them as standalone types.
 
 ## Schema
 
-Lives at `packages/db/prisma/schema.prisma`. 22 models across 7 domains — see `docs/ARCHITECTURE.md` for the full table.
+Lives at `packages/db/prisma/schema.prisma`. 28 models — see `docs/ARCHITECTURE.md` for the full table.
 
 **Partner domain**: `Organization.type` ("partner" | "client"), `PartnerClient` (many-to-many link), `InboxItem` (receipts/invoices), `MatchSuggestion` (scored receipt↔transaction candidates), `TransactionAttachment` (confirmed matches).
 
 **Multi-tenancy rule**: every query must filter by `organizationId`. This is the root of all data.
+
+## Environment variables
+
+```env
+DATABASE_URL   # required — src/client.ts throws at import time if missing
+```
 
 ## Commands
 

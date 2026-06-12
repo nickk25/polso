@@ -8,7 +8,7 @@ Receipt↔transaction matching algorithm. Spanish-adapted scoring.
 // Core matching
 scoreCandidate(candidate, weights?, thresholds?)  // → MatchResult | null
 findBestMatches(candidates, weights?, thresholds?) // → MatchResult[]
-calibrateThresholds(samples, current?)             // → CalibrationResult
+calibrateThresholds(samples, current?)             // → CalibrationResult — samples: { confirmed: boolean; score: number }[]
 
 // Normalizers
 normalizeName(name)       // strip bank prefixes, S.L., S.A., punctuation, lowercase
@@ -21,18 +21,20 @@ MatchCandidate, MatchResult, MatchType, ScoreBreakdown
 ScoringWeights, CalibrationResult, CalibrationSample
 
 // Constants
-DEFAULT_WEIGHTS     // { amount: 0.30, date: 0.15, name: 0.10, currency: 0.05 }
-DEFAULT_THRESHOLDS  // { autoMatch: 0.95, highConfidence: 0.75, suggested: 0.50 }
+DEFAULT_WEIGHTS     // { amount: 0.50, date: 0.25, name: 0.15, currency: 0.10 }
+DEFAULT_THRESHOLDS  // { autoMatchThreshold: 0.95, highConfidenceThreshold: 0.75, suggestedThreshold: 0.50 }
 ```
 
 ## Scoring weights
 
 | Score | Weight | Notes |
 |-------|--------|-------|
-| amount | 30% | IVA-aware: detects 21%, 10%, 4% variants |
-| date | 15% | Same-day 1.0, ≤90 days linear decay |
-| name | 10% | CIF match → 1.0; else Jaccard + substring |
-| currency | 5% | EUR/EUR → 1.0, mismatch → 0.3 |
+| amount | 50% | IVA-aware: detects 21%, 10%, 4% variants |
+| date | 25% | Same-day 1.0, ≤90 days linear decay |
+| name | 15% | CIF match → 1.0; else Jaccard + substring |
+| currency | 10% | EUR/EUR → 1.0, mismatch → 0.3 |
+
+Guard: if both names are present but name score is 0 (zero token overlap), the confidence score is capped at 0.45 — below the suggested threshold — to reject coincidental amount matches.
 
 ## Match types
 
@@ -51,7 +53,7 @@ DEFAULT_THRESHOLDS  // { autoMatch: 0.95, highConfidence: 0.75, suggested: 0.50 
   - `AMZN MKTP ES*...` → `amazon`
   - `PAYPAL *Vendor` → `Vendor`
   - `BIZUM DE/A Name` → `Name`
-  - `COMPRA EN/CARGO/TRF INMEDIATA/RECIBO DE ...` → strips the prefix
+  - `COMPRA/CARGO/PAGO/TRF/TRANSF(ERENCIA)/RECIBO DE ...` → strips the prefix
 
 ## Date window
 

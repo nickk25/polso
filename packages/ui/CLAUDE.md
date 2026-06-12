@@ -1,10 +1,10 @@
 # packages/ui — @polso/ui
 
-26 Shadcn/ui components + `use-mobile` hook. Raw `.tsx` exports — no build step. Style: `radix-lyra`, zinc base.
+27 Shadcn/ui components + `use-mobile` hook. Raw `.tsx` exports — no build step. Style: `radix-lyra`, zinc base.
 
 ## Components
 
-accordion, alert-dialog, avatar, badge, button, calendar, card, chart, checkbox, date-range-picker, dialog, dropdown-menu, input, label, popover, progress, scroll-area, select, separator, sheet, sidebar, skeleton, sonner, switch, table, tooltip, use-mobile (hook)
+accordion, alert-dialog, avatar, badge, button, calendar, card, chart, checkbox, date-range-picker, dialog, dropdown-menu, input, label, popover, progress, scroll-area, select, separator, sheet, sidebar, skeleton, sonner, switch, table, textarea, tooltip, use-mobile (hook)
 
 ## Import pattern
 
@@ -13,7 +13,7 @@ Each component is a separate subpath export:
 ```typescript
 import { Button } from "@polso/ui/button"
 import { Sheet, SheetContent, SheetHeader } from "@polso/ui/sheet"
-import { useMobile } from "@polso/ui/use-mobile"
+import { useIsMobile } from "@polso/ui/use-mobile"
 ```
 
 No barrel `@polso/ui` export — always use the component subpath.
@@ -50,8 +50,8 @@ This path uses the pnpm symlink in `node_modules/` so Turbopack can scan compone
 
 ## React as peerDependency
 
-React is listed in `peerDependencies`, NOT `dependencies`. This ensures all packages share the same React instance from `apps/web`. Do not add `react` to `dependencies`.
+`react`, `react-dom`, and `sonner` are listed in `peerDependencies`, NOT `dependencies`. This ensures all packages share the same React instance from `apps/web`. Do not add `react` to `dependencies`.
 
 ## Runtime dependencies
 
-`radix-ui`, `class-variance-authority`, `date-fns`, `react-day-picker`, `recharts`, `sonner`, `next-themes`, `@phosphor-icons/react`
+`radix-ui`, `class-variance-authority`, `date-fns`, `react-day-picker`, `recharts`, `next-themes`, `@phosphor-icons/react`, `@polso/utils` (peer: `sonner`)

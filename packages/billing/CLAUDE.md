@@ -14,7 +14,7 @@ cancelCreemSubscription(subscriptionId) // → CreemSubscription (cancel_at_peri
 
 // Product helpers
 CREEM_PRODUCTS                          // { starter: { monthly, annual }, business: { monthly, annual } }
-getProductId(plan, interval)           // → product ID string
+getProductId(plan, interval)           // → product ID string — throws if the env var is missing
 getProductInfo(productId)              // → { plan, interval } | null
 isCreemTestMode()                       // → boolean (CREEM_TEST_MODE === "true")
 getCreemApiBase()                       // → API base URL (test vs prod)
