@@ -1,10 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
 import { authClient } from "../client"
 import { Button } from "@polso/ui/button"
-import { Checkbox } from "@polso/ui/checkbox"
 import { Input } from "@polso/ui/input"
 import { toast } from "@polso/ui/sonner"
 
@@ -34,10 +32,6 @@ interface EmailOtpFormTranslations {
   resendPrompt?: string
   resendLabel?: string
   otpError?: string
-  consentLabel?: string
-  consentRequired?: string
-  consentTerms?: string
-  consentPrivacy?: string
 }
 
 interface EmailOtpFormProps {
@@ -46,10 +40,6 @@ interface EmailOtpFormProps {
   badge?: string
   redirectTo?: string
   translations?: EmailOtpFormTranslations
-  showConsent?: boolean
-  termsHref?: string
-  privacyHref?: string
-  onVerifySuccess?: () => Promise<void>
 }
 
 export function EmailOtpForm({
@@ -58,10 +48,6 @@ export function EmailOtpForm({
   badge,
   redirectTo = "/dashboard",
   translations = {},
-  showConsent = false,
-  termsHref = "/terms",
-  privacyHref = "/privacy",
-  onVerifySuccess,
 }: EmailOtpFormProps) {
   const tr = {
     emailPlaceholder: translations.emailPlaceholder ?? "Ingresa tu correo electrónico",
@@ -75,19 +61,12 @@ export function EmailOtpForm({
     resendPrompt: translations.resendPrompt ?? "¿No recibiste el email?",
     resendLabel: translations.resendLabel ?? "Reenviar código",
     otpError: translations.otpError ?? "Código incorrecto",
-    consentLabel: translations.consentLabel ?? "Acepto los",
-    consentRequired: translations.consentRequired ?? "Debes aceptar los términos para continuar",
-    consentTerms: translations.consentTerms ?? "Términos de uso",
-    consentPrivacy: translations.consentPrivacy ?? "Política de privacidad",
   }
-  const router = useRouter()
   const [step, setStep] = useState<"email" | "otp">("email")
   const [email, setEmail] = useState("")
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const [loading, setLoading] = useState(false)
   const [emailError, setEmailError] = useState<string | null>(null)
-  const [consentAccepted, setConsentAccepted] = useState(false)
-  const [consentError, setConsentError] = useState<string | null>(null)
   const [resent, setResent] = useState(false)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -109,13 +88,11 @@ export function EmailOtpForm({
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (showConsent && !consentAccepted) { setConsentError(tr.consentRequired); return }
     const normalized = email.trim().toLowerCase()
     if (!normalized) { setEmailError(tr.emailRequired); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) { setEmailError(tr.emailInvalid); return }
     setLoading(true)
     setEmailError(null)
-    setConsentError(null)
     const err = await sendOtp(normalized)
     setLoading(false)
     if (err) { setEmailError(err); return }
@@ -137,12 +114,12 @@ export function EmailOtpForm({
         toast.error(error.message ?? tr.otpError)
         return
       }
-      await onVerifySuccess?.()
       const stored = safeGetStorage(AUTH_CALLBACK_KEY)
-      safeRemoveStorage(AUTH_CALLBACK_KEY)
       const target = stored && isSafeRedirect(stored) ? stored : redirectTo
-      router.push(target)
-      router.refresh()
+      // Hard navigation: ensures the fresh session cookie is sent with the next request
+      // and avoids the router.push + router.refresh race that kept the form visible
+      window.location.href = target
+      safeRemoveStorage(AUTH_CALLBACK_KEY)
     } catch (e) {
       resetOtp()
       toast.error(e instanceof Error ? e.message : tr.otpError)
@@ -211,29 +188,6 @@ export function EmailOtpForm({
             disabled={loading}
           />
           {emailError && <p className="text-sm text-destructive text-center">{emailError}</p>}
-          {showConsent && (
-            <div className="space-y-1">
-              <div className="flex items-start gap-2">
-                <Checkbox
-                  id="consent"
-                  checked={consentAccepted}
-                  onCheckedChange={(v) => { setConsentAccepted(!!v); setConsentError(null) }}
-                  disabled={loading}
-                />
-                <label htmlFor="consent" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                  {tr.consentLabel}{" "}
-                  <a href={termsHref} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">
-                    {tr.consentTerms}
-                  </a>
-                  {" "}y{" "}
-                  <a href={privacyHref} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">
-                    {tr.consentPrivacy}
-                  </a>
-                </label>
-              </div>
-              {consentError && <p className="text-xs text-destructive">{consentError}</p>}
-            </div>
-          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? tr.sending : tr.continueLabel}
           </Button>

@@ -18,7 +18,7 @@ export function AuthCallbackRedirect() {
   useEffect(() => {
     const callbackUrl = sessionStorage.getItem(AUTH_CALLBACK_KEY)
     sessionStorage.removeItem(AUTH_CALLBACK_KEY)
-    if (callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
+    if (callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") && !callbackUrl.startsWith("/\\")) {
       router.replace(callbackUrl)
     }
   }, [router])

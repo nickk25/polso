@@ -4,10 +4,13 @@ import { useEffect } from "react"
 import { useParams, useSearchParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { EmailOtpForm } from "@polso/auth/ui"
-import { recordConsentAction } from "@/features/auth/actions/record-consent"
 
 const AUTH_CALLBACK_KEY = "authCallbackUrl"
 const SIGN_IN_PATHS = new Set(["sign-in", "magic-link"])
+
+function isSafeCallbackUrl(url: string): boolean {
+  return url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\")
+}
 
 export default function AuthPage() {
   const params = useParams<{ path: string }>()
@@ -18,7 +21,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     const callbackUrl = searchParams.get("callbackUrl")
-    if (callbackUrl) {
+    if (callbackUrl && isSafeCallbackUrl(callbackUrl)) {
       sessionStorage.setItem(AUTH_CALLBACK_KEY, callbackUrl)
     }
   }, [searchParams])
@@ -48,8 +51,6 @@ export default function AuthPage() {
               badge={t("form.badge")}
               heading={t("form.heading")}
               subheading={t("form.subheading")}
-              showConsent
-              onVerifySuccess={recordConsentAction}
               translations={{
                 emailPlaceholder: t("form.emailPlaceholder"),
                 emailRequired: t("form.emailRequired"),
@@ -62,10 +63,6 @@ export default function AuthPage() {
                 resendPrompt: t("form.resendPrompt"),
                 resendLabel: t("form.resendLabel"),
                 otpError: t("form.otpError"),
-                consentLabel: t("form.consentLabel"),
-                consentRequired: t("form.consentRequired"),
-                consentTerms: t("form.consentTerms"),
-                consentPrivacy: t("form.consentPrivacy"),
               }}
             />
           )}

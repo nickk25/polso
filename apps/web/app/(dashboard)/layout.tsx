@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { AuthCallbackRedirect } from "@/components/auth-callback-redirect";
 import { SyncMonitor } from "@/features/banking/components/sync-monitor";
+import { needsConsent } from "@/features/auth/queries/get-consent-status";
 
 async function getExistingOrganization(userId: string) {
   const found = await prisma.userOrganization.findFirst({
@@ -86,6 +87,10 @@ export default async function DashboardLayout({
 
   if (!organization) {
     redirect("/auth/no-access");
+  }
+
+  if (await needsConsent(user.id)) {
+    redirect("/onboarding/consent");
   }
 
   if (!organization.onboardingCompletedAt) {
