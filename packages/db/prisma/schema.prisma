@@ -159,11 +159,13 @@ model Account {
 }
 
 model PendingRequisition {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  requisitionId  String   @map("requisition_id")
-  institutionId  String   @map("institution_id")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id                 String    @id @default(cuid())
+  organizationId     String    @map("organization_id")
+  requisitionId      String    @map("requisition_id")
+  institutionId      String    @map("institution_id")
+  // Real consent expiry, anchored at agreement creation (access_valid_for_days)
+  agreementExpiresAt DateTime? @map("agreement_expires_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
