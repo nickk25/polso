@@ -2,7 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Each app and package also has its own `CLAUDE.md` with scoped instructions — Claude will load the root file plus the relevant subdirectory file automatically.
+Each app, package, **and feature module** has its own `CLAUDE.md` with scoped instructions — Claude will load the root file plus the relevant subdirectory file automatically.
+
+**⚠️ Feature doc rule:** every `apps/{web,partner}/features/<name>/` has a `CLAUDE.md`. Any change to a feature's code must update its `CLAUDE.md` in the same commit when the change affects what the doc states (files, flows, models, integration points). Enforced three ways: `/review` checklist, `/create-feature` scaffolds it, and a pre-push hook blocks `git push` when a feature changed without its doc (bypass: include "docs-ok" in a commit message when the doc is genuinely unaffected).
 
 ## Project Overview
 
