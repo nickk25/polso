@@ -19,6 +19,12 @@ export async function createBankLink(
     : 90
   const agreement = await gc.createEndUserAgreement(institutionId, maxHistoricalDays)
 
+  // Real consent expiry, anchored at agreement creation — the callback may be
+  // hit much later, so computing it there would silently extend the window
+  const agreementExpiresAt = agreement.access_valid_for_days
+    ? new Date(Date.now() + agreement.access_valid_for_days * 24 * 60 * 60 * 1000)
+    : null
+
   // Create requisition — the link the user follows to authenticate with their bank
   // reference = organizationId so the callback can look up the pending requisition
   const { requisitionId, link } = await gc.buildLink({
@@ -34,6 +40,7 @@ export async function createBankLink(
       organizationId,
       requisitionId,
       institutionId,
+      agreementExpiresAt,
     },
   })
 

@@ -82,8 +82,9 @@ export async function GET(request: NextRequest) {
     // Fetch institution info for display
     const institution = await gc.getInstitution(pending.institutionId)
 
-    // Default expiry: 90 days from now (conservative)
-    const requisitionExpiresAt = addDays(new Date(), 90)
+    // Prefer the real consent expiry saved at agreement creation;
+    // fall back to a conservative 90 days for old pending rows
+    const requisitionExpiresAt = pending.agreementExpiresAt ?? addDays(new Date(), 90)
 
     // Check if this is the first bank connection for this org
     const existingAccountCount = await prisma.account.count({ where: { organizationId } })

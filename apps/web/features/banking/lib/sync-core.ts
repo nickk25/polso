@@ -195,40 +195,55 @@ async function runSync(
   let accountsUpdated = 0
   const newTransactionIds: string[] = []
 
+  // The consent expiry is known locally (requisitionExpiresAt), so the daily
+  // requisition status check only runs near expiry or when accounts show
+  // errors — saves one GoCardless call per connection per day in the healthy case
+  const REQUISITION_CHECK_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
   for (const [requisitionId, reqAccounts] of requisitionGroups) {
-    let requisition
-    try {
-      requisition = await gc.getRequisition(requisitionId)
-    } catch (error) {
-      // Transient failure (429/5xx) — not the accounts' fault: no strikes,
-      // just end any in-progress signal so SyncMonitor terminates
-      console.error(`[Sync] Requisition check failed for ${requisitionId}:`, error)
-      await prisma.account.updateMany({
-        where: { requisitionId, organizationId, lastSyncedAt: null },
-        data: { lastSyncedAt: new Date() },
-      })
-      continue
-    }
+    const needsRequisitionCheck = reqAccounts.some(
+      (account) =>
+        !account.requisitionExpiresAt ||
+        account.requisitionExpiresAt.getTime() - Date.now() < REQUISITION_CHECK_WINDOW_MS ||
+        account.syncError !== null ||
+        (account.syncErrorRetries ?? 0) > 0
+    )
 
-    if (requisition === null) {
-      // Confirmed 404 — the requisition no longer exists at GoCardless
-      await prisma.account.updateMany({
-        where: { requisitionId, organizationId },
-        data: {
-          status: "expired",
-          syncError: "Bank connection was removed — please reconnect",
-          lastSyncedAt: new Date(),
-        },
-      })
-      continue
-    }
+    if (needsRequisitionCheck) {
+      let requisition
+      try {
+        requisition = await gc.getRequisition(requisitionId)
+      } catch (error) {
+        // Transient failure (429/5xx) — not the accounts' fault: no strikes,
+        // just end any in-progress signal so SyncMonitor terminates
+        console.error(`[Sync] Requisition check failed for ${requisitionId}:`, error)
+        await prisma.account.updateMany({
+          where: { requisitionId, organizationId, lastSyncedAt: null },
+          data: { lastSyncedAt: new Date() },
+        })
+        continue
+      }
 
-    if (gc.isRequisitionExpired(requisition.status)) {
-      await prisma.account.updateMany({
-        where: { requisitionId, organizationId },
-        data: { status: "expired", syncError: "Bank connection has expired — please reconnect" },
-      })
-      continue
+      if (requisition === null) {
+        // Confirmed 404 — the requisition no longer exists at GoCardless
+        await prisma.account.updateMany({
+          where: { requisitionId, organizationId },
+          data: {
+            status: "expired",
+            syncError: "Bank connection was removed — please reconnect",
+            lastSyncedAt: new Date(),
+          },
+        })
+        continue
+      }
+
+      if (gc.isRequisitionExpired(requisition.status)) {
+        await prisma.account.updateMany({
+          where: { requisitionId, organizationId },
+          data: { status: "expired", syncError: "Bank connection has expired — please reconnect" },
+        })
+        continue
+      }
     }
 
     for (const account of reqAccounts) {
