@@ -89,13 +89,22 @@ export async function GET(request: NextRequest) {
     const existingAccountCount = await prisma.account.count({ where: { organizationId } })
     const isFirstConnection = existingAccountCount === 0
 
-    // Create or update an Account record for each account in the requisition
+    // Create or update an Account record for each account in the requisition.
+    // Details/balances degrade per account — a transient failure (429, 5xx)
+    // must not abort the whole connection or overwrite an existing balance.
     await Promise.all(
       requisition.accounts.map(async (accountId) => {
-        const [details, balances] = await Promise.all([
+        const [details, balancesResult] = await Promise.all([
           gc.getAccountDetails(accountId),
-          gc.getAccountBalances(accountId),
+          gc.getAccountBalances(accountId).then(
+            (balances) => ({ fetched: true, balances }),
+            (err: unknown) => {
+              console.warn(`[GoCardless callback] balances fetch failed for ${accountId}:`, err)
+              return { fetched: false, balances: [] }
+            }
+          ),
         ])
+        const { balances } = balancesResult
 
         const account = details?.account
         const iban = details?.iban ?? account?.iban ?? null
@@ -130,8 +139,9 @@ export async function GET(request: NextRequest) {
           institutionName: institution?.name ?? null,
           institutionLogo: institution?.logo ?? null,
           status: "active",
-          balanceCurrent,
-          balanceAvailable,
+          // Only write balances when the fetch succeeded — never wipe an
+          // existing balance because of a transient error during reconnect
+          ...(balancesResult.fetched ? { balanceCurrent, balanceAvailable } : {}),
           lastSyncedAt: new Date(),
           syncError: null,
           syncErrorRetries: 0,
