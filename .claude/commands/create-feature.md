@@ -58,6 +58,10 @@ Create files in this order (each step depends on the previous):
 - Add the route to the sidebar navigation in the appropriate layout file
 - Add the route to the proxy middleware if auth protection is needed
 
+#### Step 7: Feature doc
+- `features/<entity>/CLAUDE.md` — mandatory. Follow the template used by every existing feature doc (`# features/<name>` → one-line purpose → `## Files` → `## Key flows` → `## Data & integration` → the literal `> **Keep fresh:**` footer)
+- Read `features/transactions/CLAUDE.md` as the reference example
+
 ### Phase 3: Verify
 
 1. Run `pnpm build` to check for type errors

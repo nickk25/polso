@@ -64,6 +64,11 @@ Review code changes against this project's established patterns and conventions.
 - [ ] No hardcoded colors — uses Tailwind theme tokens
 - [ ] No security issues (SQL injection, missing auth checks, exposed secrets)
 
+### Feature docs freshness (`features/*/CLAUDE.md`)
+- [ ] **Every feature module touched by this diff has its `CLAUDE.md` in the same diff.** For each changed file under `apps/{web,partner}/features/<name>/`, check whether `apps/<app>/features/<name>/CLAUDE.md` is also changed.
+- [ ] If the doc is missing from the diff: read it and decide — does the change affect anything the doc states (files, exports, flows, models, integration points)? If yes → **Error**: update the doc. If the doc is genuinely unaffected (typo fix, internal refactor with identical behavior) → **Info**: note it, no change needed.
+- [ ] New `features/<name>/` directory without a `CLAUDE.md` → **Error** (see the template in any existing feature doc).
+
 4. **Report findings organized by severity:**
    - **Error**: Pattern violations that must be fixed (missing auth, wrong return types, hardcoded strings)
    - **Warning**: Deviations from convention that should be fixed (naming, missing revalidation)
