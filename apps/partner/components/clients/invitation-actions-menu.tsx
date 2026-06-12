@@ -24,6 +24,7 @@ import {
 import { EditInviteEmailDialog } from "./edit-invite-email-dialog"
 import { resendPartnerInviteAction } from "@/features/clients/actions/resend-invite"
 import { revokePartnerInviteAction } from "@/features/clients/actions/revoke-invite"
+import { hoursAgo } from "@/lib/time"
 
 interface InvitationActionsMenuProps {
   invitationId: string
@@ -47,8 +48,7 @@ export function InvitationActionsMenu({
   const isActive = status === "pending"
 
   // Rate-limit guard: resend disabled if sent within last hour
-  const rateLimited =
-    isActive && emailSentAt != null && emailSentAt > new Date(Date.now() - 1000 * 60 * 60)
+  const rateLimited = isActive && emailSentAt != null && emailSentAt > hoursAgo(1)
 
   const handleResend = () => {
     startTransition(async () => {

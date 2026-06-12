@@ -1,4 +1,5 @@
 import { getPartnerAuthContext } from "@/lib/auth"
+import { daysAgo } from "@/lib/time"
 import { prisma, transactionDocumentedWhere } from "@polso/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@polso/ui/card"
 import { Badge } from "@polso/ui/badge"
@@ -190,7 +191,7 @@ export default async function DashboardPage() {
   }).length
 
   // KPI: clients with open items + no contact in 7 days
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const sevenDaysAgo = daysAgo(7)
   const needsFollowUpCount = clients.filter((client) => {
     const qStatus = quarterMap[client.clientId]
     const receiptPending = inQuarterMode && qStatus ? qStatus.receiptPendingCount : client.total - client.documented

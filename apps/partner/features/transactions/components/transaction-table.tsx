@@ -287,23 +287,34 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
   const [savingCounterparty, setSavingCounterparty] = useState(false)
   const [savingTax, setSavingTax] = useState(false)
 
+  // Reset sheet state at selection time (event handler, not effect) so the
+  // effect below only does the async invoice fetch
+  function selectTransaction(tx: ClientTransaction | null) {
+    setSelected(tx)
+    setInvoices([])
+    setInvoicesLoading(tx !== null)
+    setEditStatus(tx?.entryStatus ?? "pending")
+    setEditCounterpartyId(tx?.counterparty?.id ?? null)
+    setEditNotes(tx?.entryNotes ?? "")
+    setEditTaxRate(tx?.taxRate != null ? String(tx.taxRate) : "")
+    setEditTaxAmount(tx?.taxAmount != null ? String(tx.taxAmount) : "")
+  }
+
+  const selectedId = selected?.id ?? null
   useEffect(() => {
-    if (!selected) {
-      setInvoices([])
-      return
-    }
-    setInvoicesLoading(true)
-    setEditStatus(selected.entryStatus ?? "pending")
-    setEditCounterpartyId(selected.counterparty?.id ?? null)
-    setEditNotes(selected.entryNotes ?? "")
-    setEditTaxRate(selected.taxRate !== null ? String(selected.taxRate) : "")
-    setEditTaxAmount(selected.taxAmount !== null ? String(selected.taxAmount) : "")
-    getTransactionInvoicesAction(selected.id)
+    if (!selectedId) return
+    let cancelled = false
+    getTransactionInvoicesAction(selectedId)
       .then((result) => {
-        if (result.success) setInvoices(result.data)
+        if (!cancelled && result.success) setInvoices(result.data)
       })
-      .finally(() => setInvoicesLoading(false))
-  }, [selected?.id])
+      .finally(() => {
+        if (!cancelled) setInvoicesLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedId])
 
   async function handleStatusChange(newStatus: string) {
     if (!selected) return
@@ -457,7 +468,7 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
             <TableRow
               key={tx.id}
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => setSelected(tx)}
+              onClick={() => selectTransaction(tx)}
             >
               <TableCell>
                 <div
@@ -507,7 +518,7 @@ export function TransactionTable({ transactions, clientId, counterparties }: Tra
         </TableBody>
       </Table>
 
-      <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+      <Sheet open={!!selected} onOpenChange={(open) => !open && selectTransaction(null)}>
         <SheetContent>
           <SheetHeader>
             <SheetTitle>

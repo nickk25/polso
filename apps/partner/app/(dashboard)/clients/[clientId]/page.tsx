@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getPartnerAuthContext } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { hoursAgo, daysAgo, daysFromNow } from "@/lib/time";
 import { getClientDetail } from "@/features/clients/queries/get-client-detail";
 import { getClientOverview } from "@/features/clients/queries/get-client-overview";
 import { getClientExports } from "@/features/export/queries/get-client-exports";
@@ -113,7 +114,7 @@ export default async function ClientDetailPage({
         100
       : null;
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = daysAgo(7);
   const lastSyncedAt = client.accounts.reduce<Date | null>((latest, a) => {
     if (!a.lastSyncedAt) return latest;
     if (!latest || a.lastSyncedAt > latest) return a.lastSyncedAt;
@@ -122,11 +123,10 @@ export default async function ClientDetailPage({
   const isStaleSince = lastSyncedAt && lastSyncedAt < sevenDaysAgo;
 
   const reconnectRateLimited = client.lastContactedAt
-    ? new Date(client.lastContactedAt) >
-      new Date(Date.now() - 24 * 60 * 60 * 1000)
+    ? new Date(client.lastContactedAt) > hoursAgo(24)
     : false;
 
-  const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const sevenDaysFromNow = daysFromNow(7);
 
   function getAccountSeverity(
     account: (typeof client.accounts)[number],
