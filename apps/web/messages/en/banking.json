@@ -14,7 +14,8 @@
   "sync": {
     "syncing": "Syncing...",
     "success": "Transactions synced successfully",
-    "error": "Failed to sync transactions"
+    "error": "Failed to sync transactions",
+    "cooldown": "Already synced recently — banks limit how often we can check. Try again in a few minutes."
   },
   "empty": {
     "title": "No bank accounts connected",

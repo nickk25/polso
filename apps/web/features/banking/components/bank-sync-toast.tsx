@@ -49,7 +49,7 @@ export function SyncToastContent({ state }: { state: SyncState }) {
         </p>
         <p className="text-xs leading-relaxed text-muted-foreground">
           {state === "loading"
-            ? "Fetching your full bank history.\nThis may take a minute."
+            ? "Fetching your latest bank transactions.\nThis may take a minute."
             : state === "success"
             ? "Your transaction history is ready to explore."
             : "Something went wrong. Please try syncing again."}

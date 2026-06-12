@@ -14,7 +14,8 @@
   "sync": {
     "syncing": "Sincronizando...",
     "success": "Transacciones sincronizadas exitosamente",
-    "error": "Error al sincronizar transacciones"
+    "error": "Error al sincronizar transacciones",
+    "cooldown": "Ya se sincronizó hace poco — los bancos limitan la frecuencia de consulta. Inténtalo de nuevo en unos minutos."
   },
   "empty": {
     "title": "No hay cuentas bancarias conectadas",
