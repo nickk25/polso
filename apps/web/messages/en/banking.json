@@ -68,6 +68,10 @@
     "errorLoadingBanks": "Failed to load banks. Please try again.",
     "limitExceeded": "Bank connection limit reached. Upgrade your plan to connect more accounts.",
     "errorCreatingLink": "Failed to start bank connection. Please try again.",
-    "duplicateBank": "This bank is already connected. To reconnect it, go to Settings > Banks and tap Reconnect."
+    "duplicateBank": "This bank is already connected. To reconnect it, go to Settings > Banks and tap Reconnect.",
+    "duplicateBankTitle": "Bank already connected",
+    "duplicateBankDescription": "You already have an active connection to {bank}. Disconnect it and reconnect? Your existing transactions will be preserved.",
+    "duplicateBankConfirm": "Disconnect and reconnect",
+    "errorReconnecting": "Failed to reconnect the bank. Please try again."
   }
 }

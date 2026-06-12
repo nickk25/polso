@@ -12,7 +12,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@polso/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@polso/ui/alert-dialog"
 import { toast } from "@polso/ui/sonner"
+import { reconnectBankAction } from "@/features/banking/actions/connect-bank"
 import type { BankProvider } from "@polso/banking"
 
 interface ConnectBankDialogProps {
@@ -20,12 +31,20 @@ interface ConnectBankDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
+interface DuplicateBank {
+  institutionName: string
+  existingAccountId: string
+}
+
 export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps) {
   const t = useTranslations("banking")
+  const tc = useTranslations("common")
   const [institutions, setInstitutions] = useState<BankProvider[]>([])
   const [loading, setLoading] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [search, setSearch] = useState("")
+  const [duplicateBank, setDuplicateBank] = useState<DuplicateBank | null>(null)
+  const [reconnecting, setReconnecting] = useState(false)
 
   // Fetch institution list when dialog opens
   useEffect(() => {
@@ -72,22 +91,37 @@ export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps
         body: JSON.stringify({ institutionId: institution.id }),
       })
 
-      const data = await res.json() as { link?: string; error?: string; code?: string }
+      const data = await res.json() as {
+        link?: string
+        error?: string
+        code?: string
+        existingAccountId?: string
+      }
 
       if (!res.ok) {
         if (data.code === "LIMIT_EXCEEDED") {
           toast.error(t("connect.limitExceeded"))
-        } else if (data.code === "DUPLICATE_BANK") {
+        } else if ((data.code === "DUPLICATE_BANK" || data.error === "DUPLICATE_BANK") && data.existingAccountId) {
+          setDuplicateBank({
+            institutionName: institution.name,
+            existingAccountId: data.existingAccountId,
+          })
+        } else if (data.code === "DUPLICATE_BANK" || data.error === "DUPLICATE_BANK") {
           toast.error(t("connect.duplicateBank"))
         } else {
           throw new Error(data.error ?? "Failed to create bank connection link")
         }
+        setConnecting(false)
         return
       }
 
       if (data.link) {
+        // Keep the spinner while the browser navigates to the bank
         window.location.href = data.link
+        return
       }
+
+      setConnecting(false)
     } catch (error) {
       console.error("[ConnectBankDialog] Error creating link:", error)
       toast.error(error instanceof Error ? error.message : t("connect.errorCreatingLink"))
@@ -95,7 +129,27 @@ export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps
     }
   }
 
+  async function handleReconnect() {
+    if (!duplicateBank || reconnecting) return
+    setReconnecting(true)
+    try {
+      const result = await reconnectBankAction(duplicateBank.existingAccountId)
+      if (result.success) {
+        // Keep the spinner while the browser navigates to the bank
+        window.location.href = result.data.link
+        return
+      }
+      toast.error(t("connect.errorReconnecting"))
+    } catch (error) {
+      console.error("[ConnectBankDialog] Error reconnecting:", error)
+      toast.error(t("connect.errorReconnecting"))
+    }
+    setReconnecting(false)
+    setDuplicateBank(null)
+  }
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[80vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
@@ -169,5 +223,40 @@ export function ConnectBankDialog({ open, onOpenChange }: ConnectBankDialogProps
         </div>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog
+      open={!!duplicateBank}
+      onOpenChange={(isOpen) => {
+        if (!isOpen && !reconnecting) setDuplicateBank(null)
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("connect.duplicateBankTitle")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("connect.duplicateBankDescription", {
+              bank: duplicateBank?.institutionName ?? t("accountCard.bank"),
+            })}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={reconnecting}>
+            {tc("actions.cancel")}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            disabled={reconnecting}
+            onClick={(e) => {
+              // Prevent auto-close so the spinner stays visible while reconnecting
+              e.preventDefault()
+              handleReconnect()
+            }}
+          >
+            {reconnecting && <Spinner className="h-4 w-4 animate-spin" />}
+            {reconnecting ? t("accountCard.reconnecting") : t("connect.duplicateBankConfirm")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

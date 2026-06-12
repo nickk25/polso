@@ -68,6 +68,10 @@
     "errorLoadingBanks": "Error al cargar los bancos. Por favor, intentalo de nuevo.",
     "limitExceeded": "Limite de conexiones bancarias alcanzado. Mejora tu plan para conectar mas cuentas.",
     "errorCreatingLink": "Error al iniciar la conexion bancaria. Por favor, intentalo de nuevo.",
-    "duplicateBank": "Este banco ya esta conectado. Para reconectarlo, ve a Ajustes > Bancos y pulsa Reconectar."
+    "duplicateBank": "Este banco ya esta conectado. Para reconectarlo, ve a Ajustes > Bancos y pulsa Reconectar.",
+    "duplicateBankTitle": "Banco ya conectado",
+    "duplicateBankDescription": "Ya tienes una conexion activa con {bank}. Desconectarla y volver a conectar? Tus transacciones existentes se conservaran.",
+    "duplicateBankConfirm": "Desconectar y reconectar",
+    "errorReconnecting": "Error al reconectar el banco. Por favor, intentalo de nuevo."
   }
 }
