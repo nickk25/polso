@@ -4,14 +4,13 @@
  * Plain fetch wrapper — no SDK required.
  * API base: https://bankaccountdata.gocardless.com
  *
- * Auth: service-level tokens (not per-user). Tokens are cached in memory
- * for the lifetime of the process/serverless invocation. Access tokens
- * expire in 24 hours — safe to re-fetch on each cold start.
+ * Auth: service-level tokens (not per-user), cached in Redis across cold
+ * starts (~23.5h TTL) with an in-memory fast path per invocation. Access
+ * tokens expire in 24 hours.
  */
 
 import type {
   BankingConfig,
-  BankAccount,
   BankTransaction,
   BankProvider,
   GCTokenResponse,
@@ -23,25 +22,51 @@ import type {
   GCRawTransaction,
   RequisitionStatus,
 } from "./types"
-import { transformTransaction, transformAccount } from "./transform"
+import { transformTransaction } from "./transform"
 import { getMaxHistoricalDays } from "./utils"
-import { getOrSet } from "@polso/cache"
+import { cacheGet, cacheSet } from "@polso/cache"
 
 const GC_BASE = "https://bankaccountdata.gocardless.com"
-const GC_TOKEN_CACHE_KEY = "gocardless:access-token"
+const GC_TOKEN_CACHE_KEY = "gocardless:access-token:v2"
+const INSTITUTION_CACHE_TTL = 86_400 // institutions are near-static; 24h
 
-// In-memory fallback for when Redis is unavailable
+// In-memory fast path — also populated from Redis hits so a single
+// invocation only pays one Redis round-trip regardless of call count
 let _memToken: { value: string; expiresAt: number } | null = null
 
 // ============================================
-// Typed API error
+// Typed API errors
 // ============================================
 
-class GCApiError extends Error {
+export class GCApiError extends Error {
   constructor(public readonly status: number, message: string) {
     super(message)
     this.name = "GCApiError"
   }
+}
+
+export class GCRateLimitError extends GCApiError {
+  constructor(
+    status: number,
+    message: string,
+    public readonly retryAfterSeconds: number | null
+  ) {
+    super(status, message)
+    this.name = "GCRateLimitError"
+  }
+}
+
+function parseRetryAfterSeconds(res: Response, body: string): number | null {
+  const header =
+    res.headers.get("x-ratelimit-account-success-reset") ??
+    res.headers.get("x-ratelimit-reset") ??
+    res.headers.get("retry-after")
+  if (header) {
+    const n = parseInt(header, 10)
+    if (Number.isFinite(n) && n > 0) return n
+  }
+  const match = body.match(/try again in\s+(\d+)\s+seconds?/i)
+  return match ? parseInt(match[1], 10) : null
 }
 
 // ============================================
@@ -64,14 +89,32 @@ async function gcRequest<T>(
     headers["Authorization"] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${GC_BASE}${path}`, { ...init, headers })
+  let res = await fetch(`${GC_BASE}${path}`, { ...init, headers })
+
+  // Transient 5xx on idempotent GETs: retry once with a short jittered backoff
+  const method = (init.method ?? "GET").toUpperCase()
+  if (res.status >= 500 && method === "GET") {
+    await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500))
+    res = await fetch(`${GC_BASE}${path}`, { ...init, headers })
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => "")
+    if (res.status === 429) {
+      throw new GCRateLimitError(
+        429,
+        `GoCardless rate limit for ${path}: ${text}`,
+        parseRetryAfterSeconds(res, text)
+      )
+    }
     throw new GCApiError(res.status, `GoCardless API error ${res.status} for ${path}: ${text}`)
   }
 
-  return res.json() as Promise<T>
+  // DELETE and some success responses have no body — don't attempt to parse
+  if (res.status === 204) return undefined as T
+  const body = await res.text()
+  if (!body) return undefined as T
+  return JSON.parse(body) as T
 }
 
 // ============================================
@@ -92,22 +135,33 @@ export function createGoCardlessClient(config: BankingConfig) {
       return _memToken.value
     }
 
-    // Redis cache — persists across cold starts (~24h TTL)
     const fetchFresh = async (): Promise<string> => {
       const data = await gcRequest<GCTokenResponse>("/api/v2/token/new/", {
         method: "POST",
         body: JSON.stringify({ secret_id: secretId, secret_key: secretKey }),
       })
       _memToken = { value: data.access, expiresAt: Date.now() + data.access_expires * 1000 }
+      try {
+        // GC access tokens last 24h — cache for 23.5h (84600s) to stay safe
+        await cacheSet(GC_TOKEN_CACHE_KEY, _memToken, 84600)
+      } catch {
+        // Redis unavailable — in-memory token still covers this invocation
+      }
       return data.access
     }
 
+    // Redis cache — persists across cold starts
     try {
-      // GC access tokens last 24h — cache for 23.5h (84600s) to stay safe
-      return await getOrSet<string>(GC_TOKEN_CACHE_KEY, 84600, fetchFresh)
+      const cached = await cacheGet<{ value: string; expiresAt: number }>(GC_TOKEN_CACHE_KEY)
+      if (cached && Date.now() < cached.expiresAt - buffer) {
+        _memToken = cached
+        return cached.value
+      }
     } catch {
-      return fetchFresh()
+      // Redis unavailable — fall through to a fresh token
     }
+
+    return fetchFresh()
   }
 
   // ============================================
@@ -115,13 +169,21 @@ export function createGoCardlessClient(config: BankingConfig) {
   // ============================================
 
   async function getInstitutions(countryCode: string): Promise<BankProvider[]> {
+    const cacheKey = `gc:institutions:${countryCode}`
+    try {
+      const cached = await cacheGet<BankProvider[]>(cacheKey)
+      if (cached && cached.length > 0) return cached
+    } catch {
+      // Redis unavailable — the bank picker must still work
+    }
+
     const token = await getAccessToken()
     const data = await gcRequest<GCInstitution[]>(
       `/api/v2/institutions/?country=${countryCode}`,
       { token }
     )
 
-    return data.map((inst) => ({
+    const providers = data.map((inst) => ({
       id: inst.id,
       name: inst.name,
       displayName: inst.name,
@@ -131,12 +193,41 @@ export function createGoCardlessClient(config: BankingConfig) {
         ? parseInt(inst.transaction_total_days, 10)
         : null,
     }))
+
+    if (providers.length > 0) {
+      try {
+        await cacheSet(cacheKey, providers, INSTITUTION_CACHE_TTL)
+      } catch {
+        // best-effort cache
+      }
+    }
+
+    return providers
   }
 
   async function getInstitution(institutionId: string): Promise<GCInstitution | null> {
+    const cacheKey = `gc:institution:${institutionId}`
+    try {
+      const cached = await cacheGet<GCInstitution>(cacheKey)
+      if (cached) return cached
+    } catch {
+      // Redis unavailable — fetch live
+    }
+
     try {
       const token = await getAccessToken()
-      return await gcRequest<GCInstitution>(`/api/v2/institutions/${institutionId}/`, { token })
+      const institution = await gcRequest<GCInstitution>(
+        `/api/v2/institutions/${institutionId}/`,
+        { token }
+      )
+      if (institution) {
+        try {
+          await cacheSet(cacheKey, institution, INSTITUTION_CACHE_TTL)
+        } catch {
+          // best-effort cache
+        }
+      }
+      return institution
     } catch {
       return null
     }
@@ -212,21 +303,28 @@ export function createGoCardlessClient(config: BankingConfig) {
     return { requisitionId: data.id, link: data.link }
   }
 
+  // Returns null only when the requisition no longer exists (404).
+  // Other failures (429, 5xx) propagate so callers can react instead of
+  // mistaking a transient error for a deleted connection.
   async function getRequisition(id: string): Promise<GCRequisition | null> {
+    const token = await getAccessToken()
     try {
-      const token = await getAccessToken()
       return await gcRequest<GCRequisition>(`/api/v2/requisitions/${id}/`, { token })
-    } catch {
-      return null
+    } catch (err) {
+      if (err instanceof GCApiError && err.status === 404) return null
+      throw err
     }
   }
 
   async function deleteRequisition(id: string): Promise<void> {
+    const token = await getAccessToken()
     try {
-      const token = await getAccessToken()
       await gcRequest(`/api/v2/requisitions/${id}/`, { method: "DELETE", token })
-    } catch {
-      // 404 = already deleted; treat as success
+    } catch (err) {
+      // 404 = already deleted; treat as success. Anything else must propagate
+      // so callers can queue the deletion for retry (RequisitionCleanupQueue).
+      if (err instanceof GCApiError && err.status === 404) return
+      throw err
     }
   }
 
@@ -263,54 +361,18 @@ export function createGoCardlessClient(config: BankingConfig) {
     }
   }
 
+  // Errors propagate (including GCRateLimitError) — callers must never
+  // mistake a failed fetch for "this account has no balance".
   async function getAccountBalances(
     accountId: string,
     token?: string
   ): Promise<GCAccountBalance[]> {
-    try {
-      const t = token ?? (await getAccessToken())
-      const data = await gcRequest<{ balances: GCAccountBalance[] }>(
-        `/api/v2/accounts/${accountId}/balances/`,
-        { token: t }
-      )
-      return data.balances ?? []
-    } catch {
-      return []
-    }
-  }
-
-  /**
-   * Fetch accounts for a requisition.
-   * Returns normalized BankAccount[] with balances and expiry.
-   */
-  async function getAccounts(
-    requisitionId: string
-  ): Promise<BankAccount[]> {
-    const token = await getAccessToken()
-    const requisition = await gcRequest<GCRequisition>(
-      `/api/v2/requisitions/${requisitionId}/`,
-      { token }
+    const t = token ?? (await getAccessToken())
+    const data = await gcRequest<{ balances: GCAccountBalance[] }>(
+      `/api/v2/accounts/${accountId}/balances/`,
+      { token: t }
     )
-
-    if (!requisition?.accounts?.length) return []
-
-    const institution = await getInstitution(requisition.institution_id)
-
-    return Promise.all(
-      requisition.accounts.map(async (accountId) => {
-        const [details, balances] = await Promise.all([
-          getAccountDetails(accountId, token),
-          getAccountBalances(accountId, token),
-        ])
-
-        return transformAccount({
-          id: accountId,
-          details,
-          balances,
-          institution,
-        })
-      })
-    )
+    return data.balances ?? []
   }
 
   // ============================================
@@ -356,7 +418,6 @@ export function createGoCardlessClient(config: BankingConfig) {
     getRequisition,
     deleteRequisition,
     isRequisitionExpired,
-    getAccounts,
     getAccountDetails,
     getAccountBalances,
     getTransactions,
