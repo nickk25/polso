@@ -122,18 +122,30 @@ export function TransactionTable({
   const [documents, setDocuments] = useState<TransactionDocumentWithUrl[]>([])
   const [documentsLoading, setDocumentsLoading] = useState(false)
 
+  // Reset documents when the selected transaction changes (state adjustment
+  // during render); the effect below only runs the async fetch
+  const selectedTxId = selected?.transactionId ?? null
+  const [prevTxId, setPrevTxId] = useState<string | null>(null)
+  if (selectedTxId !== prevTxId) {
+    setPrevTxId(selectedTxId)
+    setDocuments([])
+    setDocumentsLoading(!!selectedTxId)
+  }
+
   useEffect(() => {
-    if (selected?.transactionId) {
-      setDocumentsLoading(true)
-      getTransactionDocumentsAction(selected.transactionId)
-        .then((result) => {
-          if (result.success) setDocuments(result.data.documents)
-        })
-        .finally(() => setDocumentsLoading(false))
-    } else {
-      setDocuments([])
+    if (!selectedTxId) return
+    let cancelled = false
+    getTransactionDocumentsAction(selectedTxId)
+      .then((result) => {
+        if (!cancelled && result.success) setDocuments(result.data.documents)
+      })
+      .finally(() => {
+        if (!cancelled) setDocumentsLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-  }, [selected?.id, selected?.transactionId])
+  }, [selectedTxId])
 
   const handleRowClick = (tx: TransactionRow) => {
     setSelected(tx)

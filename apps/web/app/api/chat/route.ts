@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let messages: any[]
-    let fileAttachments: { buffer: Buffer; contentType: string; fileName: string }[] = []
+    const fileAttachments: { buffer: Buffer; contentType: string; fileName: string }[] = []
 
     if (reqContentType.startsWith("multipart/form-data")) {
       const formData = await request.formData()

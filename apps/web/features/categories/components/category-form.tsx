@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@polso/ui/button"
@@ -67,23 +67,20 @@ export function CategoryForm({ category, open, onOpenChange }: CategoryFormProps
 
   const isEditing = !!category
 
-  // Reset form when category changes or sheet opens
-  useEffect(() => {
-    if (open) {
-      if (category) {
-        setName(category.name)
-        setColor(category.color)
-        setEntryType(category.entryType || NONE_VALUE)
-        setAccountCode(category.accountCode || "")
-      } else {
-        setName("")
-        setColor("#6366f1")
-        setEntryType(NONE_VALUE)
-        setAccountCode("")
-      }
+  // Reset form when the sheet opens or the edited category changes (state
+  // adjustment during render — avoids an extra effect-driven re-render)
+  const formKey = open ? (category?.id ?? "new") : null
+  const [prevFormKey, setPrevFormKey] = useState<string | null>(null)
+  if (formKey !== prevFormKey) {
+    setPrevFormKey(formKey)
+    if (formKey !== null) {
+      setName(category?.name ?? "")
+      setColor(category?.color ?? "#6366f1")
+      setEntryType(category?.entryType || NONE_VALUE)
+      setAccountCode(category?.accountCode || "")
       setError(null)
     }
-  }, [category, open])
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
