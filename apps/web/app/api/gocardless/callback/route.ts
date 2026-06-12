@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
     // Full-history sync runs after the redirect so the user isn't blocked waiting.
     // initial=true disables the 7-day window and fetches all available history.
     after(() =>
-      syncTransactionsCore(organizationId, undefined, true).catch((err) =>
+      syncTransactionsCore(organizationId, { initial: true }).catch((err) =>
         console.error("[GoCardless callback] Initial sync error:", err)
       )
     )

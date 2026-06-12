@@ -92,17 +92,30 @@ async function syncAllAccounts(): Promise<CronSyncResult> {
   let totalPatterns = 0
   const syncedOrgIds = new Set<string>()
 
-  for (const { id: accountId, organizationId } of staleAccounts) {
+  // One sync per org: requisition checks are deduped across accounts sharing
+  // a bank connection, and merchant history loads once instead of per account
+  const orgGroups = new Map<string, string[]>()
+  for (const { id, organizationId } of staleAccounts) {
+    const group = orgGroups.get(organizationId) ?? []
+    group.push(id)
+    orgGroups.set(organizationId, group)
+  }
+
+  for (const [organizationId, accountIds] of orgGroups) {
     try {
-      const result = await syncTransactionsCore(organizationId, accountId)
+      const result = await syncTransactionsCore(organizationId, { accountIds })
+      if (result.skipped) {
+        console.log(`[Cron] Org ${organizationId}: sync already in progress, skipped`)
+        continue
+      }
       accountsSynced += result.accountsUpdated
       totalImported += result.transactionsImported
       totalModified += result.transactionsModified
       totalEntries += result.entriesCreated
       if (result.accountsUpdated > 0) syncedOrgIds.add(organizationId)
     } catch (error) {
-      console.error(`[Cron] Error syncing account ${accountId}:`, error)
-      accountsFailed++
+      console.error(`[Cron] Error syncing org ${organizationId}:`, error)
+      accountsFailed += accountIds.length
     }
   }
 

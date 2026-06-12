@@ -5,8 +5,11 @@ import {
   getTransactionType,
   mapGoCardlessToPolsoCategory,
   selectPrimaryBalance,
+  getAvailableBalance,
+  GCRateLimitError,
   type BankTransaction,
 } from "@polso/banking"
+import { getRedis, cacheDel } from "@polso/cache"
 import { suggestCategory } from "@polso/intelligence"
 import { findOrCreateCounterparty, type MatchedCounterparty } from "@/features/counterparties/lib/counterparty-matcher"
 import { matchAfterSync } from "@/features/inbox/lib/match-after-sync"
@@ -18,6 +21,57 @@ export interface SyncResult {
   transactionsImported: number
   transactionsModified: number
   entriesCreated: number
+  /** True when another sync for this org was already running and this one was skipped */
+  skipped?: boolean
+}
+
+export interface SyncOptions {
+  /** Limit the sync to these account ids (defaults to all active accounts of the org) */
+  accountIds?: string[]
+  /** Fetch full available history instead of the 7-day window */
+  initial?: boolean
+}
+
+// A sync run is bounded by Vercel's 300s maxDuration — 10 min covers any legitimate run
+const SYNC_LOCK_TTL_SECONDS = 600
+// GoCardless rate limits are per-day; without a parseable retry-after, back off 6h
+const RATE_LIMIT_COOLDOWN_FALLBACK_SECONDS = 6 * 60 * 60
+
+const EMPTY_RESULT: SyncResult = {
+  accountsUpdated: 0,
+  transactionsImported: 0,
+  transactionsModified: 0,
+  entriesCreated: 0,
+}
+
+// Redis is best-effort throughout: a Redis outage degrades to unthrottled
+// behavior instead of blocking bank syncs.
+async function filterRateLimitedAccounts<T extends { externalAccountId: string | null }>(
+  accounts: T[]
+): Promise<T[]> {
+  try {
+    const keys = accounts.map((a) => `gc:cooldown:${a.externalAccountId}`)
+    const values = await getRedis().mget<(string | null)[]>(...keys)
+    return accounts.filter((_, i) => values[i] === null)
+  } catch {
+    return accounts
+  }
+}
+
+async function setRateLimitCooldown(
+  externalAccountId: string | null,
+  retryAfterSeconds: number | null
+): Promise<void> {
+  if (!externalAccountId) return
+  const ttl =
+    retryAfterSeconds && retryAfterSeconds > 0
+      ? retryAfterSeconds
+      : RATE_LIMIT_COOLDOWN_FALLBACK_SECONDS
+  try {
+    await getRedis().set(`gc:cooldown:${externalAccountId}`, "1", { ex: ttl })
+  } catch {
+    // best-effort
+  }
 }
 
 type MerchantHistory = Map<string, { categories: Map<string, number>; entryTypes: Map<string, number> }>
@@ -33,21 +87,55 @@ function mostFrequentInMap(map: Map<string, number>): string | null {
 
 export async function syncTransactionsCore(
   organizationId: string,
-  accountId?: string,
-  initial = false
+  options: SyncOptions = {}
 ): Promise<SyncResult> {
-  const accounts = await prisma.account.findMany({
+  // Org-level lock: cron, OAuth callback and manual sync can race — only one
+  // sync per org may talk to GoCardless at a time (rate limits are per-day)
+  const lockKey = `sync:lock:${organizationId}`
+  let lockAcquired = false
+  try {
+    const acquired = await getRedis().set(lockKey, "1", { nx: true, ex: SYNC_LOCK_TTL_SECONDS })
+    if (!acquired) {
+      console.log(`[Sync] Org ${organizationId}: sync already in progress, skipping`)
+      return { ...EMPTY_RESULT, skipped: true }
+    }
+    lockAcquired = true
+  } catch {
+    // Redis unavailable — proceed unlocked rather than blocking syncs entirely
+  }
+
+  try {
+    return await runSync(organizationId, options)
+  } finally {
+    if (lockAcquired) {
+      await cacheDel(lockKey).catch(() => {})
+    }
+  }
+}
+
+async function runSync(
+  organizationId: string,
+  { accountIds, initial = false }: SyncOptions
+): Promise<SyncResult> {
+  const allAccounts = await prisma.account.findMany({
     where: {
       organizationId,
       status: "active",
       requisitionId: { not: null },
       externalAccountId: { not: null },
-      ...(accountId ? { id: accountId } : {}),
+      ...(accountIds && accountIds.length > 0 ? { id: { in: accountIds } } : {}),
     },
   })
 
+  if (allAccounts.length === 0) {
+    return { ...EMPTY_RESULT }
+  }
+
+  // Skip accounts still inside a GoCardless rate-limit cooldown (single mget)
+  const accounts = await filterRateLimitedAccounts(allAccounts)
   if (accounts.length === 0) {
-    return { accountsUpdated: 0, transactionsImported: 0, transactionsModified: 0, entriesCreated: 0 }
+    console.log(`[Sync] Org ${organizationId}: all ${allAccounts.length} accounts on rate-limit cooldown`)
+    return { ...EMPTY_RESULT }
   }
 
   const requisitionGroups = new Map<string, typeof accounts>()
@@ -108,8 +196,34 @@ export async function syncTransactionsCore(
   const newTransactionIds: string[] = []
 
   for (const [requisitionId, reqAccounts] of requisitionGroups) {
-    const requisition = await gc.getRequisition(requisitionId)
-    if (requisition && gc.isRequisitionExpired(requisition.status)) {
+    let requisition
+    try {
+      requisition = await gc.getRequisition(requisitionId)
+    } catch (error) {
+      // Transient failure (429/5xx) — not the accounts' fault: no strikes,
+      // just end any in-progress signal so SyncMonitor terminates
+      console.error(`[Sync] Requisition check failed for ${requisitionId}:`, error)
+      await prisma.account.updateMany({
+        where: { requisitionId, organizationId, lastSyncedAt: null },
+        data: { lastSyncedAt: new Date() },
+      })
+      continue
+    }
+
+    if (requisition === null) {
+      // Confirmed 404 — the requisition no longer exists at GoCardless
+      await prisma.account.updateMany({
+        where: { requisitionId, organizationId },
+        data: {
+          status: "expired",
+          syncError: "Bank connection was removed — please reconnect",
+          lastSyncedAt: new Date(),
+        },
+      })
+      continue
+    }
+
+    if (gc.isRequisitionExpired(requisition.status)) {
       await prisma.account.updateMany({
         where: { requisitionId, organizationId },
         data: { status: "expired", syncError: "Bank connection has expired — please reconnect" },
@@ -121,17 +235,28 @@ export async function syncTransactionsCore(
       if (!account.externalAccountId) continue
 
       try {
-        const balances = await gc.getAccountBalances(account.externalAccountId)
-        const primaryBalance = selectPrimaryBalance(balances, account.currency ?? undefined)
-        const balanceCurrent = primaryBalance
-          ? parseFloat(primaryBalance.balanceAmount.amount)
-          : null
+        // Balances and transactions have independent rate-limit buckets — a
+        // balance failure must not block the transaction sync, and a failed
+        // fetch must never overwrite the stored balance with null
+        let balanceData: { balanceCurrent: number; balanceAvailable: number | null } | null = null
+        try {
+          const balances = await gc.getAccountBalances(account.externalAccountId)
+          const primaryBalance = selectPrimaryBalance(balances, account.currency ?? undefined)
+          if (primaryBalance) {
+            balanceData = {
+              balanceCurrent: parseFloat(primaryBalance.balanceAmount.amount),
+              balanceAvailable: getAvailableBalance(balances, account.currency ?? undefined),
+            }
+          }
+        } catch (balanceError) {
+          console.warn(`[Sync] Balance fetch failed for account ${account.id}:`, balanceError)
+        }
 
         // Update balance immediately but defer lastSyncedAt until all transactions are processed
         // so SyncMonitor can accurately track progress via lastSyncedAt: null
         await prisma.account.update({
           where: { id: account.id },
-          data: { balanceCurrent, syncError: null, syncErrorRetries: 0 },
+          data: { ...(balanceData ?? {}), syncError: null, syncErrorRetries: 0 },
         })
         accountsUpdated++
 
@@ -158,6 +283,21 @@ export async function syncTransactionsCore(
           data: { lastSyncedAt: new Date() },
         })
       } catch (error) {
+        if (error instanceof GCRateLimitError) {
+          // Daily quota hit — the connection is healthy, so no strikes and no
+          // disconnect. Cool the account down and let a later run retry.
+          console.warn(`[Sync] Rate limited for account ${account.id}, cooling down`)
+          await setRateLimitCooldown(account.externalAccountId, error.retryAfterSeconds)
+          await prisma.account.update({
+            where: { id: account.id },
+            data: {
+              syncError: "Bank API rate limit reached — will retry automatically",
+              lastSyncedAt: new Date(),
+            },
+          })
+          continue
+        }
+
         console.error(`Error syncing account ${account.id}:`, error)
         const retries = (account.syncErrorRetries ?? 0) + 1
         await prisma.account.update({
