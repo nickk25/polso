@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { neonAuth } from "@neondatabase/auth/next/server"
 import { prisma } from "@/lib/db"
 import { getLimit, isValidPlan } from "@/lib/plans"
-import { getGoCardlessClient } from "@/features/banking/lib/gocardless-client"
+import { createBankLink } from "@/features/banking/lib/create-bank-link"
 
 /**
  * POST /api/gocardless/create-link
@@ -77,6 +77,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "DUPLICATE_BANK",
+          code: "DUPLICATE_BANK",
           message: "Ya tienes una conexión activa con este banco. Desconecta la anterior antes de reconectar.",
           existingAccountId: duplicateAccount.id,
         },
@@ -84,32 +85,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const gc = getGoCardlessClient()
-
-    // Create end-user agreement (controls how long we can access the account)
-    const institution = await gc.getInstitution(institutionId)
-    const maxHistoricalDays = institution?.transaction_total_days
-      ? parseInt(institution.transaction_total_days, 10)
-      : 90
-    const agreement = await gc.createEndUserAgreement(institutionId, maxHistoricalDays)
-
-    // Create requisition — the link the user follows to authenticate with their bank
-    // reference = organizationId so the callback can look up the pending requisition
-    const { requisitionId, link } = await gc.buildLink({
-      institutionId,
-      agreement: agreement.id,
-      redirect: process.env.GOCARDLESS_REDIRECT_URI!,
-      reference: userOrg.organizationId,
-    })
-
-    // Save pending requisition so the callback can find it
-    await prisma.pendingRequisition.create({
-      data: {
-        organizationId: userOrg.organizationId,
-        requisitionId,
-        institutionId,
-      },
-    })
+    const { link } = await createBankLink(userOrg.organizationId, institutionId)
 
     return NextResponse.json({ link })
   } catch (error) {
