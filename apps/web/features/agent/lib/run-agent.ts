@@ -70,6 +70,9 @@ export async function runAgent(opts: AgentRunOptions): Promise<AgentRunResult> {
     messages,
     tools,
     maxSteps: 8,
+    // Applies per step — with maxSteps 8 this caps a single run at ~16K
+    // output tokens instead of leaving org-level cost unbounded
+    maxTokens: 2000,
   })
 
   // Persist ChatLog for visibility

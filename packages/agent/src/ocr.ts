@@ -1,8 +1,21 @@
 import { generateObject } from "ai"
 import { createAnthropic } from "@ai-sdk/anthropic"
+import { z } from "zod"
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY_OCR })
-import { z } from "zod"
+
+// Anthropic API limits: 5MB per image, 32MB per PDF request. Reject before
+// base64 expansion — an oversized upload would otherwise burn memory and an
+// API call only to fail with an opaque provider error.
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const MAX_PDF_BYTES = 25 * 1024 * 1024
+
+export class FileTooLargeError extends Error {
+  constructor(public readonly sizeBytes: number, public readonly maxBytes: number) {
+    super(`Document too large: ${sizeBytes} bytes (max ${maxBytes})`)
+    this.name = "FileTooLargeError"
+  }
+}
 
 export const ReceiptSchema = z.object({
   displayName: z.string().nullable().describe("Vendor or store name"),
@@ -38,13 +51,20 @@ export async function extractReceiptData(
   fileData: string | Buffer,
   contentType: string
 ): Promise<ReceiptData> {
+  // AI SDK uses "image" for raster images and "file" for PDFs
+  const isPdf = contentType === "application/pdf"
+
+  const sizeBytes =
+    typeof fileData === "string" ? Math.floor(fileData.length * 0.75) : fileData.length
+  const maxBytes = isPdf ? MAX_PDF_BYTES : MAX_IMAGE_BYTES
+  if (sizeBytes > maxBytes) {
+    throw new FileTooLargeError(sizeBytes, maxBytes)
+  }
+
   const base64 =
     typeof fileData === "string"
       ? fileData
       : fileData.toString("base64")
-
-  // AI SDK uses "image" for raster images and "file" for PDFs
-  const isPdf = contentType === "application/pdf"
   const filePart = isPdf
     ? ({ type: "file" as const, data: base64, mimeType: "application/pdf" as const })
     : ({

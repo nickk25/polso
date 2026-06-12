@@ -2,7 +2,7 @@ import { after } from "next/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@polso/db"
 import { uploadFile } from "@polso/storage"
-import { extractReceiptData } from "@polso/agent/ocr"
+import { extractReceiptData, FileTooLargeError } from "@polso/agent/ocr"
 import { downloadWhatsAppMedia, sendWhatsAppText } from "@polso/agent/whatsapp"
 import { runMatchingForInboxItem } from "@/features/inbox/lib/run-inbox-matching"
 import { confirmMatchInDb } from "@polso/inbox"
@@ -278,7 +278,9 @@ async function processReceipt({
     console.error("[whatsapp/webhook] processReceipt error:", err)
     await sendWhatsAppText(
       from,
-      "Ha ocurrido un error procesando tu recibo. Por favor, inténtalo de nuevo."
+      err instanceof FileTooLargeError
+        ? "El archivo es demasiado grande. Envía una imagen de menos de 5 MB o un PDF de menos de 25 MB."
+        : "Ha ocurrido un error procesando tu recibo. Por favor, inténtalo de nuevo."
     ).catch(() => {})
   }
 }

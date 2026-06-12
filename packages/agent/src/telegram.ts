@@ -1,7 +1,9 @@
 const BASE_URL = "https://api.telegram.org"
 
 function token() {
-  return process.env.TELEGRAM_BOT_TOKEN!
+  const value = process.env.TELEGRAM_BOT_TOKEN
+  if (!value) throw new Error("@polso/agent: TELEGRAM_BOT_TOKEN is not set")
+  return value
 }
 
 function apiUrl(method: string) {

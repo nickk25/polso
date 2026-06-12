@@ -1,10 +1,14 @@
 const BASE_URL = "https://graph.facebook.com/v21.0"
 
 function creds() {
-  return {
-    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID!,
-    accessToken: process.env.WHATSAPP_ACCESS_TOKEN!,
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
+  if (!phoneNumberId || !accessToken) {
+    throw new Error(
+      "@polso/agent: WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN must be set"
+    )
   }
+  return { phoneNumberId, accessToken }
 }
 
 /**

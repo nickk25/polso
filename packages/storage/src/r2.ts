@@ -7,17 +7,33 @@ import {
 } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
-// Cloudflare R2 is S3-compatible
-const r2Client = new S3Client({
-  region: "auto",
-  endpoint: process.env.R2_ENDPOINT!,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-})
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) throw new Error(`@polso/storage: missing required environment variable ${name}`)
+  return value
+}
 
-const BUCKET_NAME = process.env.R2_BUCKET_NAME!
+// Cloudflare R2 is S3-compatible. Lazy so importing this package never
+// throws — a missing env var fails at first use with a clear message.
+let _r2Client: S3Client | null = null
+
+function getR2Client(): S3Client {
+  if (!_r2Client) {
+    _r2Client = new S3Client({
+      region: "auto",
+      endpoint: requireEnv("R2_ENDPOINT"),
+      credentials: {
+        accessKeyId: requireEnv("R2_ACCESS_KEY_ID"),
+        secretAccessKey: requireEnv("R2_SECRET_ACCESS_KEY"),
+      },
+    })
+  }
+  return _r2Client
+}
+
+function getBucketName(): string {
+  return requireEnv("R2_BUCKET_NAME")
+}
 
 export interface UploadResult {
   key: string
@@ -34,13 +50,13 @@ export async function uploadFile(
   contentType?: string
 ): Promise<UploadResult> {
   const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: getBucketName(),
     Key: key,
     Body: body,
     ContentType: contentType,
   })
 
-  await r2Client.send(command)
+  await getR2Client().send(command)
 
   // Get the public URL or generate a signed URL
   const url = await getSignedDownloadUrl(key)
@@ -88,11 +104,11 @@ export async function getSignedDownloadUrl(
   expiresIn = 3600
 ): Promise<string> {
   const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: getBucketName(),
     Key: key,
   })
 
-  return getSignedUrl(r2Client, command, { expiresIn })
+  return getSignedUrl(getR2Client(), command, { expiresIn })
 }
 
 /**
@@ -104,12 +120,12 @@ export async function getSignedUploadUrl(
   expiresIn = 3600
 ): Promise<string> {
   const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: getBucketName(),
     Key: key,
     ContentType: contentType,
   })
 
-  return getSignedUrl(r2Client, command, { expiresIn })
+  return getSignedUrl(getR2Client(), command, { expiresIn })
 }
 
 /**
@@ -117,11 +133,11 @@ export async function getSignedUploadUrl(
  */
 export async function deleteFile(key: string): Promise<void> {
   const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: getBucketName(),
     Key: key,
   })
 
-  await r2Client.send(command)
+  await getR2Client().send(command)
 }
 
 /**
@@ -130,11 +146,11 @@ export async function deleteFile(key: string): Promise<void> {
 export async function deleteFiles(prefix: string): Promise<void> {
   // List all objects with the prefix
   const listCommand = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME,
+    Bucket: getBucketName(),
     Prefix: prefix,
   })
 
-  const response = await r2Client.send(listCommand)
+  const response = await getR2Client().send(listCommand)
 
   if (!response.Contents || response.Contents.length === 0) {
     return
@@ -156,11 +172,11 @@ export async function getFile(key: string): Promise<{
   contentType?: string
 }> {
   const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
+    Bucket: getBucketName(),
     Key: key,
   })
 
-  const response = await r2Client.send(command)
+  const response = await getR2Client().send(command)
 
   if (!response.Body) {
     throw new Error("File not found")
@@ -174,4 +190,4 @@ export async function getFile(key: string): Promise<{
   }
 }
 
-export { r2Client, BUCKET_NAME }
+export { getR2Client, getBucketName }

@@ -30,6 +30,13 @@ export async function checkAiRateLimit(
   organizationId: string,
   model: "sonnet" | "haiku"
 ): Promise<RateLimitResult> {
-  const { success, remaining, reset, limit } = await getLimiters()[model].limit(organizationId)
-  return { allowed: success, remaining, reset, limit }
+  try {
+    const { success, remaining, reset, limit } = await getLimiters()[model].limit(organizationId)
+    return { allowed: success, remaining, reset, limit }
+  } catch (err) {
+    // Redis outage must degrade to unthrottled, not take down every
+    // AI-backed endpoint (chat, webhooks, partner cron)
+    console.error("[ai-rate-limit] Redis unavailable, failing open:", err)
+    return { allowed: true, remaining: -1, reset: 0, limit: LIMITS[model].limit }
+  }
 }

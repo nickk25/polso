@@ -3,7 +3,7 @@ import { after } from "next/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@polso/db"
 import { uploadFile } from "@polso/storage"
-import { extractReceiptData } from "@polso/agent/ocr"
+import { extractReceiptData, FileTooLargeError } from "@polso/agent/ocr"
 import {
   sendTelegramText,
   sendTelegramMatchNotification,
@@ -375,12 +375,13 @@ async function processReceipt({
       errMsg.includes("UnsupportedFunctionality") ||
       errMsg.includes("image") ||
       errMsg.includes("file")
-    await sendTelegramText(
-      chatId,
-      isImageQuality
-        ? "No he podido leer el documento. Intenta enviarlo como PDF, o toma la foto con más luz y asegúrate de que el texto sea legible."
-        : "Ha habido un problema guardando el recibo. Por favor, inténtalo de nuevo en unos segundos."
-    ).catch(() => {})
+    const message =
+      err instanceof FileTooLargeError
+        ? "El archivo es demasiado grande. Envía una imagen de menos de 5 MB o un PDF de menos de 25 MB."
+        : isImageQuality
+          ? "No he podido leer el documento. Intenta enviarlo como PDF, o toma la foto con más luz y asegúrate de que el texto sea legible."
+          : "Ha habido un problema guardando el recibo. Por favor, inténtalo de nuevo en unos segundos."
+    await sendTelegramText(chatId, message).catch(() => {})
   }
 }
 

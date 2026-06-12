@@ -228,7 +228,9 @@ export function createGoCardlessClient(config: BankingConfig) {
         }
       }
       return institution
-    } catch {
+    } catch (err) {
+      // Display metadata only (name/logo) — degrade to null but leave a trace
+      console.warn(`[GoCardless] getInstitution failed for ${institutionId}:`, err)
       return null
     }
   }
@@ -340,6 +342,9 @@ export function createGoCardlessClient(config: BankingConfig) {
   // Account details and balances
   // ============================================
 
+  // Returns null only when the account no longer exists (404). Other failures
+  // (429, auth, 5xx) propagate so callers can degrade explicitly instead of
+  // mistaking a transient error for a missing account.
   async function getAccountDetails(
     accountId: string,
     token?: string
@@ -356,8 +361,9 @@ export function createGoCardlessClient(config: BankingConfig) {
         ),
       ])
       return { ...account, ...details } as GCAccountDetails
-    } catch {
-      return null
+    } catch (err) {
+      if (err instanceof GCApiError && err.status === 404) return null
+      throw err
     }
   }
 

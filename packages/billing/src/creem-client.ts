@@ -45,10 +45,18 @@ export function getProductInfo(
 }
 
 /**
- * Get the product ID for a plan and interval
+ * Get the product ID for a plan and interval.
+ * Throws when the env var is missing — an empty product ID would otherwise
+ * reach the Creem API and fail with an opaque 400 at checkout.
  */
 export function getProductId(plan: PlanType, interval: PlanInterval): string {
-  return CREEM_PRODUCTS[plan][interval]
+  const id = CREEM_PRODUCTS[plan][interval]
+  if (!id) {
+    throw new Error(
+      `Missing Creem product ID for ${plan}/${interval} — set CREEM_${plan.toUpperCase()}_${interval === "monthly" ? "MONTHLY" : "ANNUAL"}_PRODUCT_ID`
+    )
+  }
+  return id
 }
 
 // Creem API types

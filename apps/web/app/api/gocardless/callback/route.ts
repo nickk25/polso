@@ -96,7 +96,10 @@ export async function GET(request: NextRequest) {
     await Promise.all(
       requisition.accounts.map(async (accountId) => {
         const [details, balancesResult] = await Promise.all([
-          gc.getAccountDetails(accountId),
+          gc.getAccountDetails(accountId).catch((err: unknown) => {
+            console.warn(`[GoCardless callback] details fetch failed for ${accountId}:`, err)
+            return null
+          }),
           gc.getAccountBalances(accountId).then(
             (balances) => ({ fetched: true, balances }),
             (err: unknown) => {

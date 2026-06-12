@@ -14,10 +14,10 @@ export interface MatchCandidate {
 }
 
 export interface ScoringWeights {
-  amount: number   // default 0.30
-  date: number     // default 0.15
-  name: number     // default 0.10
-  currency: number // default 0.05
+  amount: number   // default 0.50
+  date: number     // default 0.25
+  name: number     // default 0.15
+  currency: number // default 0.10
 }
 
 export const DEFAULT_WEIGHTS: ScoringWeights = {
