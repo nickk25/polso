@@ -88,7 +88,7 @@ export async function updateWidgetAction(
     console.error("Error updating widget:", error)
     return errorResponse(
       error instanceof Error ? error.message : "Failed to update widget",
-      "ERROR"  // Error codes: VALIDATION_ERROR | NOT_FOUND | FORBIDDEN | DUPLICATE_ERROR | ERROR
+      "ERROR"  // Error codes: VALIDATION_ERROR | NOT_FOUND | FORBIDDEN | DUPLICATE_ERROR | RATE_LIMITED | ERROR
     )
   }
 }

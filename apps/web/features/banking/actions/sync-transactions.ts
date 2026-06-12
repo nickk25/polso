@@ -106,7 +106,7 @@ export async function startManualSyncAction(accountIds: string[]): Promise<Actio
     }
 
     const hasTransactions = await prisma.transaction.findFirst({
-      where: { accountId: { in: allowed } },
+      where: { organizationId, accountId: { in: allowed } },
       select: { id: true },
     })
     const initial = hasTransactions === null
