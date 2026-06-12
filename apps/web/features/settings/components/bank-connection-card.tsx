@@ -79,7 +79,12 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
 
   async function handleSync() {
     setSyncing(true)
-    await startManualSyncAction(firstAccount.id)
+    // Sync every active account of this connection, not just the first one
+    const activeIds = accounts.filter((a) => a.status === "active").map((a) => a.id)
+    const result = await startManualSyncAction(activeIds)
+    if (!result.success && result.code === "RATE_LIMITED") {
+      toast.info(t("sync.cooldown"))
+    }
     setSyncing(false)
     // SyncMonitor toast takes over from here — no router.refresh() needed yet
   }

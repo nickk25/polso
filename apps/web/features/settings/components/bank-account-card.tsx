@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@polso/ui/alert-dialog"
 import { ArrowsClockwise, Trash, Warning, CheckCircle, Clock } from "@phosphor-icons/react"
+import { toast } from "@polso/ui/sonner"
 import { syncTransactionsAction } from "@/features/banking/actions/sync-transactions"
 import { disconnectBankAction } from "@/features/banking/actions/connect-bank"
 import type { Account } from "@/lib/types"
@@ -47,7 +48,10 @@ export function BankAccountCard({ account }: BankAccountCardProps) {
 
   async function handleSync() {
     setSyncing(true)
-    await syncTransactionsAction(account.id)
+    const result = await syncTransactionsAction(account.id)
+    if (!result.success && result.code === "RATE_LIMITED") {
+      toast.info(t("sync.cooldown"))
+    }
     setSyncing(false)
     router.refresh()
   }
