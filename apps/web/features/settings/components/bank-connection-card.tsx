@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@polso/ui/alert-dialog"
 import { ArrowsClockwise, Trash, Warning, CheckCircle, Clock, ArrowCounterClockwise } from "@phosphor-icons/react"
+import { toast } from "@polso/ui/sonner"
 import { startManualSyncAction } from "@/features/banking/actions/sync-transactions"
 import { disconnectBankAction, reconnectBankAction } from "@/features/banking/actions/connect-bank"
 import type { Account } from "@/lib/types"
@@ -71,6 +72,10 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
   const hasExpiredOrError = accounts.some((a) => a.status === "expired" || a.status === "error")
   const hasError = accounts.some((a) => a.syncError)
   const totalTransactions = accounts.reduce((sum, a) => sum + a._count.transactions, 0)
+  // Reconnect targets the broken account so the action resolves the right institution
+  const reconnectableAccount = accounts.find(
+    (a) => a.status === "expired" || a.status === "error" || a.status === "disconnected"
+  )
 
   async function handleSync() {
     setSyncing(true)
@@ -87,12 +92,21 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
   }
 
   async function handleReconnect() {
+    if (!reconnectableAccount) return
     setReconnecting(true)
-    const result = await reconnectBankAction(firstAccount.id)
-    setReconnecting(false)
-    if (result.success) {
-      router.push(result.data.link)
+    try {
+      const result = await reconnectBankAction(reconnectableAccount.id)
+      if (result.success) {
+        // External GoCardless URL — keep the spinner until the browser navigates
+        window.location.href = result.data.link
+        return
+      }
+      toast.error(t("connect.errorReconnecting"))
+    } catch {
+      toast.error(t("connect.errorReconnecting"))
     }
+    setReconnecting(false)
+    router.refresh()
   }
 
   return (
@@ -132,7 +146,7 @@ export function BankConnectionCard({ connection }: BankConnectionCardProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            {hasExpiredOrError && !isDisconnected && (
+            {reconnectableAccount && (
               <Button
                 variant="ghost"
                 size="icon"
