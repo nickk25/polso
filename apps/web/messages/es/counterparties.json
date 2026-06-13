@@ -56,7 +56,14 @@
   "suggestions": {
     "title": "{count, plural, one {# sugerencia de fusion} other {# sugerencias de fusion}}",
     "subtitle": "posibles proveedores duplicados detectados",
-    "merge": "Fusionar"
+    "merge": "Fusionar",
+    "dismiss": "No fusionar",
+    "sharedHint": "en comun: {tokens}",
+    "confidence": {
+      "high": "Coincidencia alta",
+      "medium": "Probable coincidencia",
+      "low": "Revisar"
+    }
   },
   "toasts": {
     "created": "Proveedor creado",

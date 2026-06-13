@@ -56,7 +56,14 @@
   "suggestions": {
     "title": "{count, plural, one {# merge suggestion} other {# merge suggestions}}",
     "subtitle": "possible duplicate vendors detected",
-    "merge": "Merge"
+    "merge": "Merge",
+    "dismiss": "Don't merge",
+    "sharedHint": "shared: {tokens}",
+    "confidence": {
+      "high": "High match",
+      "medium": "Likely match",
+      "low": "Review"
+    }
   },
   "toasts": {
     "created": "Vendor created",

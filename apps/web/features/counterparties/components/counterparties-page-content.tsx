@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@polso/ui/button"
 import { Plus, Storefront } from "@phosphor-icons/react"
@@ -9,9 +9,13 @@ import { CounterpartyForm } from "./counterparty-form"
 import { CounterpartyMergeDialog } from "./counterparty-merge-dialog"
 import { CounterpartyMergeSuggestions } from "./counterparty-merge-suggestions"
 import { BackfillCounterpartiesButton } from "./backfill-counterparties-button"
-import { computeMergeSuggestions } from "../lib/merge-suggestions"
+import { computeMergeSuggestions, type MergeSuggestionGroup } from "../lib/merge-suggestions"
 import type { CounterpartyWithStats } from "../queries/get-counterparties"
 import type { CategoryWithCount } from "@/features/categories/queries/get-categories"
+
+// Stable identity for a suggestion group: its sorted member ids.
+const groupId = (g: MergeSuggestionGroup) => g.counterparties.map((c) => c.id).sort().join("+")
+const DISMISSED_KEY = "polso:dismissed-merges"
 
 interface CounterpartiesPageContentProps {
   counterparties: CounterpartyWithStats[]
@@ -26,7 +30,33 @@ export function CounterpartiesPageContent({ counterparties, currency, categories
   const [editing, setEditing] = useState<CounterpartyWithStats | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
-  const suggestions = useMemo(() => computeMergeSuggestions(counterparties), [counterparties])
+  const [dismissed, setDismissed] = useState<string[]>([])
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DISMISSED_KEY)
+      if (stored) setDismissed(JSON.parse(stored))
+    } catch {
+      // ignore unreadable/corrupt storage
+    }
+  }, [])
+
+  const allSuggestions = useMemo(() => computeMergeSuggestions(counterparties), [counterparties])
+  const suggestions = useMemo(
+    () => allSuggestions.filter((g) => !dismissed.includes(groupId(g))),
+    [allSuggestions, dismissed]
+  )
+
+  const handleDismiss = (group: MergeSuggestionGroup) => {
+    setDismissed((prev) => {
+      const next = [...prev, groupId(group)]
+      try {
+        localStorage.setItem(DISMISSED_KEY, JSON.stringify(next))
+      } catch {
+        // ignore unwritable storage
+      }
+      return next
+    })
+  }
 
   const handleMergeGroup = (ids: string[]) => {
     setSelectedIds(ids)
@@ -84,7 +114,11 @@ export function CounterpartiesPageContent({ counterparties, currency, categories
         </div>
       </div>
 
-      <CounterpartyMergeSuggestions suggestions={suggestions} onMergeGroup={handleMergeGroup} />
+      <CounterpartyMergeSuggestions
+        suggestions={suggestions}
+        onMergeGroup={handleMergeGroup}
+        onDismiss={handleDismiss}
+      />
 
       <CounterpartyTable
         counterparties={counterparties}
