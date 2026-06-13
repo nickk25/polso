@@ -42,9 +42,14 @@ mapGoCardlessToPolsoCategory(mcc?, proprietaryCode?) // → { slug, confidence }
 // Helpers
 getTransactionType(amount)            // → "debit" | "credit" (Polso sign convention)
 detectIncomeSource(tx)                // → "salary" | "investment" | "refund" | "transfer" | "other"
-normalizeCounterpartyName(name)       // → string — strips processor prefixes, company suffixes, refs
-extractVendorFromDescription(desc)    // → string | null — Spanish bank statement patterns
+canonicalize(name, { structured })    // → { matchKey, displayName, seenLocations } — canonical vendor identity
+brandTokens(matchKey)                 // → string[] — brand tokens for merge blocking ([] for gov keys)
+isGovKey(matchKey)                    // → boolean — true for "gov:*" government keys
+normalizeCounterpartyName(name)       // → string — LEGACY shim, superseded by canonicalize()
+extractVendorFromDescription(desc)    // → string | null — Spanish bank statement patterns (currently never called)
 ```
+
+> **Vendor identity — `canonicalize` (`src/canonicalize.ts`, see `docs/VENDOR_MATCHING_AUDIT.md`):** the single source of truth for counterparty dedup, run once at ingestion. Government carve-out first (`gov:tgss`, `gov:diputacion foral de:<province>` — province/agency is the discriminator; TGSS is one vendor, deliberately not split by CCC). Then: processor rewrites, card/commission/ref strip, digit/PAN killer, location→`seenLocations`, legal-suffix/subsidiary/stopword strip, contains-based alias map (folds in the legacy `VENDOR_MAPPINGS`). Structured payee names (`creditorName`/`debtorName`) pass `{ structured: true }` to skip the aggressive strip. Tested in `src/canonicalize.test.ts` (oracle + idempotency); validated on real prod data (241 rows → 90 vendors, 0 wrongful merges). `normalizeCounterpartyName` is now a legacy shim, no longer used by sync.
 
 ## Key concepts
 

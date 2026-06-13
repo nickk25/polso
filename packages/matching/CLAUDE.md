@@ -2,6 +2,8 @@
 
 Receipt↔transaction matching algorithm. Spanish-adapted scoring.
 
+> ⚠️ **Vendor merge known issue (see `docs/VENDOR_MATCHING_AUDIT.md`):** `tokenize`/`jaccardSimilarity` here are reused by counterparty merge-suggestions, where they run as a *second* normalization pass over an already-(poorly-)normalized name. Numeric tokens (card PANs) survive and the 0.3 Jaccard threshold groups unrelated vendors. The redesign reduces `tokenize` to a plain split of a clean ingestion-time match-key and moves dedup off polluted similarity.
+
 ## What it exports
 
 ```typescript

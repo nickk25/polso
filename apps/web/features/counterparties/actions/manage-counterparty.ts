@@ -4,7 +4,16 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
-import { normalizeCounterpartyName } from "@polso/banking"
+import { canonicalize } from "@polso/banking"
+import {
+  mergeCounterpartiesCore,
+  type MergeCounterpartiesCoreResult,
+} from "../lib/merge-counterparties-core"
+
+/** Brand tokens to seed detectionPatterns with (empty for government keys). */
+function seedPatterns(matchKey: string): string[] {
+  return matchKey.startsWith("gov:") ? [] : matchKey.split(" ").filter(Boolean)
+}
 
 interface CreateCounterpartyInput {
   name: string
@@ -38,12 +47,7 @@ interface DeleteCounterpartyResult {
   entryCount?: number
 }
 
-interface MergeCounterpartiesResult {
-  mergedId: string
-  entriesReassigned: number
-  patternsReassigned: number
-  deletedCount: number
-}
+type MergeCounterpartiesResult = MergeCounterpartiesCoreResult
 
 export async function createCounterpartyAction(
   input: CreateCounterpartyInput
@@ -58,7 +62,11 @@ export async function createCounterpartyAction(
       return errorResponse("Name must be 100 characters or less", "VALIDATION_ERROR")
     }
 
-    const normalizedName = normalizeCounterpartyName(input.name.trim())
+    const { matchKey, seenLocations } = canonicalize(input.name.trim())
+    if (!matchKey) {
+      return errorResponse("Please enter a more specific vendor name", "VALIDATION_ERROR")
+    }
+    const normalizedName = matchKey
 
     const existing = await prisma.counterparty.findFirst({
       where: { organizationId, normalizedName },
@@ -88,7 +96,8 @@ export async function createCounterpartyAction(
         defaultCategoryId: input.defaultCategoryId || null,
         defaultEntryType: input.defaultEntryType || null,
         isAutoDetected: false,
-        detectionPatterns: [normalizedName],
+        seenLocations,
+        detectionPatterns: seedPatterns(normalizedName),
       },
     })
 
@@ -128,7 +137,11 @@ export async function updateCounterpartyAction(
 
     let newNormalizedName = cp.normalizedName
     if (input.name && input.name.trim() !== cp.name) {
-      newNormalizedName = normalizeCounterpartyName(input.name.trim())
+      const recomputed = canonicalize(input.name.trim()).matchKey
+      if (!recomputed) {
+        return errorResponse("Please enter a more specific vendor name", "VALIDATION_ERROR")
+      }
+      newNormalizedName = recomputed
       const duplicate = await prisma.counterparty.findFirst({
         where: { organizationId, normalizedName: newNormalizedName, id: { not: counterpartyId } },
       })
@@ -216,69 +229,19 @@ export async function mergeCounterpartiesAction(
   try {
     const { organizationId } = await getAuthContext()
 
-    if (!input.sourceIds || input.sourceIds.length === 0) {
-      return errorResponse("At least one source counterparty is required", "VALIDATION_ERROR")
-    }
-    if (!input.targetId) {
-      return errorResponse("Target counterparty is required", "VALIDATION_ERROR")
-    }
-    if (input.sourceIds.includes(input.targetId)) {
-      return errorResponse("Target cannot be in the source list", "VALIDATION_ERROR")
-    }
-
-    const counterparties = await prisma.counterparty.findMany({
-      where: {
+    const result = await prisma.$transaction((tx) =>
+      mergeCounterpartiesCore(tx, {
         organizationId,
-        id: { in: [...input.sourceIds, input.targetId] },
-      },
-      select: { id: true, detectionPatterns: true },
-    })
-
-    if (counterparties.length !== input.sourceIds.length + 1) {
-      return errorResponse("One or more counterparties not found", "NOT_FOUND")
-    }
-
-    const targetCp = counterparties.find((c) => c.id === input.targetId)
-    if (!targetCp) return errorResponse("Target counterparty not found", "NOT_FOUND")
-
-    const result = await prisma.$transaction(async (tx) => {
-      const entriesUpdate = await tx.entry.updateMany({
-        where: { counterpartyId: { in: input.sourceIds } },
-        data: { counterpartyId: input.targetId },
+        sourceIds: input.sourceIds,
+        targetId: input.targetId,
       })
-
-      const patternsUpdate = await tx.recurringPattern.updateMany({
-        where: { counterpartyId: { in: input.sourceIds } },
-        data: { counterpartyId: input.targetId },
-      })
-
-      const sourceCps = counterparties.filter((c) => input.sourceIds.includes(c.id))
-      const allPatterns = new Set([
-        ...targetCp.detectionPatterns,
-        ...sourceCps.flatMap((c) => c.detectionPatterns),
-      ])
-
-      await tx.counterparty.update({
-        where: { id: input.targetId },
-        data: { detectionPatterns: Array.from(allPatterns) },
-      })
-
-      await tx.counterparty.deleteMany({
-        where: { id: { in: input.sourceIds } },
-      })
-
-      return {
-        entriesReassigned: entriesUpdate.count,
-        patternsReassigned: patternsUpdate.count,
-        deletedCount: input.sourceIds.length,
-      }
-    })
+    )
 
     revalidatePath("/counterparties")
     revalidatePath("/transactions")
     revalidatePath("/recurring")
 
-    return successResponse({ mergedId: input.targetId, ...result })
+    return successResponse(result)
   } catch (error) {
     console.error("Error merging counterparties:", error)
     return errorResponse(

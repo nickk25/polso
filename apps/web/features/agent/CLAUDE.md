@@ -9,7 +9,7 @@ AI financial assistant (Claude via Vercel AI SDK) serving the /dashboard chat su
 - `lib/system-prompt.ts` — `buildSystemPrompt(ctx, opts)`: localized (es/en) system prompt; injects processed-attachment summaries and match instructions
 - `lib/process-chat-attachment.ts` — OCR a chat upload (Haiku via `@polso/agent/ocr`, AI rate-limited), dedup by SHA-256 `fileHash`, upload to R2, create `InboxItem`, run matching, classify result (`auto_matched`/`high_confidence`/`suggested_match`/`no_match`)
 - `lib/tool-output.ts` — `truncate()` / `pickFields()` helpers to cap tool payloads
-- `tools/index.ts` — `buildTools(organizationId?, userId?)`: the live tool set (18 tools, snake_case names) wrapping queries from transactions, categories, counterparties, intelligence, alerts, inbox, banking, analytics features; orgId injected for bot channels, falls back to `getAuthContext()` on web
+- `tools/index.ts` — `buildTools(organizationId?, userId?)`: the live tool set (18 tools, snake_case names) wrapping queries from transactions, categories, counterparties, intelligence, alerts, inbox, banking, analytics features; orgId injected for bot channels, falls back to `getAuthContext()` on web. `get_merge_suggestions` returns vendor-merge candidates with a `confidence` (0–1) and `requiresConfirmation` flag — suggestions only, never auto-merges
 - `tools/<tool-name>.ts` — standalone single-tool variants (auth-context only); NOT imported by `index.ts` or any route
 - `widgets/registry.ts` — zod schemas validating tool results before widget render (`widgetSchemas`)
 - `widgets/` — chart/card widgets (cash flow, forecasts, category breakdown, burn/runway, VAT, top counterparties, match suggestion), lazy-loaded

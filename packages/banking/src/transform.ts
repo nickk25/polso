@@ -23,10 +23,13 @@ import { selectPrimaryBalance, getAvailableBalance, mapCashAccountType } from ".
 function transformTransactionName(transaction: GCRawTransaction): string {
   if (transaction.creditorName) return toTitleCase(transaction.creditorName)
   if (transaction.debtorName) return toTitleCase(transaction.debtorName)
-  if (transaction.additionalInformation) return toTitleCase(transaction.additionalInformation)
+  // Structured remittance is cleaner than free-text additionalInformation — prefer it.
   if (transaction.remittanceInformationStructured) {
     return toTitleCase(transaction.remittanceInformationStructured)
   }
+  const structuredArray = transaction.remittanceInformationStructuredArray?.at(0)
+  if (structuredArray) return toTitleCase(structuredArray)
+  if (transaction.additionalInformation) return toTitleCase(transaction.additionalInformation)
   if (transaction.remittanceInformationUnstructured) {
     return toTitleCase(transaction.remittanceInformationUnstructured)
   }
@@ -54,10 +57,18 @@ function transformDescription(
   return null
 }
 
-function transformCounterpartyName(transaction: GCRawTransaction): string | null {
-  if (transaction.debtorName) return toTitleCase(transaction.debtorName)
-  if (transaction.creditorName) return toTitleCase(transaction.creditorName)
-  return null
+/**
+ * Structured payee name, if the bank provided one. `structured: true` lets the
+ * canonicalizer skip its aggressive digit/noise stripping (a structured payee is
+ * already clean). Returns `null` name for card-POS rows (no creditor/debtor name).
+ */
+function transformCounterpartyName(transaction: GCRawTransaction): {
+  name: string | null
+  structured: boolean
+} {
+  if (transaction.debtorName) return { name: toTitleCase(transaction.debtorName), structured: true }
+  if (transaction.creditorName) return { name: toTitleCase(transaction.creditorName), structured: true }
+  return { name: null, structured: false }
 }
 
 function toTitleCase(str: string): string {
@@ -82,7 +93,9 @@ export function transformTransaction({
 }): BankTransaction {
   const name = transformTransactionName(transaction)
   const description = transformDescription(transaction, name)
-  const counterpartyName = transformCounterpartyName(transaction)
+  const counterparty = transformCounterpartyName(transaction)
+  const counterpartyIban =
+    transaction.creditorAccount?.iban ?? transaction.debtorAccount?.iban ?? null
 
   // GoCardless: negative = expense (money out), positive = income (money in)
   // Polso convention is opposite — negate to match
@@ -110,7 +123,9 @@ export function transformTransaction({
     date,
     authorizedDate,
     name: description ?? name,
-    merchantName: counterpartyName ?? name,
+    merchantName: counterparty.name ?? name,
+    nameIsStructured: counterparty.name != null,
+    counterpartyIban,
     pending,
     paymentChannel: null,
     transactionType,

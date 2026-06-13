@@ -62,6 +62,10 @@ export interface BankTransaction {
   name: string | null
   /** Cleaned merchant/counterparty name */
   merchantName: string | null
+  /** True when merchantName came from a structured payee field (creditor/debtorName) */
+  nameIsStructured: boolean
+  /** Beneficiary IBAN, when present (transfers/direct-debits) */
+  counterpartyIban: string | null
   pending: boolean
   /** online, in_store, other */
   paymentChannel: string | null

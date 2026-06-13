@@ -1,7 +1,6 @@
 import { Prisma } from "@polso/db"
 import { prisma } from "@/lib/db"
 import {
-  normalizeCounterpartyName,
   getTransactionType,
   mapGoCardlessToPolsoCategory,
   selectPrimaryBalance,
@@ -153,15 +152,21 @@ async function runSync(
     }),
     prisma.counterparty.findMany({
       where: { organizationId },
-      select: { id: true, normalizedName: true, defaultCategoryId: true, defaultEntryType: true },
+      select: { id: true, normalizedName: true, defaultCategoryId: true, defaultEntryType: true, iban: true },
     }),
   ])
 
   const categoryLookup = new Map(categories.map((c) => [c.slug, c.id]))
-  const counterpartyLookup = new Map(
+  const counterpartyLookup: Map<string, MatchedCounterparty> = new Map(
     counterparties.map((c) => [
       c.normalizedName,
-      { id: c.id, defaultCategoryId: c.defaultCategoryId, defaultEntryType: c.defaultEntryType },
+      {
+        id: c.id,
+        defaultCategoryId: c.defaultCategoryId,
+        defaultEntryType: c.defaultEntryType,
+        normalizedName: c.normalizedName,
+        iban: c.iban,
+      },
     ])
   )
 
@@ -354,29 +359,26 @@ async function upsertTransaction(
   counterpartyLookup: Map<string, MatchedCounterparty>,
   merchantHistory: MerchantHistory = new Map()
 ): Promise<{ imported: boolean; modified: boolean; entryCreated: boolean; transactionId: string }> {
-  const counterpartyName = tx.merchantName ?? tx.name ?? null
-  const normalizedCounterparty = counterpartyName
-    ? normalizeCounterpartyName(counterpartyName)
-    : null
+  const rawCounterpartyName = tx.merchantName ?? tx.name ?? null
 
   // Determine direction from amount sign (positive = expense, negative = income)
   const direction = tx.amount > 0 ? "expense" : "income"
 
-  // Find/create counterparty
-  let matchedCounterparty: MatchedCounterparty | null = normalizedCounterparty
-    ? (counterpartyLookup.get(normalizedCounterparty) ?? null)
+  // Resolve the canonical counterparty. Returns null for generic/operation noise
+  // (e.g. "Transaccion Movil") — those transactions get no counterparty. The matcher
+  // owns the in-batch cache, the IBAN-first match, and the empty-key suppression.
+  const matchedCounterparty: MatchedCounterparty | null = rawCounterpartyName
+    ? await findOrCreateCounterparty(
+        organizationId,
+        rawCounterpartyName,
+        direction === "expense" ? "vendor" : "client",
+        {
+          structured: tx.nameIsStructured,
+          iban: tx.counterpartyIban,
+          lookup: counterpartyLookup,
+        }
+      )
     : null
-
-  if (!matchedCounterparty && normalizedCounterparty && counterpartyName) {
-    const cp = await findOrCreateCounterparty(
-      organizationId,
-      counterpartyName,
-      direction === "expense" ? "vendor" : "client",
-      counterpartyLookup
-    )
-    matchedCounterparty = cp
-    counterpartyLookup.set(normalizedCounterparty, cp)
-  }
 
   // Upsert the raw Transaction record
   const existing = await prisma.transaction.findFirst({
@@ -397,7 +399,8 @@ async function upsertTransaction(
     transactionType: getTransactionType(tx.amount),
     category: tx.category,
     categoryDetailed: tx.categoryDetailed,
-    counterpartyName: normalizedCounterparty,
+    counterpartyName: matchedCounterparty?.normalizedName ?? null,
+    counterpartyIban: tx.counterpartyIban,
   }
 
   let transaction: { id: string }

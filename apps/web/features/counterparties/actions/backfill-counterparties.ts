@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
 import { getAuthContext } from "@polso/auth/get-session"
 import { successResponse, errorResponse, type ActionResponse } from "@/lib/types"
-import { normalizeCounterpartyName } from "@polso/banking"
+import { canonicalize } from "@polso/banking"
+
+const seedPatterns = (matchKey: string): string[] =>
+  matchKey.startsWith("gov:") ? [] : matchKey.split(" ").filter(Boolean)
 
 interface BackfillResult {
   counterpartiesCreated: number
@@ -53,19 +56,21 @@ export async function backfillCounterpartiesAction(): Promise<ActionResponse<Bac
     >()
 
     for (const entry of entriesWithoutCounterparty) {
-      const counterpartyName = entry.transaction?.counterpartyName
-      if (!counterpartyName) continue
-
-      const normalizedName = normalizeCounterpartyName(counterpartyName)
-      const displayName =
+      // Canonicalize the richest raw source (not the already-stored key) so manual
+      // backfill produces the same matchKey as the sync pipeline.
+      const raw =
         entry.transaction?.merchantName ||
         entry.transaction?.name ||
-        counterpartyName
+        entry.transaction?.counterpartyName
+      if (!raw) continue
 
-      if (!groupedByCounterparty.has(normalizedName)) {
-        groupedByCounterparty.set(normalizedName, { displayName, entryIds: [] })
+      const { matchKey, displayName } = canonicalize(raw)
+      if (!matchKey) continue // generic noise — leave unlinked
+
+      if (!groupedByCounterparty.has(matchKey)) {
+        groupedByCounterparty.set(matchKey, { displayName: displayName || raw, entryIds: [] })
       }
-      groupedByCounterparty.get(normalizedName)!.entryIds.push(entry.id)
+      groupedByCounterparty.get(matchKey)!.entryIds.push(entry.id)
     }
 
     let counterpartiesCreated = 0
@@ -86,7 +91,7 @@ export async function backfillCounterpartiesAction(): Promise<ActionResponse<Bac
           normalizedName,
           type: "vendor" as const,
           isAutoDetected: true,
-          detectionPatterns: [normalizedName],
+          detectionPatterns: seedPatterns(normalizedName),
         })),
         skipDuplicates: true,
       })
