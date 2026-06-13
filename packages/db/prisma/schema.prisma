@@ -194,6 +194,7 @@ model Transaction {
   category              String?
   categoryDetailed      String?   @map("category_detailed")
   counterpartyName      String?   @map("counterparty_name")
+  counterpartyIban      String?   @map("counterparty_iban")
   createdAt             DateTime  @default(now()) @map("created_at")
 
   organization           Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -296,6 +297,15 @@ model Counterparty {
   // Visual
   logoUrl String? @map("logo_url")
 
+  // Stable beneficiary IBAN (transfers/direct-debits) — hard identity discriminator
+  iban String? @map("iban")
+
+  // Cities/places seen for this vendor (stripped from the match key, kept as metadata)
+  seenLocations String[] @map("seen_locations")
+
+  // Reverse map of a merge ({id,name,normalizedName}[] of the absorbed sources) — for auditing/undo
+  mergedFrom Json? @map("merged_from")
+
   // Intelligence defaults
   defaultCategoryId String? @map("default_category_id")
   defaultEntryType  String? @map("default_entry_type") // fixed | variable
@@ -313,6 +323,7 @@ model Counterparty {
   @@unique([organizationId, normalizedName])
   @@index([organizationId])
   @@index([normalizedName])
+  @@index([organizationId, iban])
   @@map("counterparties")
 }
 

@@ -31,6 +31,8 @@ Lives at `packages/db/prisma/schema.prisma`. 28 models — see `docs/ARCHITECTUR
 
 **Multi-tenancy rule**: every query must filter by `organizationId`. This is the root of all data.
 
+**Counterparty identity fields** (vendor-matching redesign, see `docs/VENDOR_MATCHING_AUDIT.md`): `normalizedName` holds the canonical match-key from `canonicalize()` (`@polso/banking`); `iban` is a hard identity discriminator for transfers; `seenLocations` keeps stripped city tokens as metadata; `mergedFrom` is the reverse-map for merge auditing/undo. `Transaction.counterpartyIban` carries the beneficiary IBAN from sync.
+
 ## Environment variables
 
 ```env
