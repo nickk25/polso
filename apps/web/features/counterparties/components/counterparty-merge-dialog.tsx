@@ -123,7 +123,7 @@ export function CounterpartyMergeDialog({
           <div className="space-y-2">
             <Label>{t("merge.keepTarget")}</Label>
             <Select value={targetId} onValueChange={setTargetId}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder={t("merge.selectTarget")} />
               </SelectTrigger>
               <SelectContent>
